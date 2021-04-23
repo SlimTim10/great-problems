@@ -1,0 +1,4 @@
+* Great Problems
+
+** Running
+To run locally, install [[https://github.com/obsidiansystems/obelisk][Obelisk]], go into the project directory, and run ~ob run~. This will compile the examples using ghc and run them locally on http://localhost:8000/.
