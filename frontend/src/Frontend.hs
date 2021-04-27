@@ -116,13 +116,32 @@ drawingsWidget drawingsDyn = do
   -- simpleList drawingsDyn drawingWidget
   el "div" blank
   el "ul" $ do
-    let getFilesEvent :: Event t [File] = updated drawingsDyn
-    dFiles :: Dynamic t [File] <- accumDyn collectFiles [] getFilesEvent
+    dFiles :: Dynamic t [File] <- accumDyn collectFiles [] (updated drawingsDyn)
+    -- simpleList dFiles fileItem
+
+    -- TEST
+    el "div" blank
+    dFiles' :: Dynamic t [m T.Text] <- accumDyn collectFiles' [] (updated drawingsDyn)
+    xs :: Dynamic t [T.Text] <- simpleList dFiles' fileItem'
+    el "p" $ do
+      display xs
+
+    -- NEW TEST
+    el "div" blank
+    dFiles'' :: Dynamic t [T.Text] <- simpleList dFiles fileItem''
+    el "p" $ do
+      display dFiles''
+
+    el "div" blank
     simpleList dFiles fileItem
+
   where
     collectFiles :: [File] -> [File] -> [File]
     collectFiles state newFiles = state <> newFiles
-    
+
+    collectFiles' :: [m T.Text] -> [File] -> [m T.Text]
+    collectFiles' state newFiles = state <> map getName newFiles
+
     fileItem :: Dynamic t File -> m ()
     fileItem dFile = do
       let dynNameAction :: Dynamic t (m T.Text) = getName <$> dFile
@@ -130,6 +149,26 @@ drawingsWidget drawingsDyn = do
       name :: Dynamic t T.Text <- holdDyn "" getNameEvent
       el "li" $ do
         dynText name
+
+    fileItem' :: Dynamic t (m T.Text) -> m T.Text
+    fileItem' dFile = do
+      let c :: Behavior t (m T.Text) = current dFile
+      t :: m T.Text <- sample c
+      t
+
+    fileItem'' :: Dynamic t File -> m T.Text
+    fileItem'' dFile = do
+      let dName :: Dynamic t (m T.Text) = getName <$> dFile
+      let c :: Behavior t (m T.Text) = current dName
+      t :: m T.Text <- sample c
+      t
+
+    myFunc :: Dynamic t File -> m (Dynamic t T.Text)
+    myFunc dFile = do
+      let dynNameAction :: Dynamic t (m T.Text) = getName <$> dFile
+      getNameEvent :: Event t T.Text <- dyn dynNameAction
+      name :: Dynamic t T.Text <- holdDyn "" getNameEvent
+      return name
 
 data FileWithName = FileWithName
   { file :: File
