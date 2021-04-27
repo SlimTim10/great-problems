@@ -96,19 +96,25 @@ drawingsOption = el "div" $ do
       "multiple" =: ""
       )
     return fi1
-  let dynState = drawingsState <$> _inputElement_files fi -- :: Dynamic t T.Text
-  dynText dynState
+  -- let dynState = drawingsState <$> _inputElement_files fi -- :: Dynamic t T.Text
+  -- dynText dynState
   drawingsWidget $ _inputElement_files fi
   return ()
 
 drawingsWidget
-  :: (DomBuilder t m, MonadHold t m, PostBuild t m, MonadFix m, MonadJSM m)
+  :: ( DomBuilder t m
+     , MonadHold t m
+     , PostBuild t m
+     , MonadFix m
+     , MonadJSM m
+     )
   => Dynamic t [File]
   -> m (Dynamic t [()])
 drawingsWidget drawingsDyn = simpleList drawingsDyn drawingWidget
 
 drawingWidget
-  :: ( DomBuilder t m
+  :: forall t m.
+     ( DomBuilder t m
      , MonadHold t m
      , PostBuild t m
      , MonadFix m
@@ -117,14 +123,11 @@ drawingWidget
   => Dynamic t File
   -> m ()
 drawingWidget drawingDyn = el "div" $ do
-  getNameAction <- (return . dyn . (getNameText <$>)) drawingDyn
-  evText <- getNameAction
-  x <- holdDyn "" evText
-  dynText $ x
+  let dynNameAction :: Dynamic t (m T.Text) = getName <$> drawingDyn
+  getNameEvent :: Event t T.Text <- dyn dynNameAction
+  name :: Dynamic t T.Text <- holdDyn "" getNameEvent
+  dynText name
   return ()
-  where
-    getNameText :: MonadJSM m => File -> m T.Text
-    getNameText = getName
 
 drawingsState :: [File] -> T.Text
 drawingsState fs = T.pack . show $ length fs
@@ -145,7 +148,13 @@ randomOption = el "div" $ do
     randomState True = "Randomize variables is checked"
     randomState _ = "Randomize variables is not checked"
 
-outputOption :: (DomBuilder t m, PostBuild t m, MonadHold t m, MonadFix m) => m ()
+outputOption
+  :: ( DomBuilder t m
+     , PostBuild t m
+     , MonadHold t m
+     , MonadFix m
+     )
+  => m ()
 outputOption = el "div" $ do
   dd <- el "label" $ do
     text "Output"
