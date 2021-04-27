@@ -127,7 +127,60 @@ drawingWidget drawingDyn = el "div" $ do
   getNameEvent :: Event t T.Text <- dyn dynNameAction
   name :: Dynamic t T.Text <- holdDyn "" getNameEvent
   dynText name
+
+  let getFileEvent :: Event t File = updated drawingDyn
+
+  el "div" blank
+  el "ul" $ do
+    dFiles :: Dynamic t [File] <- accumDyn collectFiles [] getFileEvent
+    simpleList dFiles fileItem
+    
+    -- dstate :: Dynamic t [T.Text] <- accumDyn collectNames [initialState] getNameEvent
+    -- display dstate
+  
   return ()
+  where
+    initialState :: T.Text
+    initialState = T.empty
+
+    collectNames :: [T.Text] -> T.Text -> [T.Text]
+    collectNames state newName = state <> [newName]
+
+    collectFiles :: [File] -> File -> [File]
+    collectFiles state newFile = state <> [newFile]
+
+    fileItem :: Dynamic t File -> m ()
+    fileItem dFile = do
+      let dynNameAction :: Dynamic t (m T.Text) = getName <$> dFile
+      getNameEvent :: Event t T.Text <- dyn dynNameAction
+      name :: Dynamic t T.Text <- holdDyn "" getNameEvent
+      el "li" $ do
+        dynText name
+
+    -- getNameEvent' :: (MonadJSM m) => File -> m (Event t T.Text)
+    -- getNameEvent' f = do
+    --   let dynNameAction' = getName <$> constDyn f
+    --   x <- dyn dynNameAction'
+    --   return x
+
+    -- filesToNames
+    --   :: ( DomBuilder t m
+    --      , PostBuild t m
+    --      , MonadHold t m
+    --      , MonadFix m
+    --      , MonadJSM m
+    --      )
+    --   => Dynamic t [File] -> Dynamic t [T.Text]
+    -- filesToNames dFiles = do
+    --   let dynNameActions :: Dynamic t [m T.Text] = map getName <$> dFiles
+    --   y :: Event t [T.Text] <- map _ <$> dynNameActions
+    --   -- let y :: Dynamic t [T.Text] = map _ <$> dynNameActions
+    --   -- getNameEvents :: _ <- dyn dynNameActions
+    --   y
+    --   -- let dynNamesAction :: Dynamic t (m [T.Text]) = getName <$> dFiles
+    --   -- getNameEvents :: Event t [T.Text] <- dyn dynNamesAction
+    --   -- names :: Dynamic t [T.Text] <- holdDyn "" getNameEvents
+    --   -- return names
 
 drawingsState :: [File] -> T.Text
 drawingsState fs = T.pack . show $ length fs
