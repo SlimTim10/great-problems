@@ -121,16 +121,9 @@ drawingsWidget drawingsDyn = do
 
     -- TEST
     el "div" blank
-    dFiles' :: Dynamic t [m T.Text] <- accumDyn collectFiles' [] (updated drawingsDyn)
-    xs :: Dynamic t [T.Text] <- simpleList dFiles' fileItem'
+    dFiles' :: Dynamic t [T.Text] <- simpleList dFiles fileItem'
     el "p" $ do
-      display xs
-
-    -- NEW TEST
-    el "div" blank
-    dFiles'' :: Dynamic t [T.Text] <- simpleList dFiles fileItem''
-    el "p" $ do
-      display dFiles''
+      display dFiles'
 
     el "div" blank
     simpleList dFiles fileItem
@@ -150,14 +143,8 @@ drawingsWidget drawingsDyn = do
       el "li" $ do
         dynText name
 
-    fileItem' :: Dynamic t (m T.Text) -> m T.Text
+    fileItem' :: Dynamic t File -> m T.Text
     fileItem' dFile = do
-      let c :: Behavior t (m T.Text) = current dFile
-      t :: m T.Text <- sample c
-      t
-
-    fileItem'' :: Dynamic t File -> m T.Text
-    fileItem'' dFile = do
       let dName :: Dynamic t (m T.Text) = getName <$> dFile
       let c :: Behavior t (m T.Text) = current dName
       t :: m T.Text <- sample c
@@ -174,6 +161,9 @@ data FileWithName = FileWithName
   { file :: File
   , name :: T.Text
   }
+
+instance Show FileWithName where
+  show = show . name
 
 drawingWidget
   :: forall t m.
