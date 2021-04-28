@@ -79,8 +79,6 @@ drawingsOption = el "div" $ do
       "multiple" =: ""
       )
     return fi1
-  -- let dynState = drawingsState <$> _inputElement_files fi -- :: Dynamic t T.Text
-  -- dynText dynState
   drawingsWidget $ _inputElement_files fi
   return ()
 
