@@ -121,7 +121,7 @@ drawingsWidget drawingsDyn = do
 
     -- TEST
     el "div" blank
-    dFiles' :: Dynamic t [T.Text] <- simpleList dFiles fileItem'
+    dFiles' :: Dynamic t [FileWithName] <- simpleList dFiles fileItem'
     el "p" $ do
       display dFiles'
 
@@ -132,9 +132,6 @@ drawingsWidget drawingsDyn = do
     collectFiles :: [File] -> [File] -> [File]
     collectFiles state newFiles = state <> newFiles
 
-    collectFiles' :: [m T.Text] -> [File] -> [m T.Text]
-    collectFiles' state newFiles = state <> map getName newFiles
-
     fileItem :: Dynamic t File -> m ()
     fileItem dFile = do
       let dynNameAction :: Dynamic t (m T.Text) = getName <$> dFile
@@ -143,19 +140,14 @@ drawingsWidget drawingsDyn = do
       el "li" $ do
         dynText name
 
-    fileItem' :: Dynamic t File -> m T.Text
+    fileItem' :: Dynamic t File -> m FileWithName
     fileItem' dFile = do
       let dName :: Dynamic t (m T.Text) = getName <$> dFile
-      let c :: Behavior t (m T.Text) = current dName
-      t :: m T.Text <- sample c
-      t
-
-    myFunc :: Dynamic t File -> m (Dynamic t T.Text)
-    myFunc dFile = do
-      let dynNameAction :: Dynamic t (m T.Text) = getName <$> dFile
-      getNameEvent :: Event t T.Text <- dyn dynNameAction
-      name :: Dynamic t T.Text <- holdDyn "" getNameEvent
-      return name
+      mName :: m T.Text <- sample . current $ dName
+      f :: File <- sample . current $ dFile
+      n :: T.Text <- mName
+      -- True
+      return $ FileWithName f n
 
 data FileWithName = FileWithName
   { file :: File
