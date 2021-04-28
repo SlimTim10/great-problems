@@ -49,7 +49,7 @@ options
      , PostBuild t m
      , MonadHold t m
      , MonadFix m
-     , Prerender js t m
+     , MonadJSM m
      )
   => m ()
 options = do
@@ -59,7 +59,7 @@ options = do
         el "h2" $ text "Options"
         randomOption
         outputOption
-        prerender_ blank $ drawingsOption
+        drawingsOption
 
 drawingsOption
   :: ( DomBuilder t m
