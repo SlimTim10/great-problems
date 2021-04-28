@@ -7,7 +7,7 @@
 
 module Frontend where
 
--- import Control.Monad
+import Control.Monad
 import Control.Monad.Fix
 import qualified Data.Text as T
 -- import qualified Data.Text.Encoding as T
@@ -60,24 +60,6 @@ options = do
         randomOption
         outputOption
         prerender_ blank $ drawingsOption
-        
-        -- el "div" $ do
-        --   el "h4" $ text "Drawings"
-        --   elLabel idUploadDrawing "Upload"
-        --   elAttr "input" (
-        --     "name" =: nameUploadDrawing <>
-        --     "id" =: idUploadDrawing <>
-        --     "type" =: "file" <>
-        --     "accept" =: ".asc" <>
-        --     "multiple" =: "multiple"
-        --     ) blank
-  where
-    idRandom = "random"
-    nameRandom = "random"
-    idOutput = "selectOutput"
-    nameOutput = "outFlag"
-    idUploadDrawing = "uploadDrawing"
-    nameUploadDrawing = "uploadDrawing"
 
 drawingsOption
   :: ( DomBuilder t m
@@ -111,42 +93,30 @@ drawingsWidget
      , MonadJSM m
      )
   => Dynamic t [File]
-  -> m (Dynamic t [()])
-drawingsWidget drawingsDyn = do
-  -- simpleList drawingsDyn drawingWidget
-  el "div" blank
+  -> m ()
+drawingsWidget drawingsState = do
+  dFiles :: Dynamic t [File] <- accumDyn (<>) [] (updated drawingsState)
+  filesState :: Dynamic t [FileWithName] <- simpleList dFiles mkFile
+  uniqueFilesState :: Dynamic t [FileWithName] <- accumDyn collectFiles [] (updated filesState)
+
   el "ul" $ do
-    dFiles :: Dynamic t [File] <- accumDyn collectFiles [] (updated drawingsDyn)
-    -- simpleList dFiles fileItem
-
-    -- TEST
-    el "div" blank
-    dFiles' :: Dynamic t [FileWithName] <- simpleList dFiles fileItem'
-    el "p" $ do
-      display dFiles'
-
-    el "div" blank
-    simpleList dFiles fileItem
+    void $ simpleList uniqueFilesState fileItem
+    return ()
 
   where
-    collectFiles :: [File] -> [File] -> [File]
-    collectFiles state newFiles = state <> newFiles
+    collectFiles :: [FileWithName] -> [FileWithName] -> [FileWithName]
+    collectFiles state newFiles = nub $ state <> newFiles
 
-    fileItem :: Dynamic t File -> m ()
-    fileItem dFile = do
-      let dynNameAction :: Dynamic t (m T.Text) = getName <$> dFile
-      getNameEvent :: Event t T.Text <- dyn dynNameAction
-      name :: Dynamic t T.Text <- holdDyn "" getNameEvent
-      el "li" $ do
-        dynText name
+    fileItem :: Dynamic t FileWithName -> m ()
+    fileItem dFile = el "li" $ do
+      dynText $ name <$> dFile
 
-    fileItem' :: Dynamic t File -> m FileWithName
-    fileItem' dFile = do
+    mkFile :: Dynamic t File -> m FileWithName
+    mkFile dFile = do
       let dName :: Dynamic t (m T.Text) = getName <$> dFile
       mName :: m T.Text <- sample . current $ dName
       f :: File <- sample . current $ dFile
       n :: T.Text <- mName
-      -- True
       return $ FileWithName f n
 
 data FileWithName = FileWithName
@@ -157,36 +127,20 @@ data FileWithName = FileWithName
 instance Show FileWithName where
   show = show . name
 
-drawingWidget
-  :: forall t m.
-     ( DomBuilder t m
-     , MonadHold t m
-     , PostBuild t m
-     , MonadFix m
-     , MonadJSM m
-     )
-  => Dynamic t File
-  -> m ()
-drawingWidget drawingDyn = el "div" $ do
-  let dynNameAction :: Dynamic t (m T.Text) = getName <$> drawingDyn
-  getNameEvent :: Event t T.Text <- dyn dynNameAction
-  name :: Dynamic t T.Text <- holdDyn "" getNameEvent
-  el "p" $ dynText name
-
-drawingsState :: [File] -> T.Text
-drawingsState fs = T.pack . show $ length fs
-
--- drawingsStates :: [File] -> [T.Text]
--- drawingsStates fs = map (getName) $ fs
+instance Eq FileWithName where
+  (==) a b = name a == name b
 
 randomOption :: (DomBuilder t m, PostBuild t m) => m ()
 randomOption = el "div" $ do
   cb <- el "label" $ do
-    cb1 <- checkbox False def
+    cb1 <- inputElement $ def & initialAttributes .~ (
+      "type" =: "checkbox"
+      )
     text "Randomize variables"
     return cb1
-  -- let dynState = randomState <$> value cb
-  -- dynText dynState
+  let dynState = randomState <$> _inputElement_checked cb
+  el "p" $ do
+    dynText dynState
   return ()
   where
     randomState True = "Randomize variables is checked"
@@ -204,10 +158,12 @@ outputOption = el "div" $ do
     text "Output"
     dd1 <- dropdown "flagSolutions" (constDyn items) def
     return dd1
-  -- let selItem = result <$> value dd
-  -- dynText selItem
+  let selItem = result <$> value dd
+  el "p" $ do
+    dynText selItem
   return ()
   where
+    items :: Map.Map T.Text T.Text
     items = Map.fromList
       [ ("flagSolutions", "with solutions")
       , ("flagAnswers", "with answer")
