@@ -1,23 +1,30 @@
 import Control.Monad ( void )
 import Control.Monad.Fix ( MonadFix )
-import qualified Data.Text as T ( Text )
-import qualified Data.Map as Map ( Map, lookup, fromList )
-import Data.Maybe ( fromJust )
+import Data.Text ( Text )
+import qualified Data.Text as T ( pack )
+import Data.Map ( Map )
+import qualified Data.Map as Map ( lookup, fromList )
+import Data.Maybe ( fromJust, maybe )
 import Data.List ( nub )
+import Control.Lens ( view )
 import Language.Javascript.JSaddle ( MonadJSM )
-import JSDOM.Types ( File )
+import JSDOM.Types ( File, IsBlob )
 import JSDOM.File ( getName )
+import qualified JSDOM.Text as JS ( Text )
 import Obelisk.Frontend ( Frontend(..) )
 import Obelisk.Route ( R )
 import Obelisk.Generated.Static ( static )
 import Reflex.Dom.Core
     ( def,
-      MonadHold,
+      MonadHold(holdDyn),
       MonadSample(sample),
-      Reflex(updated, current, Dynamic),
+      PerformEvent(Performable),
+      Reflex(Event, updated, current, Dynamic),
       DomBuilder(inputElement),
       InputElement(_inputElement_checked, _inputElement_files),
+      HasJSContext,
       PostBuild,
+      TriggerEvent(newTriggerEvent),
       constDyn,
       InitialAttributes(initialAttributes),
       simpleList,
@@ -33,5 +40,9 @@ import Reflex.Dom.Core
       dropdown,
       HasValue(value),
       accumDyn,
-      (=:) )
+      (=:),
+      xhrResponse_responseText,
+      postForms,
+      XhrResponse,
+      FormValue(FormValue_Text) )
 import Common.Route ( FrontendRoute )

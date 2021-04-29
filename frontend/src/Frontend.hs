@@ -9,18 +9,22 @@ module Frontend where
 
 import Control.Monad
 import Control.Monad.Fix
+import Data.Text (Text)
 import qualified Data.Text as T
 -- import qualified Data.Text.Encoding as T
+import Data.Map (Map)
 import qualified Data.Map as Map
-import Data.Maybe (fromJust)
+import Data.Maybe (fromJust, maybe)
 import Data.List (nub)
+import Control.Lens (view)
 import Language.Javascript.JSaddle
   ( MonadJSM
   -- , eval
   -- , liftJSM
   )
-import JSDOM.Types (File)
+import JSDOM.Types (File, IsBlob)
 import JSDOM.File (getName)
+import qualified JSDOM.Text as JS
 
 import Obelisk.Frontend
 -- import Obelisk.Configs
@@ -32,6 +36,8 @@ import Reflex.Dom.Core
 -- import Common.Api
 import Common.Route
 
+-- import Lib (MyFrontend(..))
+
 
 frontend :: Frontend (R FrontendRoute)
 frontend = Frontend
@@ -41,10 +47,11 @@ frontend = Frontend
   , _frontend_body = do
       el "h1" $ text "Problem to Tex"
 
-      prerender_ blank $ options
+      prerender_ blank $ optionsWidget
+      prerender_ blank $ convertWidget
   }
 
-options
+optionsWidget
   :: ( DomBuilder t m
      , PostBuild t m
      , MonadHold t m
@@ -52,7 +59,7 @@ options
      , MonadJSM m
      )
   => m ()
-options = do
+optionsWidget = do
   borderBox $ do
     elClass "div" "mainContainer" $ do
       elClass "div" "optionsContainer" $ do
@@ -84,7 +91,7 @@ drawingsOption = el "div" $ do
 
 drawingsWidget
   :: forall t m.
-    ( DomBuilder t m
+     ( DomBuilder t m
      , MonadHold t m
      , PostBuild t m
      , MonadFix m
@@ -111,15 +118,15 @@ drawingsWidget drawingsState = do
 
     mkFile :: Dynamic t File -> m FileWithName
     mkFile dFile = do
-      let dName :: Dynamic t (m T.Text) = getName <$> dFile
-      mName :: m T.Text <- sample . current $ dName
+      let dName :: Dynamic t (m Text) = getName <$> dFile
+      mName :: m Text <- sample . current $ dName
       f :: File <- sample . current $ dFile
-      n :: T.Text <- mName
+      n :: Text <- mName
       return $ FileWithName f n
 
 data FileWithName = FileWithName
   { file :: File
-  , name :: T.Text
+  , name :: Text
   }
 
 instance Show FileWithName where
@@ -161,7 +168,7 @@ outputOption = el "div" $ do
     dynText selItem
   return ()
   where
-    items :: Map.Map T.Text T.Text
+    items :: Map Text Text
     items = Map.fromList
       [ ("flagSolutions", "with solutions")
       , ("flagAnswers", "with answer")
@@ -170,12 +177,49 @@ outputOption = el "div" $ do
       ]
     result key = "You selected: " <> fromJust (Map.lookup key items)
 
-elLabel :: DomBuilder t m => T.Text -> T.Text -> m ()
+elLabel :: DomBuilder t m => Text -> Text -> m ()
 elLabel for label = elAttr "label" ("for" =: for) $ text label
 
 borderBox :: DomBuilder t m => m () -> m ()
 borderBox = elAttr "div" ("style" =: "border: 1px solid black;")
 
+convertWidget
+  :: forall t m.
+     ( DomBuilder t m
+     , MonadHold t m
+     , PostBuild t m
+     , MonadJSM (Performable m)
+     , HasJSContext (Performable m)
+     , PerformEvent t m
+     , TriggerEvent t m
+     )
+  => m ()
+convertWidget = el "div" $ do
+  -- let
+  --   toRequest _ = xhrRequest "POST" "/uploadprb" $ def
+  --     & xhrRequestConfig_headers .~ (
+  --     "Accept" =: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8" <>
+  --     "Content-Type" =: "multipart/form-data"
+  --     )
+  --     & xhrRequestConfig_sendData .~ ("test" :: Text)
+  -- input <- inputElement $ def & initialAttributes .~ (
+  --   "type" =: "text"
+  --   )
+  -- responses :: Event t XhrResponse <- performRequestAsync $ toRequest <$> _inputElement_input input
+  -- let results :: Event t (Maybe Text) = view xhrResponse_responseText <$> responses
+
+  let x :: FormValue JS.Text = FormValue_Text "hellooooooooo"
+  let formData :: Map Text (FormValue JS.Text) = ("test" =: x)
+  let dFormData :: Dynamic t [Map Text (FormValue JS.Text)] = constDyn [formData]
+  let eFormData = updated dFormData
+  responses :: Event t [XhrResponse] <- postForms "/uploadprb" eFormData
+  let results = map (view xhrResponse_responseText) <$> responses
+
+  (e1, trigger) <- newTriggerEvent
+
+  asText <- holdDyn "No results." $ T.pack . concat . map (maybe "x" show) <$> results
+  dynText asText
+  return ()
 
 {-
 formData.append('prbText', getEditorContent(editorRef))
@@ -184,3 +228,5 @@ formData.append('random', randomFlag)
 formData.append('outFlag', outputType)
 formData.append('submit1', 'putDatabase') // temporary
 -}
+
+instance IsBlob JS.Text
