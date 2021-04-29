@@ -12,6 +12,8 @@ import Control.Monad.Fix
 import qualified Data.Text as T
 -- import qualified Data.Text.Encoding as T
 import qualified Data.Map as Map
+import Data.Maybe (fromJust)
+import Data.List (nub)
 import Language.Javascript.JSaddle
   ( MonadJSM
   -- , eval
@@ -19,8 +21,6 @@ import Language.Javascript.JSaddle
   )
 import JSDOM.Types (File)
 import JSDOM.File (getName)
-import Data.Maybe (fromJust)
-import Data.List (nub)
 
 import Obelisk.Frontend
 -- import Obelisk.Configs
