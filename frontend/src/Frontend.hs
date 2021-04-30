@@ -4,6 +4,7 @@
 {-# LANGUAGE RecursiveDo #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE PartialTypeSignatures #-}
 
 module Frontend where
 
@@ -36,7 +37,7 @@ import Reflex.Dom.Core
 -- import Common.Api
 import Common.Route
 
--- import Lib (MyFrontend(..))
+import Lib
 
 
 frontend :: Frontend (R FrontendRoute)
@@ -195,22 +196,9 @@ convertWidget
      )
   => m ()
 convertWidget = el "div" $ do
-  -- let
-  --   toRequest _ = xhrRequest "POST" "/uploadprb" $ def
-  --     & xhrRequestConfig_headers .~ (
-  --     "Accept" =: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8" <>
-  --     "Content-Type" =: "multipart/form-data"
-  --     )
-  --     & xhrRequestConfig_sendData .~ ("test" :: Text)
-  -- input <- inputElement $ def & initialAttributes .~ (
-  --   "type" =: "text"
-  --   )
-  -- responses :: Event t XhrResponse <- performRequestAsync $ toRequest <$> _inputElement_input input
-  -- let results :: Event t (Maybe Text) = view xhrResponse_responseText <$> responses
-
-  let x :: FormValue JS.Text = FormValue_Text "hellooooooooo"
-  let formData :: Map Text (FormValue JS.Text) = ("test" =: x)
-  let dFormData :: Dynamic t [Map Text (FormValue JS.Text)] = constDyn [formData]
+  let x :: FormValue File = FormValue_Text "hellooooooooo"
+  let formData :: Map Text (FormValue File) = ("test" =: x <> "test2" =: FormValue_Text "blah")
+  let dFormData :: Dynamic t [Map Text (FormValue File)] = constDyn [formData]
   let eFormData = updated dFormData
   responses :: Event t [XhrResponse] <- postForms "/uploadprb" eFormData
   let results = map (view xhrResponse_responseText) <$> responses
@@ -221,6 +209,20 @@ convertWidget = el "div" $ do
   dynText asText
   return ()
 
+  let x :: MyFormValue File = MyFormValue_Text "hellooooooooo"
+  let formData :: Map Text (MyFormValue File) = ("test" =: x)
+  let dFormData :: Dynamic t (Map Text (MyFormValue File)) = constDyn formData
+  let eFormData = updated dFormData
+  responses :: Event t XhrResponse <- postForm "/uploadprb" eFormData
+  let results = view xhrResponse_responseText <$> responses
+
+  (e1, trigger) <- newTriggerEvent
+
+  asText <- holdDyn "No results." $ T.pack . maybe "x" show <$> results
+  dynText asText
+  return ()
+
+
 {-
 formData.append('prbText', getEditorContent(editorRef))
 formData.append('prbName', documentName)
@@ -229,4 +231,3 @@ formData.append('outFlag', outputType)
 formData.append('submit1', 'putDatabase') // temporary
 -}
 
-instance IsBlob JS.Text
