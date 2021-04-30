@@ -1,49 +1,7 @@
-import Control.Monad ( void )
-import Control.Monad.Fix ( MonadFix )
-import Data.Text ( Text )
-import qualified Data.Text as T ( pack )
-import Data.Map ( Map )
-import qualified Data.Map as Map ( lookup, fromList )
-import Data.Maybe ( fromJust, maybe )
-import Data.List ( nub )
-import Control.Lens ( view )
-import Language.Javascript.JSaddle ( MonadJSM )
-import JSDOM.Types ( File )
-import JSDOM.File ( getName )
 import Obelisk.Frontend ( Frontend(..) )
 import Obelisk.Route ( R )
 import Obelisk.Generated.Static ( static )
 import Reflex.Dom.Core
-    ( def,
-      MonadHold(holdDyn),
-      MonadSample(sample),
-      PerformEvent(Performable),
-      Reflex(Event, updated, current, Dynamic),
-      DomBuilder(inputElement),
-      InputElement(_inputElement_checked, _inputElement_files),
-      HasJSContext,
-      PostBuild,
-      TriggerEvent,
-      constDyn,
-      pushAlways,
-      InitialAttributes(initialAttributes),
-      simpleList,
-      blank,
-      button,
-      dynText,
-      el,
-      elAttr,
-      elClass,
-      text,
-      prerender_,
-      (&),
-      (.~),
-      dropdown,
-      HasValue(value),
-      accumDyn,
-      (=:),
-      xhrResponse_responseText,
-      postForms,
-      XhrResponse,
-      FormValue(FormValue_Text) )
+    ( blank, el, elAttr, text, prerender_, (=:) )
 import Common.Route ( FrontendRoute )
+import Editor ( editorWidget )
