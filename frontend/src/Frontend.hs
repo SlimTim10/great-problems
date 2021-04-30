@@ -23,9 +23,8 @@ import Language.Javascript.JSaddle
   -- , eval
   -- , liftJSM
   )
-import JSDOM.Types (File, IsBlob)
+import JSDOM.Types (File)
 import JSDOM.File (getName)
-import qualified JSDOM.Text as JS
 
 import Obelisk.Frontend
 -- import Obelisk.Configs
@@ -36,8 +35,6 @@ import Reflex.Dom.Core
 
 -- import Common.Api
 import Common.Route
-
-import Lib
 
 
 frontend :: Frontend (R FrontendRoute)
@@ -196,38 +193,20 @@ convertWidget
      )
   => m ()
 convertWidget = el "div" $ do
-  let x :: FormValue File = FormValue_Text "hellooooooooo"
-  let formData :: Map Text (FormValue File) = ("test" =: x <> "test2" =: FormValue_Text "blah")
+  let
+    formData :: Map Text (FormValue File) = (
+      "prbText" =: FormValue_Text "editor content here" <>
+      "prbName" =: FormValue_Text "untitled" <>
+      "random" =: FormValue_Text "true" <>
+      "outFlag" =: FormValue_Text "true" <>
+      "submit1" =: FormValue_Text "putDatabase" -- temporary
+      -- "currMirror01a.asc" =: FormValue_File file1 (Just "currMirror01a.asc")
+      )
   let dFormData :: Dynamic t [Map Text (FormValue File)] = constDyn [formData]
-  let eFormData = updated dFormData
+
+  convert <- button "Convert"
+  let eFormData :: Event t [Map Text (FormValue File)] = pushAlways (const $ sample . current $ dFormData) convert
   responses :: Event t [XhrResponse] <- postForms "/uploadprb" eFormData
   let results = map (view xhrResponse_responseText) <$> responses
-
-  (e1, trigger) <- newTriggerEvent
-
-  asText <- holdDyn "No results." $ T.pack . concat . map (maybe "x" show) <$> results
+  asText <- holdDyn "No results." $ T.pack . concat . map (maybe "" show) <$> results
   dynText asText
-  return ()
-
-  let x :: MyFormValue File = MyFormValue_Text "hellooooooooo"
-  let formData :: Map Text (MyFormValue File) = ("test" =: x)
-  let dFormData :: Dynamic t (Map Text (MyFormValue File)) = constDyn formData
-  let eFormData = updated dFormData
-  responses :: Event t XhrResponse <- postForm "/uploadprb" eFormData
-  let results = view xhrResponse_responseText <$> responses
-
-  (e1, trigger) <- newTriggerEvent
-
-  asText <- holdDyn "No results." $ T.pack . maybe "x" show <$> results
-  dynText asText
-  return ()
-
-
-{-
-formData.append('prbText', getEditorContent(editorRef))
-formData.append('prbName', documentName)
-formData.append('random', randomFlag)
-formData.append('outFlag', outputType)
-formData.append('submit1', 'putDatabase') // temporary
--}
-

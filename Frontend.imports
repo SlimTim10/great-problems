@@ -10,7 +10,6 @@ import Control.Lens ( view )
 import Language.Javascript.JSaddle ( MonadJSM )
 import JSDOM.Types ( File )
 import JSDOM.File ( getName )
-import qualified JSDOM.Text as JS ()
 import Obelisk.Frontend ( Frontend(..) )
 import Obelisk.Route ( R )
 import Obelisk.Generated.Static ( static )
@@ -24,11 +23,13 @@ import Reflex.Dom.Core
       InputElement(_inputElement_checked, _inputElement_files),
       HasJSContext,
       PostBuild,
-      TriggerEvent(newTriggerEvent),
+      TriggerEvent,
       constDyn,
+      pushAlways,
       InitialAttributes(initialAttributes),
       simpleList,
       blank,
+      button,
       dynText,
       el,
       elAttr,
@@ -46,4 +47,3 @@ import Reflex.Dom.Core
       XhrResponse,
       FormValue(FormValue_Text) )
 import Common.Route ( FrontendRoute )
-import Lib ( postForm, MyFormValue(MyFormValue_Text) )
