@@ -215,6 +215,6 @@ convertWidget options = el "div" $ do
           let
             fn = name f
             fval = FormValue_File (file f) (Just fn)
-          in ("multiplefiles", fval)
+          in (fn, fval)
       let formData = Map.unions [formDataText, formDataFiles]
-      sample . current . constDyn $ [formData]
+      return [formData]
