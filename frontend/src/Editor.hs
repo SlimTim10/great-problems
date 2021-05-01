@@ -6,6 +6,7 @@ module Editor
   ( editorWidget
   ) where
 
+import Control.Lens ((^.))
 import Control.Monad
 import Control.Monad.Fix
 import Control.Lens (view)
@@ -17,7 +18,7 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 import JSDOM.Types (File)
 import JSDOM.File (getName)
-import Language.Javascript.JSaddle (MonadJSM)
+import Language.Javascript.JSaddle (MonadJSM, liftJSM, jsg, js1, ToJSVal)
 
 import Reflex.Dom.Core
 
@@ -40,6 +41,11 @@ instance Eq FileWithName where
 
 showText :: Show s => s -> Text
 showText = T.pack . show
+
+consoleLog :: (MonadJSM m, ToJSVal v) => v -> m ()
+consoleLog x = void $ liftJSM $ do
+  w <- jsg ("console" :: Text)
+  w ^. js1 ("log" :: Text) x
 
 editorWidget
   :: ( DomBuilder t m
@@ -74,7 +80,6 @@ optionsWidget = do
         o :: Dynamic t Text <- outputOption
         fs :: Dynamic t [FileWithName] <- drawingsOption
         return $ Options r o fs
-        -- return $ (\(r1 :: Bool, o1, fs1) -> Options r1 o1 fs1) <$> (r, o, fs)
 
 drawingsOption
   :: ( DomBuilder t m
@@ -127,6 +132,8 @@ drawingsWidget drawingsState = do
       mName :: m Text <- sample . current $ dName
       f :: File <- sample . current $ dFile
       n :: Text <- mName
+      consoleLog ("mkFile" :: Text)
+      consoleLog f
       return $ FileWithName f n
 
 randomOption :: (DomBuilder t m, PostBuild t m) => m (Dynamic t Bool)
@@ -206,8 +213,8 @@ convertWidget options = el "div" $ do
           )
         formDataFiles :: Map Text (FormValue File) = Map.fromList $ flip map fs $ \f ->
           let
-            fname = name f
-            fval = FormValue_File (file f) (Just . name $ f)
-          in (fname, fval)
+            fn = name f
+            fval = FormValue_File (file f) (Just fn)
+          in ("multiplefiles", fval)
       let formData = Map.unions [formDataText, formDataFiles]
       sample . current . constDyn $ [formData]
