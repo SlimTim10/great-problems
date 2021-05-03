@@ -1,0 +1,39 @@
+import Control.Monad ( (<=<) )
+import Control.Lens ( view )
+import Data.Text ( Text )
+import qualified Data.Text as T ( pack )
+import Data.Map ( Map )
+import qualified Data.Map as Map ( fromList, unions )
+import JSDOM.Types ( File )
+import JSDOM.FileReader
+    ( newFileReader, readAsText, getResult, load )
+import JSDOM.EventM ( on )
+import Language.Javascript.JSaddle
+    ( MonadJSM, liftJSM, fromJSVal, toJSVal )
+import Reflex.Dom.Core
+    ( MonadHold(holdDyn),
+      MonadSample(sample),
+      PerformEvent(Performable),
+      Reflex(Event, current, PushM),
+      DomBuilder,
+      HasJSContext,
+      PostBuild,
+      TriggerEvent,
+      pushAlways,
+      wrapDomEvent,
+      blank,
+      button,
+      dynText,
+      el,
+      widgetHold_,
+      attach,
+      ffor,
+      fmapMaybe,
+      (=:),
+      xhrResponse_responseText,
+      postForms,
+      XhrResponse,
+      FormValue(..) )
+import Util ( showText, consoleLog )
+import ProblemWidget.Types
+    ( FileWithName(file, name), Options(files, output, random) )
