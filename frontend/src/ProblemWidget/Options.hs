@@ -52,9 +52,9 @@ drawingsOption = el "div" $ do
   fi <- el "label" $ do
     text "Upload"
     fi1 <- inputElement $ def & initialAttributes .~ (
-      "type" =: "file" <>
-      "accept" =: ".asc" <>
-      "multiple" =: ""
+      "type" =: "file"
+      <> "accept" =: ".asc"
+      <> "multiple" =: ""
       )
     return fi1
   fs <- drawingsWidget $ _inputElement_files fi

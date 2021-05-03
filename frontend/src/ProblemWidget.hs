@@ -17,6 +17,7 @@ import ProblemWidget.Types
 import ProblemWidget.Options
 import ProblemWidget.Convert
 import ProblemWidget.Editor
+import ProblemWidget.PdfViewer
 
 problemWidget
   :: ( DomBuilder t m
@@ -36,6 +37,9 @@ problemWidget = do
     evUploadPrb :: Event t () <- button "Upload PRB"
     evDownloadPrb :: Event t () <- button "Download PRB"
     prbNameEl <- inputElement $ def
+      & inputElementConfig_initialValue .~ "untitled"
     return (evUploadPrb, evDownloadPrb, value prbNameEl)
   editorContent :: Dynamic t Text <- editorWidget
   convertWidget options prbName editorContent
+  let pdfData = constDyn ""
+  pdfViewerWidget pdfData

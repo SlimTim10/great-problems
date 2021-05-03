@@ -2,18 +2,23 @@ import Control.Monad.Fix ( MonadFix )
 import Data.Text ( Text )
 import Language.Javascript.JSaddle ( MonadJSM )
 import Reflex.Dom.Core
-    ( DomBuilder(inputElement),
-      def,
+    ( def,
       MonadHold,
       PerformEvent(Performable),
       Reflex(Dynamic, Event),
-      button,
-      el,
+      DomBuilder(inputElement),
+      HasJSContext,
       PostBuild,
       TriggerEvent,
-      HasJSContext,
+      constDyn,
+      inputElementConfig_initialValue,
+      button,
+      el,
+      (&),
+      (.~),
       HasValue(value) )
 import ProblemWidget.Types ( Options )
 import ProblemWidget.Options ( optionsWidget )
 import ProblemWidget.Convert ( convertWidget )
 import ProblemWidget.Editor ( editorWidget )
+import ProblemWidget.PdfViewer ( pdfViewerWidget )

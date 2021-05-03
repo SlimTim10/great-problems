@@ -2,6 +2,6 @@ import Obelisk.Frontend ( Frontend(..) )
 import Obelisk.Route ( R )
 import Obelisk.Generated.Static ( static )
 import Reflex.Dom.Core
-    ( (=:), prerender_, blank, el, elAttr, text )
+    ( blank, el, elAttr, text, prerender_, (=:) )
 import Common.Route ( FrontendRoute )
 import ProblemWidget ( problemWidget )

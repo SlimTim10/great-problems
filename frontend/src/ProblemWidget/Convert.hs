@@ -67,11 +67,11 @@ convertWidget options prbName editorContent = el "div" $ do
       t <- sample . current $ editorContent
       let
         formDataText :: Map Text (FormValue File) = (
-          "prbText" =: FormValue_Text t <>
-          "prbName" =: FormValue_Text nm <>
-          "random" =: FormValue_Text (showText r) <>
-          "outFlag" =: FormValue_Text o <>
-          "submit1" =: FormValue_Text "putDatabase" -- temporary
+          "prbText" =: FormValue_Text t
+          <> "prbName" =: FormValue_Text nm
+          <> "random" =: FormValue_Text (showText r)
+          <> "outFlag" =: FormValue_Text o
+          <> "submit1" =: FormValue_Text "putDatabase" -- temporary
           )
         formDataFiles :: Map Text (FormValue File) = Map.fromList $ flip map fs $ \f ->
           let

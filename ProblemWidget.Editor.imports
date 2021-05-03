@@ -1,10 +1,10 @@
 import Data.Text ( Text )
 import Reflex.Dom.Core
-    ( DomBuilder(textAreaElement),
-      def,
+    ( def,
       Reflex(Dynamic),
-      (=:),
+      DomBuilder(textAreaElement),
       el,
       elAttr,
       text,
-      HasValue(value) )
+      HasValue(value),
+      (=:) )

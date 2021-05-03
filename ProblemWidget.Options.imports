@@ -8,27 +8,27 @@ import JSDOM.File ( getName )
 import JSDOM.Types ( File )
 import Language.Javascript.JSaddle ( MonadJSM )
 import Reflex.Dom.Core
-    ( DomBuilder(inputElement),
-      def,
+    ( def,
       MonadHold,
       MonadSample(sample),
       Reflex(updated, current, Dynamic),
+      DomBuilder(inputElement),
       InputElement(_inputElement_checked, _inputElement_files),
-      (&),
-      (.~),
-      accumDyn,
+      PostBuild,
       constDyn,
+      InitialAttributes(initialAttributes),
       simpleList,
-      (=:),
       dynText,
       el,
       elAttr,
       elClass,
       text,
+      (&),
+      (.~),
       dropdown,
-      PostBuild,
-      InitialAttributes(initialAttributes),
-      HasValue(value) )
+      HasValue(value),
+      accumDyn,
+      (=:) )
 import Util ( consoleLog )
 import ProblemWidget.Types
     ( FileWithName(FileWithName, name), Options(Options) )
