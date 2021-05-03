@@ -40,8 +40,10 @@ convertWidget
      , MonadJSM m
      )
   => Options t
+  -> Dynamic t Text
+  -> Dynamic t Text
   -> m ()
-convertWidget options = el "div" $ do
+convertWidget options prbName editorContent = el "div" $ do
   evConvert :: Event t () <- button "Convert"
 
   let evFilesAndConvert = attach (current $ files options) evConvert
@@ -52,20 +54,23 @@ convertWidget options = el "div" $ do
   let evFormData :: Event t [Map Text (FormValue File)] = pushAlways (const buildFormData) evConvert
   responses :: Event t [XhrResponse] <- postForms "/uploadprb" evFormData
   let results = map (view xhrResponse_responseText) <$> responses
-  asText <- holdDyn "No results." $ T.pack . concat . map (maybe "" show) <$> results
-  dynText asText
+  el "div" $ do
+    asText <- holdDyn "No results." $ T.pack . concat . map (maybe "" show) <$> results
+    dynText asText
   where
     buildFormData :: PushM t [Map Text (FormValue File)]
     buildFormData = do
       r <- sample . current $ random options
       o <- sample . current $ output options
       fs <- sample . current $ files options
+      nm <- sample . current $ prbName
+      t <- sample . current $ editorContent
       let
         formDataText :: Map Text (FormValue File) = (
-          "prbText" =: FormValue_Text "editor content here" <>
-          "prbName" =: FormValue_Text "untitled" <>
+          "prbText" =: FormValue_Text t <>
+          "prbName" =: FormValue_Text nm <>
           "random" =: FormValue_Text (showText r) <>
-          "outFlag" =: FormValue_Text (showText o) <>
+          "outFlag" =: FormValue_Text o <>
           "submit1" =: FormValue_Text "putDatabase" -- temporary
           )
         formDataFiles :: Map Text (FormValue File) = Map.fromList $ flip map fs $ \f ->

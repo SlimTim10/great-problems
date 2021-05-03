@@ -1,0 +1,10 @@
+import Data.Text ( Text )
+import Reflex.Dom.Core
+    ( DomBuilder(textAreaElement),
+      def,
+      Reflex(Dynamic),
+      (=:),
+      el,
+      elAttr,
+      text,
+      HasValue(value) )
