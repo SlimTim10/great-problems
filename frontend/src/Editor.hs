@@ -18,7 +18,9 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 import JSDOM.Types (File)
 import JSDOM.File (getName)
-import Language.Javascript.JSaddle (MonadJSM, liftJSM, jsg, js1, ToJSVal)
+import JSDOM.FileReader (newFileReader, readAsText, getResult, load)
+import JSDOM.EventM (on)
+import Language.Javascript.JSaddle (MonadJSM, liftJSM, jsg, js1, ToJSVal, fromJSVal, toJSVal)
 
 import Reflex.Dom.Core
 
@@ -187,11 +189,18 @@ convertWidget
      , HasJSContext (Performable m)
      , PerformEvent t m
      , TriggerEvent t m
+     , MonadJSM m
      )
   => Options t
   -> m ()
 convertWidget options = el "div" $ do
   evConvert :: Event t () <- button "Convert"
+
+  let evFilesAndConvert = attach (current $ files options) evConvert
+  widgetHold_ blank . ffor evFilesAndConvert $ \(fs, _) -> do
+    let fs' :: [File] = map file fs
+    mapM_ printFileContents fs'
+  
   let evFormData :: Event t [Map Text (FormValue File)] = pushAlways (const buildFormData) evConvert
   responses :: Event t [XhrResponse] <- postForms "/uploadprb" evFormData
   let results = map (view xhrResponse_responseText) <$> responses
@@ -218,3 +227,18 @@ convertWidget options = el "div" $ do
           in (fn, fval)
       let formData = Map.unions [formDataText, formDataFiles]
       return [formData]
+
+    printFileContents :: File -> m ()
+    printFileContents f = do
+      fileReader <- liftJSM newFileReader
+      readAsText fileReader (Just f) (Just "utf8" :: Maybe Text)
+      e :: Event t (Maybe Text) <- wrapDomEvent fileReader (`on` load) . liftJSM $ do
+        consoleLog ("fileReader onload" :: Text)
+        v <- getResult fileReader
+        (fromJSVal <=< toJSVal) v
+      evFileText :: Event t Text <- return (fmapMaybe id e)
+      el "p" $ do
+        dynText "converting!"
+        widgetHold_ blank . ffor evFileText $ \fileText -> do
+          consoleLog ("fileText:" :: Text)
+          consoleLog fileText

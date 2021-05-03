@@ -1,5 +1,5 @@
 import Control.Lens ( (^.) )
-import Control.Monad ( void )
+import Control.Monad ( void, (<=<) )
 import Control.Monad.Fix ( MonadFix )
 import Control.Lens ( view )
 import Data.Maybe ( fromJust, maybe )
@@ -10,8 +10,11 @@ import Data.Map ( Map )
 import qualified Data.Map as Map ( lookup, fromList, unions )
 import JSDOM.Types ( File )
 import JSDOM.File ( getName )
+import JSDOM.FileReader
+    ( newFileReader, readAsText, getResult, load )
+import JSDOM.EventM ( on )
 import Language.Javascript.JSaddle
-    ( MonadJSM, liftJSM, jsg, js1, ToJSVal )
+    ( MonadJSM, liftJSM, jsg, js1, ToJSVal, fromJSVal, toJSVal )
 import Reflex.Dom.Core
     ( def,
       MonadHold(holdDyn),
@@ -26,18 +29,24 @@ import Reflex.Dom.Core
       constDyn,
       pushAlways,
       InitialAttributes(initialAttributes),
+      wrapDomEvent,
       simpleList,
+      blank,
       button,
       dynText,
       el,
       elAttr,
       elClass,
       text,
+      widgetHold_,
       (&),
       (.~),
       dropdown,
       HasValue(value),
       accumDyn,
+      attach,
+      ffor,
+      fmapMaybe,
       (=:),
       xhrResponse_responseText,
       postForms,
