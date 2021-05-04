@@ -1,6 +1,4 @@
-import Control.Lens ( (^.) )
-import Control.Monad ( void )
-import Data.Text ( Text )
+import qualified Language.Javascript.JSaddle as JS
+    ( MonadJSM, ToJSVal, js1, jsg, liftJSM )
 import qualified Data.Text as T ( pack )
-import Language.Javascript.JSaddle
-    ( MonadJSM, liftJSM, jsg, js1, ToJSVal )
+import Global ( Text, void, (^.) )

@@ -1,13 +1,10 @@
-import Control.Monad ( void )
-import Control.Monad.Fix ( MonadFix )
-import Data.List ( nub )
-import Data.Text ( Text )
-import Data.Map ( Map )
+import qualified Control.Monad.Fix as Fix ( MonadFix )
+import qualified Data.List as List ( nub )
 import qualified Data.Map as Map ( fromList )
-import JSDOM.File ( getName )
-import JSDOM.Types ( File )
-import Language.Javascript.JSaddle ( MonadJSM )
-import Reflex.Dom.Core
+import qualified JSDOM.File ( getName )
+import qualified JSDOM.Types ( File )
+import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
+import qualified Reflex.Dom.Core as FRP
     ( def,
       MonadHold,
       MonadSample(sample),
@@ -23,12 +20,10 @@ import Reflex.Dom.Core
       elAttr,
       elClass,
       text,
-      (&),
-      (.~),
       dropdown,
       HasValue(value),
-      accumDyn,
-      (=:) )
-import Util ( consoleLog )
-import ProblemWidget.Types
+      accumDyn )
+import qualified Problem.Types as Types
     ( FileWithName(FileWithName, name), Options(Options) )
+import Global ( Text, Map, void, (&), (.~), (=:) )
+import Util ( consoleLog )

@@ -1,33 +1,30 @@
 {-# LANGUAGE DeriveGeneric #-}
 
-module ProblemWidget.Types where
+module Problem.Types
+  ( Options(..)
+  , FileWithName(..)
+  , ConvertResponse(..)
+  ) where
 
-import Data.Char (toLower)
-import Data.Text (Text)
+import qualified Data.Char as Char
 import qualified Data.Text as T
 import qualified Data.HashMap.Strict as HM
 
-import GHC.Generics (Generic)
-import Data.Aeson
-  ( FromJSON
-  , fieldLabelModifier
-  , parseJSON
-  , genericParseJSON
-  , defaultOptions
-  )
+import qualified GHC.Generics as Generics
 import qualified Data.Aeson as JSON
-import JSDOM.Types (File)
+import qualified JSDOM.Types
+import qualified Reflex.Dom.Core as FRP
 
-import Reflex.Dom.Core
+import Global
 
 data Options t = Options
-  { random :: Dynamic t Bool
-  , output :: Dynamic t Text
-  , files :: Dynamic t [FileWithName]
+  { random :: FRP.Dynamic t Bool
+  , output :: FRP.Dynamic t Text
+  , files :: FRP.Dynamic t [FileWithName]
   }
 
 data FileWithName = FileWithName
-  { file :: File
+  { file :: JSDOM.Types.File
   , name :: Text
   }
 
@@ -43,11 +40,11 @@ data ConvertResponse = ConvertResponse
   , pdfContent :: Text
   , pdfName :: Text
   , terminalOutput :: Text
-  } deriving (Generic, Show)
+  } deriving (Generics.Generic, Show)
 
-instance FromJSON ConvertResponse where
-  parseJSON = genericParseJSON opts . jsonLower
-    where opts = defaultOptions { fieldLabelModifier = map toLower }
+instance JSON.FromJSON ConvertResponse where
+  parseJSON = JSON.genericParseJSON opts . jsonLower
+    where opts = JSON.defaultOptions { JSON.fieldLabelModifier = map Char.toLower }
 
 jsonLower :: JSON.Value -> JSON.Value
 jsonLower (JSON.Object o) = JSON.Object . HM.fromList . map lowerPair . HM.toList $ o

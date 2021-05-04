@@ -1,17 +1,13 @@
-import Control.Monad ( (<=<) )
-import Control.Lens ( view )
-import Data.Text ( Text )
+import qualified Control.Lens as Lens ( view )
 import qualified Data.Text as T ( concat )
-import Data.Map ( Map )
 import qualified Data.Map as Map ( fromList, unions )
-import Data.Maybe ( maybe )
-import JSDOM.Types ( File )
-import JSDOM.FileReader
-    ( newFileReader, readAsText, getResult, load )
-import JSDOM.EventM ( on )
-import Language.Javascript.JSaddle
-    ( MonadJSM, liftJSM, fromJSVal, toJSVal )
-import Reflex.Dom.Core
+import qualified JSDOM.Types ( File )
+import qualified JSDOM.FileReader as FileReader
+    ( getResult, load, newFileReader, readAsText )
+import qualified JSDOM.EventM as EventM ( on )
+import qualified Language.Javascript.JSaddle as JS
+    ( MonadJSM, FromJSVal(fromJSVal), ToJSVal(toJSVal), liftJSM )
+import qualified Reflex.Dom.Core as FRP
     ( MonadHold(holdDyn),
       MonadSample(sample),
       PerformEvent(Performable),
@@ -28,14 +24,14 @@ import Reflex.Dom.Core
       attach,
       ffor,
       fmapMaybe,
-      (=:),
       decodeText,
       xhrResponse_responseText,
       postForms,
       XhrResponse,
       FormValue(..) )
-import Util ( consoleLog )
-import ProblemWidget.Types
+import qualified Problem.Types as Types
     ( ConvertResponse,
       FileWithName(file, name),
       Options(files, output, random) )
+import Global ( Text, Map, (<=<), (=:) )
+import Util ( consoleLog )

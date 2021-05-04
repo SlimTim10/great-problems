@@ -1,0 +1,3 @@
+import qualified Reflex.Dom.Core as FRP
+    ( Reflex(Dynamic), DomBuilder, PostBuild, blank, el, elDynAttr )
+import Global ( Text, Map, (=:) )

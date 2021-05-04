@@ -2,22 +2,15 @@
 
 module Util where
 
-import Control.Lens ((^.))
-import Control.Monad (void)
-import Data.Text (Text)
+import qualified Language.Javascript.JSaddle as JS
 import qualified Data.Text as T
-import Language.Javascript.JSaddle
-  ( MonadJSM
-  , liftJSM
-  , jsg
-  , js1
-  , ToJSVal
-  )
+
+import Global
 
 showText :: Show s => s -> Text
 showText = T.pack . show
 
-consoleLog :: (MonadJSM m, ToJSVal v) => v -> m ()
-consoleLog x = void $ liftJSM $ do
-  w <- jsg ("console" :: Text)
-  w ^. js1 ("log" :: Text) x
+consoleLog :: (JS.MonadJSM m, JS.ToJSVal v) => v -> m ()
+consoleLog x = void $ JS.liftJSM $ do
+  w <- JS.jsg ("console" :: Text)
+  w ^. JS.js1 ("log" :: Text) x

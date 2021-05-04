@@ -4,4 +4,4 @@ import Obelisk.Generated.Static ( static )
 import Reflex.Dom.Core
     ( blank, el, elAttr, text, prerender_, (=:) )
 import Common.Route ( FrontendRoute )
-import ProblemWidget ( problemWidget )
+import qualified Problem ( widget )

@@ -18,7 +18,7 @@ import Reflex.Dom.Core
 -- import Common.Api
 import Common.Route
 
-import ProblemWidget
+import qualified Problem
 
 frontend :: Frontend (R FrontendRoute)
 frontend = Frontend
@@ -28,5 +28,5 @@ frontend = Frontend
   , _frontend_body = do
       el "h1" $ text "Problem to Tex"
 
-      prerender_ blank $ problemWidget
+      prerender_ blank $ Problem.widget
   }

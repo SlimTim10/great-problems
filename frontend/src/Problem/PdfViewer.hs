@@ -1,22 +1,21 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module ProblemWidget.PdfViewer
-  ( pdfViewerWidget
+module Problem.PdfViewer
+  ( widget
   ) where
 
-import Data.Text (Text)
-import Data.Map (Map)
+import qualified Reflex.Dom.Core as FRP
 
-import Reflex.Dom.Core
+import Global
 
-pdfViewerWidget
-  :: ( DomBuilder t m
-     , PostBuild t m
+widget
+  :: ( FRP.DomBuilder t m
+     , FRP.PostBuild t m
      )
-  => Dynamic t Text
+  => FRP.Dynamic t Text
   -> m ()
-pdfViewerWidget pdfData = el "div" $ do
-  elDynAttr "iframe" (attrs <$> pdfData) $ blank
+widget pdfData = FRP.el "div" $ do
+  FRP.elDynAttr "iframe" (attrs <$> pdfData) $ FRP.blank
   where
     attrs :: Text -> Map Text Text
     attrs pdfData' = (
