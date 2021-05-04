@@ -10,14 +10,13 @@ import Reflex.Dom.Core
       HasJSContext,
       PostBuild,
       TriggerEvent,
-      constDyn,
       inputElementConfig_initialValue,
       button,
       el,
       (&),
       (.~),
       HasValue(value) )
-import ProblemWidget.Types ( Options )
+import ProblemWidget.Types ( ConvertResponse(pdfContent), Options )
 import ProblemWidget.Options ( optionsWidget )
 import ProblemWidget.Convert ( convertWidget )
 import ProblemWidget.Editor ( editorWidget )

@@ -12,6 +12,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Map (Map)
 import qualified Data.Map as Map
+import Data.Maybe (maybe)
 
 import JSDOM.Types (File)
 import JSDOM.FileReader (newFileReader, readAsText, getResult, load)
@@ -32,7 +33,6 @@ convertWidget
   :: forall t m.
      ( DomBuilder t m
      , MonadHold t m
-     , PostBuild t m
      , MonadJSM (Performable m)
      , HasJSContext (Performable m)
      , PerformEvent t m
@@ -42,7 +42,7 @@ convertWidget
   => Options t
   -> Dynamic t Text
   -> Dynamic t Text
-  -> m ()
+  -> m (Dynamic t (Maybe ConvertResponse))
 convertWidget options prbName editorContent = el "div" $ do
   evConvert :: Event t () <- button "Convert"
 
@@ -52,11 +52,11 @@ convertWidget options prbName editorContent = el "div" $ do
     mapM_ printFileContents fs'
   
   let evFormData :: Event t [Map Text (FormValue File)] = pushAlways (const buildFormData) evConvert
-  responses :: Event t [XhrResponse] <- postForms "/uploadprb" evFormData
-  let results = map (view xhrResponse_responseText) <$> responses
+  responses :: Event t [XhrResponse] <- postForms "https://icewire.ca/uploadprb" evFormData
+  let results :: Event t [Maybe Text] = map (view xhrResponse_responseText) <$> responses
   el "div" $ do
-    asText <- holdDyn "No results." $ T.pack . concat . map (maybe "" show) <$> results
-    dynText asText
+    result :: Dynamic t Text <- holdDyn "" $ T.concat . map (maybe "" id) <$> results
+    return $ decodeText <$> result
   where
     buildFormData :: PushM t [Map Text (FormValue File)]
     buildFormData = do
@@ -69,7 +69,7 @@ convertWidget options prbName editorContent = el "div" $ do
         formDataText :: Map Text (FormValue File) = (
           "prbText" =: FormValue_Text t
           <> "prbName" =: FormValue_Text nm
-          <> "random" =: FormValue_Text (showText r)
+          <> "random" =: FormValue_Text (if r then "true" else "false")
           <> "outFlag" =: FormValue_Text o
           <> "submit1" =: FormValue_Text "putDatabase" -- temporary
           )

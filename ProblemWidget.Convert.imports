@@ -1,9 +1,10 @@
 import Control.Monad ( (<=<) )
 import Control.Lens ( view )
 import Data.Text ( Text )
-import qualified Data.Text as T ( pack )
+import qualified Data.Text as T ( concat )
 import Data.Map ( Map )
 import qualified Data.Map as Map ( fromList, unions )
+import Data.Maybe ( maybe )
 import JSDOM.Types ( File )
 import JSDOM.FileReader
     ( newFileReader, readAsText, getResult, load )
@@ -17,23 +18,24 @@ import Reflex.Dom.Core
       Reflex(Event, current, PushM, Dynamic),
       DomBuilder,
       HasJSContext,
-      PostBuild,
       TriggerEvent,
       pushAlways,
       wrapDomEvent,
       blank,
       button,
-      dynText,
       el,
       widgetHold_,
       attach,
       ffor,
       fmapMaybe,
       (=:),
+      decodeText,
       xhrResponse_responseText,
       postForms,
       XhrResponse,
       FormValue(..) )
-import Util ( showText, consoleLog )
+import Util ( consoleLog )
 import ProblemWidget.Types
-    ( FileWithName(file, name), Options(files, output, random) )
+    ( ConvertResponse,
+      FileWithName(file, name),
+      Options(files, output, random) )

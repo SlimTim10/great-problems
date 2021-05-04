@@ -40,6 +40,6 @@ problemWidget = do
       & inputElementConfig_initialValue .~ "untitled"
     return (evUploadPrb, evDownloadPrb, value prbNameEl)
   editorContent :: Dynamic t Text <- editorWidget
-  convertWidget options prbName editorContent
-  let pdfData = constDyn ""
+  convertResponse <- convertWidget options prbName editorContent
+  let pdfData = maybe "" pdfContent <$> convertResponse
   pdfViewerWidget pdfData
