@@ -1,6 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-
 module Problem.Options
   ( widget
   ) where
@@ -12,108 +9,108 @@ import qualified Data.Map as Map
 import qualified JSDOM.File
 import qualified JSDOM.Types
 import qualified Language.Javascript.JSaddle as JS
-import qualified Reflex.Dom.Core as FRP
+import qualified Reflex.Dom.Core as R
 
 import qualified Problem.Types as Types
 import Global
 import Util
 
 widget
-  :: ( FRP.DomBuilder t m
-     , FRP.PostBuild t m
-     , FRP.MonadHold t m
+  :: ( R.DomBuilder t m
+     , R.PostBuild t m
+     , R.MonadHold t m
      , Fix.MonadFix m
      , JS.MonadJSM m
      )
   => m (Types.Options t)
 widget = do
-  FRP.elAttr "div" ("style" =: "border: 1px solid black;") $ do
-    FRP.elClass "div" "mainContainer" $ do
-      FRP.elClass "div" "optionsContainer" $ do
-        FRP.el "h2" $ FRP.text "Options"
-        r :: FRP.Dynamic t Bool <- randomOption
-        o :: FRP.Dynamic t Text <- outputOption
-        fs :: FRP.Dynamic t [Types.FileWithName] <- drawingsOption
+  R.elAttr "div" ("style" =: "border: 1px solid black;") $ do
+    R.elClass "div" "mainContainer" $ do
+      R.elClass "div" "optionsContainer" $ do
+        R.el "h2" $ R.text "Options"
+        r :: R.Dynamic t Bool <- randomOption
+        o :: R.Dynamic t Text <- outputOption
+        fs :: R.Dynamic t [Types.FileWithName] <- drawingsOption
         return $ Types.Options r o fs
 
 drawingsOption
-  :: ( FRP.DomBuilder t m
-     , FRP.PostBuild t m
-     , FRP.MonadHold t m
+  :: ( R.DomBuilder t m
+     , R.PostBuild t m
+     , R.MonadHold t m
      , Fix.MonadFix m
      , JS.MonadJSM m
      )
-  => m (FRP.Dynamic t [Types.FileWithName])
-drawingsOption = FRP.el "div" $ do
-  FRP.el "h4" $ FRP.text "Drawings"
-  fi <- FRP.el "label" $ do
-    FRP.text "Upload"
-    fi1 <- FRP.inputElement $ FRP.def & FRP.initialAttributes .~ (
+  => m (R.Dynamic t [Types.FileWithName])
+drawingsOption = R.el "div" $ do
+  R.el "h4" $ R.text "Drawings"
+  fi <- R.el "label" $ do
+    R.text "Upload"
+    fi1 <- R.inputElement $ R.def & R.initialAttributes .~ (
       "type" =: "file"
       <> "accept" =: ".asc"
       <> "multiple" =: ""
       )
     return fi1
-  fs <- drawingsWidget $ FRP._inputElement_files fi
+  fs <- drawingsWidget $ R._inputElement_files fi
   return fs
 
 drawingsWidget
   :: forall t m.
-     ( FRP.DomBuilder t m
-     , FRP.MonadHold t m
-     , FRP.PostBuild t m
+     ( R.DomBuilder t m
+     , R.MonadHold t m
+     , R.PostBuild t m
      , Fix.MonadFix m
      , JS.MonadJSM m
      )
-  => FRP.Dynamic t [JSDOM.Types.File]
-  -> m (FRP.Dynamic t [Types.FileWithName])
+  => R.Dynamic t [JSDOM.Types.File]
+  -> m (R.Dynamic t [Types.FileWithName])
 drawingsWidget drawingsState = do
-  dFiles :: FRP.Dynamic t [JSDOM.Types.File] <- FRP.accumDyn (<>) [] (FRP.updated drawingsState)
-  filesState :: FRP.Dynamic t [Types.FileWithName] <- FRP.simpleList dFiles mkFile
-  uniqueFilesState :: FRP.Dynamic t [Types.FileWithName] <- FRP.accumDyn collectFiles [] (FRP.updated filesState)
-  FRP.el "ul" $ do
-    void $ FRP.simpleList uniqueFilesState $ \dFile -> do
-      FRP.el "li" $ do
-        FRP.dynText $ Types.name <$> dFile
+  dFiles :: R.Dynamic t [JSDOM.Types.File] <- R.accumDyn (<>) [] (R.updated drawingsState)
+  filesState :: R.Dynamic t [Types.FileWithName] <- R.simpleList dFiles mkFile
+  uniqueFilesState :: R.Dynamic t [Types.FileWithName] <- R.accumDyn collectFiles [] (R.updated filesState)
+  R.el "ul" $ do
+    void $ R.simpleList uniqueFilesState $ \dFile -> do
+      R.el "li" $ do
+        R.dynText $ Types.name <$> dFile
   return uniqueFilesState
 
   where
     collectFiles :: [Types.FileWithName] -> [Types.FileWithName] -> [Types.FileWithName]
     collectFiles state newFiles = List.nub $ state <> newFiles
 
-    mkFile :: FRP.Dynamic t JSDOM.Types.File -> m Types.FileWithName
+    mkFile :: R.Dynamic t JSDOM.Types.File -> m Types.FileWithName
     mkFile dFile = do
-      let dName :: FRP.Dynamic t (m Text) = JSDOM.File.getName <$> dFile
-      mName :: m Text <- FRP.sample . FRP.current $ dName
-      f :: JSDOM.Types.File <- FRP.sample . FRP.current $ dFile
+      let dName :: R.Dynamic t (m Text) = JSDOM.File.getName <$> dFile
+      mName :: m Text <- R.sample . R.current $ dName
+      f :: JSDOM.Types.File <- R.sample . R.current $ dFile
       n :: Text <- mName
       consoleLog ("mkFile" :: Text)
       consoleLog f
       return $ Types.FileWithName f n
 
-randomOption :: (FRP.DomBuilder t m) => m (FRP.Dynamic t Bool)
-randomOption = FRP.el "div" $ do
-  cb <- FRP.el "label" $ do
-    cb1 <- FRP.inputElement $ FRP.def & FRP.initialAttributes .~ (
+randomOption :: (R.DomBuilder t m) => m (R.Dynamic t Bool)
+randomOption = R.el "div" $ do
+  cb <- R.el "label" $ do
+    cb1 <- R.inputElement $ R.def & R.initialAttributes .~ (
       "type" =: "checkbox"
       )
-    FRP.text "Randomize variables"
+    R.text "Randomize variables"
     return cb1
-  return $ FRP._inputElement_checked cb
+  return $ R._inputElement_checked cb
 
 outputOption
-  :: ( FRP.DomBuilder t m
-     , FRP.PostBuild t m
-     , FRP.MonadHold t m
+  :: ( R.DomBuilder t m
+     , R.PostBuild t m
+     , R.MonadHold t m
      , Fix.MonadFix m
      )
-  => m (FRP.Dynamic t Text)
-outputOption = FRP.el "div" $ do
-  dd <- FRP.el "label" $ do
-    FRP.text "Output"
-    dd1 <- FRP.dropdown "flagSolutions" (FRP.constDyn items) FRP.def
+  => m (R.Dynamic t Text)
+outputOption = R.el "div" $ do
+  dd <- R.el "label" $ do
+    R.text "Output"
+    dd1 <- R.dropdown "flagSolutions" (R.constDyn items) R.def
     return dd1
-  return $ FRP.value dd
+  return $ R.value dd
   where
     items :: Map Text Text
     items = Map.fromList

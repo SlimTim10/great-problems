@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Util where
 
 import qualified Language.Javascript.JSaddle as JS
@@ -14,3 +12,7 @@ consoleLog :: (JS.MonadJSM m, JS.ToJSVal v) => v -> m ()
 consoleLog x = void $ JS.liftJSM $ do
   w <- JS.jsg ("console" :: Text)
   w ^. JS.js1 ("log" :: Text) x
+
+headMay :: [a] -> Maybe a
+headMay [] = Nothing
+headMay (x:_) = Just x

@@ -17,6 +17,15 @@ library
   exposed-modules:
     Frontend
   ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits -ddump-minimal-imports
+  default-extensions:
+             DataKinds
+             OverloadedStrings
+             TypeApplications
+             RecursiveDo
+             ScopedTypeVariables
+             FlexibleContexts
+             PartialTypeSignatures
+             DeriveGeneric
 
 executable frontend
   main-is: main.hs

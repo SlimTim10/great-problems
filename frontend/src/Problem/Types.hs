@@ -1,5 +1,3 @@
-{-# LANGUAGE DeriveGeneric #-}
-
 module Problem.Types
   ( Options(..)
   , FileWithName(..)
@@ -13,14 +11,14 @@ import qualified Data.HashMap.Strict as HM
 import qualified GHC.Generics as Generics
 import qualified Data.Aeson as JSON
 import qualified JSDOM.Types
-import qualified Reflex.Dom.Core as FRP
+import qualified Reflex.Dom.Core as R
 
 import Global
 
 data Options t = Options
-  { random :: FRP.Dynamic t Bool
-  , output :: FRP.Dynamic t Text
-  , files :: FRP.Dynamic t [FileWithName]
+  { random :: R.Dynamic t Bool
+  , output :: R.Dynamic t Text
+  , files :: R.Dynamic t [FileWithName]
   }
 
 data FileWithName = FileWithName

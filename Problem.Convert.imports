@@ -7,7 +7,7 @@ import qualified JSDOM.FileReader as FileReader
 import qualified JSDOM.EventM as EventM ( on )
 import qualified Language.Javascript.JSaddle as JS
     ( MonadJSM, FromJSVal(fromJSVal), ToJSVal(toJSVal), liftJSM )
-import qualified Reflex.Dom.Core as FRP
+import qualified Reflex.Dom.Core as R
     ( MonadHold(holdDyn),
       MonadSample(sample),
       PerformEvent(Performable),

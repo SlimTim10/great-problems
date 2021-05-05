@@ -1,5 +1,6 @@
+-- | A local Prelude, meant to be imported unqualified.
 module Global
-  (Text
+  ( Text
   , Map
   , module Control.Monad
   , module Control.Lens

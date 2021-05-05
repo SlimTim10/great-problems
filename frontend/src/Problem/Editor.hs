@@ -1,20 +1,17 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE FlexibleContexts #-}
-
 module Problem.Editor
   ( widget
   ) where
 
-import qualified Reflex.Dom.Core as FRP
+import qualified Reflex.Dom.Core as R
 
 import Global
 
 widget
-  :: ( FRP.DomBuilder t m
+  :: ( R.DomBuilder t m
      )
-  => m (FRP.Dynamic t Text)
-widget = FRP.elAttr "div" ("style" =: "border: 1px solid black;") $ do
-  FRP.el "h2" $ FRP.text "Editor"
-  t <- FRP.textAreaElement $ FRP.def
-  return $ FRP.value t
+  => R.Event t Text
+  -> m (R.Dynamic t Text)
+widget forcedValue = R.elAttr "div" ("style" =: "border: 1px solid black;") $ do
+  R.el "h2" $ R.text "Editor"
+  t <- R.textAreaElement $ R.def & R.setValue .~ forcedValue
+  return $ R.value t

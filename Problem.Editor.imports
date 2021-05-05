@@ -1,9 +1,10 @@
-import qualified Reflex.Dom.Core as FRP
+import qualified Reflex.Dom.Core as R
     ( def,
-      Reflex(Dynamic),
+      Reflex(Dynamic, Event),
       DomBuilder(textAreaElement),
+      HasSetValue(setValue),
       el,
       elAttr,
       text,
       HasValue(value) )
-import Global ( Text, (=:) )
+import Global ( Text, (&), (.~), (=:) )

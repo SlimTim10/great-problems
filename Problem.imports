@@ -1,6 +1,6 @@
 import qualified Control.Monad.Fix as Fix ( MonadFix )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
-import qualified Reflex.Dom.Core as Frp
+import qualified Reflex.Dom.Core as R
     ( def,
       MonadHold,
       PerformEvent(Performable),
@@ -19,4 +19,5 @@ import qualified Problem.Options as Options ( widget )
 import qualified Problem.Convert as Convert ( widget )
 import qualified Problem.Editor as Editor ( widget )
 import qualified Problem.PdfViewer as PdfViewer ( widget )
+import qualified Problem.UploadPrb as UploadPrb ( widget )
 import Global ( Text, (&), (.~) )
