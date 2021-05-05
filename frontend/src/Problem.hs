@@ -30,15 +30,14 @@ widget
 widget = do
   options :: Types.Options t <- Options.widget
   (evUploadPrb, evDownloadPrv, prbName) <- R.el "div" $ do
-    evUploadPrb :: R.Event t () <- R.button "Upload PRB"
-    evDownloadPrb :: R.Event t () <- R.button "Download PRB"
+    evUploadPrb <- R.el "div" $ do
+      UploadPrb.widget
+    evDownloadPrb :: R.Event t () <- R.el "div" $ do
+      R.button "Download PRB"
     prbNameEl <- R.inputElement $ R.def
       & R.inputElementConfig_initialValue .~ "untitled"
     return (evUploadPrb, evDownloadPrb, R.value prbNameEl)
-  -- let v :: R.Event t Text = R.updated . R.constDyn $ "test" -- testing
-  -- let d = R.constDyn "test"
-  -- let v' = R.pushAlways (const $ R.sample . R.current $ d) evUploadPrb
-  editorContent :: R.Dynamic t Text <- Editor.widget =<< UploadPrb.widget
+  editorContent :: R.Dynamic t Text <- Editor.widget evUploadPrb
   convertResponse <- Convert.widget options prbName editorContent
   let pdfData = maybe "" Types.pdfContent <$> convertResponse
   PdfViewer.widget pdfData

@@ -2,7 +2,6 @@ module Problem.UploadPrb
   ( widget
   ) where
 
-import qualified JSDOM.File
 import qualified JSDOM.Types
 import qualified JSDOM.FileReader as FileReader
 import qualified JSDOM.EventM as EventM
@@ -17,18 +16,18 @@ widget
      ( R.DomBuilder t m
      , JS.MonadJSM m
      , R.TriggerEvent t m
-     , R.MonadSample t m
-     , R.MonadHold t m
      , R.PerformEvent t m
      , JS.MonadJSM (R.Performable m)
      )
   => m (R.Event t Text)
 widget = do
-  fi <- R.el "label" $ do
+  fi <- R.elAttr "label" ("style" =: "border: 2px solid green;") $ do
     R.text "Upload PRB"
-    fi1 <- R.inputElement $ R.def & R.initialAttributes .~ (
+    fi1 <- R.inputElement $ R.def
+      & R.initialAttributes .~ (
       "type" =: "file"
       <> "accept" =: ".prb"
+      <> "class" =: "hidden"
       )
     return fi1
   readFileContents
