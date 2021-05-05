@@ -34,12 +34,6 @@ widget = do
     . R.fmapMaybe id
     . R.updated
     $ headMay <$> R._inputElement_files fi
-  -- -- For more detailed reference
-  -- let dfs :: R.Dynamic t [JSDOM.Types.File] = R._inputElement_files fi
-  -- let dmf :: R.Dynamic t (Maybe JSDOM.Types.File) = headMay <$> dfs
-  -- let ef :: R.Event t JSDOM.Types.File = R.fmapMaybe id (R.updated dmf)
-  -- evFileContents :: R.Event t Text <- readFileContents ef
-  -- return evFileContents
 
 readFileContents
   :: forall t m.

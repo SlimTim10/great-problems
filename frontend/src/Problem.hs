@@ -30,10 +30,8 @@ widget
 widget = do
   options :: Types.Options t <- Options.widget
   (evUploadPrb, evDownloadPrv, prbName) <- R.el "div" $ do
-    evUploadPrb <- R.el "div" $ do
-      UploadPrb.widget
-    evDownloadPrb :: R.Event t () <- R.el "div" $ do
-      R.button "Download PRB"
+    evUploadPrb <- UploadPrb.widget
+    evDownloadPrb <- R.button "Download PRB"
     prbNameEl <- R.inputElement $ R.def
       & R.inputElementConfig_initialValue .~ "untitled"
     return (evUploadPrb, evDownloadPrb, R.value prbNameEl)

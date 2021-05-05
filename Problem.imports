@@ -4,7 +4,7 @@ import qualified Reflex.Dom.Core as R
     ( def,
       MonadHold,
       PerformEvent(Performable),
-      Reflex(Dynamic, Event),
+      Reflex(Dynamic),
       DomBuilder(inputElement),
       HasJSContext,
       PostBuild,
