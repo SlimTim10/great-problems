@@ -10,7 +10,6 @@ import qualified Reflex.Dom.Core as R
       PostBuild,
       TriggerEvent,
       inputElementConfig_initialValue,
-      button,
       el,
       HasValue(value) )
 import qualified Problem.Types as Types
@@ -20,4 +19,5 @@ import qualified Problem.Convert as Convert ( widget )
 import qualified Problem.Editor as Editor ( widget )
 import qualified Problem.PdfViewer as PdfViewer ( widget )
 import qualified Problem.UploadPrb as UploadPrb ( widget )
+import qualified Problem.DownloadPrb as DownloadPrb ( widget )
 import Global ( Text, (&), (.~) )

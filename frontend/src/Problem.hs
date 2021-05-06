@@ -13,6 +13,7 @@ import qualified Problem.Convert as Convert
 import qualified Problem.Editor as Editor
 import qualified Problem.PdfViewer as PdfViewer
 import qualified Problem.UploadPrb as UploadPrb
+import qualified Problem.DownloadPrb as DownloadPrb
 import Global
 
 widget
@@ -28,14 +29,16 @@ widget
      )
   => m ()
 widget = do
-  options :: Types.Options t <- Options.widget
-  (evUploadPrb, evDownloadPrv, prbName) <- R.el "div" $ do
-    evUploadPrb <- UploadPrb.widget
-    evDownloadPrb <- R.button "Download PRB"
-    prbNameEl <- R.inputElement $ R.def
-      & R.inputElementConfig_initialValue .~ "untitled"
-    return (evUploadPrb, evDownloadPrb, R.value prbNameEl)
-  editorContent :: R.Dynamic t Text <- Editor.widget evUploadPrb
-  convertResponse <- Convert.widget options prbName editorContent
-  let pdfData = maybe "" Types.pdfContent <$> convertResponse
-  PdfViewer.widget pdfData
+  rec
+    options :: Types.Options t <- Options.widget
+    (evUploadPrb, evDownloadPrb, prbName) <- R.el "div" $ do
+      evUploadPrb <- UploadPrb.widget
+      evDownloadPrb <- DownloadPrb.widget prbName editorContent
+      prbNameEl <- R.inputElement $ R.def
+        & R.inputElementConfig_initialValue .~ "untitled"
+      return (evUploadPrb, evDownloadPrb, R.value prbNameEl)
+    editorContent :: R.Dynamic t Text <- Editor.widget evUploadPrb
+    convertResponse <- Convert.widget options prbName editorContent
+    let pdfData = maybe "" Types.pdfContent <$> convertResponse
+    PdfViewer.widget pdfData
+  return ()
