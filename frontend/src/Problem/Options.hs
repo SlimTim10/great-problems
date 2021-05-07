@@ -13,32 +13,35 @@ import qualified Reflex.Dom.Core as R
 
 import qualified Problem.Types as Types
 import Global
-import Util
 
 widget
   :: ( R.DomBuilder t m
      , R.PostBuild t m
      , R.MonadHold t m
      , Fix.MonadFix m
-     , JS.MonadJSM m
+     , R.PerformEvent t m
+     , JS.MonadJSM (R.Performable m)
      )
-  => m (Types.Options t)
+  => m (R.Dynamic t Types.Options)
 widget = do
   R.elAttr "div" ("style" =: "border: 1px solid black;") $ do
     R.elClass "div" "mainContainer" $ do
       R.elClass "div" "optionsContainer" $ do
         R.el "h2" $ R.text "Options"
-        r :: R.Dynamic t Bool <- randomOption
-        o :: R.Dynamic t Text <- outputOption
-        fs :: R.Dynamic t [Types.FileWithName] <- drawingsOption
-        return $ Types.Options r o fs
+        random :: R.Dynamic t Bool <- randomOption
+        output :: R.Dynamic t Text <- outputOption
+        drawings :: R.Dynamic t [Types.FileWithName] <- drawingsOption
+        let options = Types.Options <$> random <*> output <*> drawings
+        ops <- R.holdDyn (Types.Options False "" []) $ R.updated options
+        return ops
 
 drawingsOption
   :: ( R.DomBuilder t m
      , R.PostBuild t m
      , R.MonadHold t m
      , Fix.MonadFix m
-     , JS.MonadJSM m
+     , R.PerformEvent t m
+     , JS.MonadJSM (R.Performable m)
      )
   => m (R.Dynamic t [Types.FileWithName])
 drawingsOption = R.el "div" $ do
@@ -60,33 +63,24 @@ drawingsWidget
      , R.MonadHold t m
      , R.PostBuild t m
      , Fix.MonadFix m
-     , JS.MonadJSM m
+     , R.PerformEvent t m
+     , JS.MonadJSM (R.Performable m)
      )
   => R.Dynamic t [JSDOM.Types.File]
   -> m (R.Dynamic t [Types.FileWithName])
 drawingsWidget drawings = do
-  rawFiles :: R.Dynamic t [JSDOM.Types.File] <- R.accumDyn (<>) [] (R.updated drawings)
-  files :: R.Dynamic t [Types.FileWithName] <- R.simpleList rawFiles mkFile
-  uniqueFiles :: R.Dynamic t [Types.FileWithName] <- R.accumDyn collectFiles [] (R.updated files)
+  files :: R.Event t [Types.FileWithName] <- R.performEvent $ R.ffor (R.updated drawings) $ \fs -> do
+    names :: [Text] <- mapM JSDOM.File.getName fs
+    return $ map (uncurry Types.FileWithName) $ zip fs names
+  uniqueFiles :: R.Dynamic t [Types.FileWithName] <- R.accumDyn collectFiles [] files
   R.el "ul" $ do
     void $ R.simpleList uniqueFiles $ \file -> do
       R.el "li" $ do
         R.dynText $ Types.name <$> file
   return uniqueFiles
-
   where
     collectFiles :: [Types.FileWithName] -> [Types.FileWithName] -> [Types.FileWithName]
     collectFiles state newFiles = List.nub $ state <> newFiles
-
-    mkFile :: R.Dynamic t JSDOM.Types.File -> m Types.FileWithName
-    mkFile file = do
-      let name :: R.Dynamic t (m Text) = JSDOM.File.getName <$> file
-      mName :: m Text <- R.sample . R.current $ name
-      f :: JSDOM.Types.File <- R.sample . R.current $ file
-      n :: Text <- mName
-      consoleLog ("mkFile" :: Text)
-      consoleLog f
-      return $ Types.FileWithName f n
 
 randomOption :: (R.DomBuilder t m) => m (R.Dynamic t Bool)
 randomOption = R.el "div" $ do

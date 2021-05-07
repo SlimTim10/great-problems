@@ -11,14 +11,14 @@ import qualified Data.HashMap.Strict as HM
 import qualified GHC.Generics as Generics
 import qualified Data.Aeson as JSON
 import qualified JSDOM.Types
-import qualified Reflex.Dom.Core as R
+-- import qualified Reflex.Dom.Core as R
 
 import Global
 
-data Options t = Options
-  { random :: R.Dynamic t Bool
-  , output :: R.Dynamic t Text
-  , files :: R.Dynamic t [FileWithName]
+data Options = Options
+  { random :: Bool
+  , output :: Text
+  , files :: [FileWithName]
   }
 
 data FileWithName = FileWithName

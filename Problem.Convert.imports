@@ -2,28 +2,18 @@ import qualified Control.Lens as Lens ( view )
 import qualified Data.Text as T ( concat )
 import qualified Data.Map as Map ( fromList, unions )
 import qualified JSDOM.Types ( File )
-import qualified JSDOM.FileReader as FileReader
-    ( getResult, load, newFileReader, readAsText )
-import qualified JSDOM.EventM as EventM ( on )
-import qualified Language.Javascript.JSaddle as JS
-    ( MonadJSM, FromJSVal(fromJSVal), ToJSVal(toJSVal), liftJSM )
+import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Reflex.Dom.Core as R
     ( MonadHold(holdDyn),
-      MonadSample(sample),
-      PerformEvent(Performable),
-      Reflex(Event, current, PushM, Dynamic),
+      PerformEvent(performEvent, Performable),
+      Reflex(current, Event, Dynamic),
       DomBuilder,
       HasJSContext,
       TriggerEvent,
-      pushAlways,
-      wrapDomEvent,
-      blank,
       button,
       el,
-      widgetHold_,
-      attach,
+      tag,
       ffor,
-      fmapMaybe,
       decodeText,
       xhrResponse_responseText,
       postForms,
@@ -33,5 +23,4 @@ import qualified Problem.Types as Types
     ( ConvertResponse,
       FileWithName(file, name),
       Options(files, output, random) )
-import Global ( Text, Map, (<=<), (=:) )
-import Util ( consoleLog )
+import Global ( Text, Map, (=:) )
