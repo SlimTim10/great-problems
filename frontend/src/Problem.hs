@@ -31,13 +31,13 @@ widget
 widget = do
   rec
     options :: R.Dynamic t Types.Options <- Options.widget
-    (evUploadPrb, evDownloadPrb, prbName) <- R.el "div" $ do
-      evUploadPrb <- UploadPrb.widget
-      evDownloadPrb <- DownloadPrb.widget prbName editorContent
+    (uploadPrb, prbName) <- R.el "div" $ do
+      u <- UploadPrb.widget
+      DownloadPrb.widget prbName editorContent
       prbNameEl <- R.inputElement $ R.def
         & R.inputElementConfig_initialValue .~ "untitled"
-      return (evUploadPrb, evDownloadPrb, R.value prbNameEl)
-    editorContent :: R.Dynamic t Text <- Editor.widget evUploadPrb
+      return (u, R.value prbNameEl)
+    editorContent :: R.Dynamic t Text <- Editor.widget uploadPrb
     convertResponse <- Convert.widget options prbName editorContent
     let pdfData = maybe "" Types.pdfContent <$> convertResponse
     PdfViewer.widget pdfData
