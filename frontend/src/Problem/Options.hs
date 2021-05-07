@@ -64,25 +64,25 @@ drawingsWidget
      )
   => R.Dynamic t [JSDOM.Types.File]
   -> m (R.Dynamic t [Types.FileWithName])
-drawingsWidget drawingsState = do
-  dFiles :: R.Dynamic t [JSDOM.Types.File] <- R.accumDyn (<>) [] (R.updated drawingsState)
-  filesState :: R.Dynamic t [Types.FileWithName] <- R.simpleList dFiles mkFile
-  uniqueFilesState :: R.Dynamic t [Types.FileWithName] <- R.accumDyn collectFiles [] (R.updated filesState)
+drawingsWidget drawings = do
+  rawFiles :: R.Dynamic t [JSDOM.Types.File] <- R.accumDyn (<>) [] (R.updated drawings)
+  files :: R.Dynamic t [Types.FileWithName] <- R.simpleList rawFiles mkFile
+  uniqueFiles :: R.Dynamic t [Types.FileWithName] <- R.accumDyn collectFiles [] (R.updated files)
   R.el "ul" $ do
-    void $ R.simpleList uniqueFilesState $ \dFile -> do
+    void $ R.simpleList uniqueFiles $ \file -> do
       R.el "li" $ do
-        R.dynText $ Types.name <$> dFile
-  return uniqueFilesState
+        R.dynText $ Types.name <$> file
+  return uniqueFiles
 
   where
     collectFiles :: [Types.FileWithName] -> [Types.FileWithName] -> [Types.FileWithName]
     collectFiles state newFiles = List.nub $ state <> newFiles
 
     mkFile :: R.Dynamic t JSDOM.Types.File -> m Types.FileWithName
-    mkFile dFile = do
-      let dName :: R.Dynamic t (m Text) = JSDOM.File.getName <$> dFile
-      mName :: m Text <- R.sample . R.current $ dName
-      f :: JSDOM.Types.File <- R.sample . R.current $ dFile
+    mkFile file = do
+      let name :: R.Dynamic t (m Text) = JSDOM.File.getName <$> file
+      mName :: m Text <- R.sample . R.current $ name
+      f :: JSDOM.Types.File <- R.sample . R.current $ file
       n :: Text <- mName
       consoleLog ("mkFile" :: Text)
       consoleLog f

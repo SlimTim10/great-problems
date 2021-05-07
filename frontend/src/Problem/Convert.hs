@@ -31,15 +31,15 @@ widget
   -> R.Dynamic t Text
   -> m (R.Dynamic t (Maybe Types.ConvertResponse))
 widget options prbName editorContent = R.el "div" $ do
-  evConvert :: R.Event t () <- R.button "Convert"
+  convert :: R.Event t () <- R.button "Convert"
 
-  let evFilesAndConvert = R.attach (R.current $ Types.files options) evConvert
-  R.widgetHold_ R.blank . R.ffor evFilesAndConvert $ \(fs, _) -> do
+  let filesAndConvert = R.attach (R.current $ Types.files options) convert
+  R.widgetHold_ R.blank . R.ffor filesAndConvert $ \(fs, _) -> do
     let fs' :: [JSDOM.Types.File] = map Types.file fs
     mapM_ printFileContents fs'
   
-  let evFormData :: R.Event t [Map Text (R.FormValue JSDOM.Types.File)] = R.pushAlways (const buildFormData) evConvert
-  responses :: R.Event t [R.XhrResponse] <- R.postForms "https://icewire.ca/uploadprb" evFormData
+  let formData :: R.Event t [Map Text (R.FormValue JSDOM.Types.File)] = R.pushAlways (const buildFormData) convert
+  responses :: R.Event t [R.XhrResponse] <- R.postForms "https://icewire.ca/uploadprb" formData
   let results :: R.Event t [Maybe Text] = map (Lens.view R.xhrResponse_responseText) <$> responses
   R.el "div" $ do
     result :: R.Dynamic t Text <- R.holdDyn "" $ T.concat . map (maybe "" id) <$> results
@@ -76,7 +76,7 @@ widget options prbName editorContent = R.el "div" $ do
         consoleLog ("fileReader onload" :: Text)
         v <- FileReader.getResult fileReader
         (JS.fromJSVal <=< JS.toJSVal) v
-      evFileText :: R.Event t Text <- return (R.fmapMaybe id e)
-      R.widgetHold_ R.blank . R.ffor evFileText $ \fileText -> do
-        consoleLog ("fileText:" :: Text)
-        consoleLog fileText
+      fileText :: R.Event t Text <- return (R.fmapMaybe id e)
+      R.widgetHold_ R.blank . R.ffor fileText $ \ft -> do
+        consoleLog ("file text:" :: Text)
+        consoleLog ft

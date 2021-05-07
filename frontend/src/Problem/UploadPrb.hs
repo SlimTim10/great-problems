@@ -45,9 +45,9 @@ readFileContents
      )
   => R.Event t JSDOM.Types.File
   -> m (R.Event t Text)
-readFileContents ef = do
+readFileContents file = do
   fr <- JS.liftJSM FileReader.newFileReader
-  R.performEvent_ (fmap (\f -> FileReader.readAsText fr (Just f) (Just "utf8" :: Maybe Text)) ef)
+  R.performEvent_ (fmap (\f -> FileReader.readAsText fr (Just f) (Just "utf8" :: Maybe Text)) file)
   e :: R.Event t (Maybe Text) <- R.wrapDomEvent fr (`EventM.on` FileReader.load) . JS.liftJSM $ do
     v <- FileReader.getResult fr
     (JS.fromJSVal <=< JS.toJSVal) v

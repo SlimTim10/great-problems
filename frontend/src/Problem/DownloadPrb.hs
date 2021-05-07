@@ -20,10 +20,10 @@ createObjectURL
      )
   => R.Dynamic t Text
   -> m (R.Event t Text)
-createObjectURL contentD = do
-  R.performEvent $ R.ffor (R.updated contentD) $ \content -> do
+createObjectURL content = do
+  R.performEvent $ R.ffor (R.updated content) $ \c -> do
     JS.liftJSM $ do
-      t <- Utils.bsToArrayBuffer $ T.encodeUtf8 content
+      t <- Utils.bsToArrayBuffer $ T.encodeUtf8 c
       o <- JS.obj ^. JS.jss ("type" :: Text) ("text/plain" :: Text)
       options <- JSDOM.Types.BlobPropertyBag <$> JS.toJSVal o
       blob <- Blob.newBlob [t] (Just options)
@@ -40,12 +40,12 @@ widget
   => R.Dynamic t Text
   -> R.Dynamic t Text
   -> m ()
-widget prbNameD prbContentD = do
-  hrefD <- R.holdDyn "" =<< createObjectURL prbContentD
-  R.elDynAttr "a" (attrs <$> prbNameD <*> hrefD) (R.text "Download PRB")
+widget prbName prbContent = do
+  href <- R.holdDyn "" =<< createObjectURL prbContent
+  R.elDynAttr "a" (attrs <$> prbName <*> href) (R.text "Download PRB")
   where
     attrs :: Text -> Text -> Map Text Text
-    attrs prbName href = (
-      "href" =: href
-      <> "download" =: (prbName <> ".prb")
+    attrs nm h = (
+      "href" =: h
+      <> "download" =: (nm <> ".prb")
       )
