@@ -9,4 +9,5 @@ import qualified Data.Aeson as JSON
       Options(fieldLabelModifier),
       genericParseJSON )
 import qualified JSDOM.Types ( File )
+import qualified Reflex.Dom.Core as R ( FormValue )
 import Global ( Text )

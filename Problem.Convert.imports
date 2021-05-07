@@ -1,12 +1,14 @@
 import qualified Control.Lens as Lens ( view )
-import qualified Data.Text as T ( concat )
-import qualified Data.Map as Map ( fromList, unions )
-import qualified JSDOM.Types ( File )
-import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
+import qualified JSDOM.Types ( File, IsBlob )
+import qualified JSDOM.FormData as FormData
+    ( newFormData, append, appendBlob )
+import qualified Language.Javascript.JSaddle as JS
+    ( MonadJSM, JSVal(JSVal), liftJSM )
 import qualified Reflex.Dom.Core as R
-    ( MonadHold(holdDyn),
+    ( def,
+      MonadHold(holdDyn),
       PerformEvent(performEvent, Performable),
-      Reflex(current, Event, Dynamic),
+      Reflex(current, Dynamic, Event),
       DomBuilder,
       HasJSContext,
       TriggerEvent,
@@ -15,12 +17,14 @@ import qualified Reflex.Dom.Core as R
       tag,
       ffor,
       decodeText,
+      performMkRequestAsync,
+      xhrRequest,
+      xhrRequestConfig_sendData,
       xhrResponse_responseText,
-      postForms,
       XhrResponse,
       FormValue(..) )
 import qualified Problem.Types as Types
     ( ConvertResponse,
-      FileWithName(file, name),
+      FileWithName(formValue),
       Options(files, output, random) )
-import Global ( Text, Map, (=:) )
+import Global ( Text, forM_, (&), (.~) )

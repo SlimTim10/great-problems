@@ -71,7 +71,8 @@ drawingsWidget
 drawingsWidget drawings = do
   files :: R.Event t [Types.FileWithName] <- R.performEvent $ R.ffor (R.updated drawings) $ \fs -> do
     names :: [Text] <- mapM JSDOM.File.getName fs
-    return $ map (uncurry Types.FileWithName) $ zip fs names
+    fs' :: [R.FormValue JSDOM.Types.File] <- mapM R.fileToFormValue fs
+    return $ map (uncurry Types.FileWithName) $ zip fs' names
   uniqueFiles :: R.Dynamic t [Types.FileWithName] <- R.accumDyn collectFiles [] files
   R.el "ul" $ do
     void $ R.simpleList uniqueFiles $ \file -> do

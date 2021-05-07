@@ -23,7 +23,9 @@ import qualified Reflex.Dom.Core as R
       dropdown,
       HasValue(value),
       accumDyn,
-      ffor )
+      ffor,
+      fileToFormValue,
+      FormValue )
 import qualified Problem.Types as Types
     ( FileWithName(FileWithName, name), Options(Options) )
 import Global ( Text, Map, void, (&), (.~), (=:) )

@@ -11,7 +11,7 @@ import qualified Data.HashMap.Strict as HM
 import qualified GHC.Generics as Generics
 import qualified Data.Aeson as JSON
 import qualified JSDOM.Types
--- import qualified Reflex.Dom.Core as R
+import qualified Reflex.Dom.Core as R
 
 import Global
 
@@ -22,7 +22,7 @@ data Options = Options
   }
 
 data FileWithName = FileWithName
-  { file :: JSDOM.Types.File
+  { formValue :: R.FormValue JSDOM.Types.File
   , name :: Text
   }
 
