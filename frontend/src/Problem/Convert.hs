@@ -9,7 +9,7 @@ import qualified JSDOM.Types
 import qualified Language.Javascript.JSaddle as JS
 import qualified Reflex.Dom.Core as R
 
--- Import unofficial patch file
+-- Import unofficial patch
 import qualified Xhr.FormData as R'
 
 import qualified Problem.Types as Types

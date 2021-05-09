@@ -23,7 +23,7 @@ import Language.Javascript.JSaddle.Monad (MonadJSM, liftJSM)
 import Reflex
 import Reflex.Dom.Xhr
 
--- | A FormData value may be a blob/file or a string. The file can optionally be provided with filename.
+-- | A FormData value may be a blob/file, a string, or a list of such values. The file can optionally be provided with filename.
 data FormValue blob
   = FormValue_Text Text
   | FormValue_File blob (Maybe Text) -- maybe filename
