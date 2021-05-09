@@ -41,8 +41,6 @@ postForms url payload = do
   performMkRequestsAsync $ ffor payload $ \fs -> for fs $ \u -> liftJSM $ do
     fd <- FD.newFormData Nothing
     iforM_ u $ \k v -> appendFormValue k v fd
-      -- FormValue_Text t -> FD.append fd k t
-      -- FormValue_File b fn -> FD.appendBlob fd k b fn
     return $ xhrRequest "POST" url $ def & xhrRequestConfig_sendData .~ fd
   where
     appendFormValue k v fd = case v of
