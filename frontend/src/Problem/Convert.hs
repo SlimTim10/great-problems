@@ -13,6 +13,7 @@ import qualified Reflex.Dom.Core as R
 import qualified Xhr.FormData as R'
 
 import qualified Problem.Types as Types
+import qualified Problem.Options as Options
 import Global
 
 widget
@@ -24,19 +25,19 @@ widget
      , R.PerformEvent t m
      , R.TriggerEvent t m
      )
-  => R.Dynamic t Types.Options
+  => R.Dynamic t Options.Options
   -> R.Dynamic t Text
   -> R.Dynamic t Text
   -> m (R.Dynamic t (Maybe Types.ConvertResponse))
 widget options prbName editorContent = R.el "div" $ do
   convert :: R.Event t () <- R.button "Convert"
 
-  let allData :: R.Dynamic t (Types.Options, Text, Text) = (\ops nm ec -> (ops, nm, ec)) <$> options <*> prbName <*> editorContent
+  let allData :: R.Dynamic t (Options.Options, Text, Text) = (\ops nm ec -> (ops, nm, ec)) <$> options <*> prbName <*> editorContent
   formData :: R.Event t [Map Text (R'.FormValue JSDOM.Types.File)] <- R.performEvent $ R.ffor (R.tag (R.current allData) convert) $ \(ops, nm, ec) -> do
     let
-      r = Types.random ops
-      o = Types.output ops
-      fs = Types.files ops
+      r = Options.random ops
+      o = Options.output ops
+      fs = Options.files ops
       formDataText :: Map Text (R'.FormValue JSDOM.Types.File) = (
         "prbText" =: R'.FormValue_Text ec
         <> "prbName" =: R'.FormValue_Text nm
@@ -53,6 +54,6 @@ widget options prbName editorContent = R.el "div" $ do
     result :: R.Dynamic t Text <- R.holdDyn "" $ T.concat . map (maybe "" id) <$> results
     return $ R.decodeText <$> result
   where
-    formFile f = R'.FormValue_File (Types.file f) (Just (Types.name f))
+    formFile f = R'.FormValue_File (Options.file f) (Just (Options.name f))
     formBool True = "true"
     formBool False = "false"

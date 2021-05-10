@@ -17,8 +17,7 @@ import qualified Reflex.Dom.Core as R
       xhrResponse_responseText,
       XhrResponse )
 import qualified Xhr.FormData as R' ( FormValue(..), postForms )
-import qualified Problem.Types as Types
-    ( ConvertResponse,
-      FileWithName(name, file),
-      Options(files, output, random) )
+import qualified Problem.Types as Types ( ConvertResponse )
+import qualified Problem.Options as Options
+    ( FileWithName(name, file), Options(files, output, random) )
 import Global ( Text, Map, (=:) )

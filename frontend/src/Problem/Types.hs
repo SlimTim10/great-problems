@@ -1,7 +1,5 @@
 module Problem.Types
-  ( Options(..)
-  , FileWithName(..)
-  , ConvertResponse(..)
+  ( ConvertResponse(..)
   ) where
 
 import qualified Data.Char as Char
@@ -10,26 +8,8 @@ import qualified Data.HashMap.Strict as HM
 
 import qualified GHC.Generics as Generics
 import qualified Data.Aeson as JSON
-import qualified JSDOM.Types
 
 import Global
-
-data Options = Options
-  { random :: Bool
-  , output :: Text
-  , files :: [FileWithName]
-  }
-
-data FileWithName = FileWithName
-  { file :: JSDOM.Types.File
-  , name :: Text
-  }
-
-instance Show FileWithName where
-  show = show . name
-
-instance Eq FileWithName where
-  (==) a b = name a == name b
 
 data ConvertResponse = ConvertResponse
   { errorIcemaker :: Text

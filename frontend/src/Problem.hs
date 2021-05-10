@@ -30,7 +30,7 @@ widget
   => m ()
 widget = do
   rec
-    options :: R.Dynamic t Types.Options <- Options.widget
+    options :: R.Dynamic t Options.Options <- Options.widget
     (uploadPrb, prbName) <- R.el "div" $ do
       u <- UploadPrb.widget
       DownloadPrb.widget prbName editorContent

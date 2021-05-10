@@ -13,8 +13,8 @@ import qualified Reflex.Dom.Core as R
       el,
       HasValue(value) )
 import qualified Problem.Types as Types
-    ( ConvertResponse(pdfContent), Options )
-import qualified Problem.Options as Options ( widget )
+    ( ConvertResponse(pdfContent) )
+import qualified Problem.Options as Options ( Options, widget )
 import qualified Problem.Convert as Convert ( widget )
 import qualified Problem.Editor as Editor ( widget )
 import qualified Problem.PdfViewer as PdfViewer ( widget )

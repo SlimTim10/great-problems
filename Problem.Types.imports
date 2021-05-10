@@ -8,5 +8,4 @@ import qualified Data.Aeson as JSON
       defaultOptions,
       Options(fieldLabelModifier),
       genericParseJSON )
-import qualified JSDOM.Types ( File )
 import Global ( Text )

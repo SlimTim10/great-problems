@@ -1,6 +1,13 @@
 import qualified Control.Monad.Fix as Fix ( MonadFix )
-import qualified Data.List as List ( nub )
-import qualified Data.Map as Map ( fromList )
+import qualified Data.Map as Map
+    ( Map,
+      fromList,
+      delete,
+      elems,
+      empty,
+      insert,
+      maxViewWithKey,
+      singleton )
 import qualified JSDOM.File ( getName )
 import qualified JSDOM.Types ( File )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
@@ -8,13 +15,15 @@ import qualified Reflex.Dom.Core as R
     ( def,
       MonadHold(holdDyn),
       PerformEvent(performEvent, Performable),
-      Reflex(Event, updated, Dynamic),
+      Reflex(current, switch, Event, updated, Dynamic),
       DomBuilder(inputElement),
       InputElement(_inputElement_checked, _inputElement_files),
       PostBuild,
       constDyn,
+      foldDyn,
       InitialAttributes(initialAttributes),
-      simpleList,
+      listWithKey,
+      button,
       dynText,
       el,
       elAttr,
@@ -22,8 +31,6 @@ import qualified Reflex.Dom.Core as R
       text,
       dropdown,
       HasValue(value),
-      accumDyn,
-      ffor )
-import qualified Problem.Types as Types
-    ( FileWithName(FileWithName, name), Options(Options) )
-import Global ( Text, Map, void, (&), (.~), (=:) )
+      ffor,
+      mergeWith )
+import Global ( Text, Map, (&), (.~), (=:) )
