@@ -75,12 +75,13 @@ figuresWidget figures = do
         . map (fmap Map.delete)
         . Map.elems
         <$> deleteMap
-    -- Accumulate the file map (foldDyn = accumDyn . flip),
-    -- merging the deletions event and the new files event.
+    -- Accumulate the file map (foldDyn = accumDyn . flip) by applying the (FileMap -> FileMap) functions.
+    -- The deletions event and the new files event are merged.
     -- Note that "R.leftmost" can replace "R.mergeWith (.)",
-    -- but this would not handle the two events happening at the same time.
+    -- but this would not handle the two events happening at the same time
+    -- (even though this may never occur in practice).
     fileMap :: R.Dynamic t FileMap <-
-      R.foldDyn id Map.empty
+      R.foldDyn ($) Map.empty
       $ R.mergeWith (.) [R.switch . R.current $ deletions, collectFiles <$> filesWithNames]
   return $ Map.elems <$> fileMap
   where
