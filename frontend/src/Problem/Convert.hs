@@ -14,6 +14,7 @@ import qualified Xhr.FormData as R'
 
 import qualified Problem.Types as Types
 import qualified Problem.Options as Options
+import qualified Problem.Figures as Figures
 import Global
 
 widget
@@ -26,25 +27,25 @@ widget
      , R.TriggerEvent t m
      )
   => R.Dynamic t Options.Options
+  -> R.Dynamic t [Figures.FileWithName]
   -> R.Dynamic t Text
   -> R.Dynamic t Text
   -> m (R.Dynamic t (Maybe Types.ConvertResponse))
-widget options prbName editorContent = do
+widget options figures prbName editorContent = do
   convert :: R.Event t () <- R.button "Convert"
 
-  let allData :: R.Dynamic t (Options.Options, Text, Text) = (\ops nm ec -> (ops, nm, ec)) <$> options <*> prbName <*> editorContent
-  formData :: R.Event t [Map Text (R'.FormValue JSDOM.Types.File)] <- R.performEvent $ R.ffor (R.tag (R.current allData) convert) $ \(ops, nm, ec) -> do
+  let allData :: R.Dynamic t (Options.Options, [Figures.FileWithName], Text, Text) = (\ops figs nm ec -> (ops, figs, nm, ec)) <$> options <*> figures <*> prbName <*> editorContent
+  formData :: R.Event t [Map Text (R'.FormValue JSDOM.Types.File)] <- R.performEvent $ R.ffor (R.tag (R.current allData) convert) $ \(ops, figs, nm, ec) -> do
     let
       r = Options.random ops
       o = Options.output ops
-      fs = Options.files ops
       formDataText :: Map Text (R'.FormValue JSDOM.Types.File) = (
         "prbText" =: R'.FormValue_Text ec
         <> "prbName" =: R'.FormValue_Text nm
         <> "random" =: R'.FormValue_Text (formBool r)
         <> "outFlag" =: R'.FormValue_Text o
         <> "submit1" =: R'.FormValue_Text "putDatabase" -- temporary
-        <> "multiplefiles" =: R'.FormValue_List (map formFile fs)
+        <> "multiplefiles" =: R'.FormValue_List (map formFile figs)
         )
     return [formDataText]
   
@@ -54,6 +55,6 @@ widget options prbName editorContent = do
     result :: R.Dynamic t Text <- R.holdDyn "" $ T.concat . map (maybe "" id) <$> results
     return $ R.decodeText <$> result
   where
-    formFile f = R'.FormValue_File (Options.file f) (Just (Options.name f))
+    formFile f = R'.FormValue_File (Figures.file f) (Just (Figures.name f))
     formBool True = "true"
     formBool False = "false"

@@ -9,6 +9,7 @@ import qualified Reflex.Dom.Core as R
 
 import qualified Problem.Types as Types
 import qualified Problem.Options as Options
+import qualified Problem.Figures as Figures
 import qualified Problem.Convert as Convert
 import qualified Problem.Editor as Editor
 import qualified Problem.PdfViewer as PdfViewer
@@ -30,15 +31,17 @@ widget
   => m ()
 widget = do
   R.elClass "div" "flex-1 h-full flex gap-4" $ do
-    options :: R.Dynamic t Options.Options <- R.elClass "div" "border-2 border-gray-300 flex-none w-56" $ do
-      Options.widget
+    (options, figures) <- R.elClass "div" "flex-none w-56 flex flex-col gap-4" $ do
+      options :: R.Dynamic t Options.Options <- R.elClass "div" "border-2 border-gray-300" $ Options.widget
+      figures :: R.Dynamic t [Figures.FileWithName] <- R.elClass "div" "h-full border-2 border-gray-300" $ Figures.widget
+      return (options, figures)
     R.elClass "div" "flex-1 h-full flex flex-col" $ mdo
       (uploadPrb, downloadPrb, convertResponse) <- R.elClass "div" "bg-gray-100" $ mdo
         uploadPrb <- UploadPrb.widget
         DownloadPrb.widget prbName editorContent
         prbName <- R.value <$> (R.inputElement $ R.def
           & R.inputElementConfig_initialValue .~ "untitled")
-        convertResponse <- Convert.widget options prbName editorContent
+        convertResponse <- Convert.widget options figures prbName editorContent
         return (uploadPrb, downloadPrb, convertResponse)
       editorContent <- R.elClass "div" "h-full flex" $ mdo
         editorContent <- R.elClass "div" "h-full flex-1"$ Editor.widget uploadPrb
