@@ -4,6 +4,5 @@ import qualified Reflex.Dom.Core as R
       DomBuilder(textAreaElement),
       HasSetValue(setValue),
       InitialAttributes(initialAttributes),
-      elClass,
       HasValue(value) )
 import Global ( Text, (&), (.~), (=:) )

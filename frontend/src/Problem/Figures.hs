@@ -43,6 +43,7 @@ widget = do
       "type" =: "file"
       <> "accept" =: ".asc"
       <> "multiple" =: ""
+      <> "class" =: "hidden"
       )
     return fi1
   figuresWidget $ R._inputElement_files fi
