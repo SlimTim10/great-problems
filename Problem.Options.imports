@@ -26,7 +26,6 @@ import qualified Reflex.Dom.Core as R
       button,
       dynText,
       el,
-      elAttr,
       elClass,
       text,
       dropdown,

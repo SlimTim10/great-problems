@@ -1,3 +1,3 @@
 import qualified Reflex.Dom.Core as R
-    ( Reflex(Dynamic), DomBuilder, PostBuild, blank, el, elDynAttr )
+    ( Reflex(Dynamic), DomBuilder, PostBuild, blank, elDynAttr )
 import Global ( Text, Map, (=:) )

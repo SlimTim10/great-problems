@@ -29,7 +29,7 @@ widget
   -> R.Dynamic t Text
   -> R.Dynamic t Text
   -> m (R.Dynamic t (Maybe Types.ConvertResponse))
-widget options prbName editorContent = R.el "div" $ do
+widget options prbName editorContent = do
   convert :: R.Event t () <- R.button "Convert"
 
   let allData :: R.Dynamic t (Options.Options, Text, Text) = (\ops nm ec -> (ops, nm, ec)) <$> options <*> prbName <*> editorContent

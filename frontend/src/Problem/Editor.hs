@@ -11,7 +11,8 @@ widget
      )
   => R.Event t Text
   -> m (R.Dynamic t Text)
-widget forcedValue = R.elAttr "div" ("style" =: "border: 1px solid black;") $ do
-  R.el "h2" $ R.text "Editor"
-  t <- R.textAreaElement $ R.def & R.setValue .~ forcedValue
+widget forcedValue = R.elClass "div" "h-full" $ do
+  t <- R.textAreaElement $ R.def
+    & R.setValue .~ forcedValue
+    & R.initialAttributes .~ ("class" =: "h-full w-full border")
   return $ R.value t

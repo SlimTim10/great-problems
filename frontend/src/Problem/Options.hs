@@ -43,15 +43,12 @@ widget
      )
   => m (R.Dynamic t Options)
 widget = do
-  R.elAttr "div" ("style" =: "border: 1px solid black;") $ do
-    R.elClass "div" "mainContainer" $ do
-      R.elClass "div" "optionsContainer" $ do
-        R.el "h2" $ R.text "Options"
-        r :: R.Dynamic t Bool <- randomOption
-        o :: R.Dynamic t Text <- outputOption
-        ds :: R.Dynamic t [FileWithName] <- drawingsOption
-        let options = Options <$> r <*> o <*> ds
-        R.holdDyn (Options False "" []) $ R.updated options
+  R.elClass "p" "text-xl" $ R.text "Options"
+  r :: R.Dynamic t Bool <- randomOption
+  o :: R.Dynamic t Text <- outputOption
+  ds :: R.Dynamic t [FileWithName] <- drawingsOption
+  let options = Options <$> r <*> o <*> ds
+  R.holdDyn (Options False "" []) $ R.updated options
 
 drawingsOption
   :: ( R.DomBuilder t m
@@ -62,8 +59,8 @@ drawingsOption
      , JS.MonadJSM (R.Performable m)
      )
   => m (R.Dynamic t [FileWithName])
-drawingsOption = R.el "div" $ do
-  R.el "h4" $ R.text "Drawings"
+drawingsOption = do
+  R.elClass "p" "text-xl" $ R.text "Drawings"
   fi <- R.el "label" $ do
     R.text "Upload"
     fi1 <- R.inputElement $ R.def & R.initialAttributes .~ (

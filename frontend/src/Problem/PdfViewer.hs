@@ -12,7 +12,7 @@ widget
      )
   => R.Dynamic t Text
   -> m ()
-widget pdfData = R.el "div" $ do
+widget pdfData = do
   R.elDynAttr "iframe" (attrs <$> pdfData) $ R.blank
   where
     attrs :: Text -> Map Text Text

@@ -10,7 +10,7 @@ import qualified Reflex.Dom.Core as R
       PostBuild,
       TriggerEvent,
       inputElementConfig_initialValue,
-      el,
+      elClass,
       HasValue(value) )
 import qualified Problem.Types as Types
     ( ConvertResponse(pdfContent) )
@@ -20,4 +20,4 @@ import qualified Problem.Editor as Editor ( widget )
 import qualified Problem.PdfViewer as PdfViewer ( widget )
 import qualified Problem.UploadPrb as UploadPrb ( widget )
 import qualified Problem.DownloadPrb as DownloadPrb ( widget )
-import Global ( Text, (&), (.~) )
+import Global ( (&), (.~) )

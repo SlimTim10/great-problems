@@ -3,8 +3,7 @@ import qualified Reflex.Dom.Core as R
       Reflex(Dynamic, Event),
       DomBuilder(textAreaElement),
       HasSetValue(setValue),
-      el,
-      elAttr,
-      text,
+      InitialAttributes(initialAttributes),
+      elClass,
       HasValue(value) )
 import Global ( Text, (&), (.~), (=:) )
