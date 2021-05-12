@@ -4,19 +4,18 @@ import qualified Reflex.Dom.Core as R
     ( def,
       MonadHold,
       PerformEvent(Performable),
-      Reflex(Dynamic),
       DomBuilder(inputElement),
       HasJSContext,
       PostBuild,
       TriggerEvent,
+      splitDynPure,
       inputElementConfig_initialValue,
       elClass,
       HasValue(value) )
 import qualified Problem.Types as Types
     ( ConvertResponse(pdfContent) )
-import qualified Problem.Options as Options ( Options, widget )
-import qualified Problem.Figures as Figures
-    ( FileWithName, widget )
+import qualified Problem.Options as Options ( widget )
+import qualified Problem.Figures as Figures ( widget )
 import qualified Problem.Convert as Convert ( widget )
 import qualified Problem.Editor as Editor ( widget )
 import qualified Problem.PdfViewer as PdfViewer ( widget )

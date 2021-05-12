@@ -25,12 +25,13 @@ widget
      , R.HasJSContext (R.Performable m)
      , R.PerformEvent t m
      , R.TriggerEvent t m
+     , MonadFix m
      )
   => R.Dynamic t Options.Options
   -> R.Dynamic t [Figures.FileWithName]
   -> R.Dynamic t Text
   -> R.Dynamic t Text
-  -> m (R.Dynamic t (Maybe Types.ConvertResponse))
+  -> m (R.Dynamic t (Maybe Types.ConvertResponse, Bool))
 widget options figures prbName editorContent = do
   convert :: R.Event t () <- R.button "Convert"
 
@@ -52,8 +53,11 @@ widget options figures prbName editorContent = do
   responses :: R.Event t [R.XhrResponse] <- R'.postForms "https://icewire.ca/uploadprb" formData
   let results :: R.Event t [Maybe Text] = map (Lens.view R.xhrResponse_responseText) <$> responses
   R.el "div" $ do
-    result :: R.Dynamic t Text <- R.holdDyn "" $ T.concat . map (maybe "" id) <$> results
-    return $ R.decodeText <$> result
+    response <- fmap R.decodeText <$> (R.holdDyn "" $ T.concat . map (maybe "" id) <$> results)
+    loading <- R.zipDynWith
+      (\(x :: Integer) (y :: Integer) -> x > 0 && x > y)
+      <$> R.count convert <*> R.count responses
+    return $ R.zipDyn response loading
   where
     formFile f = R'.FormValue_File (Figures.file f) (Just (Figures.name f))
     formBool True = "true"

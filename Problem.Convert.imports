@@ -9,10 +9,13 @@ import qualified Reflex.Dom.Core as R
       DomBuilder,
       HasJSContext,
       TriggerEvent,
+      zipDynWith,
+      count,
       button,
       el,
       tag,
       ffor,
+      zipDyn,
       decodeText,
       xhrResponse_responseText,
       XhrResponse )
@@ -22,4 +25,4 @@ import qualified Problem.Options as Options
     ( Options(output, random) )
 import qualified Problem.Figures as Figures
     ( FileWithName(name, file) )
-import Global ( Text, Map, (=:) )
+import Global ( MonadFix, Text, Map, (=:) )

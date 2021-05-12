@@ -5,6 +5,7 @@ module Global
   , module Data.Traversable
   , module Control.Monad
   , module Control.Lens
+  , MonadFix
   , module Reflex.Dom.Core
   ) where
 
@@ -13,5 +14,6 @@ import Data.Map (Map)
 import Data.Traversable (for)
 import Control.Monad (void, (<=<), forM_)
 import Control.Lens ((^.), iforM_)
+import Control.Monad.Fix (MonadFix)
 
 import Reflex.Dom.Core ((&), (.~), (=:))

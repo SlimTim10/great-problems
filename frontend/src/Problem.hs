@@ -32,21 +32,21 @@ widget
 widget = do
   R.elClass "div" "flex-1 h-full flex gap-4" $ do
     (options, figures) <- R.elClass "div" "flex-none w-56 flex flex-col gap-4" $ do
-      options :: R.Dynamic t Options.Options <- R.elClass "div" "border-2 border-gray-300" $ Options.widget
-      figures :: R.Dynamic t [Figures.FileWithName] <- R.elClass "div" "h-full border-2 border-gray-300" $ Figures.widget
+      options <- R.elClass "div" "border-2 border-gray-300" $ Options.widget
+      figures <- R.elClass "div" "h-full border-2 border-gray-300" $ Figures.widget
       return (options, figures)
     R.elClass "div" "flex-1 h-full flex flex-col" $ mdo
-      (uploadPrb, downloadPrb, convertResponse) <- R.elClass "div" "bg-gray-100" $ mdo
+      (uploadPrb, downloadPrb, convertResponse, loading) <- R.elClass "div" "bg-gray-100" $ mdo
         uploadPrb <- UploadPrb.widget
         DownloadPrb.widget prbName editorContent
         prbName <- R.value <$> (R.inputElement $ R.def
           & R.inputElementConfig_initialValue .~ "untitled")
-        convertResponse <- Convert.widget options figures prbName editorContent
-        return (uploadPrb, downloadPrb, convertResponse)
+        (convertResponse, loading) <- R.splitDynPure <$> Convert.widget options figures prbName editorContent
+        return (uploadPrb, downloadPrb, convertResponse, loading)
       editorContent <- R.elClass "div" "h-full flex" $ mdo
         editorContent <- R.elClass "div" "h-full flex-1"$ Editor.widget uploadPrb
         let pdfData = maybe "" Types.pdfContent <$> convertResponse
-        R.elClass "div" "flex-1" $ PdfViewer.widget pdfData
+        R.elClass "div" "flex-1" $ PdfViewer.widget pdfData loading
         return editorContent
       return ()
   return ()
