@@ -3,6 +3,7 @@ module Global
   ( Text
   , Map
   , module Data.Traversable
+  , module Data.Functor
   , module Control.Monad
   , module Control.Lens
   , MonadFix
@@ -12,6 +13,7 @@ module Global
 import Data.Text (Text)
 import Data.Map (Map)
 import Data.Traversable (for)
+import Data.Functor ((<&>))
 import Control.Monad (void, (<=<), forM_)
 import Control.Lens ((^.), iforM_)
 import Control.Monad.Fix (MonadFix)

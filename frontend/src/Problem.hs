@@ -36,13 +36,13 @@ widget = do
       figures <- R.elClass "div" "h-full border-2 border-gray-300" $ Figures.widget
       return (options, figures)
     R.elClass "div" "flex-1 h-full flex flex-col" $ mdo
-      (uploadPrb, downloadPrb, convertResponse, loading) <- R.elClass "div" "bg-gray-100" $ mdo
+      (uploadPrb, convertResponse, loading) <- R.elClass "div" "bg-gray-100" $ mdo
         uploadPrb <- UploadPrb.widget
         DownloadPrb.widget prbName editorContent
-        prbName <- R.value <$> (R.inputElement $ R.def
-          & R.inputElementConfig_initialValue .~ "untitled")
-        (convertResponse, loading) <- R.splitDynPure <$> Convert.widget options figures prbName editorContent
-        return (uploadPrb, downloadPrb, convertResponse, loading)
+        prbName <- prbNameWidget
+        (convertResponse, loading) <- Convert.widget options figures prbName editorContent
+          <&> R.splitDynPure
+        return (uploadPrb, convertResponse, loading)
       editorContent <- R.elClass "div" "h-full flex" $ mdo
         editorContent <- R.elClass "div" "h-full flex-1"$ Editor.widget uploadPrb
         let pdfData = maybe "" Types.pdfContent <$> convertResponse
@@ -50,3 +50,8 @@ widget = do
         return editorContent
       return ()
   return ()
+
+prbNameWidget :: (R.DomBuilder t m) => m (R.Dynamic t Text)
+prbNameWidget = do
+  R.value
+  <$> R.inputElement (R.def & R.inputElementConfig_initialValue .~ "untitled")

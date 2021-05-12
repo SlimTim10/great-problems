@@ -4,6 +4,7 @@ import qualified Reflex.Dom.Core as R
     ( def,
       MonadHold,
       PerformEvent(Performable),
+      Reflex(Dynamic),
       DomBuilder(inputElement),
       HasJSContext,
       PostBuild,
@@ -21,4 +22,4 @@ import qualified Problem.Editor as Editor ( widget )
 import qualified Problem.PdfViewer as PdfViewer ( widget )
 import qualified Problem.UploadPrb as UploadPrb ( widget )
 import qualified Problem.DownloadPrb as DownloadPrb ( widget )
-import Global ( (&), (.~) )
+import Global ( Text, (<&>), (&), (.~) )
