@@ -5,7 +5,7 @@ import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Reflex.Dom.Core as R
     ( MonadHold(holdDyn),
       PerformEvent(performEvent, Performable),
-      Reflex(current, Event, Dynamic),
+      Reflex(updated, current, Event, Dynamic),
       DomBuilder,
       HasJSContext,
       TriggerEvent,

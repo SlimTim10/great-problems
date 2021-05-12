@@ -53,10 +53,10 @@ widget options figures prbName editorContent = do
   responses :: R.Event t [R.XhrResponse] <- R'.postForms "https://icewire.ca/uploadprb" formData
   let results :: R.Event t [Maybe Text] = map (Lens.view R.xhrResponse_responseText) <$> responses
   R.el "div" $ do
-    response <- fmap R.decodeText <$> (R.holdDyn "" $ T.concat . map (maybe "" id) <$> results)
+    response <- R.holdDyn Nothing $ R.decodeText . T.concat . map (maybe "" id) <$> results
     loading <- R.zipDynWith
       (\(x :: Integer) (y :: Integer) -> x > 0 && x > y)
-      <$> R.count convert <*> R.count responses
+      <$> R.count convert <*> R.count (R.updated response)
     return $ R.zipDyn response loading
   where
     formFile f = R'.FormValue_File (Figures.file f) (Just (Figures.name f))
