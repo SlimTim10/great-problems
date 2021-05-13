@@ -6,6 +6,7 @@ import qualified Data.Text as Text
 
 import qualified Reflex.Dom.Core as R
 
+import qualified Problem.Convert as Convert
 import Global
 
 widget
@@ -14,16 +15,24 @@ widget
      )
   => R.Dynamic t Text
   -> R.Dynamic t Bool
+  -> R.Dynamic t (Maybe Convert.ConvertResponse)
+  -> R.Dynamic t Bool
   -> m ()
-widget pdfData loading = do
-  R.dyn_ $ switchView <$> pdfData <*> loading
+widget pdfData loading convertResponse errorsToggle = do
+  void $ R.dyn $ switchView <$> pdfData <*> loading <*> convertResponse <*> errorsToggle
 
-switchView :: R.DomBuilder t m => Text -> Bool -> m ()
-switchView pdfData loading = case (Text.null pdfData, loading) of
-  (_, True) -> R.text "Loading..."
-  (True, False) -> R.text "Press convert to view PDF"
-  (False, False) -> do
-    R.elAttr "iframe" attrs $ R.blank
+switchView
+  :: R.DomBuilder t m
+  => Text
+  -> Bool
+  -> Maybe Convert.ConvertResponse
+  -> Bool
+  -> m ()
+switchView pdfData loading convertResponse errorsToggle
+  | loading = R.text "Loading..."
+  | errorsToggle = R.text "Display errors here"
+  | Text.null pdfData = R.text "Press convert to view PDF"
+  | otherwise = R.elAttr "iframe" attrs $ R.blank
   where
     attrs :: Map Text Text
     attrs = (
@@ -34,3 +43,4 @@ switchView pdfData loading = case (Text.null pdfData, loading) of
       <> "title" =: "pdf"
       )
     pdfObjectSrc = "data:application/pdf;base64,"
+

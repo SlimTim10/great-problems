@@ -7,7 +7,6 @@ import qualified Control.Monad.Fix as Fix
 import qualified Language.Javascript.JSaddle as JS
 import qualified Reflex.Dom.Core as R
 
-import qualified Problem.Types as Types
 import qualified Problem.Options as Options
 import qualified Problem.Figures as Figures
 import qualified Problem.Convert as Convert
@@ -15,6 +14,7 @@ import qualified Problem.Editor as Editor
 import qualified Problem.PdfViewer as PdfViewer
 import qualified Problem.UploadPrb as UploadPrb
 import qualified Problem.DownloadPrb as DownloadPrb
+import qualified Problem.ErrorsToggle as ErrorsToggle
 import Global
 
 widget
@@ -39,18 +39,19 @@ widget = do
       
     R.elClass "div" "flex-1 h-full flex flex-col" $ mdo
       
-      (uploadPrb, convertResponse, loading) <- R.elClass "div" "bg-gray-100" $ mdo
+      (uploadPrb, convertResponse, loading, errorsToggle) <- R.elClass "div" "bg-gray-100" $ mdo
         uploadPrb <- UploadPrb.widget
         DownloadPrb.widget prbName editorContent
         prbName <- prbNameWidget
         (convertResponse, loading) <- Convert.widget options figures prbName editorContent
           <&> R.splitDynPure
-        return (uploadPrb, convertResponse, loading)
+        errorsToggle <- ErrorsToggle.widget convertResponse loading
+        return (uploadPrb, convertResponse, loading, errorsToggle)
         
       editorContent <- R.elClass "div" "h-full flex" $ mdo
         editorContent <- R.elClass "div" "h-full flex-1"$ Editor.widget uploadPrb
-        let pdfData = maybe "" Types.pdfContent <$> convertResponse
-        R.elClass "div" "flex-1" $ PdfViewer.widget pdfData loading
+        let pdfData = maybe "" Convert.pdfContent <$> convertResponse
+        R.elClass "div" "flex-1" $ PdfViewer.widget pdfData loading convertResponse errorsToggle
         return editorContent
         
       return ()

@@ -4,7 +4,8 @@ import qualified Reflex.Dom.Core as R
       DomBuilder,
       PostBuild,
       blank,
-      dyn_,
+      dyn,
       elAttr,
       text )
-import Global ( Text, Map, (=:) )
+import qualified Problem.Convert as Convert ( ConvertResponse )
+import Global ( Text, Map, void, (=:) )

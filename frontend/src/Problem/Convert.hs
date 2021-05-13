@@ -1,9 +1,14 @@
 module Problem.Convert
   ( widget
+  , ConvertResponse(..)
   ) where
 
 import qualified Control.Lens as Lens
+import qualified Data.Char as Char
 import qualified Data.Text as T
+import qualified Data.HashMap.Strict as HM
+import qualified GHC.Generics as Generics
+import qualified Data.Aeson as JSON
 
 import qualified JSDOM.Types
 import qualified Language.Javascript.JSaddle as JS
@@ -12,10 +17,26 @@ import qualified Reflex.Dom.Core as R
 -- Import unofficial patch
 import qualified Xhr.FormData as R'
 
-import qualified Problem.Types as Types
 import qualified Problem.Options as Options
 import qualified Problem.Figures as Figures
 import Global
+
+data ConvertResponse = ConvertResponse
+  { errorIcemaker :: Text
+  , errorLatex :: Text
+  , pdfContent :: Text
+  , pdfName :: Text
+  , terminalOutput :: Text
+  } deriving (Generics.Generic, Show)
+
+instance JSON.FromJSON ConvertResponse where
+  parseJSON = JSON.genericParseJSON opts . jsonLower
+    where opts = JSON.defaultOptions { JSON.fieldLabelModifier = map Char.toLower }
+
+jsonLower :: JSON.Value -> JSON.Value
+jsonLower (JSON.Object o) = JSON.Object . HM.fromList . map lowerPair . HM.toList $ o
+  where lowerPair (key, val) = (T.toLower key, val)
+jsonLower x = x
 
 widget
   :: forall t m.
@@ -31,7 +52,7 @@ widget
   -> R.Dynamic t [Figures.FileWithName]
   -> R.Dynamic t Text
   -> R.Dynamic t Text
-  -> m (R.Dynamic t (Maybe Types.ConvertResponse, Bool))
+  -> m (R.Dynamic t (Maybe ConvertResponse, Bool))
 widget options figures prbName editorContent = do
   convert :: R.Event t () <- R.button "Convert"
 
@@ -52,12 +73,11 @@ widget options figures prbName editorContent = do
   
   responses :: R.Event t [R.XhrResponse] <- R'.postForms "https://icewire.ca/uploadprb" formData
   let results :: R.Event t [Maybe Text] = map (Lens.view R.xhrResponse_responseText) <$> responses
-  R.el "div" $ do
-    response <- R.holdDyn Nothing $ R.decodeText . T.concat . map (maybe "" id) <$> results
-    loading <- R.zipDynWith
-      (\(x :: Integer) (y :: Integer) -> x > 0 && x > y)
-      <$> R.count convert <*> R.count (R.updated response)
-    return $ R.zipDyn response loading
+  response <- R.holdDyn Nothing $ R.decodeText . T.concat . map (maybe "" id) <$> results
+  loading <- R.zipDynWith
+    (\(x :: Integer) (y :: Integer) -> x > 0 && x > y)
+    <$> R.count convert <*> R.count (R.updated response)
+  return $ R.zipDyn response loading
   where
     formFile f = R'.FormValue_File (Figures.file f) (Just (Figures.name f))
     formBool True = "true"

@@ -13,13 +13,13 @@ import qualified Reflex.Dom.Core as R
       inputElementConfig_initialValue,
       elClass,
       HasValue(value) )
-import qualified Problem.Types as Types
-    ( ConvertResponse(pdfContent) )
 import qualified Problem.Options as Options ( widget )
 import qualified Problem.Figures as Figures ( widget )
-import qualified Problem.Convert as Convert ( widget )
+import qualified Problem.Convert as Convert
+    ( ConvertResponse(pdfContent), widget )
 import qualified Problem.Editor as Editor ( widget )
 import qualified Problem.PdfViewer as PdfViewer ( widget )
 import qualified Problem.UploadPrb as UploadPrb ( widget )
 import qualified Problem.DownloadPrb as DownloadPrb ( widget )
+import qualified Problem.ErrorsToggle as ErrorsToggle ( widget )
 import Global ( Text, (<&>), (&), (.~) )

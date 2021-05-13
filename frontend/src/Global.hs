@@ -2,6 +2,7 @@
 module Global
   ( Text
   , Map
+  , module Data.Bool
   , module Data.Traversable
   , module Data.Functor
   , module Control.Monad
@@ -12,6 +13,7 @@ module Global
 
 import Data.Text (Text)
 import Data.Map (Map)
+import Data.Bool (bool)
 import Data.Traversable (for)
 import Data.Functor ((<&>))
 import Control.Monad (void, (<=<), forM_)
