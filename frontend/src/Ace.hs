@@ -13,7 +13,7 @@
 
 {-|
 
-Basic support for using the ACE editor with Reflex.
+Basic support for using the Ace editor with Reflex.
 
 IMPORTANT NOTE:
 
@@ -22,12 +22,12 @@ mainWidgetWithHead or mainWidgetWithCss.
 
 Example usage:
 
-    ace <- divClass "yourACEWrapperDiv" $ -- wrapper div not required
+    ace <- divClass "yourAceWrapperDiv" $ -- wrapper div not required
       aceWidget def (AceDynConfig Nothing) never "initial editor contents"
 
     -- The rest is optional and lets you change what's in the editor on the fly
     -- fly without redrawing the widget.
-    withAceInstance ace (setValueACE <$> updatesToContents)
+    withAceInstance ace (setValueAce <$> updatesToContents)
     holdDyn iv $ leftmost
       [ updatesToContents
       , updated (aceValue ace)
@@ -35,7 +35,7 @@ Example usage:
 
 -}
 
-module ACE where
+module Ace where
 
 ------------------------------------------------------------------------------
 import           Control.Lens                       ((^.))
@@ -158,7 +158,7 @@ instance Default AceConfig where
 newtype AceInstance = AceInstance { unAceInstance :: JSVal }
 
 
-data ACE t = ACE
+data Ace t = Ace
     { aceRef   :: Dynamic t (Maybe AceInstance)
     , aceValue :: Dynamic t Text
     }
@@ -202,8 +202,8 @@ instance ToJSVal Annotation where
 
 
 ------------------------------------------------------------------------------
-startACE :: MonadJSM m => Text -> AceConfig -> m AceInstance
-startACE containerId ac = liftJSM $ do
+startAce :: MonadJSM m => Text -> AceConfig -> m AceInstance
+startAce containerId ac = liftJSM $ do
   aceVal <- jsg ("ace" :: Text)
   let [basePath, mode] = map (fromMaybe (T.pack "") . ($ ac))
                               [_aceConfigBasePath, _aceConfigMode]
@@ -232,16 +232,16 @@ moveCursorToPosition (r, c) (AceInstance ace) =
 
 
 ------------------------------------------------------------------------------
-setThemeACE :: MonadJSM m => Maybe AceTheme -> AceInstance -> m ()
-setThemeACE Nothing      _                 = return ()
-setThemeACE (Just theme) (AceInstance ace) =
+setThemeAce :: MonadJSM m => Maybe AceTheme -> AceInstance -> m ()
+setThemeAce Nothing      _                 = return ()
+setThemeAce (Just theme) (AceInstance ace) =
   liftJSM $ void $ ace ^. js1 ("setTheme" :: Text) themeStr
   where themeStr = "ace/theme/" <> show theme
 
 
 ------------------------------------------------------------------------------
-setModeACE :: MonadJSM m => Text -> AceInstance -> m ()
-setModeACE mode (AceInstance ace) = liftJSM $ do
+setModeAce :: MonadJSM m => Text -> AceInstance -> m ()
+setModeAce mode (AceInstance ace) = liftJSM $ do
   session <- ace ^. js ("session" :: Text)
   void $ session ^. js1 ("setMode" :: Text) mode
 
@@ -274,21 +274,21 @@ setAnnotations as (AceInstance ace) = liftJSM $ do
 
 
 ------------------------------------------------------------------------------
-setConfigACE :: MonadJSM m => Text -> Text -> AceInstance -> m ()
-setConfigACE t1 t2 (AceInstance ace) = liftJSM $ do
+setConfigAce :: MonadJSM m => Text -> Text -> AceInstance -> m ()
+setConfigAce t1 t2 (AceInstance ace) = liftJSM $ do
   cfg <- ace ^. js ("config" :: Text)
   void $ cfg ^. js2 ("set" :: Text) t1 t2
 
 
 ------------------------------------------------------------------------------
-getValueACE :: MonadJSM m => AceInstance -> m Text
-getValueACE (AceInstance ace) =
+getValueAce :: MonadJSM m => AceInstance -> m Text
+getValueAce (AceInstance ace) =
   liftJSM $ ace ^. js0 ("getValue" :: Text) >>= fromJSValUnchecked
 
 
 ------------------------------------------------------------------------------
-setValueACE :: MonadJSM m => Text -> AceInstance -> m ()
-setValueACE t (AceInstance ace) =
+setValueAce :: MonadJSM m => Text -> AceInstance -> m ()
+setValueAce t (AceInstance ace) =
   liftJSM $ void $ ace ^. js2 ("setValue" :: Text) t (-1 :: Int)
 
 
@@ -306,7 +306,7 @@ setupValueListener (AceInstance ace) = do
   pb  <- getPostBuild
   let act cb = liftJSM $ do
         jscb <- asyncFunction $ \_ _ _ ->
-          getValueACE (AceInstance ace) >>= liftIO . cb
+          getValueAce (AceInstance ace) >>= liftIO . cb
         void $ ace ^. js2 ("on" :: Text) ("change" :: Text) jscb
   performEventAsync (act <$ pb)
 
@@ -327,15 +327,15 @@ aceWidget
        , PerformEvent t m
        , MonadJSM (Performable m)
        )
-    => AceConfig -> AceDynConfig -> Event t AceDynConfig -> Text -> Text -> m (ACE t)
+    => AceConfig -> AceDynConfig -> Event t AceDynConfig -> Text -> Text -> m (Ace t)
 aceWidget ac adc adcUps containerId initContents = do
-    aceInstance <- startACE containerId ac
+    aceInstance <- startAce containerId ac
     onChange <- setupValueListener aceInstance
     updatesDyn <- holdDyn initContents onChange
 
-    let ace = ACE (constDyn $ pure aceInstance) updatesDyn
-    setThemeACE (_aceDynConfigTheme adc) aceInstance
-    void $ withAceInstance ace (setThemeACE . _aceDynConfigTheme <$> adcUps)
+    let ace = Ace (constDyn $ pure aceInstance) updatesDyn
+    setThemeAce (_aceDynConfigTheme adc) aceInstance
+    void $ withAceInstance ace (setThemeAce . _aceDynConfigTheme <$> adcUps)
     return ace
 
 
@@ -343,7 +343,7 @@ aceWidget ac adc adcUps containerId initContents = do
 -- | Convenient helper function for running functions that need an AceInstance.
 withAceInstance
     :: PerformEvent t m
-    => ACE t
+    => Ace t
     -> Event t (AceInstance -> Performable m ())
     -> m (Event t ())
 withAceInstance ace evt = withAceInstance' ace (f <$> evt)
@@ -356,7 +356,7 @@ withAceInstance ace evt = withAceInstance' ace (f <$> evt)
 -- | More powerful function for running functions that need an AceInstance.
 withAceInstance'
     :: PerformEvent t m
-    => ACE t
+    => Ace t
     -> Event t (Maybe AceInstance -> Performable m a)
     -> m (Event t a)
 withAceInstance' ace =

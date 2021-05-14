@@ -4,7 +4,7 @@ module Problem.Editor
   ( widget
   ) where
 
-import qualified ACE
+import qualified Ace
 
 import qualified Language.Javascript.JSaddle.Types as JS
 import qualified Reflex.Dom.Core as R
@@ -40,10 +40,10 @@ widget forcedValue = do
     ace <- do
       let
         cfg = R.def
-          { ACE._aceConfigMode = Just "latex"
+          { Ace._aceConfigMode = Just "latex"
           }
-      ACE.aceWidget cfg (ACE.AceDynConfig (Just ACE.AceTheme_Clouds)) R.never containerId ""
-    return $ ACE.aceValue ace
+      Ace.aceWidget cfg (Ace.AceDynConfig (Just Ace.AceTheme_Clouds)) R.never containerId ""
+    return $ Ace.aceValue ace
   let t'' :: R.Event t Text = R.switchDyn $ R.updated <$> t'
   t''' :: R.Dynamic t Text <- R.holdDyn "" t''
   return $ t'''

@@ -1,5 +1,5 @@
-import qualified ACE
-    ( ACE(aceValue),
+import qualified Ace
+    ( Ace(aceValue),
       AceDynConfig(AceDynConfig),
       AceConfig(_aceConfigMode),
       AceTheme(AceTheme_Clouds),
