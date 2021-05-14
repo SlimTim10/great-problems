@@ -30,7 +30,7 @@ switchView
   -> m ()
 switchView pdfData loading convertResponse errorsToggle
   | loading = R.text "Loading..."
-  | errorsToggle = R.text "Display errors here"
+  | errorsToggle = errorsWidget convertResponse
   | Text.null pdfData = R.text "Press convert to view PDF"
   | otherwise = R.elAttr "iframe" attrs $ R.blank
   where
@@ -44,3 +44,13 @@ switchView pdfData loading convertResponse errorsToggle
       )
     pdfObjectSrc = "data:application/pdf;base64,"
 
+errorsWidget
+  :: R.DomBuilder t m
+  => Maybe Convert.ConvertResponse
+  -> m ()
+errorsWidget Nothing = R.text ""
+errorsWidget (Just res) = R.elClass "div" "flex flex-col w-full h-full" $ do
+  R.elClass "p" "flex-1 overflow-y-auto border-b-2" $
+    R.text (Convert.errorIcemaker res)
+  R.elClass "p" "flex-1 overflow-y-auto" $
+    R.text (Convert.errorLatex res)

@@ -8,6 +8,7 @@ import qualified Data.Text as T
 import qualified Reflex.Dom.Core as R
 
 import qualified Problem.Convert as Convert
+import qualified Util
 import Global
 
 widget
@@ -22,7 +23,7 @@ widget
   -> m (R.Dynamic t Bool)
 widget convertResponse reset = do
   rec
-    e <- buttonDynClass "Errors" (cls <$> btnOrReset <*> hasErrors)
+    e <- Util.buttonDynClass "Errors" $ cls <$> btnOrReset <*> hasErrors
     btnOrReset <- R.foldDyn ($) False $ R.leftmost [not <$ e, const False <$ R.updated reset]
   return $ showErrors <$> btnOrReset <*> convertResponse
   where
@@ -31,7 +32,9 @@ widget convertResponse reset = do
     f Nothing = False
     f (Just res) = not . T.null $ Convert.errorIcemaker res
     cls :: Bool -> Bool -> Text
-    cls active b = bool "" "border-2 border-gray-800" active <> bool "" "bg-red-200" b
+    cls active b =
+      bool "" "border-2 border-gray-800" active
+      <> bool "" "bg-red-200" b
 
 showErrors
   :: Bool
@@ -45,14 +48,3 @@ showErrors btn convertResponse
   | otherwise = False
   where
     pdfContent = Convert.pdfContent . Maybe.fromJust $ convertResponse
-
-buttonDynClass
-  :: ( R.DomBuilder t m
-     , R.PostBuild t m
-     )
-  => Text
-  -> R.Dynamic t Text
-  -> m (R.Event t ())
-buttonDynClass t c = do
-  (e, _) <- R.elDynClass' "button" c $ R.text t
-  return $ R.domEvent R.Click e

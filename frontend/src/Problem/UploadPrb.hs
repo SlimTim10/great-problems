@@ -8,7 +8,7 @@ import qualified JSDOM.EventM as EventM
 import qualified Language.Javascript.JSaddle as JS
 import qualified Reflex.Dom.Core as R
 
-import Util
+import qualified Util
 import Global
 
 widget
@@ -33,7 +33,7 @@ widget = do
   readFileContents
     . R.fmapMaybe id
     . R.updated
-    $ headMay <$> R._inputElement_files fi
+    $ Util.headMay <$> R._inputElement_files fi
 
 readFileContents
   :: forall t m.

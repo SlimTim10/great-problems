@@ -3,6 +3,8 @@ module Util where
 import qualified Language.Javascript.JSaddle as JS
 import qualified Data.Text as T
 
+import qualified Reflex.Dom.Core as R
+
 import Global
 
 showText :: Show s => s -> Text
@@ -16,3 +18,14 @@ consoleLog x = void $ JS.liftJSM $ do
 headMay :: [a] -> Maybe a
 headMay [] = Nothing
 headMay (x:_) = Just x
+
+buttonDynClass
+  :: ( R.DomBuilder t m
+     , R.PostBuild t m
+     )
+  => Text
+  -> R.Dynamic t Text
+  -> m (R.Event t ())
+buttonDynClass t c = do
+  (e, _) <- R.elDynClass' "button" c $ R.text t
+  return $ R.domEvent R.Click e

@@ -16,5 +16,5 @@ import qualified Reflex.Dom.Core as R
       elAttr,
       text,
       fmapMaybe )
-import Util ( headMay )
+import qualified Util ( headMay )
 import Global ( Text, (&), (.~), (<=<), (=:) )

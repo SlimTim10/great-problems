@@ -6,6 +6,8 @@ import qualified Reflex.Dom.Core as R
       blank,
       dyn,
       elAttr,
+      elClass,
       text )
-import qualified Problem.Convert as Convert ( ConvertResponse )
+import qualified Problem.Convert as Convert
+    ( ConvertResponse(errorLatex, errorIcemaker) )
 import Global ( Text, Map, void, (=:) )

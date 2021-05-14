@@ -39,7 +39,7 @@ widget = do
       
     R.elClass "div" "flex-1 h-full flex flex-col" $ mdo
       
-      (uploadPrb, convertResponse, loading, errorsToggle) <- R.elClass "div" "bg-gray-100" $ mdo
+      (uploadPrb, convertResponse, loading, errorsToggle) <- R.elClass "div" "bg-gray-100 flex justify-between" $ mdo
         uploadPrb <- UploadPrb.widget
         DownloadPrb.widget prbName editorContent
         prbName <- prbNameWidget
