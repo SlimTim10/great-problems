@@ -42,7 +42,7 @@ widget forcedValue = do
         cfg = R.def
           { Ace._aceConfigMode = Just "latex"
           }
-      Ace.aceWidget cfg (Ace.AceDynConfig (Just Ace.AceTheme_Clouds)) R.never containerId ""
+      Ace.aceWidget cfg (Ace.AceDynConfig (Just Ace.AceTheme_Clouds)) R.never containerId "" forcedValue
     return $ Ace.aceValue ace
   R.holdDyn "" . R.switchDyn $ R.updated <$> dt
 

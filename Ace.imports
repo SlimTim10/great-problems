@@ -15,12 +15,13 @@ import Language.Javascript.JSaddle.Object
 import Language.Javascript.JSaddle.Types ( MonadJSM, liftJSM )
 import Language.Javascript.JSaddle.Value ( ToJSVal(..) )
 import Reflex
-    ( MonadHold(holdDyn),
-      PerformEvent(performEvent, Performable),
-      Reflex(Event, Dynamic),
-      PostBuild(..),
-      TriggerEvent,
-      constDyn,
+    ( constDyn,
+      ffor,
       attachPromptlyDynWith,
-      performEventAsync )
+      performEventAsync,
+      MonadHold(holdDyn),
+      Reflex(Event, Dynamic),
+      PerformEvent(..),
+      PostBuild(..),
+      TriggerEvent )
 import Reflex.Dom.Core ( DomBuilder )

@@ -8,21 +8,21 @@ import qualified Language.Javascript.JSaddle.Types as JS
     ( MonadJSM )
 import qualified Reflex.Dom.Core as R
     ( def,
+      constDyn,
+      ffor,
+      switchDyn,
       MonadHold(holdDyn),
-      PerformEvent(Performable),
-      EventName(Load),
       Reflex(updated, never, Dynamic, Event),
-      DomBuilder,
-      elAttr',
+      PerformEvent(Performable),
       PostBuild,
       TriggerEvent,
-      constDyn,
-      switchDyn,
-      HasDomEvent(domEvent),
       blank,
       el,
       elAttr,
+      elAttr',
       text,
       widgetHold,
-      ffor )
-import Global ( Text, (<&>), void, (=:) )
+      DomBuilder,
+      HasDomEvent(domEvent),
+      EventName(Load) )
+import Global ( (<&>), void, Text, (=:) )

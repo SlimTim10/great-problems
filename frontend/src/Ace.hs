@@ -326,18 +326,22 @@ aceWidget
        , PerformEvent t m
        , MonadJSM (Performable m)
        )
-    => AceConfig -> AceDynConfig -> Event t AceDynConfig -> Text -> Text -> m (Ace t)
-aceWidget ac adc adcUps containerId initContents = do
+    => AceConfig
+    -> AceDynConfig
+    -> Event t AceDynConfig
+    -> Text
+    -> Text
+    -> Event t Text
+    -> m (Ace t)
+aceWidget ac adc adcUps containerId initContents contentsUps = do
     aceInstance <- startAce containerId ac
     onChange <- setupValueListener aceInstance
     updatesDyn <- holdDyn initContents onChange
 
-    -- On update, set the value
-    -- setValueAce "test" aceInstance
-    
     let ace = Ace (constDyn $ pure aceInstance) updatesDyn
     setThemeAce (_aceDynConfigTheme adc) aceInstance
     void $ withAceInstance ace (setThemeAce . _aceDynConfigTheme <$> adcUps)
+    performEvent_ $ ffor contentsUps $ \c -> setValueAce c aceInstance
     return ace
 
 

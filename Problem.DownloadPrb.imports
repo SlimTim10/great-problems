@@ -3,16 +3,16 @@ import qualified JSDOM.Types ( BlobPropertyBag(BlobPropertyBag) )
 import qualified JSDOM.URL as URL ( createObjectURL )
 import qualified JSDOM.Blob as Blob ( newBlob )
 import qualified Language.Javascript.JSaddle as JS
-    ( MonadJSM, ToJSVal(toJSVal), jss, obj, liftJSM )
+    ( liftJSM, ToJSVal(toJSVal), MonadJSM, jss, obj )
 import qualified Foreign.JavaScript.Utils as Utils
     ( bsToArrayBuffer )
 import qualified Reflex.Dom.Core as R
-    ( MonadHold(holdDyn),
-      PerformEvent(performEvent, Performable),
+    ( ffor,
+      MonadHold(holdDyn),
       Reflex(updated, Event, Dynamic),
-      DomBuilder,
+      PerformEvent(performEvent, Performable),
       PostBuild,
       elDynAttr,
       text,
-      ffor )
-import Global ( Text, Map, (^.), (=:) )
+      DomBuilder )
+import Global ( (^.), Map, Text, (=:) )

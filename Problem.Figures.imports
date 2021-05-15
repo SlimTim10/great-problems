@@ -1,25 +1,25 @@
 import qualified Control.Monad.Fix as Fix ( MonadFix )
 import qualified Data.Map as Map
-    ( Map, delete, elems, empty, insert, maxViewWithKey, singleton )
+    ( delete, elems, empty, insert, maxViewWithKey, singleton, Map )
 import qualified JSDOM.File ( getName )
 import qualified JSDOM.Types ( File )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Reflex.Dom.Core as R
     ( def,
-      MonadHold,
-      PerformEvent(performEvent, Performable),
-      Reflex(current, switch, updated, Event, Dynamic),
-      DomBuilder(inputElement),
-      InputElement(_inputElement_files),
-      PostBuild,
-      foldDyn,
-      InitialAttributes(initialAttributes),
+      ffor,
+      mergeWith,
       listWithKey,
+      foldDyn,
+      MonadHold,
+      Reflex(current, switch, updated, Event, Dynamic),
+      PerformEvent(performEvent, Performable),
+      PostBuild,
       button,
       dynText,
       el,
       elClass,
       text,
-      ffor,
-      mergeWith )
-import Global ( Text, Map, (&), (.~), (=:) )
+      DomBuilder(inputElement),
+      InitialAttributes(initialAttributes),
+      InputElement(_inputElement_files) )
+import Global ( (&), (.~), Map, Text, (=:) )
