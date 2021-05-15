@@ -21,13 +21,12 @@ createObjectURL
   => R.Dynamic t Text
   -> m (R.Event t Text)
 createObjectURL content = do
-  R.performEvent $ R.ffor (R.updated content) $ \c -> do
-    JS.liftJSM $ do
-      t <- Utils.bsToArrayBuffer $ T.encodeUtf8 c
-      o <- JS.obj ^. JS.jss ("type" :: Text) ("text/plain" :: Text)
-      options <- JSDOM.Types.BlobPropertyBag <$> JS.toJSVal o
-      blob <- Blob.newBlob [t] (Just options)
-      URL.createObjectURL blob
+  R.performEvent $ R.ffor (R.updated content) $ \c -> JS.liftJSM $ do
+    t <- Utils.bsToArrayBuffer $ T.encodeUtf8 c
+    o <- JS.obj ^. JS.jss ("type" :: Text) ("text/plain" :: Text)
+    options <- JSDOM.Types.BlobPropertyBag <$> JS.toJSVal o
+    blob <- Blob.newBlob [t] (Just options)
+    URL.createObjectURL blob
 
 widget
   :: forall t m.

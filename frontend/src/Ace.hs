@@ -326,12 +326,12 @@ aceWidget
        , PerformEvent t m
        , MonadJSM (Performable m)
        )
-    => AceConfig
-    -> AceDynConfig
-    -> Event t AceDynConfig
-    -> Text
-    -> Text
-    -> Event t Text
+    => AceConfig -- ^ Ace editor configurations
+    -> AceDynConfig -- ^ Ace editor theme
+    -> Event t AceDynConfig -- ^ Updatable Ace editor theme
+    -> Text -- ^ ID of desired container element
+    -> Text -- ^ Initial Ace editor contents
+    -> Event t Text -- ^ Updatable Ace editor contents
     -> m (Ace t)
 aceWidget ac adc adcUps containerId initContents contentsUps = do
     aceInstance <- startAce containerId ac

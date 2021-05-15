@@ -36,18 +36,14 @@ widget forcedValue = do
     ) R.blank
   let scriptLoaded = () <$ R.domEvent R.Load script
   let loading = R.el "p" $ R.text "Loading editor..." <&> const (R.constDyn "")
-  dt :: R.Dynamic t (R.Dynamic t Text) <- R.widgetHold loading $ R.ffor scriptLoaded $ const $ do
-    ace <- do
-      let
-        cfg = R.def
-          { Ace._aceConfigMode = Just "latex"
-          }
-      Ace.aceWidget cfg (Ace.AceDynConfig (Just Ace.AceTheme_Clouds)) R.never containerId "" forcedValue
-    return $ Ace.aceValue ace
+  dt :: R.Dynamic t (R.Dynamic t Text) <- R.widgetHold loading
+    $ R.ffor scriptLoaded
+    $ const $ do
+      ace <- do
+        let
+          cfg = R.def
+            { Ace._aceConfigMode = Just "latex"
+            }
+        Ace.aceWidget cfg (Ace.AceDynConfig (Just Ace.AceTheme_Clouds)) R.never containerId "" forcedValue
+      return $ Ace.aceValue ace
   R.holdDyn "" . R.switchDyn $ R.updated <$> dt
-
-  ------------------------------------------------------------------------
-  -- t <- R.textAreaElement $ R.def
-  --   & R.setValue .~ forcedValue
-  --   & R.initialAttributes .~ ("class" =: "h-full w-full border")
-  -- return $ R.value t
