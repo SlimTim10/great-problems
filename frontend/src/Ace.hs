@@ -39,8 +39,9 @@ module Ace where
 
 ------------------------------------------------------------------------------
 import           Control.Lens                       ((^.))
-import           Control.Monad                      (unless, void)
+import           Control.Monad                      (unless, void, join)
 import           Control.Monad.Trans
+import           Data.Bifunctor (bimap)
 import           Data.Default
 import           Data.Map                           (Map)
 import           Data.Maybe                         (fromMaybe)
@@ -57,7 +58,6 @@ import           Language.Javascript.JSaddle.Value  (ToJSVal (..))
 import           Reflex
 import           Reflex.Dom.Core                    hiding (Element,
                                                      fromJSString)
-import qualified Util
 ------------------------------------------------------------------------------
 
 
@@ -205,21 +205,19 @@ instance ToJSVal Annotation where
 startAce :: MonadJSM m => Text -> AceConfig -> m AceInstance
 startAce containerId ac = liftJSM $ do
   aceVal <- jsg ("ace" :: Text)
-  let [basePath, mode] = map (fromMaybe (T.pack "") . ($ ac))
-                              [_aceConfigBasePath, _aceConfigMode]
+  let
+    (basePath, mode) = join bimap (fromMaybe (T.pack "") . ($ ac))
+      (_aceConfigBasePath, _aceConfigMode)
   -- Set the base path if given
   unless (T.null basePath) $ do
     config <- aceVal ^. js ("config" :: Text)
     void $ config ^. js2 ("set" :: Text) ("basePath" :: Text) basePath
   -- Start and return an editing session
   editor <- aceVal ^. js1 ("edit" :: Text) containerId
+  let aceInst = AceInstance editor
   -- Set the mode if given
-  session <- editor ^. js ("session" :: Text)
-  void $ session ^. js1 ("setMode" :: Text) ("ace/mode/latex" :: Text)
-  void $ editor ^. js1 ("setTheme" :: Text) ("ace/theme/clouds" :: Text)
-  Util.consoleLog $ editor ^. js0 ("getTheme" :: Text)
-  Util.consoleLog $ session ^. js0 ("getMode" :: Text)
-  let aceInst  = AceInstance editor
+  unless (T.null mode) $ do
+    setModeAce mode aceInst
   setUseWrapMode (_aceConfigWordWrap ac) aceInst
   setShowPrintMargin (_aceConfigShowPrintMargin ac) aceInst
   return aceInst
@@ -243,7 +241,8 @@ setThemeAce (Just theme) (AceInstance ace) =
 setModeAce :: MonadJSM m => Text -> AceInstance -> m ()
 setModeAce mode (AceInstance ace) = liftJSM $ do
   session <- ace ^. js ("session" :: Text)
-  void $ session ^. js1 ("setMode" :: Text) mode
+  void $ session ^. js1 ("setMode" :: Text) modeStr
+  where modeStr = "ace/mode/" <> mode
 
 
 ------------------------------------------------------------------------------
@@ -333,6 +332,9 @@ aceWidget ac adc adcUps containerId initContents = do
     onChange <- setupValueListener aceInstance
     updatesDyn <- holdDyn initContents onChange
 
+    -- On update, set the value
+    -- setValueAce "test" aceInstance
+    
     let ace = Ace (constDyn $ pure aceInstance) updatesDyn
     setThemeAce (_aceDynConfigTheme adc) aceInstance
     void $ withAceInstance ace (setThemeAce . _aceDynConfigTheme <$> adcUps)

@@ -1,6 +1,7 @@
 import Control.Lens ( (^.) )
-import Control.Monad ( unless, void )
+import Control.Monad ( unless, void, join )
 import Control.Monad.Trans ( MonadIO(liftIO) )
+import Data.Bifunctor ( bimap )
 import Data.Default ( Default(..) )
 import Data.Map ( Map )
 import Data.Maybe ( fromMaybe )
@@ -23,4 +24,3 @@ import Reflex
       attachPromptlyDynWith,
       performEventAsync )
 import Reflex.Dom.Core ( DomBuilder )
-import qualified Util ( consoleLog )
