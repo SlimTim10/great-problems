@@ -24,8 +24,8 @@ project ./. ({ pkgs, ... }: {
     aceSrc = pkgs.fetchFromGitHub {
       owner = "SlimTim10";
       repo = "reflex-dom-ace";
-      rev = "5720581e5880685a6c48964aa2680d610e380f59";
-      sha256 = "10lrbxrnzr3yck4psxhcm5cccm61mj22qwk7vlcbyd7akvfzk631";
+      rev = "fa4d6bc6adcd9cf86f65be19e66a17517c35dfaa";
+      sha256 = "0w0w53izjqbjjwfsr681kb1nani7lqydpwwjk8hcy9nnl6qxa3cm";
     };
   in
   {
