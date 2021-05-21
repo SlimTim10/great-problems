@@ -1,4 +1,4 @@
-import Control.Lens ( (&), iforM_, (.~) )
+import Control.Lens ( (&), (.~), iforM_ )
 import Data.Default ( Default(def) )
 import Data.Map ( Map )
 import Data.Text ( Text )
@@ -11,7 +11,7 @@ import GHCJS.DOM.File ( getName )
 import GHCJS.DOM.Types ( File, IsBlob )
 import Language.Javascript.JSaddle.Monad ( MonadJSM, liftJSM )
 import Reflex
-    ( ffor, Reflex(Event), PerformEvent(Performable), TriggerEvent )
+    ( PerformEvent(Performable), Reflex(Event), TriggerEvent, ffor )
 import Reflex.Dom.Xhr
     ( performMkRequestsAsync,
       xhrRequest,

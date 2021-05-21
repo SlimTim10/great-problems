@@ -1,12 +1,12 @@
 import qualified Data.Maybe as Maybe ( fromJust, isNothing )
 import qualified Data.Text as T ( null )
 import qualified Reflex.Dom.Core as R
-    ( leftmost,
-      foldDyn,
-      MonadHold,
+    ( MonadHold,
       Reflex(updated, Dynamic),
+      DomBuilder,
       PostBuild,
-      DomBuilder )
+      foldDyn,
+      leftmost )
 import qualified Problem.Convert as Convert
     ( ConvertResponse(pdfContent, errorIcemaker) )
 import qualified Util ( buttonDynClass )

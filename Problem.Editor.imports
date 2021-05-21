@@ -1,28 +1,28 @@
-import qualified Ace
-    ( Ace(aceValue),
-      AceDynConfig(AceDynConfig),
-      AceConfig(_aceConfigMode),
-      AceTheme(AceTheme_Clouds),
-      aceWidget )
 import qualified Language.Javascript.JSaddle.Types as JS
     ( MonadJSM )
+import qualified Reflex.Dom.Ace as Ace
+    ( aceWidget,
+      Ace(aceValue),
+      AceConfig(_aceConfigMode),
+      AceDynConfig(AceDynConfig),
+      AceTheme(AceTheme_Clouds) )
 import qualified Reflex.Dom.Core as R
     ( def,
-      constDyn,
-      ffor,
-      switchDyn,
       MonadHold(holdDyn),
-      Reflex(updated, never, Dynamic, Event),
       PerformEvent(Performable),
+      EventName(Load),
+      Reflex(updated, never, Dynamic, Event),
+      DomBuilder,
+      elAttr',
       PostBuild,
       TriggerEvent,
+      constDyn,
+      switchDyn,
+      HasDomEvent(domEvent),
       blank,
       el,
       elAttr,
-      elAttr',
       text,
       widgetHold,
-      DomBuilder,
-      HasDomEvent(domEvent),
-      EventName(Load) )
-import Global ( (<&>), void, Text, (=:) )
+      ffor )
+import Global ( Text, (<&>), void, (=:) )

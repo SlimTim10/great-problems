@@ -3,18 +3,18 @@ import qualified JSDOM.FileReader as FileReader
     ( getResult, load, newFileReader, readAsText )
 import qualified JSDOM.EventM as EventM ( on )
 import qualified Language.Javascript.JSaddle as JS
-    ( liftJSM, FromJSVal(fromJSVal), ToJSVal(toJSVal), MonadJSM )
+    ( MonadJSM, FromJSVal(fromJSVal), ToJSVal(toJSVal), liftJSM )
 import qualified Reflex.Dom.Core as R
     ( def,
-      fmapMaybe,
-      Reflex(updated, Event),
       PerformEvent(performEvent_, Performable),
+      Reflex(updated, Event),
+      DomBuilder(inputElement),
+      InputElement(_inputElement_files),
       TriggerEvent,
+      InitialAttributes(initialAttributes),
       wrapDomEvent,
       elAttr,
       text,
-      DomBuilder(inputElement),
-      InitialAttributes(initialAttributes),
-      InputElement(_inputElement_files) )
+      fmapMaybe )
 import qualified Util ( headMay )
-import Global ( (&), (.~), (<=<), Text, (=:) )
+import Global ( Text, (&), (.~), (<=<), (=:) )

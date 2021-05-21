@@ -15,9 +15,20 @@
   }
 }:
 with obelisk;
-project ./. ({ ... }: {
+project ./. ({ pkgs, ... }: {
   android.applicationId = "systems.obsidian.obelisk.examples.minimal";
   android.displayName = "Obelisk Minimal Example";
   ios.bundleIdentifier = "systems.obsidian.obelisk.examples.minimal";
   ios.bundleName = "Obelisk Minimal Example";
+  overrides = self: super: let
+    aceSrc = pkgs.fetchFromGitHub {
+      owner = "SlimTim10";
+      repo = "reflex-dom-ace";
+      rev = "5720581e5880685a6c48964aa2680d610e380f59";
+      sha256 = "10lrbxrnzr3yck4psxhcm5cccm61mj22qwk7vlcbyd7akvfzk631";
+    };
+  in
+  {
+    reflex-dom-ace = self.callCabal2nix "reflex-dom-ace" aceSrc {};
+  };
 })

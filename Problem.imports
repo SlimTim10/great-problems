@@ -2,16 +2,16 @@ import qualified Control.Monad.Fix as Fix ( MonadFix )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Reflex.Dom.Core as R
     ( def,
-      splitDynPure,
       MonadHold,
-      Reflex(Dynamic),
       PerformEvent(Performable),
+      Reflex(Dynamic),
+      DomBuilder(inputElement),
+      HasJSContext,
       PostBuild,
       TriggerEvent,
+      splitDynPure,
       inputElementConfig_initialValue,
       elClass,
-      HasJSContext,
-      DomBuilder(inputElement),
       HasValue(value) )
 import qualified Problem.Options as Options ( widget )
 import qualified Problem.Figures as Figures ( widget )
@@ -22,4 +22,4 @@ import qualified Problem.PdfViewer as PdfViewer ( widget )
 import qualified Problem.UploadPrb as UploadPrb ( widget )
 import qualified Problem.DownloadPrb as DownloadPrb ( widget )
 import qualified Problem.ErrorsToggle as ErrorsToggle ( widget )
-import Global ( (&), (<&>), (.~), Text )
+import Global ( Text, (<&>), (&), (.~) )
