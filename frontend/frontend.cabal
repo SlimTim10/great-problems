@@ -17,7 +17,7 @@ library
                , reflex-dom-ace
   exposed-modules:
     Frontend
-  ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits -ddump-minimal-imports
+  ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits -ddump-minimal-imports -dumpdir imports
   default-extensions:
              DataKinds
              OverloadedStrings
