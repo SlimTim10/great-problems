@@ -20,15 +20,12 @@ project ./. ({ pkgs, ... }: {
   android.displayName = "Obelisk Minimal Example";
   ios.bundleIdentifier = "systems.obsidian.obelisk.examples.minimal";
   ios.bundleName = "Obelisk Minimal Example";
-  overrides = self: super: let
-    aceSrc = pkgs.fetchFromGitHub {
-      owner = "SlimTim10";
-      repo = "reflex-dom-ace";
-      rev = "fa4d6bc6adcd9cf86f65be19e66a17517c35dfaa";
-      sha256 = "0w0w53izjqbjjwfsr681kb1nani7lqydpwwjk8hcy9nnl6qxa3cm";
-    };
-  in
+  overrides = self: super:
   {
-    reflex-dom-ace = self.callCabal2nix "reflex-dom-ace" aceSrc {};
+    reflex-dom-ace = self.callHackageDirect {
+      pkg = "reflex-dom-ace";
+      ver = "0.3.0.1";
+      sha256 = "0kbd3kqmsx4115a39a984m62kgc9s96586c5yx80nijman8j0zlw";
+    } {};
   };
 })
