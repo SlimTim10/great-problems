@@ -2,3 +2,39 @@
 
 ** Running
 To run locally, install [[https://github.com/obsidiansystems/obelisk][Obelisk]], go into the project directory, and run ~ob run~. This will compile the examples using ghc and run them locally on http://localhost:8000/.
+
+** Development
+
+*** Explicit import style
+All imports should be qualified except for Global. This helps with code clarity; it is easy to tell where a variable/function comes from (without the use of an IDE). It also allows for local variables and functions to be given meaningful yet short names.
+
+Extra import information is outputted to ~imports/~ (ghc-options: ~-ddump-minimal-imports -dumpdir imports~).
+
+*** Reflex variable naming
+Reflex has three main data types: Event, Behavior, and Dynamic. Instead of giving variables of these types special prefixes (e.g., ~evProblemText~) or suffixes (e.g., ~problemTextE~), their type should be clear from context or explicit type signatures (e.g., ~problemText :: Event t Text~).
+
+*** Adding dependencies
+Add dependencies from Hackage or GitHub by updating default.nix, as per the [[https://github.com/obsidiansystems/obelisk/blob/master/FAQ.md#how-do-i-add-or-override-haskell-dependencies-in-the-package-set][Obelisk guide]]:
+
+#+BEGIN_SRC nix
+# ...
+project ./. ({ pkgs, ... }: {
+# ...
+  overrides = self: super: let
+    aesonSrc = pkgs.fetchFromGitHub {
+      owner = "obsidiansystems";
+      repo = "aeson-gadt-th";
+      rev = "ed573c2cccf54d72aa6279026752a3fecf9c1383";
+      sha256 = "08q6rnz7w9pn76jkrafig6f50yd0f77z48rk2z5iyyl2jbhcbhx3";
+    };
+  in
+  {
+    aeson = self.callCabal2nix "aeson" aesonSrc {};
+    waargonaut = self.callHackageDirect {
+      pkg = "waargonaut";
+      ver = "0.8.0.1";
+      sha256 = "1zv28np3k3hg378vqm89v802xr0g8cwk7gy3mr77xrzy5jbgpa39";
+    } {};
+  };
+# ...
+#+END_SRC
