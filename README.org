@@ -14,6 +14,8 @@ Extra import information is outputted to ~imports/~ (ghc-options: ~-ddump-minima
 Reflex has three main data types: Event, Behavior, and Dynamic. Instead of giving variables of these types special prefixes (e.g., ~evProblemText~) or suffixes (e.g., ~problemTextE~), their type should be clear from context or explicit type signatures (e.g., ~problemText :: Event t Text~).
 
 *** Adding dependencies
+Add the dependency to the appropriate .cabal file (frontend.cabal or backend.cabal) in ~build-depends~. If the dependency is not in Obelisk's curated list, proceed to the following instructions.
+
 Add dependencies from Hackage or GitHub by updating default.nix, as per the [[https://github.com/obsidiansystems/obelisk/blob/master/FAQ.md#how-do-i-add-or-override-haskell-dependencies-in-the-package-set][Obelisk guide]]:
 
 #+BEGIN_SRC nix
@@ -38,3 +40,7 @@ project ./. ({ pkgs, ... }: {
   };
 # ...
 #+END_SRC
+
+Let `ob run` fail with the expected `sha256` and update the value accordingly.
+
+NOTE: It may be necessary to run `nix-collect-garbage` to clear the cache before `ob run`.
