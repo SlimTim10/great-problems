@@ -24,8 +24,8 @@ project ./. ({ pkgs, ... }: {
   {
     reflex-dom-ace = self.callHackageDirect {
       pkg = "reflex-dom-ace";
-      ver = "0.3.0.1";
-      sha256 = "0kbd3kqmsx4115a39a984m62kgc9s96586c5yx80nijman8j0zlw";
+      ver = "0.3.0.3";
+      sha256 = "01kff9cn08hyw1k5bnwvc8x406bclpxmkcb61yss3xxrd0ffnpzm";
     } {};
   };
 })
