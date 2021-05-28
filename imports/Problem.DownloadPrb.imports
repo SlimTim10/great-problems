@@ -7,12 +7,12 @@ import qualified Language.Javascript.JSaddle as JS
 import qualified Foreign.JavaScript.Utils as Utils
     ( bsToArrayBuffer )
 import qualified Reflex.Dom.Core as R
-    ( MonadHold(holdDyn),
+    ( DomBuilder,
+      MonadHold(holdDyn),
       PerformEvent(performEvent, Performable),
       Reflex(updated, Event, Dynamic),
-      DomBuilder,
-      PostBuild,
+      ffor,
       elDynAttr,
       text,
-      ffor )
+      PostBuild )
 import Global ( Text, Map, (^.), (=:) )

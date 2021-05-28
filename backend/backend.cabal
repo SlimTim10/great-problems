@@ -12,9 +12,16 @@ library
                , frontend
                , obelisk-backend
                , obelisk-route
+               , postgresql-simple
+               , postgresql-libpq
+               , time-compat
+               , dotenv
   exposed-modules:
     Backend
   ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits
+  default-extensions:
+             OverloadedStrings
+             ScopedTypeVariables
 
 executable backend
   main-is: main.hs

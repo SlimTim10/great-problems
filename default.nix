@@ -20,12 +20,19 @@ project ./. ({ pkgs, ... }: {
   android.displayName = "Obelisk Minimal Example";
   ios.bundleIdentifier = "systems.obsidian.obelisk.examples.minimal";
   ios.bundleName = "Obelisk Minimal Example";
-  overrides = self: super:
+  overrides = self: super: rec
   {
     reflex-dom-ace = self.callHackageDirect {
       pkg = "reflex-dom-ace";
       ver = "0.3.0.3";
       sha256 = "01kff9cn08hyw1k5bnwvc8x406bclpxmkcb61yss3xxrd0ffnpzm";
     } {};
+
+    dotenv = pkgs.haskell.lib.dontCheck (self.callHackageDirect {
+      pkg = "dotenv";
+      ver = "0.8.0.7";
+      sha256 = "0rhawjglimx3xg4s78h99n2gg3ydjbinbx30gyan1vfzvhi1akyl";
+    } {});
+
   };
 })

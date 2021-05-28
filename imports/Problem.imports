@@ -1,17 +1,17 @@
 import qualified Control.Monad.Fix as Fix ( MonadFix )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Reflex.Dom.Core as R
-    ( def,
+    ( DomBuilder(inputElement),
+      def,
       MonadHold,
       PerformEvent(Performable),
       Reflex(Dynamic),
-      DomBuilder(inputElement),
       HasJSContext,
-      PostBuild,
-      TriggerEvent,
       splitDynPure,
       inputElementConfig_initialValue,
       elClass,
+      PostBuild,
+      TriggerEvent,
       HasValue(value) )
 import qualified Problem.Options as Options ( widget )
 import qualified Problem.Figures as Figures ( widget )

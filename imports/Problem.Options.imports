@@ -1,17 +1,17 @@
 import qualified Control.Monad.Fix as Fix ( MonadFix )
 import qualified Data.Map as Map ( fromList )
 import qualified Reflex.Dom.Core as R
-    ( def,
+    ( DomBuilder(inputElement),
+      def,
       MonadHold(holdDyn),
       Reflex(updated, Dynamic),
-      DomBuilder(inputElement),
       InputElement(_inputElement_checked),
-      PostBuild,
       constDyn,
-      InitialAttributes(initialAttributes),
       el,
       elClass,
       text,
       dropdown,
+      PostBuild,
+      InitialAttributes(initialAttributes),
       HasValue(value) )
 import Global ( Text, Map, (&), (.~), (=:) )

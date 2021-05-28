@@ -2,6 +2,7 @@
 module Global
   ( Text
   , Map
+  , module Data.Maybe
   , module Data.Bool
   , module Data.Traversable
   , module Data.Functor
@@ -13,6 +14,7 @@ module Global
 
 import Data.Text (Text)
 import Data.Map (Map)
+import Data.Maybe (fromMaybe)
 import Data.Bool (bool)
 import Data.Traversable (for)
 import Data.Functor ((<&>))

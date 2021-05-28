@@ -5,21 +5,21 @@ import qualified JSDOM.File ( getName )
 import qualified JSDOM.Types ( File )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Reflex.Dom.Core as R
-    ( def,
+    ( DomBuilder(inputElement),
+      def,
       MonadHold,
       PerformEvent(performEvent, Performable),
       Reflex(current, switch, updated, Event, Dynamic),
-      DomBuilder(inputElement),
       InputElement(_inputElement_files),
-      PostBuild,
-      foldDyn,
-      InitialAttributes(initialAttributes),
+      ffor,
+      mergeWith,
       listWithKey,
+      foldDyn,
       button,
       dynText,
       el,
       elClass,
       text,
-      ffor,
-      mergeWith )
+      PostBuild,
+      InitialAttributes(initialAttributes) )
 import Global ( Text, Map, (&), (.~), (=:) )
