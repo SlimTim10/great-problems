@@ -2,11 +2,11 @@ import qualified Language.Javascript.JSaddle as JS
     ( MonadJSM, ToJSVal, js1, jsg, liftJSM )
 import qualified Data.Text as T ( pack )
 import qualified Reflex.Dom.Core as R
-    ( DomBuilder,
-      EventName(Click),
-      Reflex(Event, Dynamic),
-      elDynClass',
+    ( elDynClass',
       text,
+      Reflex(Event, Dynamic),
       PostBuild,
-      HasDomEvent(domEvent) )
+      DomBuilder,
+      HasDomEvent(domEvent),
+      EventName(Click) )
 import Global ( Text, void, (^.) )

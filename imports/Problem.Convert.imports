@@ -12,12 +12,7 @@ import qualified Data.Aeson as JSON
 import qualified JSDOM.Types ( File )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Reflex.Dom.Core as R
-    ( DomBuilder,
-      MonadHold(holdDyn),
-      PerformEvent(performEvent, Performable),
-      Reflex(updated, current, Event, Dynamic),
-      HasJSContext,
-      ffor,
+    ( ffor,
       tag,
       zipDyn,
       zipDynWith,
@@ -25,7 +20,12 @@ import qualified Reflex.Dom.Core as R
       button,
       decodeText,
       xhrResponse_responseText,
+      MonadHold(holdDyn),
+      Reflex(updated, current, Event, Dynamic),
+      PerformEvent(performEvent, Performable),
       TriggerEvent,
+      HasJSContext,
+      DomBuilder,
       XhrResponse )
 import qualified Xhr.FormData as R' ( FormValue(..), postForms )
 import qualified Problem.Options as Options

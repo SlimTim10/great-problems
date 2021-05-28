@@ -9,6 +9,7 @@ module Global
   , module Control.Monad
   , module Control.Lens
   , MonadFix
+  , module Data.String.Conversions
   , module Reflex.Dom.Core
   ) where
 
@@ -21,5 +22,6 @@ import Data.Functor ((<&>))
 import Control.Monad (void, (<=<), forM_)
 import Control.Lens ((^.), iforM_)
 import Control.Monad.Fix (MonadFix)
+import Data.String.Conversions (cs)
 
 import Reflex.Dom.Core ((&), (.~), (=:))

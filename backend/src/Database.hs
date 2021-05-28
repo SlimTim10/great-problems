@@ -1,11 +1,17 @@
 module Database where
 
+import Prelude hiding (drop)
+
 import qualified Database.PostgreSQL.Simple as SQL
 import qualified System.Environment as Env
 import qualified Configuration.Dotenv as Dotenv
 import qualified Text.Read
+
+import qualified Database.Schema
+import qualified Database.Seeds
 import Global
 
+-- | Connect to the database using the variables in db.env, or default values.
 connect :: IO SQL.Connection
 connect = do
   let configPath = "config/backend/db.env"
@@ -26,6 +32,23 @@ connect = do
     , SQL.connectPassword = password
     , SQL.connectDatabase = name
     }
+
+-- | Load the schema and the seeds.
+setup :: IO SQL.Connection
+setup = do
+  conn <- connect
+  Database.Schema.load conn
+  Database.Seeds.load conn
+  return conn
+
+-- | Reset the schema and load the seeds.
+reset :: IO SQL.Connection
+reset = do
+  conn <- connect
+  Database.Schema.unload conn
+  Database.Schema.load conn
+  Database.Seeds.load conn
+  return conn
 
 -- | Look up an environment variable, given a default to fall back to.
 lookupSetting :: Read a => String -> a -> IO a

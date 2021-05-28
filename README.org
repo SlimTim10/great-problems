@@ -52,15 +52,25 @@ $ sudo -u postgres psql
 postgres=# create database great_problems;
 postgres=# create user myuser with encrypted password 'mypass';
 postgres=# grant all privileges on database great_problems to myuser;
-postgres=# \q
+postgres=# \c great_problems
+great_problems=# CREATE EXTENSION citext;
+great_problems=# \q
 $ ob run
 #+END_SRC
 
-Running the app (~ob run~) should create the schema in the database.
+Edit the environment variables in ~config/backend/db.env~ with the database connection settings. Running the app (~ob run~) should load the schema and seeds into the database.
 
 Environment variables and their defaults:
-- DB_HOST=localhost
-- DB_PORT=5432
-- DB_USER=root
-- DB_PASSWORD=root
-- DB_NAME=great_problems
+#+BEGIN_SRC
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=root
+DB_PASSWORD=root
+DB_NAME=great_problems
+#+END_SRC
+
+To reset the database, use the repl:
+#+BEGIN_SRC
+$ ob repl
+*Backend Obelisk.Run Frontend Backend> Database.reset
+#+END_SRC

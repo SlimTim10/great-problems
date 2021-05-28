@@ -1,0 +1,12 @@
+import Data.Text ( Text )
+import Data.Functor.Identity ( Identity )
+import Obelisk.Route
+    ( (:/),
+      mkFullRouteEncoder,
+      unitEncoder,
+      Encoder,
+      FullRoute(FullRoute_Backend),
+      PageName,
+      R,
+      SegmentResult(PathEnd, PathSegment) )
+import Obelisk.Route.TH ( deriveRouteComponent )
