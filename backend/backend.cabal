@@ -17,6 +17,7 @@ library
                , time-compat
                , dotenv
                , string-conversions
+               , raw-strings-qq
   exposed-modules:
     Backend
   ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits -ddump-minimal-imports -dumpdir imports
