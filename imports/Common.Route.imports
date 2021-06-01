@@ -3,6 +3,7 @@ import Data.Functor.Identity ( Identity )
 import Obelisk.Route
     ( (:/),
       mkFullRouteEncoder,
+      pathComponentEncoder,
       unitEncoder,
       Encoder,
       FullRoute(FullRoute_Backend),

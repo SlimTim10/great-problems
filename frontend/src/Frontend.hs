@@ -1,8 +1,11 @@
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TypeFamilies #-}
 module Frontend where
 
 import Obelisk.Frontend
 -- import Obelisk.Configs
 import Obelisk.Route
+import Obelisk.Route.Frontend
 import Obelisk.Generated.Static
 
 import Reflex.Dom.Core
@@ -20,8 +23,12 @@ frontend = Frontend
       elAttr "meta" ("name" =: "viewport" <> "content" =: "width=device-width, initial-scale=1.0") blank
       elAttr "link" ("href" =: "https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" <> "type" =: "text/css" <> "rel" =: "stylesheet") blank
       elAttr "link" ("href" =: static @"main.css" <> "type" =: "text/css" <> "rel" =: "stylesheet") blank
-  , _frontend_body = do
-      elClass "div" "h-screen flex flex-col" $ do
-        elClass "p" "text-2xl" $ text "Problem to Tex"
-        prerender_ blank $ Problem.widget
+  , _frontend_body = subRoute_ $ \case
+      FrontendRoute_Main -> do
+        el "p" $ text "Main page"
+        routeLink (FrontendRoute_New :/ ()) $ text "New problem"
+      FrontendRoute_New -> do
+        elClass "div" "h-screen flex flex-col" $ do
+          elClass "p" "text-2xl" $ text "Problem to Tex"
+          prerender_ blank $ Problem.widget
   }

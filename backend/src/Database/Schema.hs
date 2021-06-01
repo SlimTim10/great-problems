@@ -31,8 +31,7 @@ load conn = void $ SQL.execute_ conn [SqlQQ.sql|
     author_id BIGINT NOT NULL,
     topic_id BIGINT NOT NULL,
     FOREIGN KEY(author_id) REFERENCES users(id),
-    FOREIGN KEY(topic_id) REFERENCES topics(id),
-    UNIQUE(title, topic_id)
+    FOREIGN KEY(topic_id) REFERENCES topics(id)
   );
 
   CREATE TABLE IF NOT EXISTS figures (
