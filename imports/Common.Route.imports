@@ -1,8 +1,8 @@
 import Data.Text ( Text )
 import Data.Functor.Identity ( Identity )
-import Obelisk.Route
-    ( (:/),
-      mkFullRouteEncoder,
+import Obelisk.Route ( pattern (:/) )
+import qualified Obelisk.Route as O
+    ( mkFullRouteEncoder,
       pathComponentEncoder,
       unitEncoder,
       Encoder,
@@ -10,4 +10,4 @@ import Obelisk.Route
       PageName,
       R,
       SegmentResult(PathEnd, PathSegment) )
-import Obelisk.Route.TH ( deriveRouteComponent )
+import qualified Obelisk.Route.TH as O ( deriveRouteComponent )

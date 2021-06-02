@@ -1,17 +1,21 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE PatternSynonyms #-}
 module Backend where
 
-import Common.Route
-import Obelisk.Route
-import Obelisk.Backend
-import Control.Monad.IO.Class (liftIO)
+import Obelisk.Route ( pattern (:/) )
+import qualified Common.Route as Route
+import qualified Obelisk.Backend as O
+import qualified Control.Monad.IO.Class as IO
+import qualified Snap.Core as Snap
+import qualified Data.Aeson as JSON
 
 import qualified Database
+import qualified Database.Queries as Queries
 
-backend :: Backend BackendRoute FrontendRoute
-backend = Backend
-  { _backend_run = \serve -> do
+backend :: O.Backend Route.BackendRoute Route.FrontendRoute
+backend = O.Backend
+  { O._backend_run = \serve -> do
       -- Connect to the database (for production)
       -- conn <- Database.connect
       
@@ -20,10 +24,21 @@ backend = Backend
       conn <- Database.setup
 
       serve $ \case
-        BackendRoute_Missing :/ () -> return ()
-        BackendRoute_Api :/ apiRoute -> case apiRoute of
-          Api_Problems :/ () -> do
-            liftIO $ putStrLn "api/problems"
-            return ()
-  , _backend_routeEncoder = fullRouteEncoder
+        Route.BackendRoute_Missing :/ () -> return ()
+        Route.BackendRoute_Api :/ apiRoute -> case apiRoute of
+          Route.Api_Problems :/ () -> do
+            writeJSON =<< IO.liftIO (Queries.getProblems conn)
+  , O._backend_routeEncoder = Route.fullRouteEncoder
   }
+
+-- | Set MIME to 'application/json' and write given object into
+-- 'Response' body.
+writeJSON :: (Snap.MonadSnap m, JSON.ToJSON a) => a -> m ()
+writeJSON a = do
+  jsonResponse
+  Snap.writeLBS . JSON.encode $ a
+
+-- | Mark response as 'application/json'
+jsonResponse :: Snap.MonadSnap m => m ()
+jsonResponse = Snap.modifyResponse $
+  Snap.setHeader "Content-Type" "application/json"

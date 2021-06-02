@@ -9,6 +9,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE PatternSynonyms #-}
 module Common.Route where
 
 {- -- You will probably want these imports for composing Encoders.
@@ -17,15 +18,15 @@ import Control.Category
 -}
 
 import Data.Text (Text)
-import Data.Functor.Identity
-
-import Obelisk.Route
-import Obelisk.Route.TH
+import Data.Functor.Identity (Identity)
+import Obelisk.Route ( pattern (:/) )
+import qualified Obelisk.Route as O
+import qualified Obelisk.Route.TH as O
 
 data BackendRoute :: * -> * where
   -- | Used to handle unparseable routes.
   BackendRoute_Missing :: BackendRoute ()
-  BackendRoute_Api :: BackendRoute (R Api)
+  BackendRoute_Api :: BackendRoute (O.R Api)
 
 data Api :: * -> * where
   Api_Problems :: Api ()
@@ -35,20 +36,20 @@ data FrontendRoute :: * -> * where
   FrontendRoute_New :: FrontendRoute ()
 
 fullRouteEncoder
-  :: Encoder (Either Text) Identity (R (FullRoute BackendRoute FrontendRoute)) PageName
-fullRouteEncoder = mkFullRouteEncoder
-  (FullRoute_Backend BackendRoute_Missing :/ ())
+  :: O.Encoder (Either Text) Identity (O.R (O.FullRoute BackendRoute FrontendRoute)) O.PageName
+fullRouteEncoder = O.mkFullRouteEncoder
+  (O.FullRoute_Backend BackendRoute_Missing :/ ())
   (\case
-      BackendRoute_Missing -> PathSegment "missing" $ unitEncoder mempty
-      BackendRoute_Api -> PathSegment "api" $ pathComponentEncoder $ \case
-        Api_Problems -> PathSegment "problems" $ unitEncoder mempty)
+      BackendRoute_Missing -> O.PathSegment "missing" $ O.unitEncoder mempty
+      BackendRoute_Api -> O.PathSegment "api" $ O.pathComponentEncoder $ \case
+        Api_Problems -> O.PathSegment "problems" $ O.unitEncoder mempty)
   (\case
-      FrontendRoute_Main -> PathEnd $ unitEncoder mempty
-      FrontendRoute_New -> PathSegment "new" $ unitEncoder mempty)
+      FrontendRoute_Main -> O.PathEnd $ O.unitEncoder mempty
+      FrontendRoute_New -> O.PathSegment "new" $ O.unitEncoder mempty)
 
-concat <$> mapM deriveRouteComponent
+concat <$> mapM O.deriveRouteComponent
   [ ''BackendRoute
   , ''FrontendRoute
   ]
 
-deriveRouteComponent ''Api
+O.deriveRouteComponent ''Api
