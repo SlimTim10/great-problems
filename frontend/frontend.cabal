@@ -27,6 +27,7 @@ library
              FlexibleContexts
              PartialTypeSignatures
              DeriveGeneric
+             LambdaCase
 
 executable frontend
   main-is: main.hs

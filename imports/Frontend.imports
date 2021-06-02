@@ -1,8 +1,11 @@
-import Obelisk.Frontend ( Frontend(..) )
-import Obelisk.Route ( (:/), R )
-import Obelisk.Route.Frontend ( routeLink, subRoute_ )
-import Obelisk.Generated.Static ( static )
-import Reflex.Dom.Core
-    ( (=:), prerender_, blank, el, elAttr, elClass, text )
-import Common.Route ( FrontendRoute(..) )
+import Obelisk.Route ( pattern (:/) )
+import qualified Obelisk.Frontend as Ob ( Frontend(..) )
+import qualified Obelisk.Route.Frontend as Ob
+    ( R, routeLink, subRoute_ )
+import qualified Obelisk.Generated.Static as Ob ( static )
+import qualified Reflex.Dom.Core as R
+    ( prerender_, blank, el, elAttr, elClass, text )
+import qualified Common.Route as Route ( FrontendRoute(..) )
 import qualified Problem ( widget )
+import qualified Home ( widget )
+import Global ( (=:) )

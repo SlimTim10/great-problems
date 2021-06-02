@@ -3,7 +3,6 @@ module Problem
   ) where
 
 import qualified Control.Monad.Fix as Fix
-
 import qualified Language.Javascript.JSaddle as JS
 import qualified Reflex.Dom.Core as R
 

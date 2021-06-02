@@ -4,18 +4,18 @@
 module Backend where
 
 import Obelisk.Route ( pattern (:/) )
-import qualified Common.Route as Route
-import qualified Obelisk.Backend as O
+import qualified Obelisk.Backend as Ob
 import qualified Control.Monad.IO.Class as IO
 import qualified Snap.Core as Snap
 import qualified Data.Aeson as JSON
 
+import qualified Common.Route as Route
 import qualified Database
 import qualified Database.Queries as Queries
 
-backend :: O.Backend Route.BackendRoute Route.FrontendRoute
-backend = O.Backend
-  { O._backend_run = \serve -> do
+backend :: Ob.Backend Route.BackendRoute Route.FrontendRoute
+backend = Ob.Backend
+  { Ob._backend_run = \serve -> do
       -- Connect to the database (for production)
       -- conn <- Database.connect
       
@@ -28,7 +28,7 @@ backend = O.Backend
         Route.BackendRoute_Api :/ apiRoute -> case apiRoute of
           Route.Api_Problems :/ () -> do
             writeJSON =<< IO.liftIO (Queries.getProblems conn)
-  , O._backend_routeEncoder = Route.fullRouteEncoder
+  , Ob._backend_routeEncoder = Route.fullRouteEncoder
   }
 
 -- | Set MIME to 'application/json' and write given object into
