@@ -41,9 +41,9 @@ project ./. ({ pkgs, ... }: {
 # ...
 #+END_SRC
 
-Let `ob run` fail with the expected `sha256` and update the value accordingly.
+Let ~ob run~ fail with the expected ~sha256~ and update the value accordingly.
 
-NOTE: It may be necessary to run `nix-collect-garbage` to clear the cache before `ob run`.
+NOTE: It may be necessary to run ~nix-collect-garbage~ to clear the cache before ~ob run~.
 
 *** Setting up the database (Ubuntu 18.04)
 #+BEGIN_SRC
