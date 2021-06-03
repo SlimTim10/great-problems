@@ -1,5 +1,7 @@
 import qualified Control.Monad.Fix as Fix ( MonadFix )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
+import qualified Obelisk.Route.Frontend as Ob
+    ( R, routeLink, RouteToUrl, SetRoute )
 import qualified Reflex.Dom.Core as R
     ( constDyn,
       ffor,
@@ -8,18 +10,21 @@ import qualified Reflex.Dom.Core as R
       blank,
       dyn,
       dynText,
-      el,
       elClass,
       elDynAttr,
       text,
       getAndDecode,
       MonadHold(holdDyn),
+      MonadSample(..),
       Reflex(current, Event, Dynamic),
       PerformEvent(Performable),
       PostBuild(..),
       TriggerEvent,
       HasJSContext,
-      DomBuilder )
-import qualified Common.Api as Api
-    ( Problem(thumnail_url, description, title) )
-import Global ( Text, fromMaybe, void, (=:) )
+      DomBuilder,
+      Prerender )
+import qualified Common.Route as Route
+    ( FrontendRoute(FrontendRoute_ViewProblem) )
+import qualified Common.Api.Problem as Problem
+    ( Problem(id, thumnail_url, description, title) )
+import Global ( Text, (:/), void, fromMaybe, (=:) )

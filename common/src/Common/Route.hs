@@ -25,8 +25,6 @@ import Obelisk.Route ( pattern (:/) )
 import qualified Obelisk.Route as Ob
 import qualified Obelisk.Route.TH as Ob
 
-import qualified Common.Api as Api
-
 data BackendRoute :: * -> * where
   -- | Used to handle unparseable routes.
   BackendRoute_Missing :: BackendRoute ()

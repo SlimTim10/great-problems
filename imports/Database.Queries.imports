@@ -1,3 +1,3 @@
 import qualified Database.PostgreSQL.Simple as SQL
     ( query_, Connection )
-import qualified Common.Api as Api ( Problem )
+import qualified Common.Api.Problem as Problem ( Problem )

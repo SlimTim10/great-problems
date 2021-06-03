@@ -4,7 +4,7 @@ module Database.Queries
 
 import qualified Database.PostgreSQL.Simple as SQL
 
-import qualified Common.Api as Api
+import qualified Common.Api.Problem as Problem
 
-getProblems :: SQL.Connection -> IO ([Api.Problem])
+getProblems :: SQL.Connection -> IO ([Problem.Problem])
 getProblems conn = SQL.query_ conn "SELECT * FROM problems"

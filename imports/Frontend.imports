@@ -1,4 +1,3 @@
-import Obelisk.Route ( pattern (:/) )
 import qualified Obelisk.Frontend as Ob ( Frontend(..) )
 import qualified Obelisk.Route.Frontend as Ob
     ( R, routeLink, subRoute_, Routed(askRoute) )
@@ -8,4 +7,4 @@ import qualified Reflex.Dom.Core as R
 import qualified Common.Route as Route ( FrontendRoute(..) )
 import qualified Problem ( widget )
 import qualified Home ( widget )
-import Global ( (=:) )
+import Global ( (:/), (=:) )

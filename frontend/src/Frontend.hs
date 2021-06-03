@@ -1,9 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE PatternSynonyms #-}
 module Frontend where
 
-import Obelisk.Route ( pattern (:/) )
 import qualified Obelisk.Frontend as Ob
 import qualified Obelisk.Route.Frontend as Ob
 import qualified Obelisk.Generated.Static as Ob
@@ -25,7 +23,8 @@ frontend = Ob.Frontend
   , Ob._frontend_body = Ob.subRoute_ $ \case
       Route.FrontendRoute_Main -> do
         R.el "p" $ R.text "Main page"
-        Ob.routeLink (Route.FrontendRoute_New :/ ()) $ R.text "New problem"
+        Ob.routeLink (Route.FrontendRoute_New :/ ()) $ do
+          R.elClass "p" "border-2 border-green-500 w-max" $ R.text "New problem"
         R.prerender_ R.blank $ Home.widget
       Route.FrontendRoute_New -> do
         R.elClass "div" "h-screen flex flex-col" $ do

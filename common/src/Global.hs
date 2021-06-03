@@ -1,3 +1,5 @@
+{-# LANGUAGE PatternSynonyms #-}
+
 -- | A local Prelude, meant to be imported unqualified.
 module Global
   ( Text
@@ -10,6 +12,7 @@ module Global
   , module Control.Lens
   , MonadFix
   , module Data.String.Conversions
+  , module Obelisk.Route
   , module Reflex.Dom.Core
   ) where
 
@@ -24,4 +27,5 @@ import Control.Lens ((^.), iforM_)
 import Control.Monad.Fix (MonadFix)
 import Data.String.Conversions (cs)
 
+import Obelisk.Route ( pattern (:/) )
 import Reflex.Dom.Core ((&), (.~), (=:))

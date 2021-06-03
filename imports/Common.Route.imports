@@ -18,4 +18,3 @@ import qualified Obelisk.Route as Ob
       R,
       SegmentResult(PathEnd, PathSegment) )
 import qualified Obelisk.Route.TH as Ob ( deriveRouteComponent )
-import qualified Common.Api as Api ()

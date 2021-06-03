@@ -1,5 +1,0 @@
-import qualified Database.PostgreSQL.Simple as SQL
-    ( FromRow, ToRow )
-import qualified Data.Aeson as JSON ( ToJSON, FromJSON )
-import GHC.Generics ( Generic )
-import Global ( Text )
