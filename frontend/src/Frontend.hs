@@ -31,4 +31,8 @@ frontend = Ob.Frontend
         R.elClass "div" "h-screen flex flex-col" $ do
           R.elClass "p" "text-2xl" $ R.text "Problem to Tex"
           R.prerender_ R.blank $ Problem.widget
+      Route.FrontendRoute_ViewProblem -> do
+        problemId <- Ob.askRoute
+        R.el "p" $ R.text "Single problem"
+        R.el "p" $ R.display problemId
   }

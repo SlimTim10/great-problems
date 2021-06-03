@@ -22,4 +22,4 @@ import qualified Reflex.Dom.Core as R
       DomBuilder )
 import qualified Common.Api as Api
     ( Problem(thumnail_url, description, title) )
-import Global ( Text, void, fromMaybe, (=:) )
+import Global ( Text, fromMaybe, void, (=:) )

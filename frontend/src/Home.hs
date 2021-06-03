@@ -34,7 +34,8 @@ problemItem
   :: ( R.DomBuilder t m
      , R.PostBuild t m
      )
-  =>  R.Dynamic t Api.Problem -> m ()
+  =>  R.Dynamic t Api.Problem
+  -> m ()
 problemItem problem = R.elClass "div" "border" $ do
   R.elClass "p" "" $ do
     R.dynText $ "Title: " <> (Api.title <$> problem)
@@ -45,3 +46,4 @@ problemItem problem = R.elClass "div" "border" $ do
   R.elDynAttr "img"
     (("src" =:) <$> Api.thumnail_url <$> problem)
     R.blank
+  -- Ob.routeLink (Route.FrontendRoute_Problem :/ problemId)

@@ -1,10 +1,10 @@
 import Obelisk.Route ( pattern (:/) )
 import qualified Obelisk.Frontend as Ob ( Frontend(..) )
 import qualified Obelisk.Route.Frontend as Ob
-    ( R, routeLink, subRoute_ )
+    ( R, routeLink, subRoute_, Routed(askRoute) )
 import qualified Obelisk.Generated.Static as Ob ( static )
 import qualified Reflex.Dom.Core as R
-    ( prerender_, blank, el, elAttr, elClass, text )
+    ( prerender_, blank, display, el, elAttr, elClass, text )
 import qualified Common.Route as Route ( FrontendRoute(..) )
 import qualified Problem ( widget )
 import qualified Home ( widget )

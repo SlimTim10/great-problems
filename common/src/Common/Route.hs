@@ -17,16 +17,20 @@ import Prelude hiding (id, (.))
 import Control.Category
 -}
 
+import Control.Category ((>>>))
 import Data.Text (Text)
+import qualified Data.Text as T
 import Data.Functor.Identity (Identity)
 import Obelisk.Route ( pattern (:/) )
-import qualified Obelisk.Route as O
-import qualified Obelisk.Route.TH as O
+import qualified Obelisk.Route as Ob
+import qualified Obelisk.Route.TH as Ob
+
+import qualified Common.Api as Api
 
 data BackendRoute :: * -> * where
   -- | Used to handle unparseable routes.
   BackendRoute_Missing :: BackendRoute ()
-  BackendRoute_Api :: BackendRoute (O.R Api)
+  BackendRoute_Api :: BackendRoute (Ob.R Api)
 
 data Api :: * -> * where
   Api_Problems :: Api ()
@@ -34,22 +38,34 @@ data Api :: * -> * where
 data FrontendRoute :: * -> * where
   FrontendRoute_Main :: FrontendRoute ()
   FrontendRoute_New :: FrontendRoute ()
+  FrontendRoute_ViewProblem :: FrontendRoute Integer
+
+idPathSegmentEncoder
+  :: Ob.Encoder (Either Text) (Either Text) Integer Ob.PageName
+idPathSegmentEncoder = idEncoder >>> Ob.singlePathSegmentEncoder
+  where
+    idEncoder = Ob.unsafeMkEncoder Ob.EncoderImpl
+      { Ob._encoderImpl_encode = T.pack . show
+      , Ob._encoderImpl_decode = Ob.tryDecode Ob.unsafeTshowEncoder
+      }
 
 fullRouteEncoder
-  :: O.Encoder (Either Text) Identity (O.R (O.FullRoute BackendRoute FrontendRoute)) O.PageName
-fullRouteEncoder = O.mkFullRouteEncoder
-  (O.FullRoute_Backend BackendRoute_Missing :/ ())
+  :: Ob.Encoder (Either Text) Identity (Ob.R (Ob.FullRoute BackendRoute FrontendRoute)) Ob.PageName
+fullRouteEncoder = Ob.mkFullRouteEncoder
+  (Ob.FullRoute_Backend BackendRoute_Missing :/ ())
   (\case
-      BackendRoute_Missing -> O.PathSegment "missing" $ O.unitEncoder mempty
-      BackendRoute_Api -> O.PathSegment "api" $ O.pathComponentEncoder $ \case
-        Api_Problems -> O.PathSegment "problems" $ O.unitEncoder mempty)
+      BackendRoute_Missing -> Ob.PathSegment "missing" $ Ob.unitEncoder mempty
+      BackendRoute_Api -> Ob.PathSegment "api" $ Ob.pathComponentEncoder $ \case
+        Api_Problems -> Ob.PathSegment "problems" $ Ob.unitEncoder mempty)
   (\case
-      FrontendRoute_Main -> O.PathEnd $ O.unitEncoder mempty
-      FrontendRoute_New -> O.PathSegment "new" $ O.unitEncoder mempty)
+      FrontendRoute_Main -> Ob.PathEnd $ Ob.unitEncoder mempty
+      FrontendRoute_New -> Ob.PathSegment "new" $ Ob.unitEncoder mempty
+      FrontendRoute_ViewProblem -> Ob.PathSegment "problem" idPathSegmentEncoder
+  )
 
-concat <$> mapM O.deriveRouteComponent
+concat <$> mapM Ob.deriveRouteComponent
   [ ''BackendRoute
   , ''FrontendRoute
   ]
 
-O.deriveRouteComponent ''Api
+Ob.deriveRouteComponent ''Api
