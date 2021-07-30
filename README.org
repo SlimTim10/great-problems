@@ -74,3 +74,4 @@ To reset the database, use the repl:
 $ ob repl
 *Backend Obelisk.Run Frontend Backend> Database.reset
 #+END_SRC
+This will create the empty tables (dropping if they exist) and insert the seeds.

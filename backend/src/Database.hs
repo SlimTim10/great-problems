@@ -33,14 +33,6 @@ connect = do
     , SQL.connectDatabase = name
     }
 
--- | Load the schema and the seeds.
-setup :: IO SQL.Connection
-setup = do
-  conn <- connect
-  Database.Schema.load conn
-  Database.Seeds.load conn
-  return conn
-
 -- | Reset the schema and load the seeds.
 reset :: IO SQL.Connection
 reset = do

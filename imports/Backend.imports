@@ -9,5 +9,5 @@ import qualified Common.Route as Route
       Api(Api_Problems),
       BackendRoute(..),
       fullRouteEncoder )
-import qualified Database ( setup )
+import qualified Database ( connect )
 import qualified Database.Queries as Queries ( getProblems )

@@ -16,13 +16,9 @@ import qualified Database.Queries as Queries
 backend :: Ob.Backend Route.BackendRoute Route.FrontendRoute
 backend = Ob.Backend
   { Ob._backend_run = \serve -> do
-      -- Connect to the database (for production)
-      -- conn <- Database.connect
+      -- Connect to the database
+      conn <- Database.connect
       
-      -- Database.setup clears and seeds the tables every time,
-      -- so it should only be used during development/testing
-      conn <- Database.setup
-
       serve $ \case
         Route.BackendRoute_Missing :/ () -> return ()
         Route.BackendRoute_Api :/ apiRoute -> case apiRoute of
