@@ -1,0 +1,3 @@
+import qualified Reflex.Dom.Core as R ( text, DomBuilder )
+import qualified MyReflex.Dom.Widget.Basic as R' ( elAttrClass )
+import Global ( Text, (=:) )
