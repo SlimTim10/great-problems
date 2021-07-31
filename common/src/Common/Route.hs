@@ -58,7 +58,7 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
   (\case
       FrontendRoute_Main -> Ob.PathEnd $ Ob.unitEncoder mempty
       FrontendRoute_New -> Ob.PathSegment "new" $ Ob.unitEncoder mempty
-      FrontendRoute_ViewProblem -> Ob.PathSegment "problem" idPathSegmentEncoder
+      FrontendRoute_ViewProblem -> Ob.PathSegment "problems" idPathSegmentEncoder
   )
 
 concat <$> mapM Ob.deriveRouteComponent

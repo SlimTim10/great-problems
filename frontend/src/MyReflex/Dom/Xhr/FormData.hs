@@ -2,7 +2,7 @@
 
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Xhr.FormData
+module MyReflex.Dom.Xhr.FormData
   ( postForms
   , FormValue (..)
   , fileToFormValue

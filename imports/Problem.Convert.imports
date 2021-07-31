@@ -27,7 +27,8 @@ import qualified Reflex.Dom.Core as R
       HasJSContext,
       DomBuilder,
       XhrResponse )
-import qualified Xhr.FormData as R' ( FormValue(..), postForms )
+import qualified MyReflex.Dom.Xhr.FormData as R'
+    ( FormValue(..), postForms )
 import qualified Problem.Options as Options
     ( Options(output, random) )
 import qualified Problem.Figures as Figures

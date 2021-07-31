@@ -15,7 +15,7 @@ import qualified Language.Javascript.JSaddle as JS
 import qualified Reflex.Dom.Core as R
 
 -- Import unofficial patch
-import qualified Xhr.FormData as R'
+import qualified MyReflex.Dom.Xhr.FormData as R'
 
 import qualified Problem.Options as Options
 import qualified Problem.Figures as Figures

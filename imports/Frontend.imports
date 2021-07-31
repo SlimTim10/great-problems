@@ -7,4 +7,5 @@ import qualified Reflex.Dom.Core as R
 import qualified Common.Route as Route ( FrontendRoute(..) )
 import qualified Problem ( widget )
 import qualified Home ( widget )
+import qualified Header ( widget )
 import Global ( (:/), (=:) )

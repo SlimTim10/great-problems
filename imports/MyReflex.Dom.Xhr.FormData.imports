@@ -1,0 +1,19 @@
+import Control.Lens ( (&), iforM_, (.~) )
+import Data.Default ( Default(def) )
+import Data.Map ( Map )
+import Data.Text ( Text )
+import Data.Traversable ( for )
+import Data.Foldable ( forM_ )
+import qualified GHCJS.DOM.FormData as FD
+    ( newFormData, append, appendBlob )
+import Foreign.JavaScript.TH ( HasJSContext )
+import GHCJS.DOM.File ( getName )
+import GHCJS.DOM.Types ( File, IsBlob )
+import Language.Javascript.JSaddle.Monad ( MonadJSM, liftJSM )
+import Reflex
+    ( ffor, Reflex(Event), PerformEvent(Performable), TriggerEvent )
+import Reflex.Dom.Xhr
+    ( performMkRequestsAsync,
+      xhrRequest,
+      xhrRequestConfig_sendData,
+      XhrResponse )
