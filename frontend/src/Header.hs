@@ -22,15 +22,18 @@ widget
 widget = R.elClass
   "header"
   "h-14 py-2 px-3 flex items-center justify-between border-b" $ do
-    Ob.routeLink (Route.FrontendRoute_Main :/ ()) $ do
+    Ob.routeLink (Route.FrontendRoute_Home :/ ()) $ do
       R.elClass "p" "font-medium text-xl"
         $ R.text "Great Problems"
-    Buttons.secondary "Explore"
+    Ob.routeLink (Route.FrontendRoute_Explore :/ ()) $ do
+      Buttons.secondary "Explore"
     R'.elAttrClass
       "input"
       ("type" =: "text" <> "placeholder" =: "Search...")
       "border rounded h-8 w-1/2 px-1"
       $ R.blank
     R.el "div" $ do
-      Buttons.primary "Create an account"
-      Buttons.secondary "Sign in"
+      Ob.routeLink (Route.FrontendRoute_Register :/ ()) $ do
+        Buttons.primary "Create an account"
+      Ob.routeLink (Route.FrontendRoute_SignIn :/ ()) $ do
+        Buttons.secondary "Sign in"

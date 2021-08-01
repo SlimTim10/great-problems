@@ -25,13 +25,19 @@ frontend = Ob.Frontend
       R.elAttr "link" ("href" =: "https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" <> "type" =: "text/css" <> "rel" =: "stylesheet") R.blank
       R.elAttr "link" ("href" =: Ob.static @"main.css" <> "type" =: "text/css" <> "rel" =: "stylesheet") R.blank
   , Ob._frontend_body = Ob.subRoute_ $ \case
-      Route.FrontendRoute_Main -> do
+      Route.FrontendRoute_Home -> do
         Header.widget
         R.el "p" $ R.text "(placeholder for marketing page)"
         R.el "p" $ R.text "Main page"
         Ob.routeLink (Route.FrontendRoute_New :/ ()) $ do
           R.elClass "p" "border-2 border-green-500 w-max" $ R.text "New problem"
         R.prerender_ R.blank $ Home.widget
+      Route.FrontendRoute_Explore -> do
+        Header.widget
+      Route.FrontendRoute_Register -> do
+        Header.widget
+      Route.FrontendRoute_SignIn -> do
+        Header.widget
       Route.FrontendRoute_New -> do
         Header.widget
         R.elClass "div" "h-screen flex flex-col" $ do

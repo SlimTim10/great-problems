@@ -34,7 +34,10 @@ data Api :: * -> * where
   Api_Problems :: Api ()
 
 data FrontendRoute :: * -> * where
-  FrontendRoute_Main :: FrontendRoute ()
+  FrontendRoute_Home :: FrontendRoute ()
+  FrontendRoute_Explore :: FrontendRoute ()
+  FrontendRoute_Register :: FrontendRoute ()
+  FrontendRoute_SignIn :: FrontendRoute ()
   FrontendRoute_New :: FrontendRoute ()
   FrontendRoute_ViewProblem :: FrontendRoute Integer
 
@@ -56,7 +59,10 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
       BackendRoute_Api -> Ob.PathSegment "api" $ Ob.pathComponentEncoder $ \case
         Api_Problems -> Ob.PathSegment "problems" $ Ob.unitEncoder mempty)
   (\case
-      FrontendRoute_Main -> Ob.PathEnd $ Ob.unitEncoder mempty
+      FrontendRoute_Home -> Ob.PathEnd $ Ob.unitEncoder mempty
+      FrontendRoute_Explore -> Ob.PathSegment "explore" $ Ob.unitEncoder mempty
+      FrontendRoute_Register -> Ob.PathSegment "register" $ Ob.unitEncoder mempty
+      FrontendRoute_SignIn -> Ob.PathSegment "sign-in" $ Ob.unitEncoder mempty
       FrontendRoute_New -> Ob.PathSegment "new" $ Ob.unitEncoder mempty
       FrontendRoute_ViewProblem -> Ob.PathSegment "problems" idPathSegmentEncoder
   )
