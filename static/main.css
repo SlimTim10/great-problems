@@ -1,6 +1,15 @@
+/* BRAND COLORS */
+/* primary: #1062AE */
+/* black: #282828 */
+/* gray: #696969 */
+/* light-gray: #969696 */
+/* light-gray-background: #F4F4F4 */
+/* white: #FFFFFF */
+
 body {
   font-family: 'Roboto', sans-serif;
   font-size: 16px;
+  color: #282828;
 }
 
 input {
@@ -15,18 +24,54 @@ body > header {
   background-color: #1062AE;
 }
 
+.bg-brand-light-gray {
+  background-color: #F4F4F4;
+}
+
 .border-brand-primary {
   border-color: #1062AE;
 }
 
-.bg-brand-light-grey {
-  background-color: #F4F4F4;
+.border-brand-light-gray {
+  border-color: #969696;
 }
 
-.text-brand-large {
+.text-brand-base {
+  font-size: 16px;
+}
+
+.text-brand-sm {
+  font-size: 14px;
+}
+
+.text-brand-lg {
   font-size: 22px;
 }
 
-.text-brand-light {
-  font-weight: 300;
+.text-brand-black {
+  color: #282828;
+}
+
+.text-brand-light-gray {
+  color: #969696;
+}
+
+.text-brand-gray {
+  color: #696969;
+}
+
+.text-brand-primary {
+  color: #1062AE;
+}
+
+.border-brand-black {
+  border-color: #282828;
+}
+
+.w-brand-screen-lg {
+  width: 1024px;
+}
+
+.problem:hover .problem-summary {
+  text-decoration: underline;
 }

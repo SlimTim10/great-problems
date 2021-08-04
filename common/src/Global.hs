@@ -8,6 +8,7 @@ module Global
   , module Data.Bool
   , module Data.Traversable
   , module Data.Functor
+  , module Data.List
   , module Control.Monad
   , module Control.Lens
   , MonadFix
@@ -22,6 +23,7 @@ import Data.Maybe (fromMaybe)
 import Data.Bool (bool)
 import Data.Traversable (for)
 import Data.Functor ((<&>))
+import Data.List (intercalate)
 import Control.Monad (void, (<=<), forM_)
 import Control.Lens ((^.), iforM_, _1)
 import Control.Monad.Fix (MonadFix)
