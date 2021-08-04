@@ -4,7 +4,8 @@ import qualified Data.Text as T ( pack )
 import Data.Functor.Identity ( Identity )
 import Obelisk.Route ( pattern (:/) )
 import qualified Obelisk.Route as Ob
-    ( mkFullRouteEncoder,
+    ( maybeEncoder,
+      mkFullRouteEncoder,
       pathComponentEncoder,
       singlePathSegmentEncoder,
       tryDecode,

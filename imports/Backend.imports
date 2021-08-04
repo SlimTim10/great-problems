@@ -6,8 +6,10 @@ import qualified Snap.Core as Snap
 import qualified Data.Aeson as JSON ( ToJSON, encode )
 import qualified Common.Route as Route
     ( FrontendRoute,
-      Api(Api_Problems),
+      Api(Api_Topics, Api_Problems),
       BackendRoute(..),
-      fullRouteEncoder )
+      fullRouteEncoder,
+      Api_Topics(Api_RootTopics) )
 import qualified Database ( connect )
-import qualified Database.Queries as Queries ( getProblems )
+import qualified Database.Queries as Queries
+    ( getProblems, getTopics, getRootTopics )

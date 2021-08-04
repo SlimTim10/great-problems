@@ -1,5 +1,6 @@
 body {
   font-family: 'Roboto', sans-serif;
+  font-size: 16px;
 }
 
 input {
@@ -16,4 +17,16 @@ body > header {
 
 .border-brand-primary {
   border-color: #1062AE;
+}
+
+.bg-brand-light-grey {
+  background-color: #F4F4F4;
+}
+
+.text-brand-large {
+  font-size: 22px;
+}
+
+.text-brand-light {
+  font-weight: 300;
 }

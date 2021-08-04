@@ -11,6 +11,7 @@ import qualified Common.Route as Route
 import qualified Problem
 import qualified Home
 import qualified Header
+import qualified Explore
 import Global
 
 frontend :: Ob.Frontend (Ob.R Route.FrontendRoute)
@@ -34,6 +35,7 @@ frontend = Ob.Frontend
         R.prerender_ R.blank $ Home.widget
       Route.FrontendRoute_Explore -> do
         Header.widget
+        R.prerender_ R.blank $ Explore.widget
       Route.FrontendRoute_Register -> do
         Header.widget
       Route.FrontendRoute_SignIn -> do

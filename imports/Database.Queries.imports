@@ -1,3 +1,4 @@
 import qualified Database.PostgreSQL.Simple as SQL
     ( query_, Connection )
 import qualified Common.Api.Problem as Problem ( Problem )
+import qualified Common.Api.Topic as Topic ( Topic )

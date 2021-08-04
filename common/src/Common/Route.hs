@@ -32,6 +32,10 @@ data BackendRoute :: * -> * where
 
 data Api :: * -> * where
   Api_Problems :: Api ()
+  Api_Topics :: Api (Maybe (Ob.R Api_Topics))
+
+data Api_Topics :: * -> * where
+  Api_RootTopics :: Api_Topics ()
 
 data FrontendRoute :: * -> * where
   FrontendRoute_Home :: FrontendRoute ()
@@ -57,7 +61,10 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
   (\case
       BackendRoute_Missing -> Ob.PathSegment "missing" $ Ob.unitEncoder mempty
       BackendRoute_Api -> Ob.PathSegment "api" $ Ob.pathComponentEncoder $ \case
-        Api_Problems -> Ob.PathSegment "problems" $ Ob.unitEncoder mempty)
+        Api_Problems -> Ob.PathSegment "problems" $ Ob.unitEncoder mempty
+        Api_Topics -> Ob.PathSegment "topics" $
+          Ob.maybeEncoder (Ob.unitEncoder mempty) $ Ob.pathComponentEncoder $ \case
+          Api_RootTopics -> Ob.PathSegment "roots" $ Ob.unitEncoder mempty)
   (\case
       FrontendRoute_Home -> Ob.PathEnd $ Ob.unitEncoder mempty
       FrontendRoute_Explore -> Ob.PathSegment "explore" $ Ob.unitEncoder mempty
@@ -73,3 +80,4 @@ concat <$> mapM Ob.deriveRouteComponent
   ]
 
 Ob.deriveRouteComponent ''Api
+Ob.deriveRouteComponent ''Api_Topics

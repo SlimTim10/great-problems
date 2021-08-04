@@ -30,12 +30,12 @@ widget
 widget = do
   R.elClass "div" "flex flex-col items-center" $ do
     onload <- R.getPostBuild
-    let endpoint :: R.Event t Text = R.tag (R.current (R.constDyn "/api/problems")) onload
+    let endpoint :: R.Event t Text = R.tagPromptlyDyn (R.constDyn "/api/problems") onload
     response :: R.Event t (Maybe [Problem.Problem]) <- R.getAndDecode endpoint
     problems :: R.Dynamic t [Problem.Problem] <- R.holdDyn [] $ fromMaybe [] <$> response
-    void $ R.simpleList problems problemItem
+    void $ R.simpleList problems problemWidget
 
-problemItem
+problemWidget
   :: ( R.DomBuilder t m
      , R.PostBuild t m
      , R.MonadSample t m
@@ -45,16 +45,9 @@ problemItem
      )
   =>  R.Dynamic t Problem.Problem
   -> m ()
-problemItem problem = R.elClass "div" "border" $ do
+problemWidget problem = R.elClass "div" "border" $ do
   R.elClass "p" "" $ do
-    R.dynText $ "Title: " <> (Problem.title <$> problem)
-  void $ R.dyn $ R.ffor (Problem.description <$> problem) $ \case
-    Nothing -> R.blank
-    Just description -> R.elClass "p" "" $ do
-      R.text $ "Description: " <> description
-  R.elDynAttr "img"
-    (("src" =:) <$> Problem.thumnail_url <$> problem)
-    R.blank
+    R.dynText $ "Summary: " <> (Problem.summary <$> problem)
   problemId <- R.sample . R.current $ Problem.id <$> problem
   Ob.routeLink (Route.FrontendRoute_ViewProblem :/ problemId) $ do
     R.elClass "p" "" $ R.text "View"
