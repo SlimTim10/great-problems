@@ -19,4 +19,4 @@ import qualified Reflex.Dom.Core as R
 import qualified MyReflex.Dom.Widget.Basic as R' ( elAttrClass )
 import qualified Common.Api.Topic as Topic ( Topic(name) )
 import qualified Buttons ( secondary )
-import Global ( Text, void, fromMaybe, cs, (=:), intercalate )
+import Global ( Text, void, fromMaybe, intercalate, cs, (=:) )

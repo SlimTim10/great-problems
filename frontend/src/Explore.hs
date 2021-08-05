@@ -45,13 +45,16 @@ widget = do
   R.elClass "div" "flex justify-center" $ do
     R.elClass "div" "w-brand-screen-lg flex flex-col" $ do
       -- Mock problem
+      let pId :: Integer = 1
       let pTopics = ["Mathematics", "Calculus", "Rates"]
       let pSummary = "Find the present value of a continuous annuity at an annual rate of 2% compounded continuously for 4 years if the payment at time t is at the rate of $400 per year."
       let pDate = "2021-08-04"
       let pAuthor = "Bob"
-      R'.elAttrClass "a" ("href" =: "/problems/1") "problem p-2 border border-brand-light-gray" $ do
-        R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ intercalate " > " pTopics)
-        R.elClass "p" "problem-summary text-brand-primary font-medium" $ R.text pSummary
+      R'.elAttrClass "a" ("href" =: "/problems/1") "p-2 border border-brand-light-gray flex flex-col gap-1 group" $ do
+        R.elClass "div" "flex justify-between" $ do
+          R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ intercalate " > " pTopics)
+          R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "#" ++ show pId)
+        R.elClass "p" "text-brand-primary font-medium group-hover:underline" $ R.text pSummary
         R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "Updated " ++ pDate)
         R.elClass "div" "flex" $ do
           R.elClass "p" "text-brand-sm text-brand-gray mr-1" $ R.text "by"

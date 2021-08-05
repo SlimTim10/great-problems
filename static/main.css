@@ -71,7 +71,3 @@ body > header {
 .w-brand-screen-lg {
   width: 1024px;
 }
-
-.problem:hover .problem-summary {
-  text-decoration: underline;
-}
