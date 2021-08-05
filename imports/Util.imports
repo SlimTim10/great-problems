@@ -1,11 +1,19 @@
 import qualified Language.Javascript.JSaddle as JS
     ( MonadJSM, ToJSVal, js1, jsg, liftJSM )
 import qualified Data.Text as T ( pack )
+import qualified Data.Aeson as JSON ( FromJSON )
+import qualified Control.Monad.IO.Class as IO ( MonadIO )
 import qualified Reflex.Dom.Core as R
-    ( elDynClass',
+    ( constDyn,
+      tagPromptlyDyn,
+      elDynClass',
       text,
-      Reflex(Event, Dynamic),
-      PostBuild,
+      getAndDecode,
+      Reflex(Dynamic, Event),
+      PerformEvent(Performable),
+      PostBuild(..),
+      TriggerEvent,
+      HasJSContext,
       DomBuilder,
       HasDomEvent(domEvent),
       EventName(Click) )

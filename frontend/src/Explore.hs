@@ -9,31 +9,32 @@ import qualified Reflex.Dom.Core as R
 import qualified MyReflex.Dom.Widget.Basic as R'
 
 import qualified Common.Api.Topic as Topic
+import qualified Common.Api.Problem as Problem
+import qualified Common.Api.ProblemTile as ProblemTile
 -- import qualified Common.Route as Route
 import qualified Buttons
+import qualified Util
 import Global
 
 widget
   :: forall t m.
-  ( R.DomBuilder t m
-  , R.PostBuild t m
-  , JS.MonadJSM m
-  , JS.MonadJSM (R.Performable m)
-  , R.PerformEvent t m
-  , R.HasJSContext (R.Performable m)
-  , R.TriggerEvent t m
-  , R.MonadHold t m
-  , Fix.MonadFix m
-  )
+     ( R.DomBuilder t m
+     , R.PostBuild t m
+     , JS.MonadJSM m
+     , JS.MonadJSM (R.Performable m)
+     , R.PerformEvent t m
+     , R.HasJSContext (R.Performable m)
+     , R.TriggerEvent t m
+     , R.MonadHold t m
+     , Fix.MonadFix m
+     )
   => m ()
 widget = do
   R.elClass "div" "bg-brand-light-gray flex justify-center py-4" $ do
     R.elClass "div" "max-w-screen-lg flex flex-col items-center" $ do
       R.elClass "p" "text-brand-lg font-light" $ R.text "Pick a topic"
       R.elClass "div" "flex justify-center flex-wrap" $ do
-        onload :: R.Event t () <- R.getPostBuild
-        let endpoint :: R.Event t Text = R.tagPromptlyDyn (R.constDyn "/api/topics/roots") onload
-        response :: R.Event t (Maybe [Topic.Topic]) <- R.getAndDecode endpoint
+        response :: R.Event t (Maybe [Topic.Topic]) <- Util.getOnload "/api/topics/roots"
         topics :: R.Dynamic t [Topic.Topic] <- R.holdDyn [] $ fromMaybe [] <$> response
         void $ R.simpleList topics topicWidget
   R.elClass "div" "my-6 flex justify-center" $ do
@@ -43,31 +44,53 @@ widget = do
       R'.elAttrClass "a" ("href" =: "/explore/problem-sets") "flex-1 border-b border-brand-light-gray" $ do
         R.elClass "p" "text-center text-brand-lg text-brand-light-gray font-light" $ R.text "Problem sets"
   R.elClass "div" "flex justify-center" $ do
-    R.elClass "div" "w-brand-screen-lg flex flex-col" $ do
-      -- Mock problem
-      let pId :: Integer = 1
-      let pTopics = ["Mathematics", "Calculus", "Rates"]
-      let pSummary = "Find the present value of a continuous annuity at an annual rate of 2% compounded continuously for 4 years if the payment at time t is at the rate of $400 per year."
-      let pDate = "2021-08-04"
-      let pAuthor = "Bob"
-      R'.elAttrClass "a" ("href" =: "/problems/1") "p-2 border border-brand-light-gray flex flex-col gap-1 group" $ do
-        R.elClass "div" "flex justify-between" $ do
-          R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ intercalate " > " pTopics)
-          R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "#" ++ show pId)
-        R.elClass "p" "text-brand-primary font-medium group-hover:underline" $ R.text pSummary
-        R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "Updated " ++ pDate)
-        R.elClass "div" "flex" $ do
-          R.elClass "p" "text-brand-sm text-brand-gray mr-1" $ R.text "by"
-          R'.elAttrClass "a" ("href" =: "/users/1") "hover:underline text-brand-sm text-brand-gray font-bold" $ R.text pAuthor
+    R.elClass "div" "w-brand-screen-lg flex flex-col gap-2" $ do
+      response :: R.Event t (Maybe [ProblemTile.ProblemTile]) <- Util.getOnload "/api/problems"
+      problemTiles :: R.Dynamic t [ProblemTile.ProblemTile] <- R.holdDyn [] $ fromMaybe [] <$> response
+      void $ R.simpleList problemTiles problemTileWidget
 
 topicWidget
-  :: forall t m.
-  ( R.DomBuilder t m
-  , R.MonadSample t m
-  ) => R.Dynamic t Topic.Topic
+  :: ( R.DomBuilder t m
+     , R.MonadSample t m
+     ) => R.Dynamic t Topic.Topic
   -> m ()
 topicWidget topic = R.elClass "span" "m-2" $ do
   topic' <- R.sample . R.current $ topic
+  -- TODO: change <a> to routeLink
   -- Ob.routeLink (Route.FrontendRoute_ViewTopic :/ (Topic.id topic')) $ do
   R.elAttr "a" ("href" =: "/topics/1/problems") $ do
     Buttons.secondary (Topic.name topic')
+
+problemTileWidget
+  :: ( R.DomBuilder t m
+     , R.MonadSample t m
+     )
+  => R.Dynamic t ProblemTile.ProblemTile
+  -> m ()
+problemTileWidget problemTile = do
+  problemTile' <- R.sample . R.current $ problemTile
+  let problem = ProblemTile.problem problemTile'
+  let topics = ProblemTile.topics problemTile'
+  -- TODO: add author to ProblemTile
+  -- let author = ProblemTile.author problemTile'
+  let topicNames = map (cs . Topic.name) topics
+  let updatedAt = show $ Problem.updated_at problem
+  let authorName = "Bob" -- Temporary mock
+  R'.elAttrClass
+    "a"
+    ("href" =: "/problems/1")
+    "p-2 border border-brand-light-gray flex flex-col gap-1 group"
+    $ do
+    R.elClass "div" "flex justify-between" $ do
+      -- TODO: each topic name should be a link to /topics/:id/problems
+      R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ intercalate " > " topicNames)
+      R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "#" ++ show (Problem.id problem))
+    R.elClass "p" "text-brand-primary font-medium group-hover:underline" $ R.text (Problem.summary problem)
+    R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "Updated " ++ updatedAt)
+    R.elClass "div" "flex" $ do
+      R.elClass "p" "text-brand-sm text-brand-gray mr-1" $ R.text "by"
+      R'.elAttrClass
+        "a"
+        ("href" =: "/users/1")
+        "hover:underline text-brand-sm text-brand-gray font-bold"
+        $ R.text authorName

@@ -12,4 +12,4 @@ import qualified Common.Route as Route
       fullRouteEncoder )
 import qualified Database ( connect )
 import qualified Database.Queries as Queries
-    ( getProblems, getTopics, getRootTopics )
+    ( getTopics, getRootTopics, getProblemTiles )

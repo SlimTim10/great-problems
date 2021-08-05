@@ -58,7 +58,7 @@ great_problems=# \q
 $ ob run
 #+END_SRC
 
-Edit the environment variables in ~config/backend/db.env~ with the database connection settings. Running the app (~ob run~) should load the schema and seeds into the database.
+Edit the environment variables in ~config/backend/db.env~ with the database connection settings.
 
 Environment variables and their defaults:
 #+BEGIN_SRC

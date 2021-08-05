@@ -2,6 +2,8 @@ module Util where
 
 import qualified Language.Javascript.JSaddle as JS
 import qualified Data.Text as T
+import qualified Data.Aeson as JSON
+import qualified Control.Monad.IO.Class as IO
 
 import qualified Reflex.Dom.Core as R
 
@@ -29,3 +31,18 @@ buttonDynClass
 buttonDynClass t c = do
   (e, _) <- R.elDynClass' "button" c $ R.text t
   return $ R.domEvent R.Click e
+
+getOnload
+  :: ( R.PostBuild t m
+     , JSON.FromJSON a
+     , JS.MonadJSM (R.Performable m)
+     , IO.MonadIO m
+     , R.PerformEvent t m
+     , R.HasJSContext (R.Performable m)
+     , R.TriggerEvent t m
+     )
+  => Text -> m (R.Event t (Maybe a))
+getOnload url = do
+  onload :: R.Event t () <- R.getPostBuild
+  let endpoint :: R.Event t Text = R.tagPromptlyDyn (R.constDyn url) onload
+  R.getAndDecode endpoint
