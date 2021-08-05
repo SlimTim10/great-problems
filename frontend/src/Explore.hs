@@ -56,7 +56,7 @@ topicWidget
   -> m ()
 topicWidget topic = R.elClass "span" "m-2" $ do
   topic' <- R.sample . R.current $ topic
-  -- TODO: change <a> to routeLink
+  -- TODO: change <a> to routeLink (need to add ViewTopic route first)
   -- Ob.routeLink (Route.FrontendRoute_ViewTopic :/ (Topic.id topic')) $ do
   R.elAttr "a" ("href" =: "/topics/1/problems") $ do
     Buttons.secondary (Topic.name topic')
