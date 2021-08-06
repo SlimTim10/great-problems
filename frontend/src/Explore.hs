@@ -54,49 +54,50 @@ widget = do
 
 topicWidget
   :: ( R.DomBuilder t m
-     , R.MonadSample t m
      , Ob.SetRoute t (Ob.R Route.FrontendRoute) m
      , Ob.RouteToUrl (Ob.R Route.FrontendRoute) m
      , R.Prerender js t m
+     , R.PostBuild t m
      ) => R.Dynamic t Topic.Topic
   -> m ()
 topicWidget topic = R.elClass "span" "m-2" $ do
-  topic' <- R.sample . R.current $ topic
-  Ob.routeLink
-    (Route.FrontendRoute_Topics :/ (Topic.id topic', Just (Route.TopicsRoute_Problems :/ ()))) $ do
-    Buttons.secondary (Topic.name topic')
+  R.dyn_ $ R.ffor topic $ \t -> do
+    Ob.routeLink
+      (Route.FrontendRoute_Topics :/ (Topic.id t, Just (Route.TopicsRoute_Problems :/ ()))) $ do
+      Buttons.secondary (Topic.name t)
 
 problemTileWidget
   :: ( R.DomBuilder t m
-     , R.MonadSample t m
+     , R.PostBuild t m
+     , Ob.SetRoute t (Ob.R Route.FrontendRoute) m
+     , Ob.RouteToUrl (Ob.R Route.FrontendRoute) m
+     , R.Prerender js t m
      )
   => R.Dynamic t ProblemTile.ProblemTile
   -> m ()
-problemTileWidget problemTile = do
-  problemTile' <- R.sample . R.current $ problemTile
-  let problem = ProblemTile.problem problemTile'
-  let topics = ProblemTile.topics problemTile'
+problemTileWidget problemTile = R.dyn_ $ R.ffor problemTile $ \(ProblemTile.ProblemTile problem topics) -> do
   -- TODO: add author to ProblemTile
-  -- let author = ProblemTile.author problemTile'
-  let topicNames = map (cs . Topic.name) topics
+  -- let topicNames = map (cs . Topic.name) topics
   let updatedAt = show $ Problem.updated_at problem
   let authorName = "Bob" -- Temporary mock
-  -- TODO: routeLink instead of <a>
-  R'.elAttrClass
-    "a"
-    ("href" =: cs ("/problems/" ++ show (Problem.id problem)))
-    "p-2 border border-brand-light-gray flex flex-col gap-1 group"
-    $ do
-    R.elClass "div" "flex justify-between" $ do
-      -- TODO: each topic name should be a link to /topics/:id/problems
-      R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ intercalate " > " topicNames)
-      R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "#" ++ show (Problem.id problem))
-    R.elClass "p" "text-brand-primary font-medium group-hover:underline" $ R.text (Problem.summary problem)
-    R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "Updated " ++ updatedAt)
-    R.elClass "div" "flex" $ do
-      R.elClass "p" "text-brand-sm text-brand-gray mr-1" $ R.text "by"
-      R'.elAttrClass
-        "a"
-        ("href" =: "/users/1")
-        "hover:underline text-brand-sm text-brand-gray font-bold"
-        $ R.text authorName
+  Ob.routeLink
+    (Route.FrontendRoute_ViewProblem :/ (Problem.id problem)) $ do
+    R.elClass "div" "p-2 border border-brand-light-gray flex flex-col gap-1 group" $ do
+      R.elClass "div" "flex justify-between" $ do
+        R.elClass "div" "flex" $ do
+          forM_ (zip [0..] topics) $ \(n :: Integer, Topic.Topic tid name _) -> do
+            unless (n == 0) $ do
+              R.elClass "p" "text-brand-sm text-brand-gray mx-1" $ R.text ">"
+            Ob.routeLink
+              (Route.FrontendRoute_Topics :/ (tid, Just (Route.TopicsRoute_Problems :/ ()))) $ do
+              R.elClass "p" "hover:underline text-brand-sm text-brand-gray" $ R.text name
+        R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "#" ++ show (Problem.id problem))
+      R.elClass "p" "text-brand-primary font-medium group-hover:underline" $ R.text (Problem.summary problem)
+      R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "Updated " ++ updatedAt)
+      R.elClass "div" "flex" $ do
+        R.elClass "p" "text-brand-sm text-brand-gray mr-1" $ R.text "by"
+        R'.elAttrClass
+          "a"
+          ("href" =: "/users/1")
+          "hover:underline text-brand-sm text-brand-gray font-bold"
+          $ R.text authorName

@@ -3,12 +3,13 @@ import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Obelisk.Route.Frontend as Ob
     ( R, routeLink, RouteToUrl, SetRoute )
 import qualified Reflex.Dom.Core as R
-    ( simpleList,
+    ( ffor,
+      simpleList,
+      dyn_,
       elClass,
       text,
       MonadHold(holdDyn),
-      MonadSample(..),
-      Reflex(current, Event, Dynamic),
+      Reflex(Event, Dynamic),
       PerformEvent(Performable),
       PostBuild,
       TriggerEvent,
@@ -16,14 +17,15 @@ import qualified Reflex.Dom.Core as R
       DomBuilder,
       Prerender )
 import qualified MyReflex.Dom.Widget.Basic as R' ( elAttrClass )
-import qualified Common.Api.Topic as Topic ( Topic(name, id) )
+import qualified Common.Api.Topic as Topic
+    ( Topic(Topic, name, id) )
 import qualified Common.Api.Problem as Problem
     ( Problem(summary, id, updated_at) )
 import qualified Common.Api.ProblemTile as ProblemTile
-    ( ProblemTile(topics, problem) )
+    ( ProblemTile(ProblemTile) )
 import qualified Common.Route as Route
     ( TopicsRoute(TopicsRoute_Problems),
-      FrontendRoute(FrontendRoute_Topics) )
+      FrontendRoute(FrontendRoute_ViewProblem, FrontendRoute_Topics) )
 import qualified Buttons ( secondary )
 import qualified Util ( getOnload )
-import Global ( (:/), void, fromMaybe, intercalate, cs, (=:) )
+import Global ( (:/), forM_, void, fromMaybe, unless, cs, (=:) )

@@ -19,7 +19,7 @@ widget
   -> R.Dynamic t Bool
   -> m ()
 widget pdfData loading convertResponse errorsToggle = do
-  void $ R.dyn $ switchView <$> pdfData <*> loading <*> convertResponse <*> errorsToggle
+  R.dyn_ $ switchView <$> pdfData <*> loading <*> convertResponse <*> errorsToggle
 
 switchView
   :: R.DomBuilder t m
