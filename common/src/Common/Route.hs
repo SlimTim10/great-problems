@@ -45,6 +45,7 @@ data FrontendRoute :: * -> * where
 
 data TopicsRoute :: * -> * where
   TopicsRoute_Problems :: TopicsRoute ()
+  TopicsRoute_ProblemSets :: TopicsRoute ()
 
 idPathSegmentEncoder
   :: Ob.Encoder (Either Text) (Either Text) Integer Ob.PageName
@@ -69,8 +70,10 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
       FrontendRoute_New -> Ob.PathSegment "new" $ Ob.unitEncoder mempty
       FrontendRoute_ViewProblem -> Ob.PathSegment "problems" idPathSegmentEncoder
       FrontendRoute_Topics -> Ob.PathSegment "topics" $
-        let topicsRouteEncoder = Ob.pathComponentEncoder $ \case
-              TopicsRoute_Problems -> Ob.PathSegment "problems" $ Ob.unitEncoder mempty
+        let
+          topicsRouteEncoder = Ob.pathComponentEncoder $ \case
+            TopicsRoute_Problems -> Ob.PathSegment "problems" $ Ob.unitEncoder mempty
+            TopicsRoute_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.unitEncoder mempty
         in Ob.pathSegmentEncoder . bimap Ob.unsafeTshowEncoder (Ob.maybeEncoder (Ob.unitEncoder mempty) topicsRouteEncoder)
   )
 

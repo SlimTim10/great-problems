@@ -47,12 +47,14 @@ frontend = Ob.Frontend
           R.prerender_ R.blank $ Problem.widget
       Route.FrontendRoute_ViewProblem -> do
         Header.widget
-        problemId <- Ob.askRoute
+        problemId :: R.Dynamic t Integer <- Ob.askRoute
         R.el "p" $ R.text "Single problem"
         R.el "p" $ R.display problemId
       Route.FrontendRoute_Topics -> do
         Header.widget
-        topicId <- Ob.askRoute
         R.el "p" $ R.text "Problems belonging to a topic"
-        R.el "p" $ R.display topicId
+        r :: R.Dynamic t (Integer, Maybe (Ob.R Route.TopicsRoute)) <- Ob.askRoute
+        R.el "p" $ R.display r
+        R.el "span" $ R.text "topic id: "
+        R.display (fst <$> r)
   }
