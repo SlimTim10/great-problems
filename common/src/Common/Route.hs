@@ -74,7 +74,9 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
           topicsRouteEncoder = Ob.pathComponentEncoder $ \case
             TopicsRoute_Problems -> Ob.PathSegment "problems" $ Ob.unitEncoder mempty
             TopicsRoute_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.unitEncoder mempty
-        in Ob.pathSegmentEncoder . bimap Ob.unsafeTshowEncoder (Ob.maybeEncoder (Ob.unitEncoder mempty) topicsRouteEncoder)
+        in
+          Ob.pathSegmentEncoder
+          . bimap Ob.unsafeTshowEncoder (Ob.maybeEncoder (Ob.unitEncoder mempty) topicsRouteEncoder)
   )
 
 concat <$> mapM Ob.deriveRouteComponent

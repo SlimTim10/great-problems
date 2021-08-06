@@ -4,20 +4,20 @@ module Explore
 
 import qualified Control.Monad.Fix as Fix
 import qualified Language.Javascript.JSaddle as JS
--- import qualified Obelisk.Route.Frontend as Ob
+import qualified Obelisk.Route.Frontend as Ob
 import qualified Reflex.Dom.Core as R
 import qualified MyReflex.Dom.Widget.Basic as R'
 
 import qualified Common.Api.Topic as Topic
 import qualified Common.Api.Problem as Problem
 import qualified Common.Api.ProblemTile as ProblemTile
--- import qualified Common.Route as Route
+import qualified Common.Route as Route
 import qualified Buttons
 import qualified Util
 import Global
 
 widget
-  :: forall t m.
+  :: forall t m js.
      ( R.DomBuilder t m
      , R.PostBuild t m
      , JS.MonadJSM m
@@ -27,6 +27,9 @@ widget
      , R.TriggerEvent t m
      , R.MonadHold t m
      , Fix.MonadFix m
+     , Ob.SetRoute t (Ob.R Route.FrontendRoute) m
+     , Ob.RouteToUrl (Ob.R Route.FrontendRoute) m
+     , R.Prerender js t m
      )
   => m ()
 widget = do
@@ -52,13 +55,15 @@ widget = do
 topicWidget
   :: ( R.DomBuilder t m
      , R.MonadSample t m
+     , Ob.SetRoute t (Ob.R Route.FrontendRoute) m
+     , Ob.RouteToUrl (Ob.R Route.FrontendRoute) m
+     , R.Prerender js t m
      ) => R.Dynamic t Topic.Topic
   -> m ()
 topicWidget topic = R.elClass "span" "m-2" $ do
   topic' <- R.sample . R.current $ topic
-  -- TODO: change <a> to routeLink (need to add TopicProblems route first)
-  -- Ob.routeLink (Route.FrontendRoute_TopicProblems :/ (Topic.id topic')) $ do
-  R.elAttr "a" ("href" =: "/topics/1/problems") $ do
+  Ob.routeLink
+    (Route.FrontendRoute_Topics :/ (Topic.id topic', Just (Route.TopicsRoute_Problems :/ ()))) $ do
     Buttons.secondary (Topic.name topic')
 
 problemTileWidget
