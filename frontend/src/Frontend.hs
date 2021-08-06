@@ -50,4 +50,9 @@ frontend = Ob.Frontend
         problemId <- Ob.askRoute
         R.el "p" $ R.text "Single problem"
         R.el "p" $ R.display problemId
+      Route.FrontendRoute_Topics -> do
+        Header.widget
+        topicId <- Ob.askRoute
+        R.el "p" $ R.text "Problems belonging to a topic"
+        R.el "p" $ R.display topicId
   }

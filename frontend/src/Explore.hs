@@ -56,8 +56,8 @@ topicWidget
   -> m ()
 topicWidget topic = R.elClass "span" "m-2" $ do
   topic' <- R.sample . R.current $ topic
-  -- TODO: change <a> to routeLink (need to add ViewTopic route first)
-  -- Ob.routeLink (Route.FrontendRoute_ViewTopic :/ (Topic.id topic')) $ do
+  -- TODO: change <a> to routeLink (need to add TopicProblems route first)
+  -- Ob.routeLink (Route.FrontendRoute_TopicProblems :/ (Topic.id topic')) $ do
   R.elAttr "a" ("href" =: "/topics/1/problems") $ do
     Buttons.secondary (Topic.name topic')
 
@@ -76,9 +76,10 @@ problemTileWidget problemTile = do
   let topicNames = map (cs . Topic.name) topics
   let updatedAt = show $ Problem.updated_at problem
   let authorName = "Bob" -- Temporary mock
+  -- TODO: routeLink instead of <a>
   R'.elAttrClass
     "a"
-    ("href" =: "/problems/1")
+    ("href" =: cs ("/problems/" ++ show (Problem.id problem)))
     "p-2 border border-brand-light-gray flex flex-col gap-1 group"
     $ do
     R.elClass "div" "flex justify-between" $ do

@@ -12,14 +12,11 @@
 {-# LANGUAGE PatternSynonyms #-}
 module Common.Route where
 
-{- -- You will probably want these imports for composing Encoders.
 import Prelude hiding (id, (.))
-import Control.Category
--}
 
-import Control.Category ((>>>))
+import Control.Category ((>>>), (.))
+import Control.Categorical.Bifunctor (bimap)
 import Data.Text (Text)
-import qualified Data.Text as T
 import Data.Functor.Identity (Identity)
 import Obelisk.Route ( pattern (:/) )
 import qualified Obelisk.Route as Ob
@@ -44,15 +41,14 @@ data FrontendRoute :: * -> * where
   FrontendRoute_SignIn :: FrontendRoute ()
   FrontendRoute_New :: FrontendRoute ()
   FrontendRoute_ViewProblem :: FrontendRoute Integer
+  FrontendRoute_Topics :: FrontendRoute (Integer, Maybe (Ob.R TopicsRoute))
+
+data TopicsRoute :: * -> * where
+  TopicsRoute_Problems :: TopicsRoute ()
 
 idPathSegmentEncoder
   :: Ob.Encoder (Either Text) (Either Text) Integer Ob.PageName
-idPathSegmentEncoder = idEncoder >>> Ob.singlePathSegmentEncoder
-  where
-    idEncoder = Ob.unsafeMkEncoder Ob.EncoderImpl
-      { Ob._encoderImpl_encode = T.pack . show
-      , Ob._encoderImpl_decode = Ob.tryDecode Ob.unsafeTshowEncoder
-      }
+idPathSegmentEncoder = Ob.unsafeTshowEncoder >>> Ob.singlePathSegmentEncoder
 
 fullRouteEncoder
   :: Ob.Encoder (Either Text) Identity (Ob.R (Ob.FullRoute BackendRoute FrontendRoute)) Ob.PageName
@@ -72,12 +68,16 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
       FrontendRoute_SignIn -> Ob.PathSegment "sign-in" $ Ob.unitEncoder mempty
       FrontendRoute_New -> Ob.PathSegment "new" $ Ob.unitEncoder mempty
       FrontendRoute_ViewProblem -> Ob.PathSegment "problems" idPathSegmentEncoder
+      FrontendRoute_Topics -> Ob.PathSegment "topics" $
+        let topicsRouteEncoder = Ob.pathComponentEncoder $ \case
+              TopicsRoute_Problems -> Ob.PathSegment "problems" $ Ob.unitEncoder mempty
+        in Ob.pathSegmentEncoder . bimap Ob.unsafeTshowEncoder (Ob.maybeEncoder (Ob.unitEncoder mempty) topicsRouteEncoder)
   )
 
 concat <$> mapM Ob.deriveRouteComponent
   [ ''BackendRoute
   , ''FrontendRoute
+  , ''Api
+  , ''Api_Topics
+  , ''TopicsRoute
   ]
-
-Ob.deriveRouteComponent ''Api
-Ob.deriveRouteComponent ''Api_Topics

@@ -1,19 +1,26 @@
-import Control.Category ( (>>>) )
+import Prelude
+    ( ($),
+      Traversable(mapM),
+      Monoid(mempty),
+      Integer,
+      Maybe,
+      Either,
+      concat,
+      (<$>) )
+import Control.Category ( (>>>), (.) )
+import Control.Categorical.Bifunctor ( bimap )
 import Data.Text ( Text )
-import qualified Data.Text as T ( pack )
 import Data.Functor.Identity ( Identity )
 import Obelisk.Route ( pattern (:/) )
 import qualified Obelisk.Route as Ob
     ( maybeEncoder,
       mkFullRouteEncoder,
       pathComponentEncoder,
+      pathSegmentEncoder,
       singlePathSegmentEncoder,
-      tryDecode,
       unitEncoder,
-      unsafeMkEncoder,
       unsafeTshowEncoder,
       Encoder,
-      EncoderImpl(EncoderImpl, _encoderImpl_decode, _encoderImpl_encode),
       FullRoute(FullRoute_Backend),
       PageName,
       R,
