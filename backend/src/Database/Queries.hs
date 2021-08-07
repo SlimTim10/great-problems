@@ -3,7 +3,7 @@ module Database.Queries
   , getTopics
   , getTopicById
   , getRootTopics
-  , getProblemTiles
+  , getProblemCards
   , getUsers
   , getUserById
   ) where
@@ -12,7 +12,7 @@ import qualified Database.PostgreSQL.Simple as SQL
 
 import qualified Common.Api.Problem as Problem
 import qualified Common.Api.Topic as Topic
-import qualified Common.Api.ProblemTile as ProblemTile
+import qualified Common.Api.ProblemCard as ProblemCard
 import qualified Common.Api.User as User
 import qualified Util
 import Global
@@ -35,19 +35,19 @@ getParentTopic conn topic = case Topic.parent_id topic of
 getRootTopics :: SQL.Connection -> IO ([Topic.Topic])
 getRootTopics conn = SQL.query_ conn "SELECT * FROM topics WHERE parent_id IS NULL"
 
-problemToTile :: SQL.Connection -> Problem.Problem -> IO (ProblemTile.ProblemTile)
-problemToTile conn problem = do
+problemToCard :: SQL.Connection -> Problem.Problem -> IO (ProblemCard.ProblemCard)
+problemToCard conn problem = do
   topics <- getTopicById conn (Problem.topic_id problem) >>= \case
     Nothing -> return []
     Just topic -> getTopicBranch conn topic
   -- TODO: add proper error handling for finding users
   user <- getUserById conn (Problem.author_id problem) >>= return . fromMaybe (User.User 0 "" "")
-  return $ ProblemTile.ProblemTile problem topics user
+  return $ ProblemCard.ProblemCard problem topics user
 
-getProblemTiles :: SQL.Connection -> IO ([ProblemTile.ProblemTile])
-getProblemTiles conn = do
+getProblemCards :: SQL.Connection -> IO ([ProblemCard.ProblemCard])
+getProblemCards conn = do
   problems :: [Problem.Problem] <- getProblems conn
-  sequence $ map (problemToTile conn) problems
+  sequence $ map (problemToCard conn) problems
 
 getTopicBranch :: SQL.Connection -> Topic.Topic -> IO ([Topic.Topic])
 getTopicBranch conn topic

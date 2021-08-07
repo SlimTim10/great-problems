@@ -28,6 +28,7 @@ library
              PartialTypeSignatures
              DeriveGeneric
              LambdaCase
+             TypeFamilies
 
 executable frontend
   main-is: main.hs

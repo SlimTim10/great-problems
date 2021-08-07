@@ -10,7 +10,7 @@ import qualified Reflex.Dom.Core as R
 
 import qualified Common.Api.Topic as Topic
 import qualified Common.Api.Problem as Problem
-import qualified Common.Api.ProblemTile as ProblemTile
+import qualified Common.Api.ProblemCard as ProblemCard
 import qualified Common.Api.User as User
 import qualified Common.Route as Route
 import qualified Buttons
@@ -30,6 +30,7 @@ widget
      , Fix.MonadFix m
      , Ob.SetRoute t (Ob.R Route.FrontendRoute) m
      , Ob.RouteToUrl (Ob.R Route.FrontendRoute) m
+     , Ob.Routed t (Maybe (Ob.R Route.ExploreRoute)) m
      , R.Prerender js t m
      )
   => m ()
@@ -51,9 +52,11 @@ widget = do
           R.elClass "p" "text-center text-brand-lg text-brand-light-gray font-light" $ R.text "Problem sets"
   R.elClass "div" "flex justify-center" $ do
     R.elClass "div" "w-brand-screen-lg flex flex-col gap-2" $ do
-      response :: R.Event t (Maybe [ProblemTile.ProblemTile]) <- Util.getOnload "/api/problems"
-      problemTiles :: R.Dynamic t [ProblemTile.ProblemTile] <- R.holdDyn [] $ fromMaybe [] <$> response
-      void $ R.simpleList problemTiles problemTileWidget
+      path :: R.Dynamic t (Maybe (Ob.R Route.ExploreRoute)) <- Ob.askRoute
+      R.dyn_ $ R.ffor path $ \case
+        Nothing -> problemCardsWidget
+        Just (Route.ExploreRoute_Problems :/ ()) -> problemCardsWidget
+        Just (Route.ExploreRoute_ProblemSets :/ ()) -> problemSetCardsWidget
 
 topicWidget
   :: ( R.DomBuilder t m
@@ -69,16 +72,36 @@ topicWidget topic = R.elClass "span" "m-2" $ do
       (Route.FrontendRoute_Topics :/ (Topic.id t, Just (Route.TopicsRoute_Problems :/ ()))) $ do
       Buttons.secondary (Topic.name t)
 
-problemTileWidget
+problemCardsWidget
+  :: ( R.DomBuilder t m
+     , R.TriggerEvent t m
+     , R.HasJSContext (R.Performable m)
+     , R.PerformEvent t m
+     , R.PostBuild t m
+     , JS.MonadJSM m
+     , JS.MonadJSM (R.Performable m)
+     , R.MonadHold t m
+     , Fix.MonadFix m
+     , Ob.SetRoute t (Ob.R Route.FrontendRoute) m
+     , Ob.RouteToUrl (Ob.R Route.FrontendRoute) m
+     , R.Prerender js t m
+     )
+  => m ()
+problemCardsWidget = do
+  response :: R.Event t (Maybe [ProblemCard.ProblemCard]) <- Util.getOnload "/api/problems"
+  problemCards :: R.Dynamic t [ProblemCard.ProblemCard] <- R.holdDyn [] $ fromMaybe [] <$> response
+  void $ R.simpleList problemCards problemCardWidget
+
+problemCardWidget
   :: ( R.DomBuilder t m
      , R.PostBuild t m
      , Ob.SetRoute t (Ob.R Route.FrontendRoute) m
      , Ob.RouteToUrl (Ob.R Route.FrontendRoute) m
      , R.Prerender js t m
      )
-  => R.Dynamic t ProblemTile.ProblemTile
+  => R.Dynamic t ProblemCard.ProblemCard
   -> m ()
-problemTileWidget problemTile = R.dyn_ $ R.ffor problemTile $ \(ProblemTile.ProblemTile problem topics author) -> do
+problemCardWidget problemCard = R.dyn_ $ R.ffor problemCard $ \(ProblemCard.ProblemCard problem topics author) -> do
   let updatedAt = show $ Problem.updated_at problem
   R.elClass "div" "p-2 border border-brand-light-gray flex flex-col gap-1" $ do
     R.elClass "div" "flex justify-between" $ do
@@ -99,3 +122,24 @@ problemTileWidget problemTile = R.dyn_ $ R.ffor problemTile $ \(ProblemTile.Prob
       Ob.routeLink (Route.FrontendRoute_ViewUser :/ (User.id author)) $ do
         R.elClass "div" "hover:underline text-brand-sm text-brand-gray font-bold" $ do
           R.text (CI.original $ User.full_name author)
+
+problemSetCardsWidget
+  :: ( R.DomBuilder t m
+     , R.TriggerEvent t m
+     , R.HasJSContext (R.Performable m)
+     , R.PerformEvent t m
+     , R.PostBuild t m
+     , JS.MonadJSM m
+     , JS.MonadJSM (R.Performable m)
+     , R.MonadHold t m
+     , Fix.MonadFix m
+     , Ob.SetRoute t (Ob.R Route.FrontendRoute) m
+     , Ob.RouteToUrl (Ob.R Route.FrontendRoute) m
+     , R.Prerender js t m
+     )
+  => m ()
+problemSetCardsWidget = do
+  response :: R.Event t (Maybe [ProblemCard.ProblemCard]) <- Util.getOnload "/api/problems"
+  problemCards :: R.Dynamic t [ProblemCard.ProblemCard] <- R.holdDyn [] $ fromMaybe [] <$> response
+  void $ R.simpleList problemCards problemCardWidget
+

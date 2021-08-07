@@ -1,5 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE TypeFamilies #-}
 module Frontend where
 
 import qualified Obelisk.Frontend as Ob
