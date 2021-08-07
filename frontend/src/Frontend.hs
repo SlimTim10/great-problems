@@ -33,12 +33,7 @@ frontend = Ob.Frontend
         R.prerender_ R.blank $ Home.widget
       Route.FrontendRoute_Explore -> do
         Header.widget
-        r :: R.Dynamic t (Maybe (Ob.R Route.ExploreRoute)) <- Ob.askRoute
-        R.dyn_ $ R.ffor r $ \case
-          -- TODO: pass argument to Explore.widget
-          Nothing -> R.prerender_ R.blank $ Explore.widget
-          Just (Route.ExploreRoute_Problems :/ ()) -> R.prerender_ R.blank $ Explore.widget
-          Just (Route.ExploreRoute_ProblemSets :/ ()) -> R.prerender_ R.blank $ Explore.widget
+        R.prerender_ R.blank $ Explore.widget
       Route.FrontendRoute_Register -> do
         Header.widget
       Route.FrontendRoute_SignIn -> do
@@ -53,6 +48,11 @@ frontend = Ob.Frontend
         problemId :: R.Dynamic t Integer <- Ob.askRoute
         R.el "p" $ R.text "Single problem"
         R.el "p" $ R.display problemId
+      Route.FrontendRoute_ViewProblemSet -> do
+        Header.widget
+        problemSetId :: R.Dynamic t Integer <- Ob.askRoute
+        R.el "p" $ R.text "Single problem set"
+        R.el "p" $ R.display problemSetId
       Route.FrontendRoute_Topics -> do
         Header.widget
         R.el "p" $ R.text "Problems belonging to a topic"

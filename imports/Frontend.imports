@@ -3,18 +3,16 @@ import qualified Obelisk.Route.Frontend as Ob
     ( R, routeLink, subRoute_, Routed(askRoute) )
 import qualified Obelisk.Generated.Static as Ob ( static )
 import qualified Reflex.Dom.Core as R
-    ( ffor,
-      prerender_,
+    ( prerender_,
       blank,
       display,
-      dyn_,
       el,
       elAttr,
       elClass,
       text,
       Reflex(Dynamic) )
 import qualified Common.Route as Route
-    ( TopicsRoute, ExploreRoute(..), FrontendRoute(..) )
+    ( TopicsRoute, FrontendRoute(..) )
 import qualified Problem ( widget )
 import qualified Home ( widget )
 import qualified Header ( widget )

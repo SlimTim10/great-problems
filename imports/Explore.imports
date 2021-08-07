@@ -23,12 +23,17 @@ import qualified Common.Api.Problem as Problem
     ( Problem(summary, id, updated_at) )
 import qualified Common.Api.ProblemCard as ProblemCard
     ( ProblemCard(ProblemCard) )
+import qualified Common.Api.ProblemSet as ProblemSet
+    ( ProblemSet(summary, id, updated_at) )
+import qualified Common.Api.ProblemSetCard as ProblemSetCard
+    ( ProblemSetCard(ProblemSetCard) )
 import qualified Common.Api.User as User ( User(full_name, id) )
 import qualified Common.Route as Route
-    ( TopicsRoute(TopicsRoute_Problems),
+    ( TopicsRoute(TopicsRoute_ProblemSets, TopicsRoute_Problems),
       ExploreRoute(..),
-      FrontendRoute(FrontendRoute_ViewUser, FrontendRoute_ViewProblem,
-                    FrontendRoute_Topics, FrontendRoute_Explore) )
+      FrontendRoute(FrontendRoute_ViewProblemSet, FrontendRoute_ViewUser,
+                    FrontendRoute_ViewProblem, FrontendRoute_Topics,
+                    FrontendRoute_Explore) )
 import qualified Buttons ( secondary )
 import qualified Util ( getOnload )
 import Global ( (:/), forM_, void, fromMaybe, unless, cs )

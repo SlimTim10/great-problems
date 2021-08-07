@@ -28,7 +28,7 @@ data BackendRoute :: * -> * where
   BackendRoute_Api :: BackendRoute (Ob.R Api)
 
 data Api :: * -> * where
-  Api_Problems :: Api ()
+  Api_Problems :: Api (Maybe Integer)
   Api_Topics :: Api (Maybe (Ob.R Api_Topics))
   Api_Users :: Api (Maybe Integer)
 
@@ -42,6 +42,7 @@ data FrontendRoute :: * -> * where
   FrontendRoute_SignIn :: FrontendRoute ()
   FrontendRoute_New :: FrontendRoute ()
   FrontendRoute_ViewProblem :: FrontendRoute Integer
+  FrontendRoute_ViewProblemSet :: FrontendRoute Integer
   FrontendRoute_ViewUser :: FrontendRoute Integer
   FrontendRoute_Topics :: FrontendRoute (Integer, Maybe (Ob.R TopicsRoute))
 
@@ -64,7 +65,9 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
   (\case
       BackendRoute_Missing -> Ob.PathSegment "missing" $ Ob.unitEncoder mempty
       BackendRoute_Api -> Ob.PathSegment "api" $ Ob.pathComponentEncoder $ \case
-        Api_Problems -> Ob.PathSegment "problems" $ Ob.unitEncoder mempty
+        Api_Problems -> Ob.PathSegment "problems" $
+          Ob.maybeEncoder (Ob.unitEncoder mempty) $ idPathSegmentEncoder
+        -- Api_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.unitEncoder mempty
         Api_Topics -> Ob.PathSegment "topics" $
           Ob.maybeEncoder (Ob.unitEncoder mempty) $ Ob.pathComponentEncoder $ \case
           Api_RootTopics -> Ob.PathSegment "roots" $ Ob.unitEncoder mempty
@@ -81,6 +84,7 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
       FrontendRoute_SignIn -> Ob.PathSegment "sign-in" $ Ob.unitEncoder mempty
       FrontendRoute_New -> Ob.PathSegment "new" $ Ob.unitEncoder mempty
       FrontendRoute_ViewProblem -> Ob.PathSegment "problems" idPathSegmentEncoder
+      FrontendRoute_ViewProblemSet -> Ob.PathSegment "problem-sets" idPathSegmentEncoder
       FrontendRoute_ViewUser -> Ob.PathSegment "users" idPathSegmentEncoder
       FrontendRoute_Topics -> Ob.PathSegment "topics" $
         let

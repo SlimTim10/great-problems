@@ -22,18 +22,17 @@ backend = Ob.Backend
       serve $ \case
         Route.BackendRoute_Missing :/ () -> return ()
         Route.BackendRoute_Api :/ apiRoute -> case apiRoute of
-          Route.Api_Problems :/ () -> do
-            writeJSON =<< IO.liftIO (Queries.getProblemCards conn)
-          Route.Api_Topics :/ apiRoute' -> case apiRoute' of
-            Nothing -> do
-              writeJSON =<< IO.liftIO (Queries.getTopics conn)
-            Just (Route.Api_RootTopics :/ ()) -> do
-              writeJSON =<< IO.liftIO (Queries.getRootTopics conn)
-          Route.Api_Users :/ apiRoute' -> case apiRoute' of
-            Nothing -> do
-              writeJSON =<< IO.liftIO (Queries.getUsers conn)
-            Just userId -> do
-              writeJSON =<< IO.liftIO (Queries.getUserById conn userId)
+          Route.Api_Problems :/ subRoute -> case subRoute of
+            Nothing -> writeJSON =<< IO.liftIO (Queries.getProblemCards conn)
+            -- TODO: get single extended problem
+            -- Just problemId -> writeJSON =<< IO.liftIO (Queries.getExtendedProblemById conn problemId)
+            Just _ -> writeJSON =<< IO.liftIO (Queries.getProblemCards conn)
+          Route.Api_Topics :/ subRoute -> case subRoute of
+            Nothing -> writeJSON =<< IO.liftIO (Queries.getTopics conn)
+            Just (Route.Api_RootTopics :/ ()) -> writeJSON =<< IO.liftIO (Queries.getRootTopics conn)
+          Route.Api_Users :/ subRoute -> case subRoute of
+            Nothing -> writeJSON =<< IO.liftIO (Queries.getUsers conn)
+            Just userId -> writeJSON =<< IO.liftIO (Queries.getUserById conn userId)
   , Ob._backend_routeEncoder = Route.fullRouteEncoder
   }
 
