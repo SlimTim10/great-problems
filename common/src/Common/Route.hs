@@ -37,12 +37,16 @@ data Api_Topics :: * -> * where
 
 data FrontendRoute :: * -> * where
   FrontendRoute_Home :: FrontendRoute ()
-  FrontendRoute_Explore :: FrontendRoute ()
+  FrontendRoute_Explore :: FrontendRoute (Maybe (Ob.R ExploreRoute))
   FrontendRoute_Register :: FrontendRoute ()
   FrontendRoute_SignIn :: FrontendRoute ()
   FrontendRoute_New :: FrontendRoute ()
   FrontendRoute_ViewProblem :: FrontendRoute Integer
   FrontendRoute_Topics :: FrontendRoute (Integer, Maybe (Ob.R TopicsRoute))
+
+data ExploreRoute :: * -> * where
+  ExploreRoute_Problems :: ExploreRoute ()
+  ExploreRoute_ProblemSets :: ExploreRoute ()
 
 data TopicsRoute :: * -> * where
   TopicsRoute_Problems :: TopicsRoute ()
@@ -68,7 +72,10 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
   )
   (\case
       FrontendRoute_Home -> Ob.PathEnd $ Ob.unitEncoder mempty
-      FrontendRoute_Explore -> Ob.PathSegment "explore" $ Ob.unitEncoder mempty
+      FrontendRoute_Explore -> Ob.PathSegment "explore" $
+        Ob.maybeEncoder (Ob.unitEncoder mempty) $ Ob.pathComponentEncoder $ \case
+        ExploreRoute_Problems -> Ob.PathSegment "problems" $ Ob.unitEncoder mempty
+        ExploreRoute_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.unitEncoder mempty
       FrontendRoute_Register -> Ob.PathSegment "register" $ Ob.unitEncoder mempty
       FrontendRoute_SignIn -> Ob.PathSegment "sign-in" $ Ob.unitEncoder mempty
       FrontendRoute_New -> Ob.PathSegment "new" $ Ob.unitEncoder mempty
@@ -89,4 +96,5 @@ concat <$> mapM Ob.deriveRouteComponent
   , ''Api
   , ''Api_Topics
   , ''TopicsRoute
+  , ''ExploreRoute
   ]

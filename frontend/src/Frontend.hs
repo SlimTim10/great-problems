@@ -35,7 +35,12 @@ frontend = Ob.Frontend
         R.prerender_ R.blank $ Home.widget
       Route.FrontendRoute_Explore -> do
         Header.widget
-        R.prerender_ R.blank $ Explore.widget
+        r :: R.Dynamic t (Maybe (Ob.R Route.ExploreRoute)) <- Ob.askRoute
+        R.dyn_ $ R.ffor r $ \case
+          -- TODO: pass argument to Explore.widget
+          Nothing -> R.prerender_ R.blank $ Explore.widget
+          Just (Route.ExploreRoute_Problems :/ ()) -> R.prerender_ R.blank $ Explore.widget
+          Just (Route.ExploreRoute_ProblemSets :/ ()) -> R.prerender_ R.blank $ Explore.widget
       Route.FrontendRoute_Register -> do
         Header.widget
       Route.FrontendRoute_SignIn -> do

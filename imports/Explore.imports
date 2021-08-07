@@ -24,10 +24,12 @@ import qualified Common.Api.Problem as Problem
     ( Problem(summary, id, updated_at) )
 import qualified Common.Api.ProblemTile as ProblemTile
     ( ProblemTile(ProblemTile) )
-import qualified Common.Api.User as User ( User(full_name) )
+import qualified Common.Api.User as User ( User(full_name, id) )
 import qualified Common.Route as Route
     ( TopicsRoute(TopicsRoute_Problems),
-      FrontendRoute(FrontendRoute_ViewProblem, FrontendRoute_Topics) )
+      ExploreRoute(ExploreRoute_ProblemSets, ExploreRoute_Problems),
+      FrontendRoute(FrontendRoute_ViewProblem, FrontendRoute_Topics,
+                    FrontendRoute_Explore) )
 import qualified Buttons ( secondary )
 import qualified Util ( getOnload )
 import Global ( (:/), forM_, void, fromMaybe, unless, cs, (=:) )

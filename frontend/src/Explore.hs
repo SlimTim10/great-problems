@@ -44,10 +44,12 @@ widget = do
         void $ R.simpleList topics topicWidget
   R.elClass "div" "my-6 flex justify-center" $ do
     R.elClass "div" "flex justify-around w-brand-screen-lg" $ do
-      R'.elAttrClass "a" ("href" =: "/explore") "flex-1 border-b-2 border-brand-black" $ do
-        R.elClass "p" "text-center text-brand-lg font-normal" $ R.text "Problems"
-      R'.elAttrClass "a" ("href" =: "/explore/problem-sets") "flex-1 border-b border-brand-light-gray" $ do
-        R.elClass "p" "text-center text-brand-lg text-brand-light-gray font-light" $ R.text "Problem sets"
+      R.elClass "div" "flex-1 border-b-2 border-brand-black" $ do
+        Ob.routeLink (Route.FrontendRoute_Explore :/ (Just (Route.ExploreRoute_Problems :/ ()))) $ do
+          R.elClass "p" "text-center text-brand-lg font-normal" $ R.text "Problems"
+      R.elClass "div" "flex-1 border-b border-brand-light-gray" $ do
+        Ob.routeLink (Route.FrontendRoute_Explore :/ (Just (Route.ExploreRoute_ProblemSets :/ ()))) $ do
+          R.elClass "p" "text-center text-brand-lg text-brand-light-gray font-light" $ R.text "Problem sets"
   R.elClass "div" "flex justify-center" $ do
     R.elClass "div" "w-brand-screen-lg flex flex-col gap-2" $ do
       response :: R.Event t (Maybe [ProblemTile.ProblemTile]) <- Util.getOnload "/api/problems"
@@ -95,8 +97,9 @@ problemTileWidget problemTile = R.dyn_ $ R.ffor problemTile $ \(ProblemTile.Prob
       R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "Updated " ++ updatedAt)
       R.elClass "div" "flex" $ do
         R.elClass "p" "text-brand-sm text-brand-gray mr-1" $ R.text "by"
+        -- TODO: replace with routeLink (need to build FrontendRoute_Users first)
         R'.elAttrClass
           "a"
-          ("href" =: "/users/1")
+          ("href" =: cs ("/users/" ++ show (User.id author)))
           "hover:underline text-brand-sm text-brand-gray font-bold"
           $ R.text (CI.original $ User.full_name author)
