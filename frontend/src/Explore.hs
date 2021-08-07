@@ -7,7 +7,6 @@ import qualified Control.Monad.Fix as Fix
 import qualified Language.Javascript.JSaddle as JS
 import qualified Obelisk.Route.Frontend as Ob
 import qualified Reflex.Dom.Core as R
-import qualified MyReflex.Dom.Widget.Basic as R'
 
 import qualified Common.Api.Topic as Topic
 import qualified Common.Api.Problem as Problem
@@ -81,25 +80,22 @@ problemTileWidget
   -> m ()
 problemTileWidget problemTile = R.dyn_ $ R.ffor problemTile $ \(ProblemTile.ProblemTile problem topics author) -> do
   let updatedAt = show $ Problem.updated_at problem
-  Ob.routeLink
-    (Route.FrontendRoute_ViewProblem :/ (Problem.id problem)) $ do
-    R.elClass "div" "p-2 border border-brand-light-gray flex flex-col gap-1 group" $ do
-      R.elClass "div" "flex justify-between" $ do
-        R.elClass "div" "flex" $ do
-          forM_ (zip [0..] topics) $ \(n :: Integer, Topic.Topic tid name _) -> do
-            unless (n == 0) $ do
-              R.elClass "p" "text-brand-sm text-brand-gray mx-1" $ R.text ">"
-            Ob.routeLink
-              (Route.FrontendRoute_Topics :/ (tid, Just (Route.TopicsRoute_Problems :/ ()))) $ do
-              R.elClass "p" "hover:underline text-brand-sm text-brand-gray" $ R.text name
-        R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "#" ++ show (Problem.id problem))
-      R.elClass "p" "text-brand-primary font-medium group-hover:underline" $ R.text (Problem.summary problem)
-      R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "Updated " ++ updatedAt)
+  R.elClass "div" "p-2 border border-brand-light-gray flex flex-col gap-1" $ do
+    R.elClass "div" "flex justify-between" $ do
       R.elClass "div" "flex" $ do
-        R.elClass "p" "text-brand-sm text-brand-gray mr-1" $ R.text "by"
-        -- TODO: replace with routeLink (need to build FrontendRoute_Users first)
-        R'.elAttrClass
-          "a"
-          ("href" =: cs ("/users/" ++ show (User.id author)))
-          "hover:underline text-brand-sm text-brand-gray font-bold"
-          $ R.text (CI.original $ User.full_name author)
+        forM_ (zip [0..] topics) $ \(n :: Integer, Topic.Topic tid name _) -> do
+          unless (n == 0) $ do
+            R.elClass "p" "text-brand-sm text-brand-gray mx-1" $ R.text ">"
+          Ob.routeLink
+            (Route.FrontendRoute_Topics :/ (tid, Just (Route.TopicsRoute_Problems :/ ()))) $ do
+            R.elClass "p" "hover:underline text-brand-sm text-brand-gray" $ R.text name
+      R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "#" ++ show (Problem.id problem))
+    Ob.routeLink (Route.FrontendRoute_ViewProblem :/ (Problem.id problem)) $ do
+      R.elClass "div" "group" $ do
+        R.elClass "p" "text-brand-primary font-medium group-hover:underline" $ R.text (Problem.summary problem)
+        R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "Updated " ++ updatedAt)
+    R.elClass "div" "flex" $ do
+      R.elClass "p" "text-brand-sm text-brand-gray mr-1" $ R.text "by"
+      Ob.routeLink (Route.FrontendRoute_ViewUser :/ (User.id author)) $ do
+        R.elClass "div" "hover:underline text-brand-sm text-brand-gray font-bold" $ do
+          R.text (CI.original $ User.full_name author)

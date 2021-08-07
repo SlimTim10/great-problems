@@ -17,7 +17,6 @@ import qualified Reflex.Dom.Core as R
       HasJSContext,
       DomBuilder,
       Prerender )
-import qualified MyReflex.Dom.Widget.Basic as R' ( elAttrClass )
 import qualified Common.Api.Topic as Topic
     ( Topic(Topic, name, id) )
 import qualified Common.Api.Problem as Problem
@@ -28,8 +27,8 @@ import qualified Common.Api.User as User ( User(full_name, id) )
 import qualified Common.Route as Route
     ( TopicsRoute(TopicsRoute_Problems),
       ExploreRoute(ExploreRoute_ProblemSets, ExploreRoute_Problems),
-      FrontendRoute(FrontendRoute_ViewProblem, FrontendRoute_Topics,
-                    FrontendRoute_Explore) )
+      FrontendRoute(FrontendRoute_ViewUser, FrontendRoute_ViewProblem,
+                    FrontendRoute_Topics, FrontendRoute_Explore) )
 import qualified Buttons ( secondary )
 import qualified Util ( getOnload )
-import Global ( (:/), forM_, void, fromMaybe, unless, cs, (=:) )
+import Global ( (:/), forM_, void, fromMaybe, unless, cs )

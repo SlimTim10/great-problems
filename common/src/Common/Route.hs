@@ -42,6 +42,7 @@ data FrontendRoute :: * -> * where
   FrontendRoute_SignIn :: FrontendRoute ()
   FrontendRoute_New :: FrontendRoute ()
   FrontendRoute_ViewProblem :: FrontendRoute Integer
+  FrontendRoute_ViewUser :: FrontendRoute Integer
   FrontendRoute_Topics :: FrontendRoute (Integer, Maybe (Ob.R TopicsRoute))
 
 data ExploreRoute :: * -> * where
@@ -80,6 +81,7 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
       FrontendRoute_SignIn -> Ob.PathSegment "sign-in" $ Ob.unitEncoder mempty
       FrontendRoute_New -> Ob.PathSegment "new" $ Ob.unitEncoder mempty
       FrontendRoute_ViewProblem -> Ob.PathSegment "problems" idPathSegmentEncoder
+      FrontendRoute_ViewUser -> Ob.PathSegment "users" idPathSegmentEncoder
       FrontendRoute_Topics -> Ob.PathSegment "topics" $
         let
           topicsRouteEncoder = Ob.pathComponentEncoder $ \case

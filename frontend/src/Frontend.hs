@@ -62,4 +62,9 @@ frontend = Ob.Frontend
         R.el "p" $ R.display r
         R.el "span" $ R.text "topic id: "
         R.display (fst <$> r)
+      Route.FrontendRoute_ViewUser -> do
+        Header.widget
+        userId :: R.Dynamic t Integer <- Ob.askRoute
+        R.el "p" $ R.text "Single user"
+        R.el "p" $ R.display userId
   }
