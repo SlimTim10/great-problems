@@ -30,6 +30,7 @@ data BackendRoute :: * -> * where
 data Api :: * -> * where
   Api_Problems :: Api ()
   Api_Topics :: Api (Maybe (Ob.R Api_Topics))
+  Api_Users :: Api (Maybe Integer)
 
 data Api_Topics :: * -> * where
   Api_RootTopics :: Api_Topics ()
@@ -61,7 +62,10 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
         Api_Problems -> Ob.PathSegment "problems" $ Ob.unitEncoder mempty
         Api_Topics -> Ob.PathSegment "topics" $
           Ob.maybeEncoder (Ob.unitEncoder mempty) $ Ob.pathComponentEncoder $ \case
-          Api_RootTopics -> Ob.PathSegment "roots" $ Ob.unitEncoder mempty)
+          Api_RootTopics -> Ob.PathSegment "roots" $ Ob.unitEncoder mempty
+        Api_Users -> Ob.PathSegment "users" $
+          Ob.maybeEncoder (Ob.unitEncoder mempty) $ idPathSegmentEncoder
+  )
   (\case
       FrontendRoute_Home -> Ob.PathEnd $ Ob.unitEncoder mempty
       FrontendRoute_Explore -> Ob.PathSegment "explore" $ Ob.unitEncoder mempty

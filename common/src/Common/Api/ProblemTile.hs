@@ -10,10 +10,12 @@ import GHC.Generics (Generic)
 
 import qualified Common.Api.Problem as Problem
 import qualified Common.Api.Topic as Topic
+import qualified Common.Api.User as User
 
 data ProblemTile = ProblemTile
   { problem :: Problem.Problem
   , topics :: [Topic.Topic]
+  , author :: User.User
   } deriving
   ( Eq
   , Show

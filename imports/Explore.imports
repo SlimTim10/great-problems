@@ -1,3 +1,4 @@
+import qualified Data.CaseInsensitive as CI ( CI(original) )
 import qualified Control.Monad.Fix as Fix ( MonadFix )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Obelisk.Route.Frontend as Ob
@@ -23,6 +24,7 @@ import qualified Common.Api.Problem as Problem
     ( Problem(summary, id, updated_at) )
 import qualified Common.Api.ProblemTile as ProblemTile
     ( ProblemTile(ProblemTile) )
+import qualified Common.Api.User as User ( User(full_name) )
 import qualified Common.Route as Route
     ( TopicsRoute(TopicsRoute_Problems),
       FrontendRoute(FrontendRoute_ViewProblem, FrontendRoute_Topics) )

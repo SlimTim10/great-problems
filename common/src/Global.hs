@@ -13,6 +13,7 @@ module Global
   , module Control.Lens
   , MonadFix
   , module Data.String.Conversions
+  , CI
   , module Obelisk.Route
   , module Reflex.Dom.Core
   ) where
@@ -28,6 +29,7 @@ import Control.Monad (void, (<=<), forM_, when, unless)
 import Control.Lens ((^.), iforM_, _1)
 import Control.Monad.Fix (MonadFix)
 import Data.String.Conversions (cs)
+import Data.CaseInsensitive (CI)
 
 import Obelisk.Route ( pattern (:/) )
 import Reflex.Dom.Core ((&), (.~), (=:))

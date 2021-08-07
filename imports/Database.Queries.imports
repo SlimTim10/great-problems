@@ -1,9 +1,10 @@
 import qualified Database.PostgreSQL.Simple as SQL
     ( query, query_, Only(Only), Connection )
 import qualified Common.Api.Problem as Problem
-    ( Problem(topic_id) )
+    ( Problem(author_id, topic_id) )
 import qualified Common.Api.Topic as Topic ( Topic(parent_id) )
 import qualified Common.Api.ProblemTile as ProblemTile
     ( ProblemTile(ProblemTile) )
+import qualified Common.Api.User as User ( User(User) )
 import qualified Util ( headMay )
-import Global ( isNothing )
+import Global ( fromMaybe, isNothing )

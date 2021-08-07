@@ -29,6 +29,11 @@ backend = Ob.Backend
               writeJSON =<< IO.liftIO (Queries.getTopics conn)
             Just (Route.Api_RootTopics :/ ()) -> do
               writeJSON =<< IO.liftIO (Queries.getRootTopics conn)
+          Route.Api_Users :/ apiRoute' -> case apiRoute' of
+            Nothing -> do
+              writeJSON =<< IO.liftIO (Queries.getUsers conn)
+            Just userId -> do
+              writeJSON =<< IO.liftIO (Queries.getUserById conn userId)
   , Ob._backend_routeEncoder = Route.fullRouteEncoder
   }
 

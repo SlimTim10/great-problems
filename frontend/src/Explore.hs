@@ -2,6 +2,7 @@ module Explore
   ( widget
   ) where
 
+import qualified Data.CaseInsensitive as CI
 import qualified Control.Monad.Fix as Fix
 import qualified Language.Javascript.JSaddle as JS
 import qualified Obelisk.Route.Frontend as Ob
@@ -11,6 +12,7 @@ import qualified MyReflex.Dom.Widget.Basic as R'
 import qualified Common.Api.Topic as Topic
 import qualified Common.Api.Problem as Problem
 import qualified Common.Api.ProblemTile as ProblemTile
+import qualified Common.Api.User as User
 import qualified Common.Route as Route
 import qualified Buttons
 import qualified Util
@@ -75,11 +77,8 @@ problemTileWidget
      )
   => R.Dynamic t ProblemTile.ProblemTile
   -> m ()
-problemTileWidget problemTile = R.dyn_ $ R.ffor problemTile $ \(ProblemTile.ProblemTile problem topics) -> do
-  -- TODO: add author to ProblemTile
-  -- let topicNames = map (cs . Topic.name) topics
+problemTileWidget problemTile = R.dyn_ $ R.ffor problemTile $ \(ProblemTile.ProblemTile problem topics author) -> do
   let updatedAt = show $ Problem.updated_at problem
-  let authorName = "Bob" -- Temporary mock
   Ob.routeLink
     (Route.FrontendRoute_ViewProblem :/ (Problem.id problem)) $ do
     R.elClass "div" "p-2 border border-brand-light-gray flex flex-col gap-1 group" $ do
@@ -100,4 +99,4 @@ problemTileWidget problemTile = R.dyn_ $ R.ffor problemTile $ \(ProblemTile.Prob
           "a"
           ("href" =: "/users/1")
           "hover:underline text-brand-sm text-brand-gray font-bold"
-          $ R.text authorName
+          $ R.text (CI.original $ User.full_name author)

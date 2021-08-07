@@ -1,8 +1,11 @@
 module Database.Queries
   ( getProblems
   , getTopics
+  , getTopicById
   , getRootTopics
   , getProblemTiles
+  , getUsers
+  , getUserById
   ) where
 
 import qualified Database.PostgreSQL.Simple as SQL
@@ -10,6 +13,7 @@ import qualified Database.PostgreSQL.Simple as SQL
 import qualified Common.Api.Problem as Problem
 import qualified Common.Api.Topic as Topic
 import qualified Common.Api.ProblemTile as ProblemTile
+import qualified Common.Api.User as User
 import qualified Util
 import Global
 
@@ -36,7 +40,9 @@ problemToTile conn problem = do
   topics <- getTopicById conn (Problem.topic_id problem) >>= \case
     Nothing -> return []
     Just topic -> getTopicBranch conn topic
-  return $ ProblemTile.ProblemTile problem topics
+  -- TODO: add proper error handling for finding users
+  user <- getUserById conn (Problem.author_id problem) >>= return . fromMaybe (User.User 0 "" "")
+  return $ ProblemTile.ProblemTile problem topics user
 
 getProblemTiles :: SQL.Connection -> IO ([ProblemTile.ProblemTile])
 getProblemTiles conn = do
@@ -51,3 +57,10 @@ getTopicBranch conn topic
         Nothing -> return []
         Just parentTopic -> getTopicBranch conn parentTopic
       return (topicBranch ++ [topic])
+
+getUsers :: SQL.Connection -> IO ([User.User])
+getUsers conn = SQL.query_ conn "SELECT id, full_name, email FROM users"
+
+getUserById :: SQL.Connection -> Integer -> IO (Maybe User.User)
+getUserById conn userId = Util.headMay
+  <$> SQL.query conn "SELECT id, full_name, email FROM users WHERE id = ?" (SQL.Only userId)
