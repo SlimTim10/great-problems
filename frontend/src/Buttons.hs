@@ -29,5 +29,5 @@ secondary
 secondary t = R'.elAttrClass
   "button"
   ("type" =: "button")
-  "border border-brand-primary bg-white rounded text-blue-700 font-medium px-3 h-10"
+  "border border-brand-primary bg-transparent rounded text-blue-700 font-medium px-3 h-10"
   $ R.text t
