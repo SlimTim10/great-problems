@@ -6,8 +6,8 @@ import qualified GHC.Generics as Generics ( Generic )
 import qualified Data.Aeson as JSON
     ( FromJSON(parseJSON),
       Value(Object),
-      defaultOptions,
       Options(fieldLabelModifier),
+      defaultOptions,
       genericParseJSON )
 import qualified JSDOM.Types ( File )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )

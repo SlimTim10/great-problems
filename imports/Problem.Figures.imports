@@ -1,6 +1,6 @@
 import qualified Control.Monad.Fix as Fix ( MonadFix )
 import qualified Data.Map as Map
-    ( Map, delete, elems, empty, insert, maxViewWithKey, singleton )
+    ( delete, elems, empty, insert, maxViewWithKey, singleton, Map )
 import qualified JSDOM.File ( getName )
 import qualified JSDOM.Types ( File )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )

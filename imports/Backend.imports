@@ -4,9 +4,9 @@ import qualified Control.Monad.IO.Class as IO ( MonadIO(liftIO) )
 import qualified Snap.Core as Snap
     ( MonadSnap, modifyResponse, writeLBS, setHeader )
 import qualified Data.Aeson as JSON ( ToJSON, encode )
+import qualified Data.Map as Map ( lookup )
 import qualified Common.Route as Route
     ( FrontendRoute,
-      Api_Topics(Api_RootTopics),
       Api(Api_Users, Api_Topics, Api_Problems),
       BackendRoute(..),
       fullRouteEncoder )
@@ -17,3 +17,4 @@ import qualified Database.Queries as Queries
       getProblemCards,
       getUsers,
       getUserById )
+import Global ( fromMaybe )

@@ -41,7 +41,7 @@ widget = do
     R.elClass "div" "max-w-screen-lg flex flex-col items-center" $ do
       R.elClass "p" "text-brand-lg font-light" $ R.text "Pick a topic"
       R.elClass "div" "flex justify-center flex-wrap" $ do
-        response :: R.Event t (Maybe [Topic.Topic]) <- Util.getOnload "/api/topics/roots"
+        response :: R.Event t (Maybe [Topic.Topic]) <- Util.getOnload "/api/topics?parent=null"
         topics :: R.Dynamic t [Topic.Topic] <- R.holdDyn [] $ fromMaybe [] <$> response
         void $ R.simpleList topics topicWidget
   R.elClass "div" "my-6 flex justify-center" $ do

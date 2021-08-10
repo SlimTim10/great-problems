@@ -22,6 +22,8 @@ import Obelisk.Route ( pattern (:/) )
 import qualified Obelisk.Route as Ob
 import qualified Obelisk.Route.TH as Ob
 
+import Global
+
 data BackendRoute :: * -> * where
   -- | Used to handle unparseable routes.
   BackendRoute_Missing :: BackendRoute ()
@@ -29,11 +31,8 @@ data BackendRoute :: * -> * where
 
 data Api :: * -> * where
   Api_Problems :: Api (Maybe Integer)
-  Api_Topics :: Api (Maybe (Ob.R Api_Topics))
+  Api_Topics :: Api (Map Text (Maybe Text))
   Api_Users :: Api (Maybe Integer)
-
-data Api_Topics :: * -> * where
-  Api_RootTopics :: Api_Topics ()
 
 data FrontendRoute :: * -> * where
   FrontendRoute_Home :: FrontendRoute ()
@@ -68,9 +67,7 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
         Api_Problems -> Ob.PathSegment "problems" $
           Ob.maybeEncoder (Ob.unitEncoder mempty) $ idPathSegmentEncoder
         -- Api_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.unitEncoder mempty
-        Api_Topics -> Ob.PathSegment "topics" $
-          Ob.maybeEncoder (Ob.unitEncoder mempty) $ Ob.pathComponentEncoder $ \case
-          Api_RootTopics -> Ob.PathSegment "roots" $ Ob.unitEncoder mempty
+        Api_Topics -> Ob.PathSegment "topics" Ob.queryOnlyEncoder
         Api_Users -> Ob.PathSegment "users" $
           Ob.maybeEncoder (Ob.unitEncoder mempty) $ idPathSegmentEncoder
   )
@@ -100,7 +97,6 @@ concat <$> mapM Ob.deriveRouteComponent
   [ ''BackendRoute
   , ''FrontendRoute
   , ''Api
-  , ''Api_Topics
   , ''TopicsRoute
   , ''ExploreRoute
   ]

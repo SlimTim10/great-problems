@@ -17,6 +17,7 @@ import qualified Obelisk.Route as Ob
       mkFullRouteEncoder,
       pathComponentEncoder,
       pathSegmentEncoder,
+      queryOnlyEncoder,
       singlePathSegmentEncoder,
       unitEncoder,
       unsafeTshowEncoder,
@@ -26,3 +27,4 @@ import qualified Obelisk.Route as Ob
       R,
       SegmentResult(PathEnd, PathSegment) )
 import qualified Obelisk.Route.TH as Ob ( deriveRouteComponent )
+import Global ( Map )

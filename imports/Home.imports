@@ -23,4 +23,4 @@ import qualified Common.Route as Route
     ( FrontendRoute(FrontendRoute_ViewProblem) )
 import qualified Common.Api.Problem as Problem
     ( Problem(id, summary) )
-import Global ( Text, (:/), void, fromMaybe )
+import Global ( Text, fromMaybe, void, (:/) )

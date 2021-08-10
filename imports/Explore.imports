@@ -36,4 +36,4 @@ import qualified Common.Route as Route
                     FrontendRoute_Explore) )
 import qualified Buttons ( secondary )
 import qualified Util ( getOnload )
-import Global ( (:/), forM_, void, fromMaybe, unless, cs )
+import Global ( fromMaybe, void, unless, forM_, cs, (:/) )
