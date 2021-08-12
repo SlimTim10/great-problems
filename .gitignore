@@ -13,3 +13,4 @@ result
 result-*
 tags
 TAGS
+config/backend/db.env
