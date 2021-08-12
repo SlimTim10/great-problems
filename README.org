@@ -17,7 +17,7 @@ postgres=# grant all privileges on database great_problems to great_problems;
 postgres=# \c great_problems
 great_problems=# CREATE EXTENSION citext;
 great_problems=# \q
-$ mv config/backend/db.env.example config/backend/db.env
+$ cp config/backend/db.env.example config/backend/db.env
 #+END_SRC
 
 Edit the environment variables in ~config/backend/db.env~ with the database connection settings.
@@ -30,6 +30,13 @@ DB_USER=great_problems
 DB_PASSWORD=mypass
 DB_NAME=great_problems
 #+END_SRC
+
+To setup the database, use the repl:
+#+BEGIN_SRC
+$ ob repl
+*Backend Obelisk.Run Frontend Backend> Database.setup
+#+END_SRC
+This will create the empty tables and insert the seeds.
 
 To reset the database, use the repl:
 #+BEGIN_SRC

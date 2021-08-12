@@ -42,6 +42,14 @@ reset = do
   Database.Seeds.load conn
   return conn
 
+-- | Setup the schema and load the seeds.
+setup :: IO SQL.Connection
+setup = do
+  conn <- connect
+  Database.Schema.load conn
+  Database.Seeds.load conn
+  return conn
+
 -- | Look up an environment variable, given a default to fall back to.
 lookupSetting :: Read a => String -> a -> IO a
 lookupSetting env def = do
