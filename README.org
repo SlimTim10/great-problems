@@ -17,6 +17,7 @@ postgres=# grant all privileges on database great_problems to great_problems;
 postgres=# \c great_problems
 great_problems=# CREATE EXTENSION citext;
 great_problems=# \q
+$ mv config/backend/db.env.example config/backend/db.env
 #+END_SRC
 
 Edit the environment variables in ~config/backend/db.env~ with the database connection settings.
