@@ -1,7 +1,41 @@
 * Great Problems
 
-** Running
-To run locally, install [[https://github.com/obsidiansystems/obelisk][Obelisk]], go into the project directory, and run ~ob run~. This will compile the examples using ghc and run them locally on http://localhost:8000/.
+** Installing
+To install and run this project:
+- Install [[https://github.com/obsidiansystems/obelisk][Obelisk]]
+- Clone this project
+- Set up the database (see below)
+- Go into the project directory and run ~ob run~. This will compile the project using GHC and run it locally on http://localhost:8000/.
+
+*** Setting up the database (Ubuntu 18.04)
+#+BEGIN_SRC
+$ sudo apt install postgresql postgresql-contrib
+$ sudo -u postgres psql
+postgres=# create database great_problems;
+postgres=# create user great_problems with encrypted password 'mypass';
+postgres=# grant all privileges on database great_problems to great_problems;
+postgres=# \c great_problems
+great_problems=# CREATE EXTENSION citext;
+great_problems=# \q
+#+END_SRC
+
+Edit the environment variables in ~config/backend/db.env~ with the database connection settings.
+
+Environment variables and their defaults:
+#+BEGIN_SRC
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=great_problems
+DB_PASSWORD=mypass
+DB_NAME=great_problems
+#+END_SRC
+
+To reset the database, use the repl:
+#+BEGIN_SRC
+$ ob repl
+*Backend Obelisk.Run Frontend Backend> Database.reset
+#+END_SRC
+This will create the empty tables (dropping if they exist) and insert the seeds.
 
 ** Development
 
@@ -44,34 +78,3 @@ project ./. ({ pkgs, ... }: {
 Let ~ob run~ fail with the expected ~sha256~ and update the value accordingly.
 
 NOTE: It may be necessary to run ~nix-collect-garbage~ to clear the cache before ~ob run~.
-
-*** Setting up the database (Ubuntu 18.04)
-#+BEGIN_SRC
-$ sudo apt install postgresql postgresql-contrib
-$ sudo -u postgres psql
-postgres=# create database great_problems;
-postgres=# create user myuser with encrypted password 'mypass';
-postgres=# grant all privileges on database great_problems to myuser;
-postgres=# \c great_problems
-great_problems=# CREATE EXTENSION citext;
-great_problems=# \q
-$ ob run
-#+END_SRC
-
-Edit the environment variables in ~config/backend/db.env~ with the database connection settings.
-
-Environment variables and their defaults:
-#+BEGIN_SRC
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=root
-DB_PASSWORD=root
-DB_NAME=great_problems
-#+END_SRC
-
-To reset the database, use the repl:
-#+BEGIN_SRC
-$ ob repl
-*Backend Obelisk.Run Frontend Backend> Database.reset
-#+END_SRC
-This will create the empty tables (dropping if they exist) and insert the seeds.
