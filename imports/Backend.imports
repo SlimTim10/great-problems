@@ -14,8 +14,8 @@ import qualified Database ( connect )
 import qualified Database.Queries as Queries
     ( getTopics,
       getRootTopics,
+      getTopicsByParentId,
       getProblemCards,
       getUsers,
-      getUserById,
-      getTopicsByParentId )
+      getUserById )
 import Global ( fromMaybe, cs, readMaybe )

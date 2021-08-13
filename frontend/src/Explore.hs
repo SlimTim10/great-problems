@@ -37,6 +37,7 @@ widget
      )
   => m ()
 widget = do
+  path :: R.Dynamic t (Maybe (Ob.R Route.ExploreRoute)) <- Ob.askRoute
   R.elClass "div" "bg-brand-light-gray flex justify-center py-4" $ do
     R.elClass "div" "max-w-screen-lg flex flex-col items-center" $ do
       R.elClass "p" "text-brand-lg font-light" $ R.text "Pick a topic"
@@ -46,19 +47,45 @@ widget = do
         void $ R.simpleList topics topicWidget
   R.elClass "div" "my-6 flex justify-center" $ do
     R.elClass "div" "flex justify-around w-brand-screen-lg" $ do
-      R.elClass "div" "flex-1 border-b-2 border-brand-black" $ do
-        Ob.routeLink (Route.FrontendRoute_Explore :/ (Just (Route.ExploreRoute_Problems :/ ()))) $ do
-          R.elClass "p" "text-center text-brand-lg font-normal" $ R.text "Problems"
-      R.elClass "div" "flex-1 border-b border-brand-light-gray" $ do
-        Ob.routeLink (Route.FrontendRoute_Explore :/ (Just (Route.ExploreRoute_ProblemSets :/ ()))) $ do
-          R.elClass "p" "text-center text-brand-lg text-brand-light-gray font-light" $ R.text "Problem sets"
+      -- Toggle highlighted tab
+      R.dyn_ $ R.ffor path $ \case
+        Just (Route.ExploreRoute_ProblemSets :/ ()) -> do
+          tabWidget False
+            (Ob.routeLink (Route.FrontendRoute_Explore :/ (Just (Route.ExploreRoute_Problems :/ ()))))
+            "Problems"
+          tabWidget True
+            (Ob.routeLink (Route.FrontendRoute_Explore :/ (Just (Route.ExploreRoute_ProblemSets :/ ()))))
+            "Problem sets"
+        _ -> do
+          tabWidget True
+            (Ob.routeLink (Route.FrontendRoute_Explore :/ (Just (Route.ExploreRoute_Problems :/ ()))))
+            "Problems"
+          tabWidget False
+            (Ob.routeLink (Route.FrontendRoute_Explore :/ (Just (Route.ExploreRoute_ProblemSets :/ ()))))
+            "Problem sets"
   R.elClass "div" "flex justify-center" $ do
     R.elClass "div" "w-brand-screen-lg flex flex-col gap-2" $ do
-      path :: R.Dynamic t (Maybe (Ob.R Route.ExploreRoute)) <- Ob.askRoute
       R.dyn_ $ R.ffor path $ \case
         Nothing -> problemCardsWidget
         Just (Route.ExploreRoute_Problems :/ ()) -> problemCardsWidget
         Just (Route.ExploreRoute_ProblemSets :/ ()) -> problemSetCardsWidget
+
+tabWidget
+  :: ( R.DomBuilder t m
+     )
+  => Bool
+  -> (m () -> m ())
+  -> Text
+  -> m ()
+tabWidget active routeLink txt = case active of
+  True -> do
+    R.elClass "div" "flex-1 border-b-2 border-brand-black" $ do
+      routeLink $ do
+        R.elClass "p" "text-center text-brand-lg font-normal" $ R.text txt
+  False -> do
+    R.elClass "div" "flex-1 border-b border-light-gray" $ do
+      routeLink $ do
+        R.elClass "p" "text-center text-brand-lg text-brand-light-gray font-light" $ R.text txt
 
 topicWidget
   :: ( R.DomBuilder t m
@@ -66,7 +93,8 @@ topicWidget
      , Ob.RouteToUrl (Ob.R Route.FrontendRoute) m
      , R.Prerender js t m
      , R.PostBuild t m
-     ) => R.Dynamic t Topic.Topic
+     )
+  => R.Dynamic t Topic.Topic
   -> m ()
 topicWidget topic = R.elClass "span" "m-2" $ do
   R.dyn_ $ R.ffor topic $ \t -> do
@@ -143,6 +171,7 @@ problemSetCardsWidget
 problemSetCardsWidget = do
   response :: R.Event t (Maybe [ProblemSetCard.ProblemSetCard]) <- Util.getOnload "/api/problem-sets"
   problemSetCards :: R.Dynamic t [ProblemSetCard.ProblemSetCard] <- R.holdDyn [] $ fromMaybe [] <$> response
+  R.el "p" $ R.text "Under construction..."
   void $ R.simpleList problemSetCards problemSetCardWidget
 
 problemSetCardWidget
