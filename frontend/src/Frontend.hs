@@ -9,7 +9,10 @@ import qualified Common.Route as Route
 import qualified Problem
 import qualified Home
 import qualified Header
-import qualified Explore
+import qualified Topics
+import qualified Tabs
+import qualified ProblemCards
+import qualified ProblemSetCards
 import Global
 
 frontend :: Ob.Frontend (Ob.R Route.FrontendRoute)
@@ -33,7 +36,19 @@ frontend = Ob.Frontend
         R.prerender_ R.blank $ Home.widget
       Route.FrontendRoute_Explore -> do
         Header.widget
-        R.prerender_ R.blank $ Explore.widget
+        R.prerender_ R.blank $ do
+          Topics.widget Nothing
+          path :: R.Dynamic t (Maybe (Ob.R Route.ExploreRoute)) <- Ob.askRoute
+          R.dyn_ $ R.ffor path $ \case
+            Just (Route.ExploreRoute_Problems :/ ()) -> do
+              Tabs.widget "Problems"
+              ProblemCards.widget Nothing
+            Just (Route.ExploreRoute_ProblemSets :/ ()) -> do
+              Tabs.widget "Problem sets"
+              ProblemSetCards.widget Nothing
+            _ -> do
+              Tabs.widget "Problems"
+              ProblemCards.widget Nothing
       Route.FrontendRoute_Register -> do
         Header.widget
       Route.FrontendRoute_SignIn -> do
