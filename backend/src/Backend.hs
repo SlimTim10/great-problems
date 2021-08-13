@@ -32,7 +32,10 @@ backend = Ob.Backend
           Route.Api_Topics :/ query -> do
             topics <- case fromMaybe Nothing (Map.lookup "parent" query) of
               Just "null" -> IO.liftIO (Queries.getRootTopics conn)
-              _ -> IO.liftIO (Queries.getTopics conn)
+              Just x -> case readMaybe (cs x) :: Maybe Integer of
+                Just parentId -> IO.liftIO (Queries.getTopicsByParentId conn parentId)
+                Nothing -> IO.liftIO (Queries.getTopics conn)
+              Nothing -> IO.liftIO (Queries.getTopics conn)
             writeJSON topics
           Route.Api_Users :/ subRoute -> case subRoute of
             Nothing -> writeJSON =<< IO.liftIO (Queries.getUsers conn)

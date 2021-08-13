@@ -14,6 +14,7 @@ module Global
   , MonadFix
   , module Data.String.Conversions
   , CI
+  , module Text.Read
   , module Obelisk.Route
   , module Reflex.Dom.Core
   ) where
@@ -30,6 +31,7 @@ import Control.Lens ((^.), iforM_, _1)
 import Control.Monad.Fix (MonadFix)
 import Data.String.Conversions (cs)
 import Data.CaseInsensitive (CI)
+import Text.Read (readMaybe)
 
 import Obelisk.Route ( pattern (:/) )
 import Reflex.Dom.Core ((&), (.~), (=:))

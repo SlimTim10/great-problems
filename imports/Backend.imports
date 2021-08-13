@@ -16,5 +16,6 @@ import qualified Database.Queries as Queries
       getRootTopics,
       getProblemCards,
       getUsers,
-      getUserById )
-import Global ( fromMaybe )
+      getUserById,
+      getTopicsByParentId )
+import Global ( fromMaybe, cs, readMaybe )

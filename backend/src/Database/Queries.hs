@@ -3,6 +3,7 @@ module Database.Queries
   , getTopics
   , getTopicById
   , getRootTopics
+  , getTopicsByParentId
   , getProblemCards
   , getUsers
   , getUserById
@@ -34,6 +35,9 @@ getParentTopic conn topic = case Topic.parent_id topic of
 
 getRootTopics :: SQL.Connection -> IO ([Topic.Topic])
 getRootTopics conn = SQL.query_ conn "SELECT * FROM topics WHERE parent_id IS NULL"
+
+getTopicsByParentId :: SQL.Connection -> Integer -> IO ([Topic.Topic])
+getTopicsByParentId conn parentId = SQL.query conn "SELECT * FROM topics WHERE parent_id = ?" (SQL.Only parentId)
 
 problemToCard :: SQL.Connection -> Problem.Problem -> IO (ProblemCard.ProblemCard)
 problemToCard conn problem = do
