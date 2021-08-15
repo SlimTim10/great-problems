@@ -43,7 +43,7 @@ data FrontendRoute :: * -> * where
   FrontendRoute_ViewProblem :: FrontendRoute Integer
   FrontendRoute_ViewProblemSet :: FrontendRoute Integer
   FrontendRoute_ViewUser :: FrontendRoute Integer
-  FrontendRoute_Topics :: FrontendRoute (Integer, Maybe (Ob.R TopicsRoute))
+  FrontendRoute_Topics :: FrontendRoute (Integer, Ob.R TopicsRoute)
 
 data ExploreRoute :: * -> * where
   ExploreRoute_Problems :: ExploreRoute ()
@@ -83,14 +83,10 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
       FrontendRoute_ViewProblem -> Ob.PathSegment "problems" idPathSegmentEncoder
       FrontendRoute_ViewProblemSet -> Ob.PathSegment "problem-sets" idPathSegmentEncoder
       FrontendRoute_ViewUser -> Ob.PathSegment "users" idPathSegmentEncoder
-      FrontendRoute_Topics -> Ob.PathSegment "topics" $
-        let
-          topicsRouteEncoder = Ob.pathComponentEncoder $ \case
-            TopicsRoute_Problems -> Ob.PathSegment "problems" $ Ob.unitEncoder mempty
-            TopicsRoute_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.unitEncoder mempty
-        in
-          Ob.pathSegmentEncoder
-          . bimap Ob.unsafeTshowEncoder (Ob.maybeEncoder (Ob.unitEncoder mempty) topicsRouteEncoder)
+      FrontendRoute_Topics -> Ob.PathSegment "topics" $ Ob.pathSegmentEncoder .
+        bimap Ob.unsafeTshowEncoder (Ob.pathComponentEncoder $ \case
+          TopicsRoute_Problems -> Ob.PathSegment "problems" $ Ob.unitEncoder mempty
+          TopicsRoute_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.unitEncoder mempty)
   )
 
 concat <$> mapM Ob.deriveRouteComponent

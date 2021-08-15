@@ -71,7 +71,7 @@ frontend = Ob.Frontend
       Route.FrontendRoute_Topics -> do
         Header.widget
         R.el "p" $ R.text "Problems belonging to a topic"
-        r :: R.Dynamic t (Integer, Maybe (Ob.R Route.TopicsRoute)) <- Ob.askRoute
+        r :: R.Dynamic t (Integer, Ob.R Route.TopicsRoute) <- Ob.askRoute
         R.el "p" $ R.display r
         R.el "span" $ R.text "topic id: "
         R.display (fst <$> r)

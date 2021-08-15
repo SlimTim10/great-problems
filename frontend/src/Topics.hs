@@ -44,5 +44,5 @@ widget topicId = do
     topicWidget topic = R.elClass "span" "m-2" $ do
       R.dyn_ $ R.ffor topic $ \t -> do
         Ob.routeLink
-          (Route.FrontendRoute_Topics :/ (Topic.id t, Just (Route.TopicsRoute_Problems :/ ()))) $ do
+          (Route.FrontendRoute_Topics :/ (Topic.id t, Route.TopicsRoute_Problems :/ ())) $ do
           Buttons.secondary (Topic.name t)
