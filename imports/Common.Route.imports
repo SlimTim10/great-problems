@@ -1,23 +1,28 @@
 import Prelude
     ( ($),
+      Applicative,
       Traversable(mapM),
       Monoid(mempty),
       Integer,
       Maybe,
       Either,
+      error,
+      either,
       concat,
       (<$>) )
-import Control.Category ( (>>>), (.) )
+import Control.Category ( (>>>), (.), id )
 import Control.Categorical.Bifunctor ( bimap )
 import Data.Text ( Text )
 import Data.Functor.Identity ( Identity )
 import Obelisk.Route ( pattern (:/) )
 import qualified Obelisk.Route as Ob
-    ( maybeEncoder,
+    ( checkEncoder,
+      maybeEncoder,
       mkFullRouteEncoder,
       pathComponentEncoder,
       pathSegmentEncoder,
       queryOnlyEncoder,
+      renderBackendRoute,
       singlePathSegmentEncoder,
       unitEncoder,
       unsafeTshowEncoder,

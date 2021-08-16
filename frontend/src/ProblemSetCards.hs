@@ -37,8 +37,8 @@ widget topicId = do
   R.elClass "div" "flex justify-center" $ do
     R.elClass "div" "w-brand-screen-lg flex flex-col gap-2" $ do
       response :: R.Event t (Maybe [ProblemSetCard.ProblemSetCard]) <- case topicId of
-        Nothing -> Util.getOnload "/api/problems-sets"
-        Just tid -> Util.getOnload (cs $ "/api/topics/" ++ show tid ++ "/problem-sets")
+        Nothing -> Util.getOnload "/api/problems-sets" -- TODO
+        Just tid -> Util.getOnload (cs $ "/api/topics/" ++ show tid ++ "/problem-sets") -- TODO
       problemSetCards :: R.Dynamic t [ProblemSetCard.ProblemSetCard] <- R.holdDyn [] $ fromMaybe [] <$> response
       R.el "p" $ R.text "Under construction..."
       void $ R.simpleList problemSetCards problemSetCardWidget

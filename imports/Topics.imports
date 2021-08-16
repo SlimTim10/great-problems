@@ -1,7 +1,7 @@
 import qualified Control.Monad.Fix as Fix ( MonadFix )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Obelisk.Route.Frontend as Ob
-    ( R, routeLink, RouteToUrl, SetRoute )
+    ( R, SetRoute, RouteToUrl, routeLink )
 import qualified Reflex.Dom.Core as R
     ( ffor,
       simpleList,
@@ -19,7 +19,9 @@ import qualified Reflex.Dom.Core as R
 import qualified Common.Api.Topic as Topic ( Topic(name, id) )
 import qualified Common.Route as Route
     ( TopicsRoute(TopicsRoute_Problems),
-      FrontendRoute(FrontendRoute_Topics) )
+      FrontendRoute(FrontendRoute_Topics),
+      Api(Api_TopicHierarchy, Api_Topics),
+      apiHref )
 import qualified Buttons ( primary, secondary )
 import qualified Util ( getOnload )
-import Global ( fromMaybe, void, cs, (:/) )
+import Global ( fromMaybe, void, (:/), (=:) )

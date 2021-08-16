@@ -37,8 +37,8 @@ widget topicId = do
   R.elClass "div" "flex justify-center" $ do
     R.elClass "div" "w-brand-screen-lg flex flex-col gap-2" $ do
       response :: R.Event t (Maybe [ProblemCard.ProblemCard]) <- case topicId of
-        Nothing -> Util.getOnload "/api/problems"
-        Just tid -> Util.getOnload (cs $ "/api/topics/" ++ show tid ++ "/problems")
+        Nothing -> Util.getOnload $ Route.apiHref (Route.Api_Problems :/ Nothing)
+        Just tid -> Util.getOnload (cs $ "/api/topics/" ++ show tid ++ "/problems") -- TODO: update API route and use apiHref
       problemCards :: R.Dynamic t [ProblemCard.ProblemCard] <- R.holdDyn [] $ fromMaybe [] <$> response
       void $ R.simpleList problemCards problemCardWidget
 

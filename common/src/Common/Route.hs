@@ -14,7 +14,7 @@ module Common.Route where
 
 import Prelude hiding (id, (.))
 
-import Control.Category ((>>>), (.))
+import Control.Category ((>>>), (.), id)
 import Control.Categorical.Bifunctor (bimap)
 import Data.Text (Text)
 import Data.Functor.Identity (Identity)
@@ -91,6 +91,14 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
           TopicsRoute_Problems -> Ob.PathSegment "problems" $ Ob.unitEncoder mempty
           TopicsRoute_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.unitEncoder mempty)
   )
+
+apiHref
+  :: Ob.R Api
+  -> Text
+apiHref r = Ob.renderBackendRoute checkedEncoder $ BackendRoute_Api :/ r
+
+checkedEncoder :: Applicative check => Ob.Encoder check Identity (Ob.R (Ob.FullRoute BackendRoute FrontendRoute)) Ob.PageName
+checkedEncoder = either (error "checkEncoder failed") id $ Ob.checkEncoder fullRouteEncoder
 
 concat <$> mapM Ob.deriveRouteComponent
   [ ''BackendRoute

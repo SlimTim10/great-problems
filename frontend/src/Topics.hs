@@ -36,16 +36,16 @@ widget topicId = do
       R.elClass "p" "text-brand-lg font-light" $ R.text "Pick a topic"
       topicHierarchy :: R.Dynamic t [[Either Topic.Topic Topic.Topic]] <- case topicId of
         Nothing -> do
-          response :: R.Event t (Maybe [Topic.Topic]) <-
-            Util.getOnload "/api/topics?parent=null"
+          response :: R.Event t (Maybe [Topic.Topic]) <- Util.getOnload
+            $ Route.apiHref (Route.Api_Topics :/ ("parent" =: Just "null"))
           R.holdDyn []
             $ singleton
             <$> map Left
             <$> fromMaybe []
             <$> response
         Just tid -> do
-          response :: R.Event t (Maybe [[Either Topic.Topic Topic.Topic]]) <-
-            Util.getOnload (cs $ "/api/topic-hierarchy/" ++ show tid)
+          response :: R.Event t (Maybe [[Either Topic.Topic Topic.Topic]]) <- Util.getOnload
+            $ Route.apiHref (Route.Api_TopicHierarchy :/ Just tid)
           R.holdDyn []
             $ filter ((> 0) . length)
             <$> fromMaybe []
