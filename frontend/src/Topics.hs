@@ -34,14 +34,22 @@ widget topicId = do
   R.elClass "div" "bg-brand-light-gray flex justify-center py-4" $ do
     R.elClass "div" "max-w-screen-lg flex flex-col items-center" $ do
       R.elClass "p" "text-brand-lg font-light" $ R.text "Pick a topic"
-        -- response :: R.Event t (Maybe [Topic.Topic]) <- case topicId of
-        --   Nothing -> Util.getOnload "/api/topics?parent=null"
-        --   Just tid -> Util.getOnload (cs $ "/api/topics?parent=" ++ show tid)
-      response :: R.Event t (Maybe [[Either Topic.Topic Topic.Topic]]) <- case topicId of
-        Nothing -> undefined -- TODO: update API route and response
-        Just tid -> Util.getOnload (cs $ "/api/topic-hierarchy/" ++ show tid)
-      topicHierarchy :: R.Dynamic t [[Either Topic.Topic Topic.Topic]] <- R.holdDyn []
-        $ filter ((> 0) . length) <$> fromMaybe [] <$> response
+      topicHierarchy :: R.Dynamic t [[Either Topic.Topic Topic.Topic]] <- case topicId of
+        Nothing -> do
+          response :: R.Event t (Maybe [Topic.Topic]) <-
+            Util.getOnload "/api/topics?parent=null"
+          R.holdDyn []
+            $ singleton
+            <$> map Left
+            <$> fromMaybe []
+            <$> response
+        Just tid -> do
+          response :: R.Event t (Maybe [[Either Topic.Topic Topic.Topic]]) <-
+            Util.getOnload (cs $ "/api/topic-hierarchy/" ++ show tid)
+          R.holdDyn []
+            $ filter ((> 0) . length)
+            <$> fromMaybe []
+            <$> response
       void $ R.simpleList (safeInit <$> topicHierarchy) topicsRow
       void $ R.simpleList (singleton . safeLast <$> topicHierarchy) topicsLastRow
   where
