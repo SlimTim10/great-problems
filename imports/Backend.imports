@@ -7,15 +7,18 @@ import qualified Data.Aeson as JSON ( ToJSON, encode )
 import qualified Data.Map as Map ( lookup )
 import qualified Common.Route as Route
     ( FrontendRoute,
-      Api(Api_Users, Api_Topics, Api_Problems),
+      Api(Api_TopicHierarchy, Api_Users, Api_Topics, Api_Problems),
       BackendRoute(..),
       fullRouteEncoder )
+import qualified Common.Api.Error as Error ( mk )
 import qualified Database ( connect )
 import qualified Database.Queries as Queries
     ( getTopics,
+      getTopicById,
       getRootTopics,
       getTopicsByParentId,
       getProblemCards,
       getUsers,
-      getUserById )
+      getUserById,
+      getTopicHierarchy )
 import Global ( fromMaybe, cs, readMaybe )

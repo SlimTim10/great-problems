@@ -11,6 +11,7 @@ import qualified Data.Aeson as JSON
 import qualified Data.Map as Map
 
 import qualified Common.Route as Route
+import qualified Common.Api.Error as Error
 import qualified Database
 import qualified Database.Queries as Queries
 import Global
@@ -27,7 +28,7 @@ backend = Ob.Backend
           Route.Api_Problems :/ subRoute -> case subRoute of
             Nothing -> writeJSON =<< IO.liftIO (Queries.getProblemCards conn)
             -- TODO: get single extended problem
-            -- Just problemId -> writeJSON =<< IO.liftIO (Queries.getExtendedProblemById conn problemId)
+            -- Just problemId -> writeJSON =<< IO.liftIO $ Queries.getExtendedProblemById conn problemId
             Just _ -> writeJSON =<< IO.liftIO (Queries.getProblemCards conn)
           Route.Api_Topics :/ query -> do
             topics <- case fromMaybe Nothing (Map.lookup "parent" query) of
@@ -40,6 +41,12 @@ backend = Ob.Backend
           Route.Api_Users :/ subRoute -> case subRoute of
             Nothing -> writeJSON =<< IO.liftIO (Queries.getUsers conn)
             Just userId -> writeJSON =<< IO.liftIO (Queries.getUserById conn userId)
+          Route.Api_TopicHierarchy :/ subRoute -> case subRoute of
+            Nothing -> writeJSON $ Error.mk "Not yet implemented"
+            Just topicId -> do
+              IO.liftIO (Queries.getTopicById conn topicId) >>= \case
+                Nothing -> writeJSON $ Error.mk "Topic not found"
+                Just topic -> writeJSON =<< IO.liftIO (Queries.getTopicHierarchy conn topic)
   , Ob._backend_routeEncoder = Route.fullRouteEncoder
   }
 

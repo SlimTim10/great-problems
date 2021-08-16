@@ -33,6 +33,7 @@ data Api :: * -> * where
   Api_Problems :: Api (Maybe Integer)
   Api_Topics :: Api (Map Text (Maybe Text))
   Api_Users :: Api (Maybe Integer)
+  Api_TopicHierarchy :: Api (Maybe Integer)
 
 data FrontendRoute :: * -> * where
   FrontendRoute_Home :: FrontendRoute ()
@@ -69,6 +70,8 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
         -- Api_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.unitEncoder mempty
         Api_Topics -> Ob.PathSegment "topics" Ob.queryOnlyEncoder
         Api_Users -> Ob.PathSegment "users" $
+          Ob.maybeEncoder (Ob.unitEncoder mempty) $ idPathSegmentEncoder
+        Api_TopicHierarchy -> Ob.PathSegment "topic-hierarchy" $
           Ob.maybeEncoder (Ob.unitEncoder mempty) $ idPathSegmentEncoder
   )
   (\case

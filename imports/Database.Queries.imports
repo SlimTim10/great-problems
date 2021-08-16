@@ -2,7 +2,7 @@ import qualified Database.PostgreSQL.Simple as SQL
     ( query, query_, Only(Only), Connection )
 import qualified Common.Api.Problem as Problem
     ( Problem(author_id, topic_id) )
-import qualified Common.Api.Topic as Topic ( Topic(parent_id) )
+import qualified Common.Api.Topic as Topic ( Topic(id, parent_id) )
 import qualified Common.Api.ProblemCard as ProblemCard
     ( ProblemCard(ProblemCard) )
 import qualified Common.Api.User as User ( User(User) )
