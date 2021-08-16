@@ -70,11 +70,17 @@ frontend = Ob.Frontend
         R.el "p" $ R.display problemSetId
       Route.FrontendRoute_Topics -> do
         Header.widget
-        R.el "p" $ R.text "Problems belonging to a topic"
-        r :: R.Dynamic t (Integer, Ob.R Route.TopicsRoute) <- Ob.askRoute
-        R.el "p" $ R.display r
-        R.el "span" $ R.text "topic id: "
-        R.display (fst <$> r)
+        R.prerender_ R.blank $ do
+          path :: R.Dynamic t (Integer, Ob.R Route.TopicsRoute) <- Ob.askRoute
+          let topicId :: R.Dynamic t Integer = fst <$> path
+          let route :: R.Dynamic t (Ob.R Route.TopicsRoute) = snd <$> path
+          R.dyn_ $ R.ffor topicId $ \tid -> Topics.widget (Just tid)
+          R.dyn_ $ R.ffor route $ \case
+            Route.TopicsRoute_Problems :/ () -> do
+              R.el "p" $ R.text "Problems"
+            Route.TopicsRoute_ProblemSets :/ () -> do
+              R.el "p" $ R.text "Problem sets"
+            _ -> pure () -- Type refinement through unification
       Route.FrontendRoute_ViewUser -> do
         Header.widget
         userId :: R.Dynamic t Integer <- Ob.askRoute
