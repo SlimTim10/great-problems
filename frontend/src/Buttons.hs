@@ -17,7 +17,7 @@ primary
 primary t = R'.elAttrClass
   "button"
   ("type" =: "button")
-  "bg-brand-primary rounded text-white font-medium px-3 h-10 mr-3"
+  "bg-brand-primary rounded text-white font-medium px-3 h-10"
   $ R.text t
 
 secondary

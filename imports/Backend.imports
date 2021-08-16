@@ -18,7 +18,7 @@ import qualified Database.Queries as Queries
       getRootTopics,
       getTopicsByParentId,
       getProblemCards,
+      getTopicHierarchy,
       getUsers,
-      getUserById,
-      getTopicHierarchy )
+      getUserById )
 import Global ( fromMaybe, cs, readMaybe )

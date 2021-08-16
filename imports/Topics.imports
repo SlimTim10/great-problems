@@ -20,6 +20,6 @@ import qualified Common.Api.Topic as Topic ( Topic(name, id) )
 import qualified Common.Route as Route
     ( TopicsRoute(TopicsRoute_Problems),
       FrontendRoute(FrontendRoute_Topics) )
-import qualified Buttons ( secondary )
+import qualified Buttons ( primary, secondary )
 import qualified Util ( getOnload )
 import Global ( fromMaybe, void, cs, (:/) )
