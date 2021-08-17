@@ -5,4 +5,4 @@ import qualified Reflex.Dom.Core as R
 import qualified Common.Route as Route
     ( ExploreRoute(ExploreRoute_ProblemSets, ExploreRoute_Problems),
       FrontendRoute(FrontendRoute_Explore) )
-import Global ( Text, (:/) )
+import Global ( (:/) )

@@ -42,13 +42,13 @@ frontend = Ob.Frontend
           path :: R.Dynamic t (Maybe (Ob.R Route.ExploreRoute)) <- Ob.askRoute
           Util.dynFor path $ \case
             Just (Route.ExploreRoute_Problems :/ ()) -> do
-              Tabs.widget "Problems"
+              Tabs.widget Tabs.Problems
               ProblemCards.widget Nothing
             Just (Route.ExploreRoute_ProblemSets :/ ()) -> do
-              Tabs.widget "Problem sets"
+              Tabs.widget Tabs.ProblemSets
               ProblemSetCards.widget Nothing
             _ -> do
-              Tabs.widget "Problems"
+              Tabs.widget Tabs.Problems
               ProblemCards.widget Nothing
       Route.FrontendRoute_Register -> do
         Header.widget
@@ -78,9 +78,11 @@ frontend = Ob.Frontend
           Util.dynFor topicId $ \tid -> Topics.widget (Just tid)
           Util.dynFor route $ \case
             Route.TopicsRoute_Problems :/ () -> do
-              R.el "p" $ R.text "Problems"
+              Tabs.widget Tabs.Problems
+              ProblemCards.widget Nothing
             Route.TopicsRoute_ProblemSets :/ () -> do
-              R.el "p" $ R.text "Problem sets"
+              Tabs.widget Tabs.ProblemSets
+              ProblemCards.widget Nothing
             _ -> pure () -- Type refinement through unification
       Route.FrontendRoute_ViewUser -> do
         Header.widget

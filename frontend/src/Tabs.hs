@@ -1,5 +1,6 @@
 module Tabs
   ( widget
+  , Tab(..)
   ) where
 
 import qualified Obelisk.Route.Frontend as Ob
@@ -8,6 +9,8 @@ import qualified Reflex.Dom.Core as R
 import qualified Common.Route as Route
 import Global
 
+data Tab = Problems | ProblemSets
+
 widget
   :: forall t m js.
      ( R.DomBuilder t m
@@ -15,14 +18,14 @@ widget
      , Ob.RouteToUrl (Ob.R Route.FrontendRoute) m
      , R.Prerender js t m
      )
-  => Text
+  => Tab
   -> m ()
 widget activeTab = do
   R.elClass "div" "my-6 flex justify-center" $ do
     R.elClass "div" "flex justify-around w-brand-screen-lg" $ do
       -- Toggle highlighted tab
       case activeTab of
-        "Problems" -> do
+        Problems -> do
           tabWidget True
             (Ob.routeLink (Route.FrontendRoute_Explore :/ (Just (Route.ExploreRoute_Problems :/ ()))))
             "Problems"

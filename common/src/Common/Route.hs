@@ -24,14 +24,17 @@ import qualified Obelisk.Route.TH as Ob
 
 import Global
 
+type Query = Map Text (Maybe Text)
+
 data BackendRoute :: * -> * where
   -- | Used to handle unparseable routes.
   BackendRoute_Missing :: BackendRoute ()
   BackendRoute_Api :: BackendRoute (Ob.R Api)
 
 data Api :: * -> * where
-  Api_Problems :: Api (Maybe Integer)
-  Api_Topics :: Api (Map Text (Maybe Text))
+  -- Api_Problems :: Api (Maybe Integer, Map Text (Maybe Text))
+  Api_Problems :: Api (Maybe Integer, Query)
+  Api_Topics :: Api Query
   Api_Users :: Api (Maybe Integer)
   Api_TopicHierarchy :: Api (Maybe Integer)
 
@@ -65,8 +68,10 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
   (\case
       BackendRoute_Missing -> Ob.PathSegment "missing" $ Ob.unitEncoder mempty
       BackendRoute_Api -> Ob.PathSegment "api" $ Ob.pathComponentEncoder $ \case
-        Api_Problems -> Ob.PathSegment "problems" $
-          Ob.maybeEncoder (Ob.unitEncoder mempty) $ idPathSegmentEncoder
+        -- Api_Problems -> Ob.PathSegment "problems" $
+        --   Ob.maybeEncoder (Ob.unitEncoder mempty) $ idPathSegmentEncoder
+        Api_Problems -> Ob.PathSegment "problems" $ Ob.pathSegmentEncoder .
+          bimap Ob.unsafeTshowEncoder Ob.queryOnlyEncoder
         -- Api_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.unitEncoder mempty
         Api_Topics -> Ob.PathSegment "topics" Ob.queryOnlyEncoder
         Api_Users -> Ob.PathSegment "users" $
