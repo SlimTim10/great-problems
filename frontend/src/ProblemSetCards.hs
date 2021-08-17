@@ -52,7 +52,7 @@ problemSetCardWidget
      )
   => R.Dynamic t ProblemSetCard.ProblemSetCard
   -> m ()
-problemSetCardWidget problemSetCard = R.dyn_ $ R.ffor problemSetCard $ \(ProblemSetCard.ProblemSetCard problemSet topics author) -> do
+problemSetCardWidget problemSetCard = Util.dynFor problemSetCard $ \(ProblemSetCard.ProblemSetCard problemSet topics author) -> do
   let updatedAt = show $ ProblemSet.updated_at problemSet
   R.elClass "div" "p-2 border border-brand-light-gray flex flex-col gap-1" $ do
     R.elClass "div" "flex justify-between" $ do

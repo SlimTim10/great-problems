@@ -2,11 +2,9 @@ import qualified Data.CaseInsensitive as CI ( CI(original) )
 import qualified Control.Monad.Fix as Fix ( MonadFix )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Obelisk.Route.Frontend as Ob
-    ( R, SetRoute, RouteToUrl, routeLink )
+    ( R, routeLink, RouteToUrl, SetRoute )
 import qualified Reflex.Dom.Core as R
-    ( ffor,
-      simpleList,
-      dyn_,
+    ( simpleList,
       elClass,
       text,
       MonadHold(holdDyn),
@@ -29,5 +27,5 @@ import qualified Common.Route as Route
                     FrontendRoute_Topics),
       Api(Api_Problems),
       apiHref )
-import qualified Util ( getOnload )
+import qualified Util ( getOnload, dynFor )
 import Global ( fromMaybe, void, unless, forM_, cs, (:/) )

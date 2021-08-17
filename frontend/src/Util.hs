@@ -46,3 +46,11 @@ getOnload url = do
   onload :: R.Event t () <- R.getPostBuild
   let endpoint :: R.Event t Text = R.tagPromptlyDyn (R.constDyn url) onload
   R.getAndDecode endpoint
+
+dynFor
+  :: ( R.Adjustable t m
+     , R.NotReady t m
+     , R.PostBuild t m
+     )
+  => R.Dynamic t a -> (a -> m a1) -> m ()
+dynFor x = R.dyn_ . R.ffor x

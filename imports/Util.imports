@@ -5,11 +5,15 @@ import qualified Data.Aeson as JSON ( FromJSON )
 import qualified Control.Monad.IO.Class as IO ( MonadIO )
 import qualified Reflex.Dom.Core as R
     ( constDyn,
+      ffor,
       tagPromptlyDyn,
+      dyn_,
       elDynClass',
       text,
       getAndDecode,
-      Reflex(Dynamic, Event),
+      Adjustable,
+      Reflex(Event, Dynamic),
+      NotReady,
       PerformEvent(Performable),
       PostBuild(..),
       TriggerEvent,

@@ -60,7 +60,7 @@ widget topicId = do
       R.elClass "div" "flex justify-center flex-wrap w-full py-2" $ do
         void $ R.simpleList topics topicWidget
     topicWidget topic = R.elClass "span" "m-2" $ do
-      R.dyn_ $ R.ffor topic $ \case
+      Util.dynFor topic $ \case
         Left t -> do
           Ob.routeLink
             (Route.FrontendRoute_Topics :/ (Topic.id t, Route.TopicsRoute_Problems :/ ())) $ do

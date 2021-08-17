@@ -13,6 +13,7 @@ import qualified Topics
 import qualified Tabs
 import qualified ProblemCards
 import qualified ProblemSetCards
+import qualified Util
 import Global
 
 frontend :: Ob.Frontend (Ob.R Route.FrontendRoute)
@@ -39,7 +40,7 @@ frontend = Ob.Frontend
         R.prerender_ R.blank $ do
           Topics.widget Nothing
           path :: R.Dynamic t (Maybe (Ob.R Route.ExploreRoute)) <- Ob.askRoute
-          R.dyn_ $ R.ffor path $ \case
+          Util.dynFor path $ \case
             Just (Route.ExploreRoute_Problems :/ ()) -> do
               Tabs.widget "Problems"
               ProblemCards.widget Nothing
@@ -74,8 +75,8 @@ frontend = Ob.Frontend
           path :: R.Dynamic t (Integer, Ob.R Route.TopicsRoute) <- Ob.askRoute
           let topicId :: R.Dynamic t Integer = fst <$> path
           let route :: R.Dynamic t (Ob.R Route.TopicsRoute) = snd <$> path
-          R.dyn_ $ R.ffor topicId $ \tid -> Topics.widget (Just tid)
-          R.dyn_ $ R.ffor route $ \case
+          Util.dynFor topicId $ \tid -> Topics.widget (Just tid)
+          Util.dynFor route $ \case
             Route.TopicsRoute_Problems :/ () -> do
               R.el "p" $ R.text "Problems"
             Route.TopicsRoute_ProblemSets :/ () -> do

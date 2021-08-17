@@ -3,11 +3,9 @@ import qualified Obelisk.Route.Frontend as Ob
     ( R, routeLink, subRoute_, Routed(askRoute) )
 import qualified Obelisk.Generated.Static as Ob ( static )
 import qualified Reflex.Dom.Core as R
-    ( ffor,
-      prerender_,
+    ( prerender_,
       blank,
       display,
-      dyn_,
       el,
       elAttr,
       elClass,
@@ -22,4 +20,5 @@ import qualified Topics ( widget )
 import qualified Tabs ( widget )
 import qualified ProblemCards ( widget )
 import qualified ProblemSetCards ( widget )
+import qualified Util ( dynFor )
 import Global ( (:/), (=:) )
