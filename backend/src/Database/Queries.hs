@@ -31,7 +31,7 @@ exprFromRouteParam
   -> Route.Query -- ^ Route query
   -> Maybe (SQL.Query, SQL.Action)
 exprFromRouteParam param expr cast routeQuery = do
-  y <- Route.paramFromQuery param routeQuery
+  y <- Route.readParamFromQuery param routeQuery
   Just (expr, SQL.toField $ cast y)
 
 getProblems :: SQL.Connection -> Route.Query -> IO [Problem.Problem]
@@ -52,7 +52,7 @@ getProblems conn routeQuery
            })
         dbProblems
   | otherwise = do
-      topicExpr <- case Route.paramFromQuery "topic" routeQuery of
+      topicExpr <- case Route.readParamFromQuery "topic" routeQuery of
         Nothing -> return Nothing
         Just topicId -> do
           topicIds <- getTopicIdPath conn topicId
@@ -65,37 +65,53 @@ getProblems conn routeQuery
           routeQuery
         whereClause = mconcat . intersperse " AND " . map fst . catMaybes $ [topicExpr, authorExpr]
         whereParams = map snd . catMaybes $ [topicExpr, authorExpr]
-      print =<< SQL.formatQuery conn ("SELECT * FROM problems WHERE " <> whereClause) whereParams
       dbProblems <- if not . all isNothing $ [topicExpr, authorExpr]
         then SQL.query conn ("SELECT * FROM problems WHERE " <> whereClause) whereParams
         else SQL.query_ conn "SELECT * FROM problems"
-      return $ map
-        (\dbProblem ->
-           Problem.Problem
-           { Problem.id = DbProblem.id dbProblem
-           , Problem.summary = DbProblem.summary dbProblem
-           , Problem.contents = DbProblem.contents dbProblem
-           , Problem.topic = Left $ DbProblem.topic_id dbProblem
-           , Problem.author = Left $ DbProblem.author_id dbProblem
-           , Problem.topicPath = Nothing
-           , Problem.created_at = DbProblem.created_at dbProblem
-           , Problem.updated_at = DbProblem.updated_at dbProblem
-           })
-        dbProblems
-      -- let expands = maybe [] (\x -> Text.splitOn "," x) $ Map.lookup "topic" routeQuery
-      -- let
-      --   expands = maybe mempty
-      --     (maybe mempty (Text.splitOn ","))
-      --     $ Map.lookup "topic" routeQuery
-
-      -- x <- if "author" `elem` expands
-      --   then sequence $ map expandProblemAuthor problems
-      --   else return problems
-      -- -- expandedProblems <- maybe problems (\)
-      -- return problems
+      let problems = flip map dbProblems $ \dbProblem ->
+            Problem.Problem
+            { Problem.id = DbProblem.id dbProblem
+            , Problem.summary = DbProblem.summary dbProblem
+            , Problem.contents = DbProblem.contents dbProblem
+            , Problem.topic = Left $ DbProblem.topic_id dbProblem
+            , Problem.author = Left $ DbProblem.author_id dbProblem
+            , Problem.topicPath = Nothing
+            , Problem.created_at = DbProblem.created_at dbProblem
+            , Problem.updated_at = DbProblem.updated_at dbProblem
+            }
+      let expands = maybe [] (Text.splitOn ",") $ Route.textParamFromQuery "expand" routeQuery
+      let includeTopicPath = Route.textParamFromQuery "include" routeQuery == Just "topic_path"
+      foldr (>=>) return
+        [ Util.whenM ("author" `elem` expands) (sequence . map expandProblemAuthor)
+        , Util.whenM ("topic" `elem` expands) (sequence . map expandProblemTopic)
+        , Util.whenM includeTopicPath (sequence . map withTopicPath)
+        ]
+        problems
   where
-    expandProblemAuthor :: Problem.Problem -> IO (Problem.Problem)
-    expandProblemAuthor _ = undefined
+    expandProblemAuthor :: Problem.Problem -> IO Problem.Problem
+    expandProblemAuthor problem = case Problem.author problem of
+      Left authorId -> getUserById conn authorId >>= \case
+        Nothing -> do
+          error $ "expandProblemAuthor: User not found with ID: " ++ show authorId
+        Just author -> return $ problem { Problem.author = Right author }
+      Right _ -> return problem
+    expandProblemTopic :: Problem.Problem -> IO Problem.Problem
+    expandProblemTopic problem = case Problem.topic problem of
+      Left topicId -> getTopicById conn topicId >>= \case
+        Nothing -> do
+          error $ "expandProblemAuthor: Topic not found with ID: " ++ show topicId
+        Just topic -> return $ problem { Problem.topic = Right topic }
+      Right _ -> return problem
+    withTopicPath :: Problem.Problem -> IO Problem.Problem
+    withTopicPath problem = do
+      topic <- case Problem.topic problem of
+        Left topicId -> getTopicById conn topicId >>= \case
+          Nothing -> do
+            error $ "withTopicPath: Topic not found with ID: " ++ show topicId
+          Just x -> return x
+        Right x -> return x
+      topicPath <- getTopicPath conn topic
+      return $ problem { Problem.topicPath = Just topicPath}
 
 getTopics :: SQL.Connection -> IO [Topic.Topic]
 getTopics conn = SQL.query_ conn "SELECT * FROM topics"
@@ -115,7 +131,7 @@ getRootTopics conn = SQL.query_ conn "SELECT * FROM topics WHERE parent_id IS NU
 getTopicsByParentId :: SQL.Connection -> Integer -> IO [Topic.Topic]
 getTopicsByParentId conn parentId = SQL.query conn "SELECT * FROM topics WHERE parent_id = ?" (SQL.Only parentId)
 
--- problemToCard :: SQL.Connection -> Problem.Problem -> IO (ProblemCard.ProblemCard)
+-- problemToCard :: SQL.Connection -> Problem.Problem -> IO ProblemCard.ProblemCard
 -- problemToCard conn problem = do
 --   topics <- getTopicById conn (Problem.topic_id problem) >>= \case
 --     Nothing -> return []

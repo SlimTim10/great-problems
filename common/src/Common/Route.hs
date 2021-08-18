@@ -106,14 +106,20 @@ apiHref r = Ob.renderBackendRoute checkedEncoder $ BackendRoute_Api :/ r
 checkedEncoder :: Applicative check => Ob.Encoder check Identity (Ob.R (Ob.FullRoute BackendRoute FrontendRoute)) Ob.PageName
 checkedEncoder = either (error "checkEncoder failed") id $ Ob.checkEncoder fullRouteEncoder
 
-paramFromQuery
+readParamFromQuery
   :: Read a
   => Text -- ^ Param name in route query
   -> Query
   -> Maybe a
-paramFromQuery param query = do
+readParamFromQuery param query = do
   x <- fromMaybe Nothing (Map.lookup param query)
   readMaybe (cs x)
+
+textParamFromQuery
+  :: Text -- ^ Param name in route query
+  -> Query
+  -> Maybe Text
+textParamFromQuery param query = fromMaybe Nothing (Map.lookup param query)
 
 concat <$> mapM Ob.deriveRouteComponent
   [ ''BackendRoute

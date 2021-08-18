@@ -54,3 +54,6 @@ dynFor
      )
   => R.Dynamic t a -> (a -> m a1) -> m ()
 dynFor x = R.dyn_ . R.ffor x
+
+whenM :: Monad m => Bool -> (a -> m a) -> a -> m a
+whenM b f m = (if b then f else return) m
