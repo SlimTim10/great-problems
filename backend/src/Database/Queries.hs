@@ -58,12 +58,6 @@ getProblems conn routeQuery
           topicIds <- getTopicIdPath conn topicId
           return $ Just ("topic_id IN ?", SQL.toField $ SQL.In topicIds)
       let
-        -- topicExpr = exprFromRouteParam
-        --   "topic"
-        --   "topic_id IN ?"
-        --   (readMaybe :: String -> Maybe Integer)
-        --   (const $ SQL.In topicIds)
-        --   routeQuery
         authorExpr = exprFromRouteParam
           "author"
           "author_id = ?"
