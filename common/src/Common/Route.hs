@@ -21,6 +21,7 @@ import Data.Functor.Identity (Identity)
 import Obelisk.Route ( pattern (:/) )
 import qualified Obelisk.Route as Ob
 import qualified Obelisk.Route.TH as Ob
+import qualified Data.Map as Map
 
 import Global
 
@@ -104,6 +105,15 @@ apiHref r = Ob.renderBackendRoute checkedEncoder $ BackendRoute_Api :/ r
 
 checkedEncoder :: Applicative check => Ob.Encoder check Identity (Ob.R (Ob.FullRoute BackendRoute FrontendRoute)) Ob.PageName
 checkedEncoder = either (error "checkEncoder failed") id $ Ob.checkEncoder fullRouteEncoder
+
+paramFromQuery
+  :: Read a
+  => Text -- ^ Param name in route query
+  -> Query
+  -> Maybe a
+paramFromQuery param query = do
+  x <- fromMaybe Nothing (Map.lookup param query)
+  readMaybe (cs x)
 
 concat <$> mapM Ob.deriveRouteComponent
   [ ''BackendRoute

@@ -27,14 +27,12 @@ exprFromRouteParam
   :: (SQL.ToField q, Read a)
   => Text -- ^ Param name in route query
   -> SQL.Query -- ^ Target SQL expression with parameter substitution
-  -> (String -> Maybe a)
-  -> (a -> q)
+  -> (a -> q) -- ^ Function to take the previous type to a ToField type (or simply use id with type signature)
   -> Route.Query -- ^ Route query
   -> Maybe (SQL.Query, SQL.Action)
-exprFromRouteParam param expr readFunc f routeQuery = do
-  x <- fromMaybe Nothing (Map.lookup param routeQuery)
-  y <- readFunc (cs x)
-  Just (expr, SQL.toField $ f y)
+exprFromRouteParam param expr cast routeQuery = do
+  y <- Route.paramFromQuery param routeQuery
+  Just (expr, SQL.toField $ cast y)
 
 getProblems :: SQL.Connection -> Route.Query -> IO [Problem.Problem]
 getProblems conn routeQuery
@@ -54,23 +52,27 @@ getProblems conn routeQuery
            })
         dbProblems
   | otherwise = do
+      topicExpr <- case Route.paramFromQuery "topic" routeQuery of
+        Nothing -> return Nothing
+        Just topicId -> do
+          topicIds <- getTopicIdPath conn topicId
+          return $ Just ("topic_id IN ?", SQL.toField $ SQL.In topicIds)
       let
-        topic = exprFromRouteParam
-          "topic"
-          "topic_id IN ?"
-          (readMaybe :: String -> Maybe Integer)
-          (\x -> SQL.In [x])
-          routeQuery
-        author = exprFromRouteParam
+        -- topicExpr = exprFromRouteParam
+        --   "topic"
+        --   "topic_id IN ?"
+        --   (readMaybe :: String -> Maybe Integer)
+        --   (const $ SQL.In topicIds)
+        --   routeQuery
+        authorExpr = exprFromRouteParam
           "author"
           "author_id = ?"
-          (readMaybe :: String -> Maybe Integer)
-          id
+          (id :: Integer -> Integer)
           routeQuery
-        whereClause = mconcat . intersperse " AND " . map fst . catMaybes $ [topic, author]
-        whereParams = map snd . catMaybes $ [topic, author]
+        whereClause = mconcat . intersperse " AND " . map fst . catMaybes $ [topicExpr, authorExpr]
+        whereParams = map snd . catMaybes $ [topicExpr, authorExpr]
       print =<< SQL.formatQuery conn ("SELECT * FROM problems WHERE " <> whereClause) whereParams
-      dbProblems <- if not . all isNothing $ [topic, author]
+      dbProblems <- if not . all isNothing $ [topicExpr, authorExpr]
         then SQL.query conn ("SELECT * FROM problems WHERE " <> whereClause) whereParams
         else SQL.query_ conn "SELECT * FROM problems"
       return $ map
@@ -101,7 +103,7 @@ getProblems conn routeQuery
     expandProblemAuthor :: Problem.Problem -> IO (Problem.Problem)
     expandProblemAuthor _ = undefined
 
-getTopics :: SQL.Connection -> IO ([Topic.Topic])
+getTopics :: SQL.Connection -> IO [Topic.Topic]
 getTopics conn = SQL.query_ conn "SELECT * FROM topics"
 
 getTopicById :: SQL.Connection -> Integer -> IO (Maybe Topic.Topic)
@@ -113,36 +115,45 @@ getParentTopic conn topic = case Topic.parent_id topic of
   Nothing -> return Nothing
   Just parentId -> Util.headMay <$> SQL.query conn "SELECT * FROM topics WHERE id = ?" (SQL.Only parentId)
 
-getRootTopics :: SQL.Connection -> IO ([Topic.Topic])
+getRootTopics :: SQL.Connection -> IO [Topic.Topic]
 getRootTopics conn = SQL.query_ conn "SELECT * FROM topics WHERE parent_id IS NULL"
 
-getTopicsByParentId :: SQL.Connection -> Integer -> IO ([Topic.Topic])
+getTopicsByParentId :: SQL.Connection -> Integer -> IO [Topic.Topic]
 getTopicsByParentId conn parentId = SQL.query conn "SELECT * FROM topics WHERE parent_id = ?" (SQL.Only parentId)
 
 -- problemToCard :: SQL.Connection -> Problem.Problem -> IO (ProblemCard.ProblemCard)
 -- problemToCard conn problem = do
 --   topics <- getTopicById conn (Problem.topic_id problem) >>= \case
 --     Nothing -> return []
---     Just topic -> getTopicBranch conn topic
+--     Just topic -> getTopicPath conn topic
 --   -- TODO: add proper error handling for finding users
 --   user <- getUserById conn (Problem.author_id problem) >>= return . fromMaybe (User.User 0 "" "")
 --   return $ ProblemCard.ProblemCard problem topics user
 
--- getProblemCards :: SQL.Connection -> IO ([ProblemCard.ProblemCard])
+-- getProblemCards :: SQL.Connection -> IO [ProblemCard.ProblemCard]
 -- getProblemCards conn = do
 --   problems :: [Problem.Problem] <- getProblems conn
 --   sequence $ map (problemToCard conn) problems
 
--- | Get the branch pertaining to a given topic, tracing its path to a root topic.
+-- | Get the path pertaining to a given topic, tracing its path to a root topic.
 -- For example, given the topic Limits, return [Mathematics, Calculus, Limits]
-getTopicBranch :: SQL.Connection -> Topic.Topic -> IO ([Topic.Topic])
-getTopicBranch conn topic
+getTopicPath :: SQL.Connection -> Topic.Topic -> IO [Topic.Topic]
+getTopicPath conn topic
   | isNothing (Topic.parent_id topic) = return [topic]
   | otherwise = do
-      topicBranch <- getParentTopic conn topic >>= \case
+      topicPath <- getParentTopic conn topic >>= \case
         Nothing -> return []
-        Just parent -> getTopicBranch conn parent
-      return $ topicBranch ++ [topic]
+        Just parent -> getTopicPath conn parent
+      return $ topicPath ++ [topic]
+
+-- | Same as getTopicPath, but only IDs
+getTopicIdPath :: SQL.Connection -> Integer -> IO [Integer]
+getTopicIdPath conn topicId = do
+  getTopicById conn topicId >>= \case
+    Nothing -> return []
+    Just topic -> do
+      topics <- getTopicPath conn topic
+      return $ map Topic.id topics
 
 -- | Get the hierarchy of topics, ending with the children of the given topic. The Either type is used to keep track of irrelevant and relevant topics, respectively Left and Right.
 -- For example, given the topic Mathematics, return
@@ -161,26 +172,26 @@ getTopicBranch conn topic
 --   , [Left (Differential Equations), Right Limits, Left Rates]
 --   , []
 --   ]
-getTopicHierarchy :: SQL.Connection -> Topic.Topic -> IO ([[Either Topic.Topic Topic.Topic]])
+getTopicHierarchy :: SQL.Connection -> Topic.Topic -> IO [[Either Topic.Topic Topic.Topic]]
 getTopicHierarchy conn topic = do
-  topicBranch <- getTopicBranch conn topic
-  siblings <- mapM getSiblings topicBranch
+  topicPath <- getTopicPath conn topic
+  siblings <- mapM getSiblings topicPath
   children <- getChildren topic
   return $ siblings ++ [children]
   where
-    getSiblings :: Topic.Topic -> IO ([Either Topic.Topic Topic.Topic])
+    getSiblings :: Topic.Topic -> IO [Either Topic.Topic Topic.Topic]
     getSiblings t = do
       xs <- case Topic.parent_id t of
         Nothing -> SQL.query_ conn "SELECT * FROM topics WHERE parent_id IS NULL"
         Just pid -> SQL.query conn "SELECT * FROM topics WHERE parent_id = ?" (SQL.Only pid)
       return $ map (\x -> if x == t then Right x else Left x) xs
       
-    getChildren :: Topic.Topic -> IO ([Either Topic.Topic Topic.Topic])
+    getChildren :: Topic.Topic -> IO [Either Topic.Topic Topic.Topic]
     getChildren t = do
       xs <- SQL.query conn "SELECT * FROM topics WHERE parent_id = ?" (SQL.Only (Topic.id t))
       return $ map Left xs
 
-getUsers :: SQL.Connection -> IO ([User.User])
+getUsers :: SQL.Connection -> IO [User.User]
 getUsers conn = SQL.query_ conn "SELECT id, full_name, email FROM users"
 
 getUserById :: SQL.Connection -> Integer -> IO (Maybe User.User)

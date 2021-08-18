@@ -9,21 +9,14 @@ import qualified Database.PostgreSQL.Simple as SQL
 import qualified Database.PostgreSQL.Simple.Types as SQL ()
 import qualified Database.PostgreSQL.Simple.ToField as SQL
     ( Action, ToField(..) )
-import qualified Data.Map as Map ( lookup, null )
+import qualified Data.Map as Map ( null )
 import qualified Data.Text as Text ()
 import qualified Common.Api.Problem as Problem ( Problem(..) )
 import qualified Common.Api.Topic as Topic ( Topic(id, parent_id) )
 import qualified Common.Api.User as User ( User )
-import qualified Common.Route as Route ( Query )
+import qualified Common.Route as Route ( Query, paramFromQuery )
 import qualified Database.Types.Problem as DbProblem
     ( Problem(updated_at, created_at, author_id, topic_id, contents,
               summary, id) )
 import qualified Util ( headMay )
-import Global
-    ( Text,
-      catMaybes,
-      fromMaybe,
-      isNothing,
-      intersperse,
-      cs,
-      readMaybe )
+import Global ( Text, catMaybes, isNothing, intersperse )
