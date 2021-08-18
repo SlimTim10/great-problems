@@ -1,4 +1,3 @@
-{-# LANGUAGE RankNTypes #-}
 module Database.Queries
   ( getProblems
   , getTopics
@@ -24,6 +23,19 @@ import qualified Database.Types.Problem as DbProblem
 import qualified Util
 import Global
 
+exprFromRouteParam
+  :: (SQL.ToField q, Read a)
+  => Text -- ^ Param name in route query
+  -> SQL.Query -- ^ Target SQL expression with parameter substitution
+  -> (String -> Maybe a)
+  -> (a -> q)
+  -> Route.Query -- ^ Route query
+  -> Maybe (SQL.Query, SQL.Action)
+exprFromRouteParam param expr readFunc f routeQuery = do
+  x <- fromMaybe Nothing (Map.lookup param routeQuery)
+  y <- readFunc (cs x)
+  Just (expr, SQL.toField $ f y)
+
 getProblems :: SQL.Connection -> Route.Query -> IO [Problem.Problem]
 getProblems conn routeQuery
   | Map.null routeQuery = do
@@ -43,14 +55,18 @@ getProblems conn routeQuery
         dbProblems
   | otherwise = do
       let
-        topic = do
-          x <- fromMaybe Nothing (Map.lookup "topic" routeQuery)
-          topicId <- readMaybe (cs x) :: Maybe Integer
-          Just ("topic_id IN ?", SQL.toField $ SQL.In [topicId])
-        author = do
-          x <- fromMaybe Nothing (Map.lookup "author" routeQuery)
-          authorId <- readMaybe (cs x) :: Maybe Integer
-          Just ("author_id = ?", SQL.toField authorId)
+        topic = exprFromRouteParam
+          "topic"
+          "topic_id IN ?"
+          (readMaybe :: String -> Maybe Integer)
+          (\x -> SQL.In [x])
+          routeQuery
+        author = exprFromRouteParam
+          "author"
+          "author_id = ?"
+          (readMaybe :: String -> Maybe Integer)
+          id
+          routeQuery
         whereClause = mconcat . intersperse " AND " . map fst . catMaybes $ [topic, author]
         whereParams = map snd . catMaybes $ [topic, author]
       print =<< SQL.formatQuery conn ("SELECT * FROM problems WHERE " <> whereClause) whereParams

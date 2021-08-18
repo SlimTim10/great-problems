@@ -1,8 +1,14 @@
 import qualified Database.PostgreSQL.Simple as SQL
-    ( formatQuery, query, query_, Only(Only), Connection, In(In) )
+    ( formatQuery,
+      query,
+      query_,
+      Only(Only),
+      Connection,
+      In(In),
+      Query )
 import qualified Database.PostgreSQL.Simple.Types as SQL ()
 import qualified Database.PostgreSQL.Simple.ToField as SQL
-    ( ToField(toField) )
+    ( Action, ToField(..) )
 import qualified Data.Map as Map ( lookup, null )
 import qualified Data.Text as Text ()
 import qualified Common.Api.Problem as Problem ( Problem(..) )
@@ -14,4 +20,10 @@ import qualified Database.Types.Problem as DbProblem
               summary, id) )
 import qualified Util ( headMay )
 import Global
-    ( catMaybes, fromMaybe, isNothing, intersperse, cs, readMaybe )
+    ( Text,
+      catMaybes,
+      fromMaybe,
+      isNothing,
+      intersperse,
+      cs,
+      readMaybe )
