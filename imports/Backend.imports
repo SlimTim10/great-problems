@@ -13,11 +13,11 @@ import qualified Common.Route as Route
 import qualified Common.Api.Error as Error ( mk )
 import qualified Database ( connect )
 import qualified Database.Queries as Queries
-    ( getTopics,
+    ( getProblems,
+      getTopics,
       getTopicById,
       getRootTopics,
       getTopicsByParentId,
-      getProblemCards,
       getTopicHierarchy,
       getUsers,
       getUserById )

@@ -1,12 +1,11 @@
-import qualified Data.CaseInsensitive as CI ( CI(original) )
+import qualified Data.CaseInsensitive as CI ()
 import qualified Control.Monad.Fix as Fix ( MonadFix )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Obelisk.Route.Frontend as Ob
-    ( R, routeLink, RouteToUrl, SetRoute )
+    ( R, RouteToUrl, SetRoute )
 import qualified Reflex.Dom.Core as R
     ( simpleList,
       elClass,
-      text,
       MonadHold(holdDyn),
       Reflex(Event, Dynamic),
       PerformEvent(Performable),
@@ -15,17 +14,10 @@ import qualified Reflex.Dom.Core as R
       HasJSContext,
       DomBuilder,
       Prerender )
-import qualified Common.Api.Topic as Topic ( Topic(Topic) )
-import qualified Common.Api.Problem as Problem
-    ( Problem(summary, id, updated_at) )
-import qualified Common.Api.ProblemCard as ProblemCard
-    ( ProblemCard(ProblemCard) )
-import qualified Common.Api.User as User ( User(full_name, id) )
+import qualified Common.Api.Topic as Topic ()
+import qualified Common.Api.Problem as Problem ( Problem )
+import qualified Common.Api.User as User ()
 import qualified Common.Route as Route
-    ( TopicsRoute(TopicsRoute_Problems),
-      FrontendRoute(FrontendRoute_ViewUser, FrontendRoute_ViewProblem,
-                    FrontendRoute_Topics),
-      Api(Api_Problems),
-      apiHref )
-import qualified Util ( getOnload, dynFor )
-import Global ( fromMaybe, void, unless, forM_, cs, (:/) )
+    ( FrontendRoute, Api(Api_Problems), apiHref )
+import qualified Util ( getOnload )
+import Global ( fromMaybe, void, cs, (:/) )

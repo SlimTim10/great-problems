@@ -1,10 +1,17 @@
 import qualified Database.PostgreSQL.Simple as SQL
-    ( query, query_, Only(Only), Connection )
-import qualified Common.Api.Problem as Problem
-    ( Problem(author_id, topic_id) )
+    ( formatQuery, query, query_, Only(Only), Connection, In(In) )
+import qualified Database.PostgreSQL.Simple.Types as SQL ()
+import qualified Database.PostgreSQL.Simple.ToField as SQL
+    ( ToField(toField) )
+import qualified Data.Map as Map ( lookup, null )
+import qualified Data.Text as Text ()
+import qualified Common.Api.Problem as Problem ( Problem(..) )
 import qualified Common.Api.Topic as Topic ( Topic(id, parent_id) )
-import qualified Common.Api.ProblemCard as ProblemCard
-    ( ProblemCard(ProblemCard) )
-import qualified Common.Api.User as User ( User(User) )
+import qualified Common.Api.User as User ( User )
+import qualified Common.Route as Route ( Query )
+import qualified Database.Types.Problem as DbProblem
+    ( Problem(updated_at, created_at, author_id, topic_id, contents,
+              summary, id) )
 import qualified Util ( headMay )
-import Global ( fromMaybe, isNothing )
+import Global
+    ( catMaybes, fromMaybe, isNothing, intersperse, cs, readMaybe )

@@ -21,11 +21,11 @@ module Global
 
 import Data.Text (Text)
 import Data.Map (Map)
-import Data.Maybe (fromMaybe, isNothing)
+import Data.Maybe (fromMaybe, isNothing, catMaybes)
 import Data.Bool (bool)
 import Data.Traversable (for)
 import Data.Functor ((<&>))
-import Data.List (intercalate)
+import Data.List (intercalate, intersperse)
 import Control.Monad (void, (<=<), forM_, when, unless, mapM)
 import Control.Lens ((^.), iforM_, _1)
 import Control.Monad.Fix (MonadFix)

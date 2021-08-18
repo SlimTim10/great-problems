@@ -10,7 +10,6 @@ import qualified Reflex.Dom.Core as R
 
 import qualified Common.Api.Topic as Topic
 import qualified Common.Api.Problem as Problem
-import qualified Common.Api.ProblemCard as ProblemCard
 import qualified Common.Api.User as User
 import qualified Common.Route as Route
 import qualified Util
@@ -36,10 +35,10 @@ widget
 widget topicId = do
   R.elClass "div" "flex justify-center" $ do
     R.elClass "div" "w-brand-screen-lg flex flex-col gap-2" $ do
-      response :: R.Event t (Maybe [ProblemCard.ProblemCard]) <- case topicId of
+      response :: R.Event t (Maybe [Problem.Problem]) <- case topicId of
         Nothing -> Util.getOnload $ Route.apiHref (Route.Api_Problems :/ (Nothing, mempty))
         Just tid -> Util.getOnload (cs $ "/api/topics/" ++ show tid ++ "/problems") -- TODO: update API route and use apiHref
-      problemCards :: R.Dynamic t [ProblemCard.ProblemCard] <- R.holdDyn [] $ fromMaybe [] <$> response
+      problemCards :: R.Dynamic t [Problem.Problem] <- R.holdDyn [] $ fromMaybe [] <$> response
       void $ R.simpleList problemCards problemCardWidget
 
 problemCardWidget
@@ -49,26 +48,28 @@ problemCardWidget
      , Ob.RouteToUrl (Ob.R Route.FrontendRoute) m
      , R.Prerender js t m
      )
-  => R.Dynamic t ProblemCard.ProblemCard
+  => R.Dynamic t Problem.Problem
   -> m ()
-problemCardWidget problemCard = Util.dynFor problemCard $ \(ProblemCard.ProblemCard problem topics author) -> do
-  let updatedAt = show $ Problem.updated_at problem
-  R.elClass "div" "p-2 border border-brand-light-gray flex flex-col gap-1" $ do
-    R.elClass "div" "flex justify-between" $ do
-      R.elClass "div" "flex" $ do
-        forM_ (zip [0..] topics) $ \(n :: Integer, Topic.Topic tid name _) -> do
-          unless (n == 0) $ do
-            R.elClass "p" "text-brand-sm text-brand-gray mx-1" $ R.text ">"
-          Ob.routeLink
-            (Route.FrontendRoute_Topics :/ (tid, Route.TopicsRoute_Problems :/ ())) $ do
-            R.elClass "p" "hover:underline text-brand-sm text-brand-gray" $ R.text name
-      R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "#" ++ show (Problem.id problem))
-    Ob.routeLink (Route.FrontendRoute_ViewProblem :/ (Problem.id problem)) $ do
-      R.elClass "div" "group" $ do
-        R.elClass "p" "text-brand-primary font-medium group-hover:underline" $ R.text (Problem.summary problem)
-        R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "Updated " ++ updatedAt)
-    R.elClass "div" "flex" $ do
-      R.elClass "p" "text-brand-sm text-brand-gray mr-1" $ R.text "by"
-      Ob.routeLink (Route.FrontendRoute_ViewUser :/ (User.id author)) $ do
-        R.elClass "div" "hover:underline text-brand-sm text-brand-gray font-bold" $ do
-          R.text (CI.original $ User.full_name author)
+problemCardWidget problemCard = do
+  undefined
+  -- Util.dynFor problemCard $ \(Problem.Problem problem topics author) -> do
+  --   let updatedAt = show $ Problem.updated_at problem
+  --   R.elClass "div" "p-2 border border-brand-light-gray flex flex-col gap-1" $ do
+  --     R.elClass "div" "flex justify-between" $ do
+  --       R.elClass "div" "flex" $ do
+  --         forM_ (zip [0..] topics) $ \(n :: Integer, Topic.Topic tid name _) -> do
+  --           unless (n == 0) $ do
+  --             R.elClass "p" "text-brand-sm text-brand-gray mx-1" $ R.text ">"
+  --           Ob.routeLink
+  --             (Route.FrontendRoute_Topics :/ (tid, Route.TopicsRoute_Problems :/ ())) $ do
+  --             R.elClass "p" "hover:underline text-brand-sm text-brand-gray" $ R.text name
+  --       R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "#" ++ show (Problem.id problem))
+  --     Ob.routeLink (Route.FrontendRoute_ViewProblem :/ (Problem.id problem)) $ do
+  --       R.elClass "div" "group" $ do
+  --         R.elClass "p" "text-brand-primary font-medium group-hover:underline" $ R.text (Problem.summary problem)
+  --         R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "Updated " ++ updatedAt)
+  --     R.elClass "div" "flex" $ do
+  --       R.elClass "p" "text-brand-sm text-brand-gray mr-1" $ R.text "by"
+  --       Ob.routeLink (Route.FrontendRoute_ViewUser :/ (User.id author)) $ do
+  --         R.elClass "div" "hover:underline text-brand-sm text-brand-gray font-bold" $ do
+  --           R.text (CI.original $ User.full_name author)
