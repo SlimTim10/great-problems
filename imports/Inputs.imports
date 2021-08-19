@@ -1,0 +1,8 @@
+import qualified Reflex.Dom.Core as R
+    ( elementConfig_initialAttributes,
+      inputElementConfig_elementConfig,
+      def,
+      Reflex(Dynamic),
+      DomBuilder(inputElement),
+      HasValue(value) )
+import Global ( Text, (&), (.~), (=:) )

@@ -13,6 +13,8 @@ import qualified Topics
 import qualified Tabs
 import qualified ProblemCards
 import qualified ProblemSetCards
+import qualified Register
+import qualified SignIn
 import qualified Util
 import Global
 
@@ -52,8 +54,14 @@ frontend = Ob.Frontend
               ProblemCards.widget Nothing
       Route.FrontendRoute_Register -> do
         Header.widget
+        R.elClass "div" "bg-brand-light-gray flex justify-center py-4" $ do
+          R.elClass "p" "text-brand-lg font-light" $ R.text "Register"
+        Register.widget
       Route.FrontendRoute_SignIn -> do
         Header.widget
+        R.elClass "div" "bg-brand-light-gray flex justify-center py-4" $ do
+          R.elClass "p" "text-brand-lg font-light" $ R.text "Sign in"
+        R.prerender_ R.blank $ SignIn.widget
       Route.FrontendRoute_New -> do
         Header.widget
         R.elClass "div" "h-screen flex flex-col" $ do

@@ -27,7 +27,7 @@ widget = R.elClass "header" "h-14 py-2 px-3 flex items-center justify-between bo
     Buttons.secondary "Explore"
   R'.elAttrClass
     "input"
-    ("type" =: "text" <> "placeholder" =: "Search...")
+    ("type" =: "search" <> "placeholder" =: "Search...")
     "border rounded h-8 w-1/2 px-1"
     $ R.blank
   R.el "div" $ do
