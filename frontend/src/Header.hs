@@ -31,7 +31,8 @@ widget = R.elClass "header" "h-14 py-2 px-3 flex items-center justify-between bo
     "border rounded h-8 w-1/2 px-1"
     $ R.blank
   R.el "div" $ do
-    Ob.routeLink (Route.FrontendRoute_Register :/ ()) $ do
-      Buttons.primary "Create an account"
+    R.elClass "span" "pr-2" $ do
+      Ob.routeLink (Route.FrontendRoute_Register :/ ()) $ do
+        Buttons.primary "Create an account"
     Ob.routeLink (Route.FrontendRoute_SignIn :/ ()) $ do
       Buttons.secondary "Sign in"
