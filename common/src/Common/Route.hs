@@ -33,7 +33,6 @@ data BackendRoute :: * -> * where
   BackendRoute_Api :: BackendRoute (Ob.R Api)
 
 data Api :: * -> * where
-  -- Api_Problems :: Api (Maybe Integer, Map Text (Maybe Text))
   Api_Problems :: Api (Maybe Integer, Query)
   Api_Topics :: Api Query
   Api_Users :: Api (Maybe Integer)

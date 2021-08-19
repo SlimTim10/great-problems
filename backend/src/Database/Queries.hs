@@ -11,7 +11,6 @@ module Database.Queries
   ) where
 
 import qualified Database.PostgreSQL.Simple as SQL
-import qualified Database.PostgreSQL.Simple.Types as SQL
 import qualified Database.PostgreSQL.Simple.ToField as SQL
 import qualified Data.Text as Text
 
@@ -40,7 +39,7 @@ getProblems conn problemId routeQuery = do
   topicExpr <- case Route.readParamFromQuery "topic" routeQuery of
     Nothing -> return Nothing
     Just topicId -> do
-      topicIds <- getTopicIdPath conn topicId
+      topicIds <- getTopicIdDescendants conn topicId
       return $ Just ("topic_id IN ?", SQL.toField $ SQL.In topicIds)
   let
     authorExpr = exprFromRouteParam
@@ -121,22 +120,8 @@ getRootTopics conn = SQL.query_ conn "SELECT * FROM topics WHERE parent_id IS NU
 getTopicsByParentId :: SQL.Connection -> Integer -> IO [Topic.Topic]
 getTopicsByParentId conn parentId = SQL.query conn "SELECT * FROM topics WHERE parent_id = ?" (SQL.Only parentId)
 
--- problemToCard :: SQL.Connection -> Problem.Problem -> IO ProblemCard.ProblemCard
--- problemToCard conn problem = do
---   topics <- getTopicById conn (Problem.topic_id problem) >>= \case
---     Nothing -> return []
---     Just topic -> getTopicPath conn topic
---   -- TODO: add proper error handling for finding users
---   user <- getUserById conn (Problem.author_id problem) >>= return . fromMaybe (User.User 0 "" "")
---   return $ ProblemCard.ProblemCard problem topics user
-
--- getProblemCards :: SQL.Connection -> IO [ProblemCard.ProblemCard]
--- getProblemCards conn = do
---   problems :: [Problem.Problem] <- getProblems conn
---   sequence $ map (problemToCard conn) problems
-
 -- | Get the path pertaining to a given topic, tracing its path to a root topic.
--- For example, given the topic Limits, return [Mathematics, Calculus, Limits]
+-- For example, given the topic Limits, return [Mathematics, Calculus, Limits].
 getTopicPath :: SQL.Connection -> Topic.Topic -> IO [Topic.Topic]
 getTopicPath conn topic
   | isNothing (Topic.parent_id topic) = return [topic]
@@ -146,13 +131,22 @@ getTopicPath conn topic
         Just parent -> getTopicPath conn parent
       return $ topicPath ++ [topic]
 
--- | Same as getTopicPath, but only IDs
-getTopicIdPath :: SQL.Connection -> Integer -> IO [Integer]
-getTopicIdPath conn topicId = do
+-- | Get all the descendants of a given topic as a flat list.
+getTopicDescendants :: SQL.Connection -> Topic.Topic -> IO [Topic.Topic]
+getTopicDescendants conn topic = do
+  (SQL.query conn "SELECT * FROM topics WHERE parent_id = ?" (SQL.Only $ Topic.id topic)) >>= \case
+    [] -> return [topic]
+    children -> do
+      ds <- mapM (getTopicDescendants conn) children
+      return $ topic : concat ds
+
+-- | Same as getTopicDescendants, but only IDs.
+getTopicIdDescendants :: SQL.Connection -> Integer -> IO [Integer]
+getTopicIdDescendants conn topicId = do
   getTopicById conn topicId >>= \case
     Nothing -> return []
     Just topic -> do
-      topics <- getTopicPath conn topic
+      topics <- getTopicDescendants conn topic
       return $ map Topic.id topics
 
 -- | Get the hierarchy of topics, ending with the children of the given topic. The Either type is used to keep track of unselected and selected topics, respectively Left and Right.

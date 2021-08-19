@@ -75,15 +75,16 @@ frontend = Ob.Frontend
           path :: R.Dynamic t (Integer, Ob.R Route.TopicsRoute) <- Ob.askRoute
           let topicId :: R.Dynamic t Integer = fst <$> path
           let route :: R.Dynamic t (Ob.R Route.TopicsRoute) = snd <$> path
-          Util.dynFor topicId $ \tid -> Topics.widget (Just tid)
-          Util.dynFor route $ \case
-            Route.TopicsRoute_Problems :/ () -> do
-              Tabs.widget Tabs.Problems
-              ProblemCards.widget Nothing
-            Route.TopicsRoute_ProblemSets :/ () -> do
-              Tabs.widget Tabs.ProblemSets
-              ProblemCards.widget Nothing
-            _ -> pure () -- Type refinement through unification
+          Util.dynFor topicId $ \tid -> do
+            Topics.widget $ Just tid
+            Util.dynFor route $ \case
+              Route.TopicsRoute_Problems :/ () -> do
+                Tabs.widget Tabs.Problems
+                ProblemCards.widget $ Just tid
+              Route.TopicsRoute_ProblemSets :/ () -> do
+                Tabs.widget Tabs.ProblemSets
+                ProblemCards.widget $ Just tid
+              _ -> pure () -- Type refinement through unification
       Route.FrontendRoute_ViewUser -> do
         Header.widget
         userId :: R.Dynamic t Integer <- Ob.askRoute
