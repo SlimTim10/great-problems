@@ -48,7 +48,9 @@ This will create the empty tables (dropping if they exist) and insert the seeds.
 ** API Routes
 
 *** Topics
-~GET /api/topics~
+~GET /api/topics?parent={null|id}~
+
+Get a list of topics.
 
 ~parent=null~ means topics which have no parent (root topics)
 
@@ -500,7 +502,11 @@ Get the hierarchy of topics, ending with the children of the given topic. The Ei
 *** Problems
 ~GET /api/problems/?topic={id}&author={id}&expand=author,topic&include=topic_path~
 
+Get a list of problems. Optional query parameters for topic, author, expanding the topic or author, and including the topic path.
+
 ~GET /api/problems/{id}?expand=author,topic&include=topic_path~
+
+Get a single problem.
 
 **** Samples
 ~GET /api/problems/~
