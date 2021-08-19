@@ -45,6 +45,536 @@ $ ob repl
 #+END_SRC
 This will create the empty tables (dropping if they exist) and insert the seeds.
 
+** API Routes
+
+*** Topics
+~GET /api/topics~
+
+~parent=null~ means topics which have no parent (root topics)
+
+**** Samples
+~GET /api/topics~
+#+BEGIN_SRC js
+[
+  {
+    "name": "Astronomy",
+    "id": 1,
+    "parent_id": null
+  },
+  {
+    "name": "Biology",
+    "id": 2,
+    "parent_id": null
+  },
+  {
+    "name": "Chemistry",
+    "id": 3,
+    "parent_id": null
+  },
+  {
+    "name": "Electrical Engineering",
+    "id": 4,
+    "parent_id": null
+  },
+  {
+    "name": "Mathematics",
+    "id": 5,
+    "parent_id": null
+  },
+  {
+    "name": "Physics",
+    "id": 6,
+    "parent_id": null
+  },
+  {
+    "name": "Psychology",
+    "id": 7,
+    "parent_id": null
+  },
+  {
+    "name": "Statistics",
+    "id": 8,
+    "parent_id": null
+  },
+  {
+    "name": "Analog Circuits",
+    "id": 9,
+    "parent_id": 4
+  },
+  {
+    "name": "Calculus",
+    "id": 10,
+    "parent_id": 5
+  },
+  {
+    "name": "Group Theory",
+    "id": 11,
+    "parent_id": 5
+  },
+  {
+    "name": "Differential Equations",
+    "id": 12,
+    "parent_id": 10
+  },
+  {
+    "name": "Limits",
+    "id": 13,
+    "parent_id": 10
+  },
+  {
+    "name": "Rates",
+    "id": 14,
+    "parent_id": 10
+  }
+]
+#+END_SRC
+
+~GET /api/topics?parent=null~
+#+BEGIN_SRC js
+[
+  {
+    "name": "Astronomy",
+    "id": 1,
+    "parent_id": null
+  },
+  {
+    "name": "Biology",
+    "id": 2,
+    "parent_id": null
+  },
+  {
+    "name": "Chemistry",
+    "id": 3,
+    "parent_id": null
+  },
+  {
+    "name": "Electrical Engineering",
+    "id": 4,
+    "parent_id": null
+  },
+  {
+    "name": "Mathematics",
+    "id": 5,
+    "parent_id": null
+  },
+  {
+    "name": "Physics",
+    "id": 6,
+    "parent_id": null
+  },
+  {
+    "name": "Psychology",
+    "id": 7,
+    "parent_id": null
+  },
+  {
+    "name": "Statistics",
+    "id": 8,
+    "parent_id": null
+  }
+]
+#+END_SRC
+
+~GET /api/topics?parent=5~
+#+begin_src js
+[
+  {
+    "name": "Calculus",
+    "id": 10,
+    "parent_id": 5
+  },
+  {
+    "name": "Group Theory",
+    "id": 11,
+    "parent_id": 5
+  }
+]
+#+end_src
+
+~GET /api/topics?parent=999~
+#+begin_src js
+[]
+#+end_src
+
+*** Topic Hierarchy
+~GET /api/topic-hierarchy/{id}~
+
+Get the hierarchy of topics, ending with the children of the given topic. The Either type is used to keep track of unselected and selected topics, respectively Left and Right.
+
+**** Samples
+~GET /api/topic-hierarchy/5~
+#+begin_src js
+[
+  [
+    {
+      "Left": {
+        "name": "Astronomy",
+        "id": 1,
+        "parent_id": null
+      }
+    },
+    {
+      "Left": {
+        "name": "Biology",
+        "id": 2,
+        "parent_id": null
+      }
+    },
+    {
+      "Left": {
+        "name": "Chemistry",
+        "id": 3,
+        "parent_id": null
+      }
+    },
+    {
+      "Left": {
+        "name": "Electrical Engineering",
+        "id": 4,
+        "parent_id": null
+      }
+    },
+    {
+      "Right": {
+        "name": "Mathematics",
+        "id": 5,
+        "parent_id": null
+      }
+    },
+    {
+      "Left": {
+        "name": "Physics",
+        "id": 6,
+        "parent_id": null
+      }
+    },
+    {
+      "Left": {
+        "name": "Psychology",
+        "id": 7,
+        "parent_id": null
+      }
+    },
+    {
+      "Left": {
+        "name": "Statistics",
+        "id": 8,
+        "parent_id": null
+      }
+    }
+  ],
+  [
+    {
+      "Left": {
+        "name": "Calculus",
+        "id": 10,
+        "parent_id": 5
+      }
+    },
+    {
+      "Left": {
+        "name": "Group Theory",
+        "id": 11,
+        "parent_id": 5
+      }
+    }
+  ]
+]
+#+end_src
+
+~GET /api/topic-hierarchy/10~
+#+begin_src js
+[
+  [
+    {
+      "Left": {
+        "name": "Astronomy",
+        "id": 1,
+        "parent_id": null
+      }
+    },
+    {
+      "Left": {
+        "name": "Biology",
+        "id": 2,
+        "parent_id": null
+      }
+    },
+    {
+      "Left": {
+        "name": "Chemistry",
+        "id": 3,
+        "parent_id": null
+      }
+    },
+    {
+      "Left": {
+        "name": "Electrical Engineering",
+        "id": 4,
+        "parent_id": null
+      }
+    },
+    {
+      "Right": {
+        "name": "Mathematics",
+        "id": 5,
+        "parent_id": null
+      }
+    },
+    {
+      "Left": {
+        "name": "Physics",
+        "id": 6,
+        "parent_id": null
+      }
+    },
+    {
+      "Left": {
+        "name": "Psychology",
+        "id": 7,
+        "parent_id": null
+      }
+    },
+    {
+      "Left": {
+        "name": "Statistics",
+        "id": 8,
+        "parent_id": null
+      }
+    }
+  ],
+  [
+    {
+      "Right": {
+        "name": "Calculus",
+        "id": 10,
+        "parent_id": 5
+      }
+    },
+    {
+      "Left": {
+        "name": "Group Theory",
+        "id": 11,
+        "parent_id": 5
+      }
+    }
+  ],
+  [
+    {
+      "Left": {
+        "name": "Differential Equations",
+        "id": 12,
+        "parent_id": 10
+      }
+    },
+    {
+      "Left": {
+        "name": "Limits",
+        "id": 13,
+        "parent_id": 10
+      }
+    },
+    {
+      "Left": {
+        "name": "Rates",
+        "id": 14,
+        "parent_id": 10
+      }
+    }
+  ]
+]
+#+end_src
+
+~GET /api/topic-hierarchy/13~
+#+begin_src js
+[
+  [
+    {
+      "Left": {
+        "name": "Astronomy",
+        "id": 1,
+        "parent_id": null
+      }
+    },
+    {
+      "Left": {
+        "name": "Biology",
+        "id": 2,
+        "parent_id": null
+      }
+    },
+    {
+      "Left": {
+        "name": "Chemistry",
+        "id": 3,
+        "parent_id": null
+      }
+    },
+    {
+      "Left": {
+        "name": "Electrical Engineering",
+        "id": 4,
+        "parent_id": null
+      }
+    },
+    {
+      "Right": {
+        "name": "Mathematics",
+        "id": 5,
+        "parent_id": null
+      }
+    },
+    {
+      "Left": {
+        "name": "Physics",
+        "id": 6,
+        "parent_id": null
+      }
+    },
+    {
+      "Left": {
+        "name": "Psychology",
+        "id": 7,
+        "parent_id": null
+      }
+    },
+    {
+      "Left": {
+        "name": "Statistics",
+        "id": 8,
+        "parent_id": null
+      }
+    }
+  ],
+  [
+    {
+      "Right": {
+        "name": "Calculus",
+        "id": 10,
+        "parent_id": 5
+      }
+    },
+    {
+      "Left": {
+        "name": "Group Theory",
+        "id": 11,
+        "parent_id": 5
+      }
+    }
+  ],
+  [
+    {
+      "Left": {
+        "name": "Differential Equations",
+        "id": 12,
+        "parent_id": 10
+      }
+    },
+    {
+      "Right": {
+        "name": "Limits",
+        "id": 13,
+        "parent_id": 10
+      }
+    },
+    {
+      "Left": {
+        "name": "Rates",
+        "id": 14,
+        "parent_id": 10
+      }
+    }
+  ],
+  []
+]
+#+end_src
+
+~GET /api/topic-hierarchy/999~
+#+begin_src js
+{
+  "error": true,
+  "message": "Topic not found"
+}
+#+end_src
+
+*** Problems
+~GET /api/problems/?topic={id}&author={id}&expand=author,topic&include=topic_path~
+~GET /api/problems/{id}?expand=author,topic&include=topic_path~
+
+**** Samples
+~GET /api/problems/~
+#+begin_src js
+[
+  {
+    "summary": "Find the present value ...",
+    "topicPath": null,
+    "contents": "\n\\runParam{paramFormat = decimal}\n ...",
+    "topic": {
+      "Left": 14
+    },
+    "updated_at": "2021-08-07T12:03:21.678487Z",
+    "created_at": "2021-08-07T12:03:21.678487Z",
+    "author": {
+      "Left": 2
+    },
+    "id": 1
+  },
+  {
+    "summary": "Consider the wide-swing current mirror ...",
+    "topicPath": null,
+    "contents": "\n\\runParam{I_D = [30, 20, 10, 40]  ...",
+    "topic": {
+      "Left": 9
+    },
+    "updated_at": "2021-08-07T12:03:21.678487Z",
+    "created_at": "2021-08-07T12:03:21.678487Z",
+    "author": {
+      "Left": 1
+    },
+    "id": 2
+  }
+]
+#+end_src
+
+~GET /api/problems/?topic=9&expand=author,topic&include=topic_path~
+#+begin_src js
+[
+  {
+    "summary": "Consider the wide-swing current mirror ...",
+    "topicPath": [
+      {
+        "name": "Electrical Engineering",
+        "id": 4,
+        "parent_id": null
+      },
+      {
+        "name": "Analog Circuits",
+        "id": 9,
+        "parent_id": 4
+      }
+    ],
+    "contents": "\n\\runParam{I_D = [30, 20, 10, 40] ...",
+    "topic": {
+      "Right": {
+        "name": "Analog Circuits",
+        "id": 9,
+        "parent_id": 4
+      }
+    },
+    "updated_at": "2021-08-07T12:03:21.678487Z",
+    "created_at": "2021-08-07T12:03:21.678487Z",
+    "author": {
+      "Right": {
+        "email": "alice@email.com",
+        "full_name": "Alice",
+        "id": 1
+      }
+    },
+    "id": 2
+  }
+]
+#+end_src
+
 ** Development
 
 *** Explicit import style

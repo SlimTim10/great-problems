@@ -155,7 +155,7 @@ getTopicIdPath conn topicId = do
       topics <- getTopicPath conn topic
       return $ map Topic.id topics
 
--- | Get the hierarchy of topics, ending with the children of the given topic. The Either type is used to keep track of irrelevant and relevant topics, respectively Left and Right.
+-- | Get the hierarchy of topics, ending with the children of the given topic. The Either type is used to keep track of unselected and selected topics, respectively Left and Right.
 -- For example, given the topic Mathematics, return
 --   [ [Left Astronomy, Left Biology, Left Chemistry, Left (Electrical Engineering), Right Mathematics, Left Physics, Left Psychology, Left Statistics]
 --   , [Right Calculus, Left (Group Theory)]
