@@ -5,7 +5,6 @@ module Database.Types.Problem
   ) where
 
 import qualified Database.PostgreSQL.Simple as SQL
-import qualified Data.Aeson as JSON
 import qualified Data.Time.Clock as Time
 import GHC.Generics (Generic)
 
@@ -25,6 +24,4 @@ data Problem = Problem
   , Generic
   , SQL.FromRow
   , SQL.ToRow
-  , JSON.FromJSON
-  , JSON.ToJSON
   )

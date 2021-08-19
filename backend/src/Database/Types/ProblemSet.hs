@@ -8,8 +8,6 @@ module Database.Types.ProblemSet
   ) where
 
 import qualified Database.PostgreSQL.Simple as SQL
-import qualified Data.Aeson as JSON
-import qualified Data.CaseInsensitive as CI
 import qualified Data.Time.Clock as Time
 import GHC.Generics (Generic)
 
@@ -28,6 +26,4 @@ data ProblemSet = ProblemSet
   , Generic
   , SQL.FromRow
   , SQL.ToRow
-  , JSON.FromJSON
-  , JSON.ToJSON
   )
