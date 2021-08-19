@@ -1,5 +1,6 @@
 module Database.Queries
   ( getProblems
+  , getProblemById
   , getTopics
   , getTopicById
   , getRootTopics
@@ -12,7 +13,6 @@ module Database.Queries
 import qualified Database.PostgreSQL.Simple as SQL
 import qualified Database.PostgreSQL.Simple.Types as SQL
 import qualified Database.PostgreSQL.Simple.ToField as SQL
-import qualified Data.Map as Map
 import qualified Data.Text as Text
 
 import qualified Common.Api.Problem as Problem
@@ -34,59 +34,45 @@ exprFromRouteParam param expr cast routeQuery = do
   y <- Route.readParamFromQuery param routeQuery
   Just (expr, SQL.toField $ cast y)
 
-getProblems :: SQL.Connection -> Route.Query -> IO [Problem.Problem]
-getProblems conn routeQuery
-  | Map.null routeQuery = do
-      dbProblems <- SQL.query_ conn "SELECT * FROM problems" :: IO [DbProblem.Problem]
-      return $ map
-        (\dbProblem ->
-           Problem.Problem
-           { Problem.id = DbProblem.id dbProblem
-           , Problem.summary = DbProblem.summary dbProblem
-           , Problem.contents = DbProblem.contents dbProblem
-           , Problem.topic = Left $ DbProblem.topic_id dbProblem
-           , Problem.author = Left $ DbProblem.author_id dbProblem
-           , Problem.topicPath = Nothing
-           , Problem.created_at = DbProblem.created_at dbProblem
-           , Problem.updated_at = DbProblem.updated_at dbProblem
-           })
-        dbProblems
-  | otherwise = do
-      topicExpr <- case Route.readParamFromQuery "topic" routeQuery of
-        Nothing -> return Nothing
-        Just topicId -> do
-          topicIds <- getTopicIdPath conn topicId
-          return $ Just ("topic_id IN ?", SQL.toField $ SQL.In topicIds)
-      let
-        authorExpr = exprFromRouteParam
-          "author"
-          "author_id = ?"
-          (id :: Integer -> Integer)
-          routeQuery
-        whereClause = mconcat . intersperse " AND " . map fst . catMaybes $ [topicExpr, authorExpr]
-        whereParams = map snd . catMaybes $ [topicExpr, authorExpr]
-      dbProblems <- if not . all isNothing $ [topicExpr, authorExpr]
-        then SQL.query conn ("SELECT * FROM problems WHERE " <> whereClause) whereParams
-        else SQL.query_ conn "SELECT * FROM problems"
-      let problems = flip map dbProblems $ \dbProblem ->
-            Problem.Problem
-            { Problem.id = DbProblem.id dbProblem
-            , Problem.summary = DbProblem.summary dbProblem
-            , Problem.contents = DbProblem.contents dbProblem
-            , Problem.topic = Left $ DbProblem.topic_id dbProblem
-            , Problem.author = Left $ DbProblem.author_id dbProblem
-            , Problem.topicPath = Nothing
-            , Problem.created_at = DbProblem.created_at dbProblem
-            , Problem.updated_at = DbProblem.updated_at dbProblem
-            }
-      let expands = maybe [] (Text.splitOn ",") $ Route.textParamFromQuery "expand" routeQuery
-      let includeTopicPath = Route.textParamFromQuery "include" routeQuery == Just "topic_path"
-      foldr (>=>) return
-        [ Util.whenM ("author" `elem` expands) (sequence . map expandProblemAuthor)
-        , Util.whenM ("topic" `elem` expands) (sequence . map expandProblemTopic)
-        , Util.whenM includeTopicPath (sequence . map withTopicPath)
-        ]
-        problems
+getProblems :: SQL.Connection -> Maybe Integer -> Route.Query -> IO [Problem.Problem]
+getProblems conn problemId routeQuery = do
+  let problemExpr = problemId >>= \pid -> Just ("id = ?", SQL.toField pid)
+  topicExpr <- case Route.readParamFromQuery "topic" routeQuery of
+    Nothing -> return Nothing
+    Just topicId -> do
+      topicIds <- getTopicIdPath conn topicId
+      return $ Just ("topic_id IN ?", SQL.toField $ SQL.In topicIds)
+  let
+    authorExpr = exprFromRouteParam
+      "author"
+      "author_id = ?"
+      (id :: Integer -> Integer)
+      routeQuery
+    exprs = [problemExpr, topicExpr, authorExpr]
+    whereClause = mconcat . intersperse " AND " . map fst . catMaybes $ exprs
+    whereParams = map snd . catMaybes $ exprs
+  dbProblems <- if not . all isNothing $ exprs
+    then SQL.query conn ("SELECT * FROM problems WHERE " <> whereClause) whereParams
+    else SQL.query_ conn "SELECT * FROM problems"
+  let problems = flip map dbProblems $ \dbProblem ->
+        Problem.Problem
+        { Problem.id = DbProblem.id dbProblem
+        , Problem.summary = DbProblem.summary dbProblem
+        , Problem.contents = DbProblem.contents dbProblem
+        , Problem.topic = Left $ DbProblem.topic_id dbProblem
+        , Problem.author = Left $ DbProblem.author_id dbProblem
+        , Problem.topicPath = Nothing
+        , Problem.created_at = DbProblem.created_at dbProblem
+        , Problem.updated_at = DbProblem.updated_at dbProblem
+        }
+  let expands = maybe [] (Text.splitOn ",") $ Route.textParamFromQuery "expand" routeQuery
+  let includeTopicPath = Route.textParamFromQuery "include" routeQuery == Just "topic_path"
+  foldr (>=>) return
+    [ Util.whenM ("author" `elem` expands) (sequence . map expandProblemAuthor)
+    , Util.whenM ("topic" `elem` expands) (sequence . map expandProblemTopic)
+    , Util.whenM includeTopicPath (sequence . map withTopicPath)
+    ]
+    problems
   where
     expandProblemAuthor :: Problem.Problem -> IO Problem.Problem
     expandProblemAuthor problem = case Problem.author problem of
@@ -112,6 +98,10 @@ getProblems conn routeQuery
         Right x -> return x
       topicPath <- getTopicPath conn topic
       return $ problem { Problem.topicPath = Just topicPath}
+
+getProblemById :: SQL.Connection -> Integer -> Route.Query -> IO (Maybe Problem.Problem)
+getProblemById conn problemId routeQuery = Util.headMay
+  <$> getProblems conn (Just problemId) routeQuery
 
 getTopics :: SQL.Connection -> IO [Topic.Topic]
 getTopics conn = SQL.query_ conn "SELECT * FROM topics"

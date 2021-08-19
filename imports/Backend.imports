@@ -14,6 +14,7 @@ import qualified Common.Api.Error as Error ( mk )
 import qualified Database ( connect )
 import qualified Database.Queries as Queries
     ( getProblems,
+      getProblemById,
       getTopics,
       getTopicById,
       getRootTopics,

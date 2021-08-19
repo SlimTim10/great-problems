@@ -69,11 +69,10 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
   (\case
       BackendRoute_Missing -> Ob.PathSegment "missing" $ Ob.unitEncoder mempty
       BackendRoute_Api -> Ob.PathSegment "api" $ Ob.pathComponentEncoder $ \case
-        -- Api_Problems -> Ob.PathSegment "problems" $
-        --   Ob.maybeEncoder (Ob.unitEncoder mempty) $ idPathSegmentEncoder
         Api_Problems -> Ob.PathSegment "problems" $ Ob.pathSegmentEncoder .
-          bimap Ob.unsafeTshowEncoder Ob.queryOnlyEncoder
-        -- Api_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.unitEncoder mempty
+          bimap (Ob.maybeEncoder (Ob.unitEncoder mempty) Ob.unsafeTshowEncoder) Ob.queryOnlyEncoder
+        -- Api_Problems -> Ob.PathSegment "problem-sets" $ Ob.pathSegmentEncoder .
+        --   bimap (Ob.maybeEncoder (Ob.unitEncoder mempty) Ob.unsafeTshowEncoder) Ob.queryOnlyEncoder
         Api_Topics -> Ob.PathSegment "topics" Ob.queryOnlyEncoder
         Api_Users -> Ob.PathSegment "users" $
           Ob.maybeEncoder (Ob.unitEncoder mempty) $ idPathSegmentEncoder

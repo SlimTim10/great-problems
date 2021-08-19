@@ -26,10 +26,8 @@ backend = Ob.Backend
         Route.BackendRoute_Missing :/ () -> return ()
         Route.BackendRoute_Api :/ apiRoute -> case apiRoute of
           Route.Api_Problems :/ subRoute -> case subRoute of
-            (Nothing, query) -> writeJSON =<< IO.liftIO (Queries.getProblems conn query)
-            -- TODO: get single extended problem
-            -- Just problemId -> writeJSON =<< IO.liftIO $ Queries.getExtendedProblemById conn problemId
-            (Just _, _) -> writeJSON =<< IO.liftIO (Queries.getProblems conn mempty)
+            (Nothing, query) -> writeJSON =<< IO.liftIO (Queries.getProblems conn Nothing query)
+            (Just problemId, query) -> writeJSON =<< IO.liftIO (Queries.getProblemById conn problemId query)
           Route.Api_Topics :/ query -> do
             topics <- case fromMaybe Nothing (Map.lookup "parent" query) of
               Just "null" -> IO.liftIO (Queries.getRootTopics conn)
