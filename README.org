@@ -499,6 +499,7 @@ Get the hierarchy of topics, ending with the children of the given topic. The Ei
 
 *** Problems
 ~GET /api/problems/?topic={id}&author={id}&expand=author,topic&include=topic_path~
+
 ~GET /api/problems/{id}?expand=author,topic&include=topic_path~
 
 **** Samples
