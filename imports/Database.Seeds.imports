@@ -1,6 +1,6 @@
 import qualified Database.PostgreSQL.Simple as SQL
     ( executeMany, Connection )
 import qualified Database.PostgreSQL.Simple.SqlQQ as SqlQQ ( sql )
-import qualified Crypto.PasswordStore ( makePassword )
 import qualified Text.RawString.QQ as QQ ( r )
-import Global ( Text, void, (^.), _1, cs )
+import qualified Util ( hashPassword )
+import Global ( Text, void, (^.), _1 )

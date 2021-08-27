@@ -1,20 +1,26 @@
-import qualified Obelisk.Route.Frontend as Ob
-    ( R, RouteToUrl, SetRoute )
 import qualified Language.Javascript.JSaddle as JS
     ( MonadJSM, liftJSM )
+import qualified Data.Aeson as JSON ( ToJSON )
+import qualified Data.CaseInsensitive as CI ( mk )
 import qualified Reflex.Dom.Core as R
     ( ffor,
+      zipDyn,
+      tagPromptlyDyn,
       blank,
-      button,
       elClass,
       text,
-      Reflex(Event),
+      decodeXhrResponse,
+      performRequestAsync,
+      postJson,
+      Reflex(Event, Dynamic),
       PerformEvent(performEvent, Performable),
+      TriggerEvent,
+      HasJSContext,
       DomBuilder,
-      Prerender )
-import qualified MyReflex.Dom.Widget.Basic as R' ( elAttrClass )
-import qualified Common.Route as Route ( FrontendRoute )
+      XhrRequest )
+import qualified Common.Route as Route ( Api(Api_SignIn), apiHref )
 import qualified Inputs ( emailClass, passwordClass )
-import qualified Buttons ( primary )
+import qualified Buttons ( primary' )
 import qualified Util ( consoleLog )
-import Global ( (=:) )
+import qualified Common.Api.Auth as Auth ( Auth(Auth) )
+import Global ( Text, void, (:/) )

@@ -8,6 +8,7 @@ module Database.Queries
   , getUsers
   , getUserById
   , getTopicHierarchy
+  , authenticate
   ) where
 
 import qualified Database.PostgreSQL.Simple as SQL
@@ -17,8 +18,10 @@ import qualified Data.Text as Text
 import qualified Common.Api.Problem as Problem
 import qualified Common.Api.Topic as Topic
 import qualified Common.Api.User as User
+import qualified Common.Api.Auth as Auth
 import qualified Common.Route as Route
 import qualified Database.Types.Problem as DbProblem
+import qualified Database.Types.User as DbUser
 import qualified Util
 import Global
 
@@ -186,8 +189,38 @@ getTopicHierarchy conn topic = do
       return $ map Left xs
 
 getUsers :: SQL.Connection -> IO [User.User]
-getUsers conn = SQL.query_ conn "SELECT id, full_name, email FROM users"
+getUsers conn = do
+  dbUsers <- SQL.query_ conn "SELECT id, full_name, email FROM users"
+  return $ flip map dbUsers $ \dbUser ->
+    User.User
+    { User.id = DbUser.id dbUser
+    , User.full_name = DbUser.full_name dbUser
+    , User.email = DbUser.email dbUser
+    }
 
 getUserById :: SQL.Connection -> Integer -> IO (Maybe User.User)
-getUserById conn userId = Util.headMay
-  <$> SQL.query conn "SELECT id, full_name, email FROM users WHERE id = ?" (SQL.Only userId)
+getUserById conn userId = do
+  mDbUser <- Util.headMay
+    <$> SQL.query conn "SELECT id, full_name, email FROM users WHERE id = ?" (SQL.Only userId)
+  return $ flip fmap mDbUser $ \dbUser ->
+    User.User
+    { User.id = DbUser.id dbUser
+    , User.full_name = DbUser.full_name dbUser
+    , User.email = DbUser.email dbUser
+    }
+
+authenticate :: SQL.Connection -> Auth.Auth -> IO (Maybe User.User)
+authenticate conn auth = do
+  mDbUser <- Util.headMay
+    <$> SQL.query conn "SELECT id, full_name, email, password FROM users WHERE email = ?"
+    (SQL.Only (Auth.email auth))
+  return $ do
+    dbUser <- mDbUser
+    if Util.verifyPassword (Auth.password auth) (DbUser.password dbUser)
+      then Just $
+           User.User
+           { User.id = DbUser.id dbUser
+           , User.full_name = DbUser.full_name dbUser
+           , User.email = DbUser.email dbUser
+           }
+      else Nothing

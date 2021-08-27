@@ -34,5 +34,17 @@ project ./. ({ pkgs, ... }: {
       sha256 = "0rhawjglimx3xg4s78h99n2gg3ydjbinbx30gyan1vfzvhi1akyl";
     } {});
 
+    servant-auth = pkgs.haskell.lib.dontCheck (self.callHackageDirect {
+      pkg = "servant-auth";
+      ver = "0.4.0.0";
+      sha256 = "1m86y699xynsc9i7n9fflm6yg4iys3mccbpy3nyjjw071n67bij1";
+    } {});
+
+    servant-auth-server = pkgs.haskell.lib.dontCheck (self.callHackageDirect {
+      pkg = "servant-auth-server";
+      ver = "0.4.6.0";
+      sha256 = "1x5zi6l6ihc4xyqi4vl5pzna83bgpn1kz3zmp6jnk7x7yxh370y4";
+    } {});
+
   };
 })

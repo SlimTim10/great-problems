@@ -7,20 +7,37 @@ import Obelisk.Route ( pattern (:/) )
 import qualified Obelisk.Backend as Ob
 import qualified Control.Monad.IO.Class as IO
 import qualified Snap.Core as Snap
+import qualified Servant.Auth.Server as SAS
 import qualified Data.Aeson as JSON
 import qualified Data.Map as Map
+import qualified Database.PostgreSQL.Simple as SQL
+import qualified Data.Word as Word
 
 import qualified Common.Route as Route
 import qualified Common.Api.Error as Error
 import qualified Database
 import qualified Database.Queries as Queries
+import qualified Common.Api.User as User
+import qualified Common.Api.Auth as Auth
 import Global
+
+authCheck
+  :: SQL.Connection
+  -> Auth.Auth
+  -> IO (SAS.AuthResult User.User)
+authCheck conn auth = maybe SAS.Indefinite SAS.Authenticated <$> Queries.authenticate conn auth
+
+maxRequestBodySize :: Word.Word64
+maxRequestBodySize = 2048
 
 backend :: Ob.Backend Route.BackendRoute Route.FrontendRoute
 backend = Ob.Backend
   { Ob._backend_run = \serve -> do
       -- Connect to the database
       conn <- Database.connect
+
+      jwk <- SAS.generateKey
+      let jwtCfg = SAS.defaultJWTSettings jwk
       
       serve $ \case
         Route.BackendRoute_Missing :/ () -> return ()
@@ -45,6 +62,14 @@ backend = Ob.Backend
               IO.liftIO (Queries.getTopicById conn topicId) >>= \case
                 Nothing -> writeJSON $ Error.mk "Topic not found"
                 Just topic -> writeJSON =<< IO.liftIO (Queries.getTopicHierarchy conn topic)
+          Route.Api_SignIn :/ () -> do
+            rawBody <- Snap.readRequestBody maxRequestBodySize
+            case JSON.decode rawBody :: Maybe Auth.Auth of
+              Just auth -> do
+                IO.liftIO (authCheck conn auth) >>= \case
+                  SAS.Authenticated user -> writeJSON $ Error.mk "Success!" -- make JWT and redirect?
+                  _ -> writeJSON $ Error.mk "Authentication failed"
+              Nothing -> writeJSON $ Error.mk "No auth in body"
   , Ob._backend_routeEncoder = Route.fullRouteEncoder
   }
 

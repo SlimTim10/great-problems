@@ -5,11 +5,14 @@ import qualified Database.PostgreSQL.Simple.ToField as SQL
 import qualified Data.Text as Text ( splitOn )
 import qualified Common.Api.Problem as Problem ( Problem(..) )
 import qualified Common.Api.Topic as Topic ( Topic(id, parent_id) )
-import qualified Common.Api.User as User ( User )
+import qualified Common.Api.User as User ( User(..) )
+import qualified Common.Api.Auth as Auth ( Auth(password, email) )
 import qualified Common.Route as Route
     ( Query, readParamFromQuery, textParamFromQuery )
 import qualified Database.Types.Problem as DbProblem
     ( Problem(updated_at, created_at, author_id, topic_id, contents,
               summary, id) )
-import qualified Util ( headMay, whenM )
+import qualified Database.Types.User as DbUser
+    ( User(password, email, full_name, id) )
+import qualified Util ( headMay, whenM, verifyPassword )
 import Global ( Text, catMaybes, isNothing, intersperse, (>=>) )

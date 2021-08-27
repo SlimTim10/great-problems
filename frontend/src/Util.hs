@@ -4,7 +4,7 @@ import qualified Language.Javascript.JSaddle as JS
 import qualified Data.Text as T
 import qualified Data.Aeson as JSON
 import qualified Control.Monad.IO.Class as IO
-
+import qualified Crypto.PasswordStore
 import qualified Reflex.Dom.Core as R
 
 import Global
@@ -57,3 +57,9 @@ dynFor x = R.dyn_ . R.ffor x
 
 whenM :: Monad m => Bool -> (a -> m a) -> a -> m a
 whenM b f m = (if b then f else return) m
+
+hashPassword :: Text -> IO Text
+hashPassword password = cs <$> Crypto.PasswordStore.makePassword (cs $ password) 17
+
+verifyPassword :: Text -> Text -> Bool
+verifyPassword a b = Crypto.PasswordStore.verifyPassword (cs a) (cs b)

@@ -4,13 +4,16 @@ module Database.Seeds where
 
 import qualified Database.PostgreSQL.Simple as SQL
 import qualified Database.PostgreSQL.Simple.SqlQQ as SqlQQ
-import qualified Crypto.PasswordStore
 import qualified Text.RawString.QQ as QQ
+
+import qualified Util
 import Global
 
 load :: SQL.Connection -> IO ()
 load conn = do
-  password :: Text <- cs <$> Crypto.PasswordStore.makePassword "123" 17
+  password <- Util.hashPassword "123"
+  putStrLn "Password:"
+  print password
 
   let
     userAlice = (1, "Alice", "alice@email.com", password)

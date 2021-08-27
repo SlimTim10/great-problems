@@ -2,29 +2,25 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-module Common.Api.User
-  ( User(..)
+module Common.Api.Auth
+  ( Auth(..)
   ) where
 
 import qualified Data.Aeson as JSON
 import qualified Data.CaseInsensitive as CI
 import GHC.Generics (Generic)
-import qualified Servant.Auth.Server as SAS
 
 import Global
 
-data User = User
-  { id :: Integer
-  , full_name :: CI Text
-  , email :: CI Text
+data Auth = Auth
+  { email :: CI Text
+  , password :: Text
   } deriving
   ( Eq
   , Show
   , Generic
   , JSON.FromJSON
   , JSON.ToJSON
-  , SAS.FromJWT
-  , SAS.ToJWT
   )
 
 instance (JSON.FromJSON (CI Text)) where

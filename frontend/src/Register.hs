@@ -2,21 +2,17 @@ module Register
   ( widget
   ) where
 
-import qualified Obelisk.Route.Frontend as Ob
 import qualified Reflex.Dom.Core as R
 import qualified MyReflex.Dom.Widget.Basic as R'
 
-import qualified Common.Route as Route
+-- import qualified Common.Route as Route
 import qualified Buttons as Buttons
 
 import Global
 
 widget
-  :: forall t m js.
+  :: forall t m.
      ( R.DomBuilder t m
-     , Ob.SetRoute t (Ob.R Route.FrontendRoute) m
-     , Ob.RouteToUrl (Ob.R Route.FrontendRoute) m
-     , R.Prerender js t m
      )
   => m ()
 widget = do

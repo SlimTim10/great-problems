@@ -37,6 +37,7 @@ data Api :: * -> * where
   Api_Topics :: Api Query
   Api_Users :: Api (Maybe Integer)
   Api_TopicHierarchy :: Api (Maybe Integer)
+  Api_SignIn :: Api ()
 
 data FrontendRoute :: * -> * where
   FrontendRoute_Home :: FrontendRoute ()
@@ -77,6 +78,7 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
           Ob.maybeEncoder (Ob.unitEncoder mempty) $ idPathSegmentEncoder
         Api_TopicHierarchy -> Ob.PathSegment "topic-hierarchy" $
           Ob.maybeEncoder (Ob.unitEncoder mempty) $ idPathSegmentEncoder
+        Api_SignIn -> Ob.PathSegment "sign-in" $ Ob.unitEncoder mempty
   )
   (\case
       FrontendRoute_Home -> Ob.PathEnd $ Ob.unitEncoder mempty
