@@ -38,12 +38,14 @@ data Api :: * -> * where
   Api_Users :: Api (Maybe Integer)
   Api_TopicHierarchy :: Api (Maybe Integer)
   Api_SignIn :: Api ()
+  Api_SignOut :: Api ()
 
 data FrontendRoute :: * -> * where
   FrontendRoute_Home :: FrontendRoute ()
   FrontendRoute_Explore :: FrontendRoute (Maybe (Ob.R ExploreRoute))
   FrontendRoute_Register :: FrontendRoute ()
   FrontendRoute_SignIn :: FrontendRoute ()
+  FrontendRoute_SignOut :: FrontendRoute ()
   FrontendRoute_New :: FrontendRoute ()
   FrontendRoute_ViewProblem :: FrontendRoute Integer
   FrontendRoute_ViewProblemSet :: FrontendRoute Integer
@@ -79,6 +81,7 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
         Api_TopicHierarchy -> Ob.PathSegment "topic-hierarchy" $
           Ob.maybeEncoder (Ob.unitEncoder mempty) $ idPathSegmentEncoder
         Api_SignIn -> Ob.PathSegment "sign-in" $ Ob.unitEncoder mempty
+        Api_SignOut -> Ob.PathSegment "sign-out" $ Ob.unitEncoder mempty
   )
   (\case
       FrontendRoute_Home -> Ob.PathEnd $ Ob.unitEncoder mempty
@@ -88,6 +91,7 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
         ExploreRoute_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.unitEncoder mempty
       FrontendRoute_Register -> Ob.PathSegment "register" $ Ob.unitEncoder mempty
       FrontendRoute_SignIn -> Ob.PathSegment "sign-in" $ Ob.unitEncoder mempty
+      FrontendRoute_SignOut -> Ob.PathSegment "sign-out" $ Ob.unitEncoder mempty
       FrontendRoute_New -> Ob.PathSegment "new" $ Ob.unitEncoder mempty
       FrontendRoute_ViewProblem -> Ob.PathSegment "problems" idPathSegmentEncoder
       FrontendRoute_ViewProblemSet -> Ob.PathSegment "problem-sets" idPathSegmentEncoder

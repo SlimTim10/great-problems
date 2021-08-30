@@ -69,18 +69,28 @@ backend = Ob.Backend
               Just auth -> do
                 IO.liftIO (authCheck conn auth) >>= \case
                   SAS.Authenticated user -> do
-                    mCookie <- IO.liftIO $ SAS.makeSessionCookieBS SAS.defaultCookieSettings jwtCfg user
-                    IO.liftIO $ print mCookie
-                    case mCookie of
-                      Just cookie -> do
-                        addResponseCookie "user" (cs $ JSON.encode user)
-                        Snap.modifyResponse $ Snap.setHeader "Set-Cookie" cookie
-                        writeJSON ()
+                    makeJWTCookie jwtCfg user >>= \case
+                      Just rawJWTCookie -> do
+                        addCookie "user" (cs $ JSON.encode user)
+                        Snap.modifyResponse $ Snap.setHeader "Set-Cookie" rawJWTCookie
                       Nothing -> writeJSON $ Error.mk "No cookie"
                   _ -> writeJSON $ Error.mk "Incorrect email or password. Please try again."
               Nothing -> writeJSON $ Error.mk "No auth in body"
+          Route.Api_SignOut :/ () -> do
+            removeCookie "user"
+            removeCookie "JWT-Cookie"
   , Ob._backend_routeEncoder = Route.fullRouteEncoder
   }
+
+makeJWTCookie
+  :: ( IO.MonadIO m
+     , SAS.ToJWT v
+     )
+  => SAS.JWTSettings
+  -> v
+  -> m (Maybe B.ByteString)
+makeJWTCookie jwtCfg user = IO.liftIO $
+  SAS.makeSessionCookieBS SAS.defaultCookieSettings jwtCfg user
 
 -- | Set MIME to 'application/json' and write given object into
 -- 'Response' body.
@@ -94,8 +104,11 @@ jsonResponse :: Snap.MonadSnap m => m ()
 jsonResponse = Snap.modifyResponse $
   Snap.setHeader "Content-Type" "application/json"
 
-addResponseCookie :: Snap.MonadSnap m => Text -> Text -> m ()
-addResponseCookie name value = Snap.modifyResponse $ Snap.addResponseCookie $ Snap.Cookie
+mkCookie
+  :: Text -- ^ name
+  -> Text -- ^ value
+  -> Snap.Cookie
+mkCookie name value = Snap.Cookie
   (cs name :: B.ByteString)
   (cs value :: B.ByteString)
   Nothing
@@ -103,3 +116,19 @@ addResponseCookie name value = Snap.modifyResponse $ Snap.addResponseCookie $ Sn
   (Just "/")
   False
   False
+
+addCookie
+  :: Snap.MonadSnap m
+  => Text -- ^ cookie name
+  -> Text -- ^ cookie value
+  -> m ()
+addCookie name value =
+  Snap.modifyResponse
+  $ Snap.addResponseCookie
+  $ mkCookie name value
+
+removeCookie
+  :: Snap.MonadSnap m
+  => Text -- ^ cookie name
+  -> m ()
+removeCookie name = Snap.expireCookie $ mkCookie name ""
