@@ -12,6 +12,7 @@ import qualified Data.Aeson as JSON
 import qualified Data.Map as Map
 import qualified Database.PostgreSQL.Simple as SQL
 import qualified Data.Word as Word
+import qualified Data.ByteString as B
 
 import qualified Common.Route as Route
 import qualified Common.Api.Error as Error
@@ -67,8 +68,16 @@ backend = Ob.Backend
             case JSON.decode rawBody :: Maybe Auth.Auth of
               Just auth -> do
                 IO.liftIO (authCheck conn auth) >>= \case
-                  SAS.Authenticated user -> writeJSON $ Error.mk "Success!" -- make JWT and redirect?
-                  _ -> writeJSON $ Error.mk "Authentication failed"
+                  SAS.Authenticated user -> do
+                    mCookie <- IO.liftIO $ SAS.makeSessionCookieBS SAS.defaultCookieSettings jwtCfg user
+                    IO.liftIO $ print mCookie
+                    case mCookie of
+                      Just cookie -> do
+                        addResponseCookie "user" (cs $ JSON.encode user)
+                        Snap.modifyResponse $ Snap.setHeader "Set-Cookie" cookie
+                        writeJSON ()
+                      Nothing -> writeJSON $ Error.mk "No cookie"
+                  _ -> writeJSON $ Error.mk "Incorrect email or password. Please try again."
               Nothing -> writeJSON $ Error.mk "No auth in body"
   , Ob._backend_routeEncoder = Route.fullRouteEncoder
   }
@@ -84,3 +93,13 @@ writeJSON a = do
 jsonResponse :: Snap.MonadSnap m => m ()
 jsonResponse = Snap.modifyResponse $
   Snap.setHeader "Content-Type" "application/json"
+
+addResponseCookie :: Snap.MonadSnap m => Text -> Text -> m ()
+addResponseCookie name value = Snap.modifyResponse $ Snap.addResponseCookie $ Snap.Cookie
+  (cs name :: B.ByteString)
+  (cs value :: B.ByteString)
+  Nothing
+  Nothing
+  (Just "/")
+  False
+  False

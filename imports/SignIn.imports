@@ -1,26 +1,32 @@
-import qualified Language.Javascript.JSaddle as JS
-    ( MonadJSM, liftJSM )
+import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Data.Aeson as JSON ( ToJSON )
 import qualified Data.CaseInsensitive as CI ( mk )
 import qualified Reflex.Dom.Core as R
     ( ffor,
       zipDyn,
+      eitherDyn,
       tagPromptlyDyn,
       blank,
+      dynText,
       elClass,
       text,
       decodeXhrResponse,
       performRequestAsync,
       postJson,
-      Reflex(Event, Dynamic),
+      MonadHold(holdDyn),
+      Reflex(updated, Event, Dynamic),
       PerformEvent(performEvent, Performable),
+      PostBuild,
       TriggerEvent,
       HasJSContext,
       DomBuilder,
       XhrRequest )
-import qualified Common.Route as Route ( Api(Api_SignIn), apiHref )
+import qualified Obelisk.Route.Frontend as Ob
+    ( R, SetRoute(setRoute) )
+import qualified Common.Route as Route
+    ( FrontendRoute(FrontendRoute_Explore), Api(Api_SignIn), apiHref )
 import qualified Inputs ( emailClass, passwordClass )
 import qualified Buttons ( primary' )
-import qualified Util ( consoleLog )
 import qualified Common.Api.Auth as Auth ( Auth(Auth) )
-import Global ( Text, void, (:/) )
+import qualified Common.Api.Error as Error ( Error(message) )
+import Global ( MonadFix, Text, (:/), fromLeft )

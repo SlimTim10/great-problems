@@ -1,3 +1,4 @@
+{-# LANGUAGE PackageImports #-}
 module Util where
 
 import qualified Language.Javascript.JSaddle as JS
@@ -6,7 +7,10 @@ import qualified Data.Aeson as JSON
 import qualified Control.Monad.IO.Class as IO
 import qualified Crypto.PasswordStore
 import qualified Reflex.Dom.Core as R
+import qualified "jsaddle-dom" GHCJS.DOM.Document as DOM
+import qualified Web.Cookie as Cookie
 
+import qualified Common.Api.User as User
 import Global
 
 showText :: Show s => s -> Text
@@ -63,3 +67,15 @@ hashPassword password = cs <$> Crypto.PasswordStore.makePassword (cs $ password)
 
 verifyPassword :: Text -> Text -> Bool
 verifyPassword a b = Crypto.PasswordStore.verifyPassword (cs a) (cs b)
+
+-- | Get the current user from the cookie, if there is one
+getCurrentUser
+  :: ( JS.MonadJSM m
+     , DOM.IsDocument (R.RawDocument (R.DomBuilderSpace m))
+     , R.HasDocument m
+     )
+  => m (Maybe User.User)
+getCurrentUser = do
+  rawCookies :: Text <- DOM.getCookie =<< R.askDocument
+  let cookies :: Cookie.Cookies = Cookie.parseCookies (cs rawCookies)
+  return $ JSON.decode . cs =<< lookup "user" cookies

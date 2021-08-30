@@ -6,12 +6,13 @@ import qualified Language.Javascript.JSaddle as JS
 import qualified Data.Aeson as JSON
 import qualified Data.CaseInsensitive as CI
 import qualified Reflex.Dom.Core as R
+import qualified Obelisk.Route.Frontend as Ob
 
 import qualified Common.Route as Route
 import qualified Inputs
 import qualified Buttons
-import qualified Util
 import qualified Common.Api.Auth as Auth
+import qualified Common.Api.Error as Error
 import Global
 
 widget
@@ -21,6 +22,10 @@ widget
      , JS.MonadJSM (R.Performable m)
      , R.HasJSContext (R.Performable m)
      , R.TriggerEvent t m
+     , Ob.SetRoute t (Ob.R Route.FrontendRoute) m
+     , R.MonadHold t m
+     , MonadFix m
+     , R.PostBuild t m
      )
   => m ()
 widget = do
@@ -35,17 +40,28 @@ widget = do
         password <- Inputs.passwordClass "border px-1"
         return password
       signIn :: R.Event t () <- Buttons.primary' "Sign in"
-      let e :: R.Event t (Text, Text) = R.tagPromptlyDyn (R.zipDyn email password) signIn
-      mResponse :: R.Event t (Maybe Text) <-
-        fmap R.decodeXhrResponse
-        <$> (R.performRequestAsync $ (\(email', password') -> signInRequest (Auth.Auth (CI.mk email') password')) <$> e)
-      void $ R.performEvent $ R.ffor mResponse $ \mx -> JS.liftJSM $ do
-        case mx of
-          Just x -> Util.consoleLog x
-          Nothing -> return ()
+      
+      response <- signInAttempt email password signIn
+      signInError :: R.Event t (Either Text ()) <- R.performEvent $ R.ffor response $ \case
+        Just e -> return $ Left (Error.message e)
+        Nothing -> return $ Right ()
+        
+      signInErrorText :: R.Dynamic t Text <- R.holdDyn "" $ fromLeft "" <$> signInError
+      R.elClass "p" "text-red-500" $ R.dynText signInErrorText
+      
+      signInSuccess :: R.Event t (Either (R.Dynamic t Text) (R.Dynamic t ())) <- fmap R.updated $
+        R.eitherDyn =<< R.holdDyn (Left "") signInError
+      Ob.setRoute $ Route.FrontendRoute_Explore :/ Nothing <$ signInSuccess
+      
       R.blank
-
-signInRequest :: JSON.ToJSON a => a -> R.XhrRequest Text
-signInRequest body = R.postJson url body
   where
-    url = Route.apiHref (Route.Api_SignIn :/ ())
+    signInAttempt :: R.Dynamic t Text -> R.Dynamic t Text -> R.Event t () -> m (R.Event t (Maybe Error.Error))
+    signInAttempt email password signIn = do
+      let ev :: R.Event t (Text, Text) = R.tagPromptlyDyn (R.zipDyn email password) signIn
+      r <- R.performRequestAsync $ (\(email', password') -> signInRequest (Auth.Auth (CI.mk email') password')) <$> ev
+      return $ R.decodeXhrResponse <$> r
+
+    signInRequest :: JSON.ToJSON a => a -> R.XhrRequest Text
+    signInRequest body = R.postJson url body
+     where
+       url = Route.apiHref (Route.Api_SignIn :/ ())

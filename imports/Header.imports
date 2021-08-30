@@ -1,10 +1,24 @@
 import qualified Obelisk.Route.Frontend as Ob
     ( R, routeLink, RouteToUrl, SetRoute )
 import qualified Reflex.Dom.Core as R
-    ( blank, el, elClass, text, DomBuilder, Prerender )
+    ( blank,
+      el,
+      elClass,
+      text,
+      DomBuilder(DomBuilderSpace),
+      DomSpace(RawDocument),
+      HasDocument,
+      Prerender )
 import qualified MyReflex.Dom.Widget.Basic as R' ( elAttrClass )
+import qualified "jsaddle-dom" GHCJS.DOM.Document as DOM
+    ( IsDocument )
+import qualified Language.Javascript.JSaddle as JS
+    ( MonadJSM, JSVal(JSVal) )
+import qualified Data.CaseInsensitive as CI ( CI(original) )
 import qualified Common.Route as Route
     ( FrontendRoute(FrontendRoute_SignIn, FrontendRoute_Register,
                     FrontendRoute_Explore, FrontendRoute_Home) )
 import qualified Buttons as Buttons ( primary, secondary )
+import qualified Common.Api.User as User ( User(full_name) )
+import qualified Util ( getCurrentUser )
 import Global ( (:/), (=:) )
