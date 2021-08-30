@@ -190,7 +190,7 @@ getTopicHierarchy conn topic = do
 
 getUsers :: SQL.Connection -> IO [User.User]
 getUsers conn = do
-  dbUsers <- SQL.query_ conn "SELECT id, full_name, email FROM users"
+  dbUsers :: [DbUser.User] <- SQL.query_ conn "SELECT * FROM users"
   return $ flip map dbUsers $ \dbUser ->
     User.User
     { User.id = DbUser.id dbUser
@@ -200,8 +200,8 @@ getUsers conn = do
 
 getUserById :: SQL.Connection -> Integer -> IO (Maybe User.User)
 getUserById conn userId = do
-  mDbUser <- Util.headMay
-    <$> SQL.query conn "SELECT id, full_name, email FROM users WHERE id = ?" (SQL.Only userId)
+  mDbUser :: Maybe DbUser.User <- Util.headMay
+    <$> SQL.query conn "SELECT * FROM users WHERE id = ?" (SQL.Only userId)
   return $ flip fmap mDbUser $ \dbUser ->
     User.User
     { User.id = DbUser.id dbUser
@@ -211,8 +211,8 @@ getUserById conn userId = do
 
 authenticate :: SQL.Connection -> Auth.Auth -> IO (Maybe User.User)
 authenticate conn auth = do
-  mDbUser <- Util.headMay
-    <$> SQL.query conn "SELECT id, full_name, email, password FROM users WHERE email = ?"
+  mDbUser :: Maybe DbUser.User <- Util.headMay
+    <$> SQL.query conn "SELECT * FROM users WHERE email = ?"
     (SQL.Only (Auth.email auth))
   return $ do
     dbUser <- mDbUser
