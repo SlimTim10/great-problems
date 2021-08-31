@@ -11,7 +11,7 @@ import qualified Language.Javascript.JSaddle as JS
 import qualified Data.CaseInsensitive as CI
 
 import qualified Common.Route as Route
-import qualified Buttons as Buttons
+import qualified Buttons
 import qualified Common.Api.User as User
 import qualified Util
 import Global
@@ -42,9 +42,11 @@ widget = R.elClass "header" "h-14 py-2 px-3 flex items-center justify-between bo
     Util.getCurrentUser >>= \case
       Just user -> do
         R.elClass "div" "flex items-center" $ do
-          R.elClass "p" "font-medium mr-2" $ R.text $ CI.original $ User.full_name user
-          Ob.routeLink (Route.FrontendRoute_SignOut :/ ()) $ do
-            Buttons.secondary "Sign out"
+          R.elClass "span" "pr-2" $ do
+            Ob.routeLink (Route.FrontendRoute_NewProblem :/ ()) $ do
+              Buttons.primary "Contribute"
+          Ob.routeLink (Route.FrontendRoute_Profile :/ ()) $ do
+            R.elClass "p" "font-medium mr-2" $ R.text $ CI.original $ User.full_name user
       Nothing -> do
         R.elClass "span" "pr-2" $ do
           Ob.routeLink (Route.FrontendRoute_Register :/ ()) $ do

@@ -16,6 +16,7 @@ import qualified ProblemSetCards
 import qualified Register
 import qualified SignIn
 import qualified SignOut
+import qualified Profile
 import qualified Util
 import Global
 
@@ -64,6 +65,11 @@ frontend = Ob.Frontend
         SignIn.widget
       Route.FrontendRoute_SignOut -> do
         SignOut.widget
+      Route.FrontendRoute_Profile -> do
+        Header.widget
+        R.elClass "div" "bg-brand-light-gray flex justify-center py-4" $ do
+          R.elClass "p" "text-brand-lg font-light" $ R.text "Profile"
+        Profile.widget
       Route.FrontendRoute_NewProblem -> do
         Header.widget
         R.elClass "div" "h-screen flex flex-col" $ do

@@ -17,8 +17,9 @@ import qualified Language.Javascript.JSaddle as JS
 import qualified Data.CaseInsensitive as CI ( CI(original) )
 import qualified Common.Route as Route
     ( FrontendRoute(FrontendRoute_SignIn, FrontendRoute_Register,
-                    FrontendRoute_SignOut, FrontendRoute_Explore, FrontendRoute_Home) )
-import qualified Buttons as Buttons ( primary, secondary )
+                    FrontendRoute_Profile, FrontendRoute_NewProblem,
+                    FrontendRoute_Explore, FrontendRoute_Home) )
+import qualified Buttons ( primary, secondary )
 import qualified Common.Api.User as User ( User(full_name) )
 import qualified Util ( getCurrentUser )
 import Global ( (:/), (=:) )

@@ -46,6 +46,7 @@ data FrontendRoute :: * -> * where
   FrontendRoute_Register :: FrontendRoute ()
   FrontendRoute_SignIn :: FrontendRoute ()
   FrontendRoute_SignOut :: FrontendRoute ()
+  FrontendRoute_Profile :: FrontendRoute ()
   FrontendRoute_NewProblem :: FrontendRoute ()
   FrontendRoute_ViewProblem :: FrontendRoute Integer
   FrontendRoute_ViewProblemSet :: FrontendRoute Integer
@@ -92,6 +93,7 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
       FrontendRoute_Register -> Ob.PathSegment "register" $ Ob.unitEncoder mempty
       FrontendRoute_SignIn -> Ob.PathSegment "sign-in" $ Ob.unitEncoder mempty
       FrontendRoute_SignOut -> Ob.PathSegment "sign-out" $ Ob.unitEncoder mempty
+      FrontendRoute_Profile -> Ob.PathSegment "profile" $ Ob.unitEncoder mempty
       FrontendRoute_NewProblem -> Ob.PathSegment "new-problem" $ Ob.unitEncoder mempty
       FrontendRoute_ViewProblem -> Ob.PathSegment "problems" idPathSegmentEncoder
       FrontendRoute_ViewProblemSet -> Ob.PathSegment "problem-sets" idPathSegmentEncoder
