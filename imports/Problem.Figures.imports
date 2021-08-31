@@ -1,11 +1,12 @@
 import qualified Control.Monad.Fix as Fix ( MonadFix )
 import qualified Data.Map as Map
-    ( delete, elems, empty, insert, maxViewWithKey, singleton, Map )
+    ( Map, insert, delete, elems, empty, maxViewWithKey, singleton )
 import qualified JSDOM.File ( getName )
 import qualified JSDOM.Types ( File )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Reflex.Dom.Core as R
-    ( ffor,
+    ( def,
+      ffor,
       mergeWith,
       listWithKey,
       foldDyn,
@@ -14,7 +15,6 @@ import qualified Reflex.Dom.Core as R
       el,
       elClass,
       text,
-      def,
       MonadHold,
       Reflex(current, switch, updated, Event, Dynamic),
       PerformEvent(performEvent, Performable),

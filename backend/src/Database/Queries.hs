@@ -18,10 +18,12 @@ import qualified Data.Text as Text
 import qualified Common.Api.Problem as Problem
 import qualified Common.Api.Topic as Topic
 import qualified Common.Api.User as User
+import qualified Common.Api.Role as Role
 import qualified Common.Api.Auth as Auth
 import qualified Common.Route as Route
 import qualified Database.Types.Problem as DbProblem
 import qualified Database.Types.User as DbUser
+import qualified Database.Types.Role as DbRole
 import qualified Util
 import Global
 
@@ -188,25 +190,49 @@ getTopicHierarchy conn topic = do
       xs <- SQL.query conn "SELECT * FROM topics WHERE parent_id = ?" (SQL.Only (Topic.id t))
       return $ map Left xs
 
+getRoleById :: SQL.Connection -> Integer -> IO (Maybe Role.Role)
+getRoleById conn roleId = do
+  mDbRole :: Maybe DbRole.Role <- Util.headMay
+    <$> SQL.query conn "SELECT * FROM roles WHERE id = ?" (SQL.Only roleId)
+  return $ flip fmap mDbRole $ \case
+    DbRole.Role 1 "User" -> Role.User
+    DbRole.Role 2 "Contributor" -> Role.Contributor
+    DbRole.Role 3 "Moderator" -> Role.Moderator
+    _ -> Role.User
+
 getUsers :: SQL.Connection -> IO [User.User]
 getUsers conn = do
   dbUsers :: [DbUser.User] <- SQL.query_ conn "SELECT * FROM users"
-  return $ flip map dbUsers $ \dbUser ->
-    User.User
-    { User.id = DbUser.id dbUser
-    , User.full_name = DbUser.full_name dbUser
-    , User.email = DbUser.email dbUser
-    }
+  flip mapM dbUsers $ \dbUser -> do
+    getRoleById conn (DbUser.role_id dbUser) >>= \case
+      Nothing -> return $ User.User
+        { User.id = DbUser.id dbUser
+        , User.full_name = DbUser.full_name dbUser
+        , User.email = DbUser.email dbUser
+        , User.role = Role.User
+        }
+      Just role -> return $ User.User
+        { User.id = DbUser.id dbUser
+        , User.full_name = DbUser.full_name dbUser
+        , User.email = DbUser.email dbUser
+        , User.role = role
+        }
 
 getUserById :: SQL.Connection -> Integer -> IO (Maybe User.User)
 getUserById conn userId = do
   mDbUser :: Maybe DbUser.User <- Util.headMay
     <$> SQL.query conn "SELECT * FROM users WHERE id = ?" (SQL.Only userId)
-  return $ flip fmap mDbUser $ \dbUser ->
-    User.User
+  flip (maybe (pure Nothing)) mDbUser $ \dbUser ->
+    withRole dbUser <$> getRoleById conn (DbUser.role_id dbUser)
+
+withRole :: DbUser.User -> Maybe Role.Role -> Maybe User.User
+withRole dbUser mRole = do
+  role <- mRole
+  return User.User
     { User.id = DbUser.id dbUser
     , User.full_name = DbUser.full_name dbUser
     , User.email = DbUser.email dbUser
+    , User.role = role
     }
 
 authenticate :: SQL.Connection -> Auth.Auth -> IO (Maybe User.User)
@@ -214,13 +240,7 @@ authenticate conn auth = do
   mDbUser :: Maybe DbUser.User <- Util.headMay
     <$> SQL.query conn "SELECT * FROM users WHERE email = ?"
     (SQL.Only (Auth.email auth))
-  return $ do
-    dbUser <- mDbUser
+  flip (maybe (pure Nothing)) mDbUser $ \dbUser -> do
     if Util.verifyPassword (Auth.password auth) (DbUser.password dbUser)
-      then Just $
-           User.User
-           { User.id = DbUser.id dbUser
-           , User.full_name = DbUser.full_name dbUser
-           , User.email = DbUser.email dbUser
-           }
-      else Nothing
+      then withRole dbUser <$> getRoleById conn (DbUser.role_id dbUser)
+      else return Nothing

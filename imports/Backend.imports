@@ -18,7 +18,7 @@ import qualified Servant.Auth.Server as SAS
       ToJWT,
       JWTSettings,
       AuthResult(Authenticated, Indefinite) )
-import qualified Data.Aeson as JSON ( ToJSON, decode, encode )
+import qualified Data.Aeson as JSON ( decode, encode, ToJSON )
 import qualified Data.Map as Map ( lookup )
 import qualified Database.PostgreSQL.Simple as SQL ( Connection )
 import qualified Data.Word as Word ( Word64 )

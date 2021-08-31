@@ -5,11 +5,11 @@ import qualified JSDOM.EventM as EventM ( on )
 import qualified Language.Javascript.JSaddle as JS
     ( MonadJSM, FromJSVal(fromJSVal), ToJSVal(toJSVal), liftJSM )
 import qualified Reflex.Dom.Core as R
-    ( fmapMaybe,
+    ( def,
+      fmapMaybe,
       wrapDomEvent,
       elAttr,
       text,
-      def,
       Reflex(updated, Event),
       PerformEvent(performEvent_, Performable),
       TriggerEvent,

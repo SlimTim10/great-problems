@@ -12,19 +12,30 @@ import Global
 load :: SQL.Connection -> IO ()
 load conn = do
   password <- Util.hashPassword "123"
-  putStrLn "Password:"
-  print password
 
   let
-    userAlice = (1, "Alice", "alice@email.com", password)
-    userBob = (2, "Bob", "bob@email.com", password)
-    userCarol = (3, "Carol", "carol@email.com", password)
-      :: (Integer, Text, Text, Text)
+    roleUser = (1, "User")
+    roleContributor = (2, "Contributor")
+    roleModerator = (3, "Moderator")
+      :: (Integer, Text)
   void $ SQL.executeMany conn [SqlQQ.sql|
     INSERT INTO
-      users(id, full_name, email, password)
+      roles(id, name)
     VALUES
-      (?,?,?,?)
+      (?,?)
+  |]
+    [roleUser, roleContributor, roleModerator]
+
+  let
+    userAlice = (1, "Alice", "alice@email.com", password, 3)
+    userBob = (2, "Bob", "bob@email.com", password, 2)
+    userCarol = (3, "Carol", "carol@email.com", password, 1)
+      :: (Integer, Text, Text, Text, Integer)
+  void $ SQL.executeMany conn [SqlQQ.sql|
+    INSERT INTO
+      users(id, full_name, email, password, role_id)
+    VALUES
+      (?,?,?,?,?)
   |]
     [ userAlice
     , userBob

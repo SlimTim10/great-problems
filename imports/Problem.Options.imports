@@ -1,12 +1,12 @@
 import qualified Control.Monad.Fix as Fix ( MonadFix )
 import qualified Data.Map as Map ( fromList )
 import qualified Reflex.Dom.Core as R
-    ( constDyn,
+    ( def,
+      constDyn,
       el,
       elClass,
       text,
       dropdown,
-      def,
       MonadHold(holdDyn),
       Reflex(updated, Dynamic),
       PostBuild,

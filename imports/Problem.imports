@@ -1,10 +1,10 @@
 import qualified Control.Monad.Fix as Fix ( MonadFix )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Reflex.Dom.Core as R
-    ( splitDynPure,
+    ( def,
+      splitDynPure,
       inputElementConfig_initialValue,
       elClass,
-      def,
       MonadHold,
       Reflex(Dynamic),
       PerformEvent(Performable),

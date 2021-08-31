@@ -11,12 +11,14 @@ import qualified Data.CaseInsensitive as CI
 import GHC.Generics (Generic)
 import qualified Servant.Auth.Server as SAS
 
+import qualified Common.Api.Role as Role
 import Global
 
 data User = User
   { id :: Integer
   , full_name :: CI Text
   , email :: CI Text
+  , role :: Role.Role
   } deriving
   ( Eq
   , Show

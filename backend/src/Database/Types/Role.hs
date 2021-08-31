@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
-module Database.Types.User
-  ( User(..)
+module Database.Types.Role
+  ( Role(..)
   ) where
 
 import qualified Database.PostgreSQL.Simple as SQL
@@ -9,12 +9,9 @@ import GHC.Generics (Generic)
 
 import Global
 
-data User = User
+data Role = Role
   { id :: Integer
-  , full_name :: CI Text
-  , email :: CI Text
-  , password :: Text
-  , role_id :: Integer
+  , name :: Text
   } deriving
   ( Eq
   , Show

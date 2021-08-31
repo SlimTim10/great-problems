@@ -1,4 +1,4 @@
-import qualified Data.Aeson as JSON ( ToJSON, FromJSON )
+import qualified Data.Aeson as JSON ( FromJSON, ToJSON )
 import GHC.Generics ( Generic )
 import qualified Common.Api.ProblemSet as ProblemSet ( ProblemSet )
 import qualified Common.Api.Topic as Topic ( Topic )

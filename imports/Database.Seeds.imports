@@ -3,4 +3,4 @@ import qualified Database.PostgreSQL.Simple as SQL
 import qualified Database.PostgreSQL.Simple.SqlQQ as SqlQQ ( sql )
 import qualified Text.RawString.QQ as QQ ( r )
 import qualified Util ( hashPassword )
-import Global ( Text, void, (^.), _1 )
+import Global ( Text, _1, void, (^.) )

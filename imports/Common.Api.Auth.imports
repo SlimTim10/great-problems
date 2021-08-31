@@ -1,5 +1,5 @@
 import qualified Data.Aeson as JSON
-    ( ToJSON(toJSON), FromJSON(parseJSON), Value(String) )
-import qualified Data.CaseInsensitive as CI ( mk, CI(original) )
+    ( FromJSON(parseJSON), Value(String), ToJSON(toJSON) )
+import qualified Data.CaseInsensitive as CI ( CI(original), mk )
 import GHC.Generics ( Generic )
 import Global ( Text, CI )

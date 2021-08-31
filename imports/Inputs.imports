@@ -1,7 +1,7 @@
 import qualified Reflex.Dom.Core as R
-    ( elementConfig_initialAttributes,
+    ( def,
+      elementConfig_initialAttributes,
       inputElementConfig_elementConfig,
-      def,
       Reflex(Dynamic),
       DomBuilder(inputElement),
       HasValue(value) )

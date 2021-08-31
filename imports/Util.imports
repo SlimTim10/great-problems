@@ -1,7 +1,7 @@
 import qualified Language.Javascript.JSaddle as JS
     ( MonadJSM, ToJSVal, JSVal(JSVal), js1, jsg, liftJSM )
 import qualified Data.Text as T ( pack )
-import qualified Data.Aeson as JSON ( FromJSON, decode )
+import qualified Data.Aeson as JSON ( decode, FromJSON )
 import qualified Control.Monad.IO.Class as IO ( MonadIO )
 import qualified Crypto.PasswordStore
     ( makePassword, verifyPassword )

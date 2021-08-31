@@ -1,4 +1,4 @@
-import qualified Data.Aeson as JSON ( ToJSON, FromJSON )
+import qualified Data.Aeson as JSON ( FromJSON, ToJSON )
 import qualified Data.Time.Clock as Time ( UTCTime )
 import qualified Data.Text as Text ( intercalate )
 import GHC.Generics ( Generic )

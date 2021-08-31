@@ -7,7 +7,8 @@ import qualified Reflex.Dom.Ace as Ace
       AceDynConfig(AceDynConfig),
       AceTheme(AceTheme_Clouds) )
 import qualified Reflex.Dom.Core as R
-    ( constDyn,
+    ( def,
+      constDyn,
       ffor,
       switchDyn,
       blank,
@@ -16,7 +17,6 @@ import qualified Reflex.Dom.Core as R
       elAttr',
       text,
       widgetHold,
-      def,
       MonadHold(holdDyn),
       Reflex(updated, never, Dynamic, Event),
       PerformEvent(Performable),

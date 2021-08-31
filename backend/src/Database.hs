@@ -36,18 +36,27 @@ connect = do
 -- | Reset the schema and load the seeds.
 reset :: IO SQL.Connection
 reset = do
+  putStrLn "Connecting to database..."
   conn <- connect
+  putStrLn "Dropping tables..."
   Database.Schema.unload conn
+  putStrLn "Creating tables..."
   Database.Schema.load conn
+  putStrLn "Inserting seeds..."
   Database.Seeds.load conn
+  putStrLn "Complete!"
   return conn
 
 -- | Setup the schema and load the seeds.
 setup :: IO SQL.Connection
 setup = do
+  putStrLn "Connecting to database..."
   conn <- connect
+  putStrLn "Creating tables..."
   Database.Schema.load conn
+  putStrLn "Inserting seeds..."
   Database.Seeds.load conn
+  putStrLn "Complete!"
   return conn
 
 -- | Look up an environment variable, given a default to fall back to.
