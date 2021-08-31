@@ -75,11 +75,18 @@ frontend = Ob.Frontend
         R.elClass "div" "h-screen flex flex-col" $ do
           R.elClass "p" "text-2xl" $ R.text "Problem to Tex"
           Problem.widget
-      Route.FrontendRoute_ViewProblem -> do
+      Route.FrontendRoute_Problems -> do
         Header.widget
-        problemId :: R.Dynamic t Integer <- Ob.askRoute
-        R.el "p" $ R.text "Single problem"
-        R.el "p" $ R.display problemId
+        path :: R.Dynamic t (Integer, Ob.R Route.ProblemsRoute) <- Ob.askRoute
+        Util.dynFor path $ \(problemId, route) -> do
+          case route of
+            Route.ProblemsRoute_View :/ () -> do
+              R.el "p" $ R.text "View problem"
+              R.el "p" $ R.text (cs . show $ problemId)
+            Route.ProblemsRoute_Edit :/ () -> do
+              R.el "p" $ R.text "Edit problem"
+              R.el "p" $ R.text (cs . show $ problemId)
+            _ -> pure () -- Type refinement through unification
       Route.FrontendRoute_ViewProblemSet -> do
         Header.widget
         problemSetId :: R.Dynamic t Integer <- Ob.askRoute
@@ -88,17 +95,15 @@ frontend = Ob.Frontend
       Route.FrontendRoute_Topics -> do
         Header.widget
         path :: R.Dynamic t (Integer, Ob.R Route.TopicsRoute) <- Ob.askRoute
-        let topicId :: R.Dynamic t Integer = fst <$> path
-        let route :: R.Dynamic t (Ob.R Route.TopicsRoute) = snd <$> path
-        Util.dynFor topicId $ \tid -> do
-          Topics.widget $ Just tid
-          Util.dynFor route $ \case
+        Util.dynFor path $ \(topicId, route) -> do
+          Topics.widget $ Just topicId
+          case route of
             Route.TopicsRoute_Problems :/ () -> do
               Tabs.widget Tabs.Problems
-              ProblemCards.widget $ Just tid
+              ProblemCards.widget $ Just topicId
             Route.TopicsRoute_ProblemSets :/ () -> do
               Tabs.widget Tabs.ProblemSets
-              ProblemCards.widget $ Just tid
+              ProblemCards.widget $ Just topicId
             _ -> pure () -- Type refinement through unification
       Route.FrontendRoute_ViewUser -> do
         Header.widget

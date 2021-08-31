@@ -47,8 +47,8 @@ data FrontendRoute :: * -> * where
   FrontendRoute_SignIn :: FrontendRoute ()
   FrontendRoute_SignOut :: FrontendRoute ()
   FrontendRoute_Profile :: FrontendRoute ()
+  FrontendRoute_Problems :: FrontendRoute (Integer, Ob.R ProblemsRoute)
   FrontendRoute_NewProblem :: FrontendRoute ()
-  FrontendRoute_ViewProblem :: FrontendRoute Integer
   FrontendRoute_ViewProblemSet :: FrontendRoute Integer
   FrontendRoute_ViewUser :: FrontendRoute Integer
   FrontendRoute_Topics :: FrontendRoute (Integer, Ob.R TopicsRoute)
@@ -60,6 +60,10 @@ data ExploreRoute :: * -> * where
 data TopicsRoute :: * -> * where
   TopicsRoute_Problems :: TopicsRoute ()
   TopicsRoute_ProblemSets :: TopicsRoute ()
+
+data ProblemsRoute :: * -> * where
+  ProblemsRoute_View :: ProblemsRoute ()
+  ProblemsRoute_Edit :: ProblemsRoute ()
 
 idPathSegmentEncoder
   :: Ob.Encoder (Either Text) (Either Text) Integer Ob.PageName
@@ -95,7 +99,10 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
       FrontendRoute_SignOut -> Ob.PathSegment "sign-out" $ Ob.unitEncoder mempty
       FrontendRoute_Profile -> Ob.PathSegment "profile" $ Ob.unitEncoder mempty
       FrontendRoute_NewProblem -> Ob.PathSegment "new-problem" $ Ob.unitEncoder mempty
-      FrontendRoute_ViewProblem -> Ob.PathSegment "problems" idPathSegmentEncoder
+      FrontendRoute_Problems -> Ob.PathSegment "problems" $ Ob.pathSegmentEncoder .
+        bimap Ob.unsafeTshowEncoder (Ob.pathComponentEncoder $ \case
+          ProblemsRoute_View -> Ob.PathEnd $ Ob.unitEncoder mempty
+          ProblemsRoute_Edit -> Ob.PathSegment "edit" $ Ob.unitEncoder mempty)
       FrontendRoute_ViewProblemSet -> Ob.PathSegment "problem-sets" idPathSegmentEncoder
       FrontendRoute_ViewUser -> Ob.PathSegment "users" idPathSegmentEncoder
       FrontendRoute_Topics -> Ob.PathSegment "topics" $ Ob.pathSegmentEncoder .
@@ -132,5 +139,6 @@ concat <$> mapM Ob.deriveRouteComponent
   , ''FrontendRoute
   , ''Api
   , ''TopicsRoute
+  , ''ProblemsRoute
   , ''ExploreRoute
   ]

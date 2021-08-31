@@ -49,5 +49,5 @@ problemWidget problem = R.elClass "div" "border" $ do
   R.elClass "p" "" $ do
     R.dynText $ "Summary: " <> (Problem.summary <$> problem)
   problemId <- R.sample . R.current $ Problem.id <$> problem
-  Ob.routeLink (Route.FrontendRoute_ViewProblem :/ problemId) $ do
+  Ob.routeLink (Route.FrontendRoute_Problems :/ (problemId, Route.ProblemsRoute_View :/ ())) $ do
     R.elClass "p" "" $ R.text "View"

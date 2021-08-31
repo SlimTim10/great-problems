@@ -82,7 +82,7 @@ problemCardWidget problemCard = do
               (Route.FrontendRoute_Topics :/ (tid, Route.TopicsRoute_Problems :/ ())) $ do
               R.elClass "p" "hover:underline text-brand-sm text-brand-gray" $ R.text name
         R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "#" ++ show (Problem.id problem))
-      Ob.routeLink (Route.FrontendRoute_ViewProblem :/ (Problem.id problem)) $ do
+      Ob.routeLink (Route.FrontendRoute_Problems :/ (Problem.id problem, Route.ProblemsRoute_View :/ ())) $ do
         R.elClass "div" "group" $ do
           R.elClass "p" "text-brand-primary font-medium group-hover:underline" $ R.text (Problem.summary problem)
           R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "Updated " ++ updatedAt)
@@ -90,7 +90,7 @@ problemCardWidget problemCard = do
         R.elClass "p" "text-brand-sm text-brand-gray mr-1" $ R.text "by"
         case Problem.author problem of
               Left authorId -> do
-                -- TODO: handle better
+                -- TODO: handle this better
                 R.el "p" $ R.text . cs $ "Author ID: " ++ show authorId
               Right author -> do
                Ob.routeLink (Route.FrontendRoute_ViewUser :/ User.id author) $ do

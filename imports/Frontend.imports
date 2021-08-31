@@ -12,7 +12,10 @@ import qualified Reflex.Dom.Core as R
       text,
       Reflex(Dynamic) )
 import qualified Common.Route as Route
-    ( TopicsRoute(..), ExploreRoute(..), FrontendRoute(..) )
+    ( TopicsRoute(..),
+      ExploreRoute(..),
+      FrontendRoute(..),
+      ProblemsRoute(..) )
 import qualified Problem ( widget )
 import qualified Home ( widget )
 import qualified Header ( widget )
@@ -25,4 +28,4 @@ import qualified SignIn ( widget )
 import qualified SignOut ( widget )
 import qualified Profile ( widget )
 import qualified Util ( dynFor )
-import Global ( (:/), (=:) )
+import Global ( cs, (:/), (=:) )
