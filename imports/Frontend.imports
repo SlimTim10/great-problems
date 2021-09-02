@@ -12,10 +12,10 @@ import qualified Reflex.Dom.Core as R
       text,
       Reflex(Dynamic) )
 import qualified Common.Route as Route
-    ( TopicsRoute(..),
+    ( ProblemsRoute(..),
+      TopicsRoute(..),
       ExploreRoute(..),
-      FrontendRoute(..),
-      ProblemsRoute(..) )
+      FrontendRoute(..) )
 import qualified Problem ( widget )
 import qualified Home ( widget )
 import qualified Header ( widget )

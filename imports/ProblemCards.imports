@@ -25,11 +25,11 @@ import qualified Common.Api.Problem as Problem
       problemParamsToRouteQuery )
 import qualified Common.Api.User as User ( User(full_name, id) )
 import qualified Common.Route as Route
-    ( TopicsRoute(TopicsRoute_Problems),
+    ( ProblemsRoute(ProblemsRoute_View),
+      TopicsRoute(TopicsRoute_Problems),
       FrontendRoute(FrontendRoute_ViewUser, FrontendRoute_Problems,
                     FrontendRoute_Topics),
       Api(Api_Problems),
-      apiHref,
-      ProblemsRoute(ProblemsRoute_View) )
+      apiHref )
 import qualified Util ( getOnload, dynFor )
 import Global ( fromMaybe, void, unless, forM_, cs, (:/) )

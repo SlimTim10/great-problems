@@ -20,8 +20,8 @@ import qualified Reflex.Dom.Core as R
       DomBuilder,
       Prerender )
 import qualified Common.Route as Route
-    ( FrontendRoute(FrontendRoute_Problems),
-      ProblemsRoute(ProblemsRoute_View) )
+    ( ProblemsRoute(ProblemsRoute_View),
+      FrontendRoute(FrontendRoute_Problems) )
 import qualified Common.Api.Problem as Problem
     ( Problem(id, summary) )
 import Global ( Text, fromMaybe, void, (:/) )

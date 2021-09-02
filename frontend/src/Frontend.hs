@@ -72,8 +72,7 @@ frontend = Ob.Frontend
         Profile.widget
       Route.FrontendRoute_NewProblem -> do
         Header.widget
-        R.elClass "div" "h-screen flex flex-col" $ do
-          R.elClass "p" "text-2xl" $ R.text "Problem to Tex"
+        R.elClass "div" "h-screen flex flex-col mt-2" $ do
           Problem.widget
       Route.FrontendRoute_Problems -> do
         Header.widget

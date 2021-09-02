@@ -1,25 +1,21 @@
-import qualified Control.Monad.Fix as Fix ( MonadFix )
+import qualified Data.Map as Map ( insert, empty )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Reflex.Dom.Core as R
     ( def,
-      splitDynPure,
-      inputElementConfig_initialValue,
+      ffor,
       elClass,
-      MonadHold,
-      Reflex(Dynamic),
-      PerformEvent(Performable),
+      text,
+      dropdown,
+      MonadHold(holdDyn),
+      Reflex(Dynamic, Event),
+      PerformEvent(performEvent_, Performable),
       PostBuild,
       TriggerEvent,
       HasJSContext,
-      DomBuilder(inputElement),
-      HasValue(value) )
-import qualified Problem.Options as Options ( widget )
-import qualified Problem.Figures as Figures ( widget )
-import qualified Problem.Convert as Convert
-    ( ConvertResponse(pdfContent), widget )
-import qualified Problem.Editor as Editor ( widget )
-import qualified Problem.PdfViewer as PdfViewer ( widget )
-import qualified Problem.UploadPrb as UploadPrb ( widget )
-import qualified Problem.DownloadPrb as DownloadPrb ( widget )
-import qualified Problem.ErrorsToggle as ErrorsToggle ( widget )
-import Global ( Text, (<&>), (&), (.~) )
+      DomBuilder )
+import qualified Common.Route as Route ( Api(Api_Topics), apiHref )
+import qualified Common.Api.Topic as Topic
+    ( Topic(name, id, parent_id) )
+import qualified Util ( consoleLog, getOnload )
+import Global
+    ( MonadFix, Text, Map, fromMaybe, isNothing, void, cs, (:/) )
