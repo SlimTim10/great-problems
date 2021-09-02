@@ -7,6 +7,8 @@ import qualified Reflex.Dom.Core as R
 
 import qualified Problem.SelectTopic as SelectTopic
 import qualified Problem.Summary as Summary
+import qualified Problem.Options as Options
+import qualified Widget.Button as Button
 import Global
 
 widget
@@ -21,12 +23,26 @@ widget
      , R.TriggerEvent t m
      )
   => m ()
-widget = do
-  R.elClass "div" "mt-2 flex justify-center" $ do
-    R.elClass "div" "flex flex-col" $ do
-      selectedTopicId :: R.Dynamic t Integer <- SelectTopic.widget
-      summary :: R.Dynamic t Text <- Summary.widget
-      return ()
+widget = R.elClass "div" "mt-2 flex justify-center" $ do
+  R.elClass "div" "flex flex-col w-1/3" $ do
+    selectedTopicId :: R.Dynamic t Integer <- R.elClass "div" "pb-3 border-b border-brand-light-gray" $
+      SelectTopic.widget
+    summary :: R.Dynamic t Text <- R.elClass "div" "py-3 border-b border-brand-light-gray" $
+      Summary.widget
+    R.elClass "div" "py-3 border-b border-brand-light-gray" $ do
+      R.elClass "div" "flex gap-2 mb-2" $ do
+        void $ Button.primarySmall' "Randomize variables"
+        void $ Button.primarySmall' "Reset variables"
+      R.elClass "div" "flex gap-2" $ do
+        R.elClass "p" "text-brand-primary" $ R.text "Show problem with:"
+        R.elClass "div" "flex flex-col" $ do
+          R.elClass "p" "text-brand-primary" $ R.text "[ ] Answer"
+          R.elClass "p" "text-brand-primary" $ R.text "[ ] Solution"
+
+    -- (randomizeVariables, resetVariables, outputOption) :: (R.Event t (), R.Event t (), R.Dynamic t Text) <-
+    --   R.elClass "div" "py-2 border-b border-brand-light-gray" $
+    --   Options.widget
+    return ()
 
   -- R.elClass "div" "flex-1 h-full flex gap-4" $ do
 

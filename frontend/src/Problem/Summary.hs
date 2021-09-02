@@ -12,5 +12,5 @@ widget
      )
   => m (R.Dynamic t Text)
 widget = R.elClass "div" "" $ do
-  R.elClass "p" "font-medium" $ R.text "Summary"
-  Input.textAreaClass "border border-brand-light-gray"
+  R.elClass "p" "font-medium mb-2" $ R.text "Summary"
+  Input.textAreaClass "border border-brand-light-gray w-full px-1"

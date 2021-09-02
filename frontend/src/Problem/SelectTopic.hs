@@ -26,13 +26,13 @@ widget
      )
   => m (R.Dynamic t Integer)
 widget = R.elClass "div" "" $ do
-  R.elClass "p" "font-medium" $ R.text "Topic"
+  R.elClass "p" "font-medium mb-2" $ R.text "Topic"
   response :: R.Event t (Maybe [Topic.Topic]) <- Util.getOnload $
     Route.apiHref (Route.Api_Topics :/ mempty)
   let allTopics :: R.Event t [Topic.Topic] = fromMaybe [] <$> response
   dropdownItems :: R.Dynamic t (Map Integer Text) <- R.holdDyn Map.empty $
     hierarchyToDropdownItems <$> flattenHierarchy <$> topicsToHierarchy <$> allTopics
-  Input.dropdownClass "border border-brand-light-gray" 1 dropdownItems
+  Input.dropdownClass "border border-brand-light-gray w-full" 1 dropdownItems
   
 data TopicWithChildren = TopicWithChildren
   { topic :: Topic.Topic

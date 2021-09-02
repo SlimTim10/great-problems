@@ -1,6 +1,7 @@
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Reflex.Dom.Core as R
     ( elClass,
+      text,
       MonadHold,
       Reflex(Dynamic),
       PerformEvent(Performable),
@@ -10,4 +11,6 @@ import qualified Reflex.Dom.Core as R
       DomBuilder )
 import qualified Problem.SelectTopic as SelectTopic ( widget )
 import qualified Problem.Summary as Summary ( widget )
-import Global ( MonadFix, Text )
+import qualified Problem.Options as Options ()
+import qualified Widget.Button as Button ( primarySmall' )
+import Global ( MonadFix, Text, void )
