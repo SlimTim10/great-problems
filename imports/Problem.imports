@@ -1,14 +1,11 @@
 import qualified Data.Map as Map ( insert, empty )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Reflex.Dom.Core as R
-    ( def,
-      ffor,
-      elClass,
+    ( elClass,
       text,
-      dropdown,
       MonadHold(holdDyn),
-      Reflex(Dynamic, Event),
-      PerformEvent(performEvent_, Performable),
+      Reflex(Event, Dynamic),
+      PerformEvent(Performable),
       PostBuild,
       TriggerEvent,
       HasJSContext,
@@ -16,6 +13,8 @@ import qualified Reflex.Dom.Core as R
 import qualified Common.Route as Route ( Api(Api_Topics), apiHref )
 import qualified Common.Api.Topic as Topic
     ( Topic(name, id, parent_id) )
-import qualified Util ( consoleLog, getOnload )
+import qualified Widget.Input as Input
+    ( textAreaClass, dropdownClass )
+import qualified Util ( getOnload )
 import Global
-    ( MonadFix, Text, Map, fromMaybe, isNothing, void, cs, (:/) )
+    ( MonadFix, Text, Map, fromMaybe, isNothing, cs, (:/) )

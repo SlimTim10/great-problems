@@ -9,7 +9,7 @@ import qualified Reflex.Dom.Core as R
 
 import qualified Common.Api.Topic as Topic
 import qualified Common.Route as Route
-import qualified Buttons
+import qualified Widget.Button as Button
 import qualified Util
 import Global
 
@@ -64,11 +64,11 @@ widget topicId = do
         Left t -> do
           Ob.routeLink
             (Route.FrontendRoute_Topics :/ (Topic.id t, Route.TopicsRoute_Problems :/ ())) $ do
-            Buttons.secondary (Topic.name t)
+            Button.secondary (Topic.name t)
         Right t -> do
           Ob.routeLink
             (Route.FrontendRoute_Topics :/ (Topic.id t, Route.TopicsRoute_Problems :/ ())) $ do
-            Buttons.primary (Topic.name t)
+            Button.primary (Topic.name t)
     safeInit xs = if length xs == 0 then [] else init xs
     safeLast xs = if length xs == 0 then [] else last xs
     singleton x = [x]

@@ -6,7 +6,7 @@ import qualified Reflex.Dom.Core as R
 import qualified MyReflex.Dom.Widget.Basic as R'
 
 -- import qualified Common.Route as Route
-import qualified Buttons as Buttons
+import qualified Widget.Button as Button
 
 import Global
 
@@ -39,4 +39,4 @@ widget = do
           ("type" =: "password")
           "border px-1"
           $ R.blank
-      Buttons.primary "Create my account"
+      Button.primary "Create my account"

@@ -1,4 +1,4 @@
-module Buttons
+module Widget.Button
   ( primary
   , secondary
   , primary'

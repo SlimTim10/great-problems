@@ -8,6 +8,7 @@ import qualified Reflex.Dom.Core as R
 
 import qualified Common.Route as Route
 import qualified Common.Api.Topic as Topic
+import qualified Widget.Input as Input
 import qualified Util
 import Global
 
@@ -24,7 +25,11 @@ widget
      )
   => m ()
 widget = do
-  selectTopicWidget
+  R.elClass "div" "mt-2 flex justify-center" $ do
+    R.elClass "div" "flex flex-col" $ do
+      selectedTopicId :: R.Dynamic t Integer <- selectTopicWidget
+      summary :: R.Dynamic t Text <- summaryWidget
+      return ()
 
   -- R.elClass "div" "flex-1 h-full flex gap-4" $ do
 
@@ -64,68 +69,16 @@ selectTopicWidget
      , R.MonadHold t m
      , MonadFix m
      )
-  => m ()
-selectTopicWidget = do
+  => m (R.Dynamic t Integer)
+selectTopicWidget = R.elClass "div" "" $ do
   R.elClass "p" "font-medium" $ R.text "Topic"
   response :: R.Event t (Maybe [Topic.Topic]) <- Util.getOnload $
     Route.apiHref (Route.Api_Topics :/ mempty)
   let allTopics :: R.Event t [Topic.Topic] = fromMaybe [] <$> response
-  let topicsWithChildren :: R.Event t [TopicWithChildren] = topicsToHierarchy <$> allTopics
-
-  R.performEvent_ $ R.ffor topicsWithChildren $ \x -> do
-    Util.consoleLog $ ("topicsWithChildren" :: Text)
-    Util.consoleLog $ (cs . show $ x :: Text)
-
-  let flattened :: R.Event t [(Integer, Text, Integer)] = flattenHierarchy <$> topicsWithChildren
-  R.performEvent_ $ R.ffor flattened $ \x -> do
-    Util.consoleLog $ ("flattened" :: Text)
-    Util.consoleLog $ (cs . show $ x :: Text)
-
-  let dropdownItems :: R.Event t (Map Integer Text) = hierarchyToDropdownItems <$> flattened
-  R.performEvent_ $ R.ffor dropdownItems $ \x -> do
-    Util.consoleLog $ ("dropdownItems" :: Text)
-    Util.consoleLog $ (cs . show $ x :: Text)
-
-  xs :: R.Dynamic t (Map Integer Text) <- R.holdDyn Map.empty $
+  dropdownItems :: R.Dynamic t (Map Integer Text) <- R.holdDyn Map.empty $
     hierarchyToDropdownItems <$> flattenHierarchy <$> topicsToHierarchy <$> allTopics
-  void $ R.dropdown 1 xs R.def
+  Input.dropdownClass "border border-brand-light-gray" 1 dropdownItems
   
-  return ()
-  
-  -- allTopics :: R.Dynamic t (Map Integer Text) <- R.holdDyn Map.empty
-  --   $ Map.fromList
-  --   <$> map (\topic -> (Topic.id topic, Topic.name topic))
-  --   <$> fromMaybe []
-  --   <$> response
-  -- selectedRootTopicId :: R.Dynamic t Integer <- R.value <$> R.dropdown 1 rootTopics R.def
-  
-  -- let selectedTopicIds :: [R.Dynamic t Integer] = [selectedRootTopicId]
-  -- let selectedTopicId = R.leftmost . map R.updated $ selectedTopicIds
-  -- let rootTopicsUrl = Route.apiHref (Route.Api_Topics :/ ("parent" =: Just "null"))
-  -- url :: R.Dynamic t Text <- R.holdDyn rootTopicsUrl $ (\tid -> Route.apiHref (Route.Api_TopicHierarchy :/ Just tid)) <$> selectedTopicId
-  -- let endpoint :: R.Event t Text = R.tagPromptlyDyn url selectedTopicId
-  -- response' :: R.Event t (Maybe [[Either Topic.Topic Topic.Topic]]) <- R.getAndDecode endpoint
-  -- let topicHierarchy :: R.Event t [[Topic.Topic]] =
-  --       filter ((> 0) . length)
-  --       <$> map (map (either id id))
-  --       <$> fromMaybe []
-  --       <$> response'
-  -- R.performEvent_ $ R.ffor topicHierarchy $ \t -> do
-  --   Util.consoleLog $ ("topicHierarchy" :: Text)
-  --   Util.consoleLog $ (cs . show $ t :: Text)
-
-  -- x :: R.Dynamic t [[Topic.Topic]] <- R.holdDyn [] topicHierarchy
-  -- void $ R.simpleList x topicsDropdown
-  -- return ()
-  -- where
-  --   topicsDropdown :: R.Dynamic t [Topic.Topic] -> m ()
-  --   topicsDropdown topics = Util.dynFor topics $ \ts -> do
-  --     let tid = Topic.id . head $ ts
-  --     let topics' :: R.Dynamic t (Map Integer Text) = Map.fromList
-  --           <$> map (\topic -> (Topic.id topic, Topic.name topic))
-  --           <$> topics
-  --     void $ R.dropdown tid topics' R.def
-
 data TopicWithChildren = TopicWithChildren
   { topic :: Topic.Topic
   , children :: [TopicWithChildren]
@@ -161,3 +114,11 @@ hierarchyToDropdownItems = foldr f mempty
       (concat . replicate (fromIntegral n) $ "--")
       ++
       cs txt
+
+summaryWidget
+  :: ( R.DomBuilder t m
+     )
+  => m (R.Dynamic t Text)
+summaryWidget = R.elClass "div" "" $ do
+  R.elClass "p" "font-medium" $ R.text "Summary"
+  Input.textAreaClass "border border-brand-light-gray"

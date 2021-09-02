@@ -20,6 +20,6 @@ import qualified Common.Route as Route
       FrontendRoute(FrontendRoute_Topics),
       Api(Api_TopicHierarchy, Api_Topics),
       apiHref )
-import qualified Buttons ( primary, secondary )
+import qualified Widget.Button as Button ( primary, secondary )
 import qualified Util ( getOnload, dynFor )
 import Global ( fromMaybe, void, (:/), (=:) )

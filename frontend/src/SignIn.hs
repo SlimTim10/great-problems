@@ -9,8 +9,8 @@ import qualified Reflex.Dom.Core as R
 import qualified Obelisk.Route.Frontend as Ob
 
 import qualified Common.Route as Route
-import qualified Inputs
-import qualified Buttons
+import qualified Widget.Input as Input
+import qualified Widget.Button as Button
 import qualified Common.Api.Auth as Auth
 import qualified Common.Api.Error as Error
 import Global
@@ -33,13 +33,13 @@ widget = do
     R.elClass "div" "flex flex-col gap-4 w-80" $ do
       email :: R.Dynamic t Text <- R.elClass "div" "flex justify-between" $ do
         R.elClass "p" "font-normal text-brand-lg" $ R.text "Email"
-        email <- Inputs.emailClass "border px-1"
+        email <- Input.emailClass "border px-1"
         return email
       password :: R.Dynamic t Text <- R.elClass "div" "flex justify-between" $ do
         R.elClass "p" "font-normal text-brand-lg" $ R.text "Password"
-        password <- Inputs.passwordClass "border px-1"
+        password <- Input.passwordClass "border px-1"
         return password
-      signIn :: R.Event t () <- Buttons.primary' "Sign in"
+      signIn :: R.Event t () <- Button.primary' "Sign in"
       
       response <- signInAttempt email password signIn
       signInError :: R.Event t (Either Text ()) <- R.performEvent $ R.ffor response $ \case

@@ -6,7 +6,7 @@ import qualified Reflex.Dom.Core as R
 import qualified Obelisk.Route.Frontend as Ob
 
 import qualified Common.Route as Route
-import qualified Buttons
+import qualified Widget.Button as Button
 import Global
 
 widget
@@ -20,4 +20,4 @@ widget
 widget = do
   R.elClass "div" "mt-10 flex justify-center" $ do
     Ob.routeLink (Route.FrontendRoute_SignOut :/ ()) $ do
-      Buttons.secondary "Sign out"
+      Button.secondary "Sign out"
