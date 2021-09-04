@@ -1,6 +1,6 @@
-module Problem.Convert
+module Problem.Compile
   ( widget
-  , ConvertResponse(..)
+  , CompileResponse(..)
   ) where
 
 import qualified Control.Lens as Lens
@@ -17,11 +17,12 @@ import qualified Reflex.Dom.Core as R
 -- Import unofficial patch
 import qualified MyReflex.Dom.Xhr.FormData as R'
 
+import qualified Widget.Button as Button
 import qualified Problem.Options as Options
 import qualified Problem.Figures as Figures
 import Global
 
-data ConvertResponse = ConvertResponse
+data CompileResponse = CompileResponse
   { errorIcemaker :: Text
   , errorLatex :: Text
   , pdfContent :: Text
@@ -29,7 +30,7 @@ data ConvertResponse = ConvertResponse
   , terminalOutput :: Text
   } deriving (Generics.Generic, Show)
 
-instance JSON.FromJSON ConvertResponse where
+instance JSON.FromJSON CompileResponse where
   parseJSON = JSON.genericParseJSON opts . jsonLower
     where opts = JSON.defaultOptions { JSON.fieldLabelModifier = map Char.toLower }
 
@@ -52,12 +53,12 @@ widget
   -> R.Dynamic t [Figures.FileWithName]
   -> R.Dynamic t Text
   -> R.Dynamic t Text
-  -> m (R.Dynamic t (Maybe ConvertResponse, Bool))
+  -> m (R.Dynamic t (Maybe CompileResponse, Bool))
 widget options figures prbName editorContent = do
-  convert :: R.Event t () <- R.button "Convert"
+  compile :: R.Event t () <- Button.primarySmall' "Compile"
 
   let allData :: R.Dynamic t (Options.Options, [Figures.FileWithName], Text, Text) = (\ops figs nm ec -> (ops, figs, nm, ec)) <$> options <*> figures <*> prbName <*> editorContent
-  formData :: R.Event t [Map Text (R'.FormValue JSDOM.Types.File)] <- R.performEvent $ R.ffor (R.tag (R.current allData) convert) $ \(ops, figs, nm, ec) -> do
+  formData :: R.Event t [Map Text (R'.FormValue JSDOM.Types.File)] <- R.performEvent $ R.ffor (R.tag (R.current allData) compile) $ \(ops, figs, nm, ec) -> do
     let
       r = Options.random ops
       o = Options.output ops
@@ -76,7 +77,7 @@ widget options figures prbName editorContent = do
   response <- R.holdDyn Nothing $ R.decodeText . T.concat . map (maybe "" id) <$> results
   loading <- R.zipDynWith
     (\(x :: Integer) (y :: Integer) -> x > 0 && x > y)
-    <$> R.count convert <*> R.count (R.updated response)
+    <$> R.count compile <*> R.count (R.updated response)
   return $ R.zipDyn response loading
   where
     formFile f = R'.FormValue_File (Figures.file f) (Just (Figures.name f))

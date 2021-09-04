@@ -4,11 +4,15 @@ import qualified Reflex.Dom.Core as R
       elementConfig_initialAttributes,
       inputElementConfig_elementConfig,
       textAreaElementConfig_elementConfig,
+      elClass,
+      text,
       dropdown,
       dropdownConfig_attributes,
       MonadHold,
       Reflex(Dynamic),
       PostBuild,
       DomBuilder(textAreaElement, inputElement),
+      InitialAttributes(initialAttributes),
+      InputElement(_inputElement_checked),
       HasValue(value) )
 import Global ( MonadFix, Text, Map, (&), (.~), (=:) )

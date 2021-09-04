@@ -8,6 +8,6 @@ import qualified Reflex.Dom.Core as R
       Reflex(Dynamic),
       PostBuild,
       DomBuilder )
-import qualified Problem.Convert as Convert
-    ( ConvertResponse(errorLatex, errorIcemaker) )
+import qualified Problem.Compile as Compile
+    ( CompileResponse(errorLatex, errorIcemaker) )
 import Global ( Text, Map, (=:) )

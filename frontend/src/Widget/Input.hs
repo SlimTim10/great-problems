@@ -4,6 +4,7 @@ module Widget.Input
   , passwordClass
   , textAreaClass
   , dropdownClass
+  , checkboxClass
   ) where
 
 import qualified Reflex.Dom.Core as R
@@ -65,10 +66,29 @@ dropdownClass
      , Ord k
      )
   => Text -- ^ Style
-  -> k
-  -> R.Dynamic t (Map k Text)
+  -> k -- ^ Default option selected
+  -> R.Dynamic t (Map k Text) -- ^ Options
   -> m (R.Dynamic t k) 
 dropdownClass c k0 options = do
   fmap R.value $ R.dropdown k0 options $
     R.def & R.dropdownConfig_attributes .~
     R.constDyn ("class" =: c)
+
+checkboxClass
+  :: forall t m.
+     ( R.DomBuilder t m
+     )
+  => Text -- ^ Style for checkbox
+  -> Text -- ^ Style for label
+  -> Text -- ^ Label
+  -> m (R.Dynamic t Bool)
+checkboxClass cCheckbox cLabel label = do
+  cb <- R.elClass "label" cLabel $ do
+    cb1 <- R.inputElement
+      $ R.def & R.initialAttributes .~
+      ( "type" =: "checkbox"
+        <> "class" =: cCheckbox
+      )
+    R.text label
+    return cb1
+  return $ R._inputElement_checked cb

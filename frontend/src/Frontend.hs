@@ -71,9 +71,11 @@ frontend = Ob.Frontend
           R.elClass "p" "text-brand-lg font-light" $ R.text "Profile"
         Profile.widget
       Route.FrontendRoute_NewProblem -> do
-        Header.widget
-        R.elClass "div" "h-screen flex flex-col mt-2" $ do
-          Problem.widget
+        R.elClass "div" "h-screen flex flex-col gap-3" $ do
+          R.elClass "div" "flex-none"
+            Header.widget
+          R.elClass "div" "flex-1 mx-2 flex justify-center" $ do
+            Problem.widget
       Route.FrontendRoute_Problems -> do
         Header.widget
         path :: R.Dynamic t (Integer, Ob.R Route.ProblemsRoute) <- Ob.askRoute

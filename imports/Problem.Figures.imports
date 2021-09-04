@@ -10,7 +10,6 @@ import qualified Reflex.Dom.Core as R
       mergeWith,
       listWithKey,
       foldDyn,
-      button,
       dynText,
       el,
       elClass,
@@ -22,4 +21,5 @@ import qualified Reflex.Dom.Core as R
       DomBuilder(inputElement),
       InitialAttributes(initialAttributes),
       InputElement(_inputElement_files) )
+import qualified Widget.Button as Button ( primarySmall' )
 import Global ( Text, Map, (&), (.~), (=:) )

@@ -6,4 +6,4 @@ import qualified Reflex.Dom.Core as R
       EventName(Click) )
 import qualified MyReflex.Dom.Widget.Basic as R'
     ( elAttrClass, elAttrClass' )
-import Global ( Text, (=:) )
+import Global ( Text, cs, (=:) )

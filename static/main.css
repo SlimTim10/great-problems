@@ -71,3 +71,12 @@ body > header {
 .w-brand-screen-lg {
   width: 1024px;
 }
+
+.checkbox-brand-primary {
+  outline: 2px solid #1062AE;
+  outline-offset: -2px;
+}
+
+.min-w-fit {
+  min-width: fit-content;
+}

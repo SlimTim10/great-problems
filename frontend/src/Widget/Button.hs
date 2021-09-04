@@ -2,7 +2,11 @@ module Widget.Button
   ( primary
   , secondary
   , primary'
+  , primaryClass'
+  , primarySmall
   , primarySmall'
+  , primarySmallClass
+  , primarySmallClass'
   , secondary'
   ) where
 
@@ -20,7 +24,7 @@ primary
 primary t = R'.elAttrClass
   "button"
   ("type" =: "button")
-  "bg-brand-primary rounded text-white font-medium px-3 h-10"
+  "bg-brand-primary rounded text-white font-medium px-3 py-2"
   $ R.text t
 
 secondary
@@ -32,7 +36,7 @@ secondary
 secondary t = R'.elAttrClass
   "button"
   ("type" =: "button")
-  "border border-brand-primary bg-transparent rounded text-blue-700 font-medium px-3 h-10"
+  "border border-brand-primary bg-transparent rounded text-blue-700 font-medium px-3 py-2"
   $ R.text t
 
 primary'
@@ -45,9 +49,36 @@ primary' t = do
   (e, _) <- R'.elAttrClass'
     "button"
     ("type" =: "button")
-    "bg-brand-primary rounded text-white font-medium px-3 h-10"
+    "bg-brand-primary rounded text-white font-medium px-3 py-2"
     $ R.text t
   return $ R.domEvent R.Click e
+
+primaryClass'
+  :: forall t m.
+     ( R.DomBuilder t m
+     )
+  => Text -- ^ Style
+  -> Text
+  -> m (R.Event t ())
+primaryClass' c t = do
+  (e, _) <- R'.elAttrClass'
+    "button"
+    ("type" =: "button")
+    (cs $ "bg-brand-primary rounded text-white font-medium px-3 py-2 " ++ cs c)
+    $ R.text t
+  return $ R.domEvent R.Click e
+
+primarySmall
+  :: forall t m.
+     ( R.DomBuilder t m
+     )
+  => Text
+  -> m ()
+primarySmall t = R'.elAttrClass
+  "button"
+  ("type" =: "button")
+  "bg-brand-primary rounded text-white font-medium px-2 py-1 text-brand-sm"
+  $ R.text t
 
 primarySmall'
   :: forall t m.
@@ -59,7 +90,35 @@ primarySmall' t = do
   (e, _) <- R'.elAttrClass'
     "button"
     ("type" =: "button")
-    "bg-brand-primary rounded text-white font-medium px-2 h-8 text-brand-sm"
+    "bg-brand-primary rounded text-white font-medium px-2 py-1 text-brand-sm"
+    $ R.text t
+  return $ R.domEvent R.Click e
+
+primarySmallClass
+  :: forall t m.
+     ( R.DomBuilder t m
+     )
+  => Text -- ^ Style
+  -> Text
+  -> m ()
+primarySmallClass c t = R'.elAttrClass
+  "button"
+  ("type" =: "button")
+  (cs $ "bg-brand-primary rounded text-white font-medium px-2 py-1 text-brand-sm " ++ cs c)
+  $ R.text t
+
+primarySmallClass'
+  :: forall t m.
+     ( R.DomBuilder t m
+     )
+  => Text -- ^ Style
+  -> Text
+  -> m (R.Event t ())
+primarySmallClass' c t = do
+  (e, _) <- R'.elAttrClass'
+    "button"
+    ("type" =: "button")
+    (cs $ "bg-brand-primary rounded text-white font-medium px-2 py-1 text-brand-sm " ++ cs c)
     $ R.text t
   return $ R.domEvent R.Click e
 
@@ -73,6 +132,6 @@ secondary' t = do
   (e, _) <- R'.elAttrClass'
     "button"
     ("type" =: "button")
-    "border border-brand-primary bg-transparent rounded text-blue-700 font-medium px-3 h-10"
+    "border border-brand-primary bg-transparent rounded text-blue-700 font-medium px-3 py-2"
     $ R.text t
   return $ R.domEvent R.Click e

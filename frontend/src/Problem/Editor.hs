@@ -18,7 +18,7 @@ widget
      , R.PostBuild t m
      , R.MonadHold t m
      )
-  => R.Event t Text
+  => R.Event t Text -- ^ Used to force the content from an external source
   -> m (R.Dynamic t Text)
 widget forcedValue = do
   let containerId = "editor"

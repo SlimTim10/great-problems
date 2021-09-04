@@ -17,7 +17,6 @@ import qualified Reflex.Dom.Core as R
       zipDyn,
       zipDynWith,
       count,
-      button,
       decodeText,
       xhrResponse_responseText,
       MonadHold(holdDyn),
@@ -29,6 +28,7 @@ import qualified Reflex.Dom.Core as R
       XhrResponse )
 import qualified MyReflex.Dom.Xhr.FormData as R'
     ( FormValue(..), postForms )
+import qualified Widget.Button as Button ( primarySmall' )
 import qualified Problem.Options as Options
     ( Options(output, random) )
 import qualified Problem.Figures as Figures

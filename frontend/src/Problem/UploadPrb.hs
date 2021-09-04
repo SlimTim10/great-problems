@@ -21,7 +21,10 @@ widget
      )
   => m (R.Event t Text)
 widget = do
-  fi <- R.elAttr "label" ("style" =: "border: 2px solid green;") $ do
+  fi <- R.elClass
+    "label"
+    "cursor-pointer bg-brand-primary rounded text-white font-medium px-2 py-1 text-brand-sm min-w-fit"
+    $ do
     R.text "Upload PRB"
     fi1 <- R.inputElement $ R.def
       & R.initialAttributes .~ (

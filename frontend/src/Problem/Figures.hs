@@ -11,6 +11,7 @@ import qualified JSDOM.Types
 import qualified Language.Javascript.JSaddle as JS
 import qualified Reflex.Dom.Core as R
 
+import qualified Widget.Button as Button
 import Global
 
 type FileMap = Map.Map Int FileWithName
@@ -35,17 +36,21 @@ widget
      , JS.MonadJSM (R.Performable m)
      )
   => m (R.Dynamic t [FileWithName])
-widget = do
-  R.elClass "p" "text-xl bg-blue-200" $ R.text "Figures"
-  fi <- R.el "label" $ do
-    R.text "Upload"
-    fi1 <- R.inputElement $ R.def & R.initialAttributes .~ (
-      "type" =: "file"
-      <> "accept" =: ".asc"
-      <> "multiple" =: ""
-      <> "class" =: "hidden"
-      )
-    return fi1
+widget = R.el "div" $ do
+  fi <- R.elClass "div" "flex gap-3" $ do
+    R.elClass "p" "font-medium mb-2 py-1" $ R.text "Figures"
+    R.elClass "div" "w-min h-min" $ do
+      R.el "label" $ do
+        R.elClass
+          "p"
+          "bg-brand-primary rounded text-white font-medium px-2 py-1 text-brand-sm cursor-pointer"
+          $ R.text "Upload"
+        R.inputElement $ R.def & R.initialAttributes .~ (
+          "type" =: "file"
+          <> "accept" =: ".asc"
+          <> "multiple" =: ""
+          <> "class" =: "hidden"
+          )
   figuresWidget $ R._inputElement_files fi
 
 figuresWidget
@@ -64,11 +69,11 @@ figuresWidget figures = do
     filesWithNames :: R.Event t [FileWithName] <- R.performEvent $ R.ffor (R.updated figures) $ \fs -> do
       names :: [Text] <- mapM JSDOM.File.getName fs
       return $ map (uncurry FileWithName) $ zip fs names
-    deleteMap :: R.Dynamic t (Map Int (R.Event t Int)) <- R.el "ul" $ do
+    deleteMap :: R.Dynamic t (Map Int (R.Event t Int)) <- R.elClass "ul" "ml-4 flex flex-col gap-2" $ do
       R.listWithKey fileMap $ \k f -> do
-        R.el "li" $ do
+        R.elClass "li" "flex justify-between" $ do
           R.dynText $ name <$> f
-          fmap (const k) <$> R.button "X"
+          fmap (const k) <$> Button.primarySmall' "Remove"
     let
       deletions :: R.Dynamic t (R.Event t (FileMap -> FileMap)) =
         R.mergeWith (.)

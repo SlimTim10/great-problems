@@ -9,10 +9,10 @@ import qualified Foreign.JavaScript.Utils as Utils
 import qualified Reflex.Dom.Core as R
     ( ffor,
       elDynAttr,
-      text,
       MonadHold(holdDyn),
       Reflex(updated, Event, Dynamic),
       PerformEvent(performEvent, Performable),
       PostBuild,
       DomBuilder )
+import qualified Widget.Button as Button ( primarySmall )
 import Global ( Text, Map, (^.), (=:) )

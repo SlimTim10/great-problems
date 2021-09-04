@@ -1,16 +1,36 @@
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Reflex.Dom.Core as R
-    ( elClass,
+    ( def,
+      constDyn,
+      ffor,
+      splitDynPure,
+      elementConfig_initialAttributes,
+      inputElementConfig_elementConfig,
+      inputElementConfig_initialValue,
+      elClass,
       text,
       MonadHold,
-      Reflex(Dynamic),
-      PerformEvent(Performable),
+      Reflex(updated, Event, Dynamic),
+      PerformEvent(performEvent_, Performable),
       PostBuild,
       TriggerEvent,
       HasJSContext,
-      DomBuilder )
+      DomBuilder(inputElement),
+      HasValue(value) )
 import qualified Problem.SelectTopic as SelectTopic ( widget )
 import qualified Problem.Summary as Summary ( widget )
-import qualified Problem.Options as Options ()
-import qualified Widget.Button as Button ( primarySmall' )
-import Global ( MonadFix, Text, void )
+import qualified Problem.Figures as Figures
+    ( FileWithName, widget )
+import qualified Problem.Editor as Editor ( widget )
+import qualified Problem.ErrorsToggle as ErrorsToggle ( widget )
+import qualified Problem.PdfViewer as PdfViewer ( widget )
+import qualified Problem.Compile as Compile
+    ( CompileResponse(pdfContent), widget )
+import qualified Problem.Options as Options ( Options(Options) )
+import qualified Problem.UploadPrb as UploadPrb ( widget )
+import qualified Problem.DownloadPrb as DownloadPrb ( widget )
+import qualified Widget.Button as Button
+    ( primaryClass', primarySmall' )
+import qualified Widget.Input as Input ( checkboxClass )
+import qualified Util ( consoleLog )
+import Global ( MonadFix, Text, (&), (.~), (=:) )

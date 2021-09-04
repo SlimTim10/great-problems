@@ -11,6 +11,6 @@ widget
   :: ( R.DomBuilder t m
      )
   => m (R.Dynamic t Text)
-widget = R.elClass "div" "" $ do
+widget = R.el "div" $ do
   R.elClass "p" "font-medium mb-2" $ R.text "Summary"
   Input.textAreaClass "border border-brand-light-gray w-full px-1"

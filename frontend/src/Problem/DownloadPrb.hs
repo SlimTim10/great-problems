@@ -11,6 +11,7 @@ import qualified Language.Javascript.JSaddle as JS
 import qualified Foreign.JavaScript.Utils as Utils
 import qualified Reflex.Dom.Core as R
 
+import qualified Widget.Button as Button
 import Global
 
 createObjectURL
@@ -41,10 +42,11 @@ widget
   -> m ()
 widget prbName prbContent = do
   href <- R.holdDyn "" =<< createObjectURL prbContent
-  R.elDynAttr "a" (attrs <$> prbName <*> href) (R.text "Download PRB")
+  R.elDynAttr "a" (attrs <$> prbName <*> href) (Button.primarySmall "Download PRB")
   where
     attrs :: Text -> Text -> Map Text Text
     attrs nm h = (
       "href" =: h
       <> "download" =: (nm <> ".prb")
+      <> "class" =: "min-w-fit"
       )
