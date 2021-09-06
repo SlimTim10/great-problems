@@ -3,13 +3,14 @@ import qualified Reflex.Dom.Core as R
     ( def,
       constDyn,
       ffor,
+      leftmost,
       splitDynPure,
       elementConfig_initialAttributes,
       inputElementConfig_elementConfig,
       inputElementConfig_initialValue,
       elClass,
       text,
-      MonadHold,
+      MonadHold(holdDyn),
       Reflex(updated, Event, Dynamic),
       PerformEvent(performEvent_, Performable),
       PostBuild,
@@ -19,16 +20,17 @@ import qualified Reflex.Dom.Core as R
       HasValue(value) )
 import qualified Common.File ( FileWithName )
 import qualified Common.Compile
-    ( CompileResponse(pdfContent),
+    ( CompileResponse,
       CompileRequest(CompileRequest),
-      OutputOption(QuestionOnly) )
+      OutputOption(QuestionOnly, WithSolutionAndAnswer) )
 import qualified Problem.SelectTopic as SelectTopic ( widget )
 import qualified Problem.Summary as Summary ( widget )
 import qualified Problem.Figures as Figures ( widget )
 import qualified Problem.Editor as Editor ( widget )
 import qualified Problem.ErrorsToggle as ErrorsToggle ( widget )
 import qualified Problem.PdfViewer as PdfViewer ( widget )
-import qualified Problem.Compile as Compile ( widget )
+import qualified Problem.Compile as Compile
+    ( widget, performRequest )
 import qualified Problem.UploadPrb as UploadPrb ( widget )
 import qualified Problem.DownloadPrb as DownloadPrb ( widget )
 import qualified Widget.Button as Button

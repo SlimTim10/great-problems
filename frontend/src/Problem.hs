@@ -34,7 +34,7 @@ widget
      )
   => m ()
 widget = do
-  figures <- do
+  (figures, randomizeVariables, resetVariables, showAnswer, showSolution) <- do
     R.elClass "div" "w-96 flex-none flex flex-col pr-2 border-r border-brand-light-gray" $ do
     
       selectedTopicId :: R.Dynamic t Integer <- R.elClass "div" "pb-3 border-b border-brand-light-gray" $
@@ -76,10 +76,10 @@ widget = do
       R.performEvent_ $ R.ffor publish $ \_ -> do
         Util.consoleLog ("Publish" :: Text)
 
-      return figures
-
+      return (figures, randomizeVariables, resetVariables, showAnswer, showSolution)
+      
   R.elClass "div" "pl-2 flex-1 h-full flex flex-col" $ mdo
-    (uploadPrb, loading, compileResponse, errorsToggle) <- do
+    (uploadPrb, loading, compileResponse, errorsToggle, compileResponse''', loading''') <- do
       R.elClass "div" "bg-brand-light-gray p-1 flex justify-between" $ do
         (uploadPrb', prbName) <- do
           R.elClass "div" "flex-1 flex justify-center" $ do
@@ -92,6 +92,17 @@ widget = do
                 ("type" =: "text" <> "class" =: "pl-1")
                 & R.inputElementConfig_initialValue .~ "untitled"
               return (uploadPrb, prbName)
+
+        -- Do the compile for randomizeVariables button
+        ( compileResponse'''' :: R.Dynamic t (Maybe Common.Compile.CompileResponse)
+          , loading'''' :: R.Dynamic t Bool) <- fmap R.splitDynPure $
+          Compile.performRequest randomizeVariables $ Common.Compile.CompileRequest
+            <$> editorContent
+            <*> prbName
+            <*> R.constDyn True
+            <*> R.constDyn Common.Compile.WithSolutionAndAnswer -- TODO: use checkboxes
+            <*> figures
+
         ( compileResponse' :: R.Dynamic t (Maybe Common.Compile.CompileResponse)
           , loading' :: R.Dynamic t Bool
           ) <- fmap R.splitDynPure $
@@ -103,13 +114,15 @@ widget = do
               <*> R.constDyn Common.Compile.QuestionOnly -- TODO: use checkboxes
               <*> figures
         errorsToggle' :: R.Dynamic t Bool <- R.elClass "div" "flex-1 flex justify-center ml-auto" $ do
-          R.elClass "span" "ml-auto" $ ErrorsToggle.widget compileResponse' (R.updated loading)
-        return (uploadPrb', loading', compileResponse', errorsToggle')
+          R.elClass "span" "ml-auto" $ ErrorsToggle.widget compileResponse (R.updated loading)
+        return (uploadPrb', loading', compileResponse', errorsToggle', compileResponse'''', loading'''')
     editorContent <- R.elClass "div" "h-full flex" $ do
       editorContent' :: R.Dynamic t Text <- R.elClass "div" "flex-1" $ Editor.widget uploadPrb
       R.elClass "div" "flex-1" $ do
-        let pdfData :: R.Dynamic t Text = maybe "" Common.Compile.pdfContent <$> compileResponse
-        PdfViewer.widget pdfData loading compileResponse errorsToggle
+        x :: R.Dynamic t (Maybe Common.Compile.CompileResponse) <-
+          R.holdDyn Nothing $
+          R.leftmost [R.updated compileResponse, R.updated compileResponse''']
+        PdfViewer.widget x loading errorsToggle
       return editorContent'
       
     return ()

@@ -1,5 +1,6 @@
 module Problem.Compile
   ( widget
+  , performRequest
   ) where
 
 import qualified Control.Lens as Lens
@@ -26,11 +27,26 @@ widget
      , MonadFix m
      )
   => R.Dynamic t Compile.CompileRequest
-  -> m (R.Dynamic t (Maybe Compile.CompileResponse, Bool))
+  -> m (R.Dynamic t (Maybe Compile.CompileResponse, Bool)) -- ^ Response, loading
 widget compileRequest = do
   compile :: R.Event t () <- Button.primarySmallClass' "Compile" "active:bg-blue-400"
+  performRequest compile compileRequest
 
-  formData :: R.Event t [Map Text (R'.FormValue JSDOM.Types.File)] <- R.performEvent $ R.ffor (R.tagPromptlyDyn compileRequest compile) $ \cr -> do
+performRequest
+  :: forall t m.
+     (R.DomBuilder t m
+     , R.MonadHold t m
+     , JS.MonadJSM (R.Performable m)
+     , R.HasJSContext (R.Performable m)
+     , R.PerformEvent t m
+     , R.TriggerEvent t m
+     , MonadFix m
+     )
+  => R.Event t () -- ^ Event to trigger request
+  -> R.Dynamic t Compile.CompileRequest
+  -> m (R.Dynamic t (Maybe Compile.CompileResponse, Bool)) -- ^ Response, loading
+performRequest e compileRequest = do
+  formData :: R.Event t [Map Text (R'.FormValue JSDOM.Types.File)] <- R.performEvent $ R.ffor (R.tagPromptlyDyn compileRequest e) $ \cr -> do
     let
       formDataText :: Map Text (R'.FormValue JSDOM.Types.File) = (
         "prbText" =: R'.FormValue_Text (Compile.prbText cr)
@@ -47,7 +63,7 @@ widget compileRequest = do
   response <- R.holdDyn Nothing $ R.decodeText . T.concat . map (maybe "" id) <$> results
   loading <- R.zipDynWith
     (\(x :: Integer) (y :: Integer) -> x > 0 && x > y)
-    <$> R.count compile <*> R.count (R.updated response)
+    <$> R.count e <*> R.count (R.updated response)
   return $ R.zipDyn response loading
   where
     formFile f = R'.FormValue_File (File.file f) (Just (File.name f))

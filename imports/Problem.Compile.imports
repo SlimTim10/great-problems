@@ -11,7 +11,7 @@ import qualified Reflex.Dom.Core as R
       decodeText,
       xhrResponse_responseText,
       MonadHold(holdDyn),
-      Reflex(updated, Event, Dynamic),
+      Reflex(updated, Dynamic, Event),
       PerformEvent(performEvent, Performable),
       TriggerEvent,
       HasJSContext,

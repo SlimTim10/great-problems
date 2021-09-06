@@ -9,5 +9,5 @@ import qualified Reflex.Dom.Core as R
       PostBuild,
       DomBuilder )
 import qualified Common.Compile as Compile
-    ( CompileResponse(errorLatex, errorIcemaker) )
+    ( CompileResponse(errorLatex, errorIcemaker, pdfContent) )
 import Global ( Text, Map, (=:) )

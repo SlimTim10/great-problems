@@ -10,15 +10,16 @@ import qualified Common.Compile as Compile
 import Global
 
 widget
-  :: ( R.DomBuilder t m
+  :: forall t m.
+     ( R.DomBuilder t m
      , R.PostBuild t m
      )
-  => R.Dynamic t Text
+  => R.Dynamic t (Maybe Compile.CompileResponse)
   -> R.Dynamic t Bool
-  -> R.Dynamic t (Maybe Compile.CompileResponse)
   -> R.Dynamic t Bool
   -> m ()
-widget pdfData loading compileResponse errorsToggle = do
+widget compileResponse loading errorsToggle = do
+  let pdfData :: R.Dynamic t Text = maybe "" Compile.pdfContent <$> compileResponse
   R.dyn_ $ switchView <$> pdfData <*> loading <*> compileResponse <*> errorsToggle
 
 switchView
