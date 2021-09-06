@@ -6,7 +6,7 @@ import qualified Data.Text as Text
 
 import qualified Reflex.Dom.Core as R
 
-import qualified Problem.Compile as Compile
+import qualified Common.Compile as Compile
 import Global
 
 widget

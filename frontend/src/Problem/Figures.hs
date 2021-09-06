@@ -1,31 +1,17 @@
 module Problem.Figures
   ( widget
-  , FileWithName(..)
   ) where
 
-import qualified Control.Monad.Fix as Fix
 import qualified Data.Map as Map
-
+import qualified Control.Monad.Fix as Fix
 import qualified JSDOM.File
 import qualified JSDOM.Types
 import qualified Language.Javascript.JSaddle as JS
 import qualified Reflex.Dom.Core as R
 
+import qualified Common.File as File
 import qualified Widget.Button as Button
 import Global
-
-type FileMap = Map.Map Int FileWithName
-
-data FileWithName = FileWithName
-  { file :: JSDOM.Types.File
-  , name :: Text
-  }
-
-instance Show FileWithName where
-  show = show . name
-
-instance Eq FileWithName where
-  (==) a b = name a == name b
 
 widget
   :: ( R.DomBuilder t m
@@ -35,7 +21,7 @@ widget
      , R.PerformEvent t m
      , JS.MonadJSM (R.Performable m)
      )
-  => m (R.Dynamic t [FileWithName])
+  => m (R.Dynamic t [File.FileWithName])
 widget = R.el "div" $ do
   fi <- R.elClass "div" "flex gap-3" $ do
     R.elClass "p" "font-medium mb-2 py-1" $ R.text "Figures"
@@ -63,36 +49,36 @@ figuresWidget
      , JS.MonadJSM (R.Performable m)
      )
   => R.Dynamic t [JSDOM.Types.File]
-  -> m (R.Dynamic t [FileWithName])
+  -> m (R.Dynamic t [File.FileWithName])
 figuresWidget figures = do
   rec
-    filesWithNames :: R.Event t [FileWithName] <- R.performEvent $ R.ffor (R.updated figures) $ \fs -> do
+    filesWithNames :: R.Event t [File.FileWithName] <- R.performEvent $ R.ffor (R.updated figures) $ \fs -> do
       names :: [Text] <- mapM JSDOM.File.getName fs
-      return $ map (uncurry FileWithName) $ zip fs names
+      return $ map (uncurry File.FileWithName) $ zip fs names
     deleteMap :: R.Dynamic t (Map Int (R.Event t Int)) <- R.elClass "ul" "ml-4 flex flex-col gap-2" $ do
       R.listWithKey fileMap $ \k f -> do
         R.elClass "li" "flex justify-between" $ do
-          R.dynText $ name <$> f
+          R.dynText $ File.name <$> f
           fmap (const k) <$> Button.primarySmall' "Remove"
     let
-      deletions :: R.Dynamic t (R.Event t (FileMap -> FileMap)) =
+      deletions :: R.Dynamic t (R.Event t (File.FileMap -> File.FileMap)) =
         R.mergeWith (.)
         . map (fmap Map.delete)
         . Map.elems
         <$> deleteMap
-    -- Accumulate the file map (foldDyn = accumDyn . flip) by applying the (FileMap -> FileMap) functions.
+    -- Accumulate the file map (foldDyn = accumDyn . flip) by applying the (File.FileMap -> File.FileMap) functions.
     -- The deletions event and the new files event are merged.
     -- Note that "R.leftmost" can replace "R.mergeWith (.)",
     -- but this would not handle the two events happening at the same time
     -- (even though this may never occur in practice).
-    fileMap :: R.Dynamic t FileMap <-
+    fileMap :: R.Dynamic t File.FileMap <-
       R.foldDyn ($) Map.empty
       $ R.mergeWith (.) [R.switch . R.current $ deletions, collectFiles <$> filesWithNames]
   return $ Map.elems <$> fileMap
   where
-    collectFiles :: [FileWithName] -> FileMap -> FileMap
+    collectFiles :: [File.FileWithName] -> File.FileMap -> File.FileMap
     collectFiles newFiles state = foldr addNew state newFiles
-    addNew :: FileWithName -> FileMap -> FileMap
+    addNew :: File.FileWithName -> File.FileMap -> File.FileMap
     addNew v m = case Map.maxViewWithKey m of
       Nothing -> Map.singleton 0 v
       Just ((k, _), _) -> Map.insert (succ k) v m

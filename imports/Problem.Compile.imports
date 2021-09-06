@@ -1,26 +1,17 @@
 import qualified Control.Lens as Lens ( view )
-import qualified Data.Char as Char ( toLower )
-import qualified Data.Text as T ( concat, toLower )
-import qualified Data.HashMap.Strict as HM ( toList, fromList )
-import qualified GHC.Generics as Generics ( Generic )
-import qualified Data.Aeson as JSON
-    ( genericParseJSON,
-      defaultOptions,
-      FromJSON(parseJSON),
-      Options(fieldLabelModifier),
-      Value(Object) )
+import qualified Data.Text as T ( concat )
 import qualified JSDOM.Types ( File )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Reflex.Dom.Core as R
     ( ffor,
-      tag,
       zipDyn,
       zipDynWith,
       count,
+      tagPromptlyDyn,
       decodeText,
       xhrResponse_responseText,
       MonadHold(holdDyn),
-      Reflex(updated, current, Event, Dynamic),
+      Reflex(updated, Event, Dynamic),
       PerformEvent(performEvent, Performable),
       TriggerEvent,
       HasJSContext,
@@ -28,9 +19,10 @@ import qualified Reflex.Dom.Core as R
       XhrResponse )
 import qualified MyReflex.Dom.Xhr.FormData as R'
     ( FormValue(..), postForms )
+import qualified Common.Compile as Compile
+    ( CompileResponse,
+      CompileRequest(figures, outputOption, randomizeVariables, prbName,
+                     prbText) )
+import qualified Common.File as File ( FileWithName(name, file) )
 import qualified Widget.Button as Button ( primarySmallClass' )
-import qualified Problem.Options as Options
-    ( Options(output, random) )
-import qualified Problem.Figures as Figures
-    ( FileWithName(name, file) )
-import Global ( MonadFix, Text, Map, (=:) )
+import Global ( MonadFix, Text, Map, cs, (=:) )

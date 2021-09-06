@@ -7,7 +7,7 @@ import qualified Data.Text as T
 
 import qualified Reflex.Dom.Core as R
 
-import qualified Problem.Compile as Compile
+import qualified Common.Compile as Compile
 import qualified Util
 import Global
 

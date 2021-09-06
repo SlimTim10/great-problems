@@ -17,16 +17,18 @@ import qualified Reflex.Dom.Core as R
       HasJSContext,
       DomBuilder(inputElement),
       HasValue(value) )
+import qualified Common.File ( FileWithName )
+import qualified Common.Compile
+    ( CompileResponse(pdfContent),
+      CompileRequest(CompileRequest),
+      OutputOption(QuestionOnly) )
 import qualified Problem.SelectTopic as SelectTopic ( widget )
 import qualified Problem.Summary as Summary ( widget )
-import qualified Problem.Figures as Figures
-    ( FileWithName, widget )
+import qualified Problem.Figures as Figures ( widget )
 import qualified Problem.Editor as Editor ( widget )
 import qualified Problem.ErrorsToggle as ErrorsToggle ( widget )
 import qualified Problem.PdfViewer as PdfViewer ( widget )
-import qualified Problem.Compile as Compile
-    ( CompileResponse(pdfContent), widget )
-import qualified Problem.Options as Options ( Options(Options) )
+import qualified Problem.Compile as Compile ( widget )
 import qualified Problem.UploadPrb as UploadPrb ( widget )
 import qualified Problem.DownloadPrb as DownloadPrb ( widget )
 import qualified Widget.Button as Button

@@ -5,15 +5,15 @@ module Problem
 import qualified Language.Javascript.JSaddle as JS
 import qualified Reflex.Dom.Core as R
 
+import qualified Common.File
+import qualified Common.Compile
 import qualified Problem.SelectTopic as SelectTopic
 import qualified Problem.Summary as Summary
--- import qualified Problem.Options as Options
 import qualified Problem.Figures as Figures
 import qualified Problem.Editor as Editor
 import qualified Problem.ErrorsToggle as ErrorsToggle
 import qualified Problem.PdfViewer as PdfViewer
 import qualified Problem.Compile as Compile
-import qualified Problem.Options as Options
 import qualified Problem.UploadPrb as UploadPrb
 import qualified Problem.DownloadPrb as DownloadPrb
 import qualified Widget.Button as Button
@@ -67,7 +67,7 @@ widget = do
               return (showAnswer, showSolution)
           return (randomizeVariables, resetVariables, showAnswer, showSolution)
 
-      figures :: R.Dynamic t [Figures.FileWithName] <- R.elClass "div" "py-3 border-b border-brand-light-gray" $
+      figures :: R.Dynamic t [Common.File.FileWithName] <- R.elClass "div" "py-3 border-b border-brand-light-gray" $
         Figures.widget
 
       publish :: R.Event t () <- R.elClass "div" "py-3" $ do
@@ -92,19 +92,23 @@ widget = do
                 ("type" =: "text" <> "class" =: "pl-1")
                 & R.inputElementConfig_initialValue .~ "untitled"
               return (uploadPrb, prbName)
-        let options = R.constDyn $ Options.Options True "flagSolAns" -- temporary
-        ( compileResponse' :: R.Dynamic t (Maybe Compile.CompileResponse)
+        ( compileResponse' :: R.Dynamic t (Maybe Common.Compile.CompileResponse)
           , loading' :: R.Dynamic t Bool
-          ) <- do
-          R.elClass "div" "flex-1 flex justify-center" $
-            R.splitDynPure <$> Compile.widget options figures prbName editorContent
+          ) <- fmap R.splitDynPure $
+          R.elClass "div" "flex-1 flex justify-center" $ do
+            Compile.widget $ Common.Compile.CompileRequest
+              <$> editorContent
+              <*> prbName
+              <*> R.constDyn False
+              <*> R.constDyn Common.Compile.QuestionOnly -- TODO: use checkboxes
+              <*> figures
         errorsToggle' :: R.Dynamic t Bool <- R.elClass "div" "flex-1 flex justify-center ml-auto" $ do
           R.elClass "span" "ml-auto" $ ErrorsToggle.widget compileResponse (R.updated loading)
         return (uploadPrb', loading', compileResponse', errorsToggle')
     editorContent <- R.elClass "div" "h-full flex" $ do
       editorContent' :: R.Dynamic t Text <- R.elClass "div" "flex-1" $ Editor.widget uploadPrb
       R.elClass "div" "flex-1" $ do
-        let pdfData :: R.Dynamic t Text = maybe "" Compile.pdfContent <$> compileResponse
+        let pdfData :: R.Dynamic t Text = maybe "" Common.Compile.pdfContent <$> compileResponse
         PdfViewer.widget pdfData loading compileResponse errorsToggle
       return editorContent'
       
