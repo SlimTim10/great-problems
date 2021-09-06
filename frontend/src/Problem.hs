@@ -21,6 +21,11 @@ import qualified Widget.Input as Input
 import qualified Util
 import Global
 
+data WithLoading a = WithLoading
+  { action :: a
+  , loading :: Bool
+  }
+
 widget
   :: ( R.DomBuilder t m
      , R.PostBuild t m
@@ -79,7 +84,7 @@ widget = do
       return (figures, randomizeVariables, resetVariables, showAnswer, showSolution)
       
   R.elClass "div" "pl-2 flex-1 h-full flex flex-col" $ mdo
-    (uploadPrb, loading, compileResponse, errorsToggle, compileResponse''', loading''') <- do
+    (uploadPrb, compileButtonAction, errorsToggle, randomizeVariablesAction) <- do
       R.elClass "div" "bg-brand-light-gray p-1 flex justify-between" $ do
         (uploadPrb', prbName) <- do
           R.elClass "div" "flex-1 flex justify-center" $ do
@@ -93,36 +98,37 @@ widget = do
                 & R.inputElementConfig_initialValue .~ "untitled"
               return (uploadPrb, prbName)
 
-        -- Do the compile for randomizeVariables button
-        ( compileResponse'''' :: R.Dynamic t (Maybe Common.Compile.CompileResponse)
-          , loading'''' :: R.Dynamic t Bool) <- fmap R.splitDynPure $
-          Compile.performRequest randomizeVariables $ Common.Compile.CompileRequest
-            <$> editorContent
-            <*> prbName
-            <*> R.constDyn True
-            <*> R.constDyn Common.Compile.WithSolutionAndAnswer -- TODO: use checkboxes
-            <*> figures
-
-        ( compileResponse' :: R.Dynamic t (Maybe Common.Compile.CompileResponse)
-          , loading' :: R.Dynamic t Bool
-          ) <- fmap R.splitDynPure $
-          R.elClass "div" "flex-1 flex justify-center" $ do
-            Compile.widget $ Common.Compile.CompileRequest
+        randomizeVariablesAction' :: R.Dynamic t (WithLoading (Maybe Common.Compile.CompileResponse)) <- do
+          (fmap . fmap $ uncurry WithLoading) $ do
+            Compile.performRequest randomizeVariables $ Common.Compile.CompileRequest
               <$> editorContent
               <*> prbName
-              <*> R.constDyn False
-              <*> R.constDyn Common.Compile.QuestionOnly -- TODO: use checkboxes
+              <*> R.constDyn True
+              <*> R.constDyn Common.Compile.WithSolutionAndAnswer -- TODO: use checkboxes
               <*> figures
+
+        compileButtonAction' :: R.Dynamic t (WithLoading (Maybe Common.Compile.CompileResponse)) <- do
+          (fmap . fmap $ uncurry WithLoading) $ do
+            R.elClass "div" "flex-1 flex justify-center" $ do
+              Compile.widget $ Common.Compile.CompileRequest
+                <$> editorContent
+                <*> prbName
+                <*> R.constDyn False
+                <*> R.constDyn Common.Compile.QuestionOnly -- TODO: use checkboxes
+                <*> figures
         errorsToggle' :: R.Dynamic t Bool <- R.elClass "div" "flex-1 flex justify-center ml-auto" $ do
-          R.elClass "span" "ml-auto" $ ErrorsToggle.widget compileResponse (R.updated loading)
-        return (uploadPrb', loading', compileResponse', errorsToggle', compileResponse'''', loading'''')
+          R.elClass "span" "ml-auto" $ ErrorsToggle.widget (action <$> compileButtonAction') (R.updated $ loading <$> compileButtonAction')
+        return (uploadPrb', compileButtonAction', errorsToggle', randomizeVariablesAction')
     editorContent <- R.elClass "div" "h-full flex" $ do
       editorContent' :: R.Dynamic t Text <- R.elClass "div" "flex-1" $ Editor.widget uploadPrb
       R.elClass "div" "flex-1" $ do
-        x :: R.Dynamic t (Maybe Common.Compile.CompileResponse) <-
-          R.holdDyn Nothing $
-          R.leftmost [R.updated compileResponse, R.updated compileResponse''']
-        PdfViewer.widget x loading errorsToggle
+        anyResponse :: R.Dynamic t (Maybe Common.Compile.CompileResponse) <- R.holdDyn Nothing $
+          R.leftmost . map (R.updated . fmap action) $
+          [compileButtonAction, randomizeVariablesAction]
+        anyLoading :: R.Dynamic t Bool <- R.holdDyn False $
+          R.leftmost . map (R.updated . fmap loading) $
+          [compileButtonAction, randomizeVariablesAction]
+        PdfViewer.widget anyResponse anyLoading errorsToggle
       return editorContent'
       
     return ()

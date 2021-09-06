@@ -4,7 +4,6 @@ import qualified Reflex.Dom.Core as R
       constDyn,
       ffor,
       leftmost,
-      splitDynPure,
       elementConfig_initialAttributes,
       inputElementConfig_elementConfig,
       inputElementConfig_initialValue,

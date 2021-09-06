@@ -61,6 +61,7 @@ performRequest e compileRequest = do
   responses :: R.Event t [R.XhrResponse] <- R'.postForms "https://icewire.ca/uploadprb" formData
   let results :: R.Event t [Maybe Text] = map (Lens.view R.xhrResponse_responseText) <$> responses
   response <- R.holdDyn Nothing $ R.decodeText . T.concat . map (maybe "" id) <$> results
+  -- The response is loading when the event has been triggered and the response has yet to update
   loading <- R.zipDynWith
     (\(x :: Integer) (y :: Integer) -> x > 0 && x > y)
     <$> R.count e <*> R.count (R.updated response)
