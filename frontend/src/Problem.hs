@@ -103,7 +103,7 @@ widget = do
               <*> R.constDyn Common.Compile.QuestionOnly -- TODO: use checkboxes
               <*> figures
         errorsToggle' :: R.Dynamic t Bool <- R.elClass "div" "flex-1 flex justify-center ml-auto" $ do
-          R.elClass "span" "ml-auto" $ ErrorsToggle.widget compileResponse (R.updated loading)
+          R.elClass "span" "ml-auto" $ ErrorsToggle.widget compileResponse' (R.updated loading)
         return (uploadPrb', loading', compileResponse', errorsToggle')
     editorContent <- R.elClass "div" "h-full flex" $ do
       editorContent' :: R.Dynamic t Text <- R.elClass "div" "flex-1" $ Editor.widget uploadPrb
