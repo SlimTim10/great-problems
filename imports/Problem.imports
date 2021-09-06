@@ -30,7 +30,7 @@ import qualified Problem.Options as Options ( Options(Options) )
 import qualified Problem.UploadPrb as UploadPrb ( widget )
 import qualified Problem.DownloadPrb as DownloadPrb ( widget )
 import qualified Widget.Button as Button
-    ( primaryClass', primarySmall' )
+    ( primaryClass', primarySmallClass' )
 import qualified Widget.Input as Input ( checkboxClass )
 import qualified Util ( consoleLog )
 import Global ( MonadFix, Text, (&), (.~), (=:) )

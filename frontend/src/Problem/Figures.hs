@@ -43,7 +43,7 @@ widget = R.el "div" $ do
       R.el "label" $ do
         R.elClass
           "p"
-          "bg-brand-primary rounded text-white font-medium px-2 py-1 text-brand-sm cursor-pointer"
+          "bg-brand-primary rounded text-white font-medium px-2 py-1 text-brand-sm cursor-pointer active:bg-blue-400"
           $ R.text "Upload"
         R.inputElement $ R.def & R.initialAttributes .~ (
           "type" =: "file"

@@ -14,5 +14,5 @@ import qualified Reflex.Dom.Core as R
       PerformEvent(performEvent, Performable),
       PostBuild,
       DomBuilder )
-import qualified Widget.Button as Button ( primarySmall )
+import qualified Widget.Button as Button ( primarySmallClass )
 import Global ( Text, Map, (^.), (=:) )

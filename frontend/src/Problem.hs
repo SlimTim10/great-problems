@@ -50,8 +50,8 @@ widget = do
         ) <-
         R.elClass "div" "py-3 border-b border-brand-light-gray" $ do
           (randomizeVariables, resetVariables) <- R.elClass "div" "flex gap-2 mb-2" $ do
-            randomizeVariables :: R.Event t () <- Button.primarySmall' "Randomize variables"
-            resetVariables :: R.Event t () <- Button.primarySmall' "Reset variables"
+            randomizeVariables :: R.Event t () <- Button.primarySmallClass' "Randomize variables" "active:bg-blue-400"
+            resetVariables :: R.Event t () <- Button.primarySmallClass' "Reset variables" "active:bg-blue-400"
             return (randomizeVariables, resetVariables)
           (showAnswer, showSolution) <- R.elClass "div" "flex gap-4" $ do
             R.elClass "p" "font-medium text-brand-primary" $ R.text "Show problem with:"
@@ -71,7 +71,7 @@ widget = do
         Figures.widget
 
       publish :: R.Event t () <- R.elClass "div" "py-3" $ do
-        Button.primaryClass' "Save & Publish" "w-full"
+        Button.primaryClass' "Save & Publish" "w-full active:bg-blue-400"
 
       R.performEvent_ $ R.ffor publish $ \_ -> do
         Util.consoleLog ("Publish" :: Text)

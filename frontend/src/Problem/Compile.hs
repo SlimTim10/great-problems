@@ -55,7 +55,7 @@ widget
   -> R.Dynamic t Text
   -> m (R.Dynamic t (Maybe CompileResponse, Bool))
 widget options figures prbName editorContent = do
-  compile :: R.Event t () <- Button.primarySmall' "Compile"
+  compile :: R.Event t () <- Button.primarySmallClass' "Compile" "active:bg-blue-400"
 
   let allData :: R.Dynamic t (Options.Options, [Figures.FileWithName], Text, Text) = (\ops figs nm ec -> (ops, figs, nm, ec)) <$> options <*> figures <*> prbName <*> editorContent
   formData :: R.Event t [Map Text (R'.FormValue JSDOM.Types.File)] <- R.performEvent $ R.ffor (R.tag (R.current allData) compile) $ \(ops, figs, nm, ec) -> do

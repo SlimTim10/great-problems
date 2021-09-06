@@ -42,7 +42,7 @@ widget
   -> m ()
 widget prbName prbContent = do
   href <- R.holdDyn "" =<< createObjectURL prbContent
-  R.elDynAttr "a" (attrs <$> prbName <*> href) (Button.primarySmall "Download PRB")
+  R.elDynAttr "a" (attrs <$> prbName <*> href) (Button.primarySmallClass "Download PRB" "active:bg-blue-400")
   where
     attrs :: Text -> Text -> Map Text Text
     attrs nm h = (

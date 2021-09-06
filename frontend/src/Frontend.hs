@@ -29,7 +29,7 @@ frontend = Ob.Frontend
       R.elAttr "link" ("rel" =: "preconnect" <> "href" =: "https://fonts.googleapis.com") R.blank
       R.elAttr "link" ("rel" =: "preconnect" <> "href" =: "https://fonts.gstatic.com" <> "crossorigin" =: "") R.blank
       R.elAttr "link" ("href" =: "https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" <> "rel" =: "stylesheet") R.blank
-      R.elAttr "link" ("href" =: "https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.7/tailwind.min.css" <> "type" =: "text/css" <> "rel" =: "stylesheet") R.blank
+      R.elAttr "link" ("href" =: "/static/tailwind.css" <> "type" =: "text/css" <> "rel" =: "stylesheet") R.blank
       R.elAttr "link" ("href" =: Ob.static @"main.css" <> "type" =: "text/css" <> "rel" =: "stylesheet") R.blank
   , Ob._frontend_body = R.prerender_ R.blank $ Ob.subRoute_ $ \case
       Route.FrontendRoute_Home -> do

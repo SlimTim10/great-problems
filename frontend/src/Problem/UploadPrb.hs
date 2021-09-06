@@ -23,7 +23,7 @@ widget
 widget = do
   fi <- R.elClass
     "label"
-    "cursor-pointer bg-brand-primary rounded text-white font-medium px-2 py-1 text-brand-sm min-w-fit"
+    "cursor-pointer bg-brand-primary rounded text-white font-medium px-2 py-1 text-brand-sm min-w-fit active:bg-blue-400"
     $ do
     R.text "Upload PRB"
     fi1 <- R.inputElement $ R.def
