@@ -15,6 +15,7 @@ import qualified Common.File as File
 import Global
 
 data OutputOption = WithSolution | WithAnswer | WithSolutionAndAnswer | QuestionOnly
+
 instance Show OutputOption where
   show WithSolution = "flagSolutions"
   show WithAnswer = "flagAnswers"
