@@ -34,7 +34,7 @@ widget
      )
   => m ()
 widget = do
-  (figures) <- do
+  figures <- do
     R.elClass "div" "w-96 flex-none flex flex-col pr-2 border-r border-brand-light-gray" $ do
     
       selectedTopicId :: R.Dynamic t Integer <- R.elClass "div" "pb-3 border-b border-brand-light-gray" $
@@ -71,17 +71,17 @@ widget = do
         Figures.widget
 
       publish :: R.Event t () <- R.elClass "div" "py-3" $ do
-        Button.primaryClass' "w-full" "Save & Publish"
+        Button.primaryClass' "Save & Publish" "w-full"
 
       R.performEvent_ $ R.ffor publish $ \_ -> do
         Util.consoleLog ("Publish" :: Text)
 
-      return (figures)
+      return figures
 
   R.elClass "div" "pl-2 flex-1 h-full flex flex-col" $ mdo
     (uploadPrb, loading, compileResponse, errorsToggle) <- do
       R.elClass "div" "bg-brand-light-gray p-1 flex justify-between" $ do
-        (uploadPrb, prbName) <- do
+        (uploadPrb', prbName) <- do
           R.elClass "div" "flex-1 flex justify-center" $ do
             R.elClass "span" "mr-auto flex gap-2 items-center" $ mdo
               uploadPrb :: R.Event t Text <- UploadPrb.widget
@@ -93,21 +93,20 @@ widget = do
                 & R.inputElementConfig_initialValue .~ "untitled"
               return (uploadPrb, prbName)
         let options = R.constDyn $ Options.Options True "flagSolAns" -- temporary
-        ( compileResponse :: R.Dynamic t (Maybe Compile.CompileResponse)
-          , loading :: R.Dynamic t Bool
+        ( compileResponse' :: R.Dynamic t (Maybe Compile.CompileResponse)
+          , loading' :: R.Dynamic t Bool
           ) <- do
           R.elClass "div" "flex-1 flex justify-center" $
             R.splitDynPure <$> Compile.widget options figures prbName editorContent
-        errorsToggle :: R.Dynamic t Bool <- R.elClass "div" "flex-1 flex justify-center ml-auto" $ do
+        errorsToggle' :: R.Dynamic t Bool <- R.elClass "div" "flex-1 flex justify-center ml-auto" $ do
           R.elClass "span" "ml-auto" $ ErrorsToggle.widget compileResponse (R.updated loading)
-        return (uploadPrb, loading, compileResponse, errorsToggle)
+        return (uploadPrb', loading', compileResponse', errorsToggle')
     editorContent <- R.elClass "div" "h-full flex" $ do
-      editorContent <- R.elClass "div" "flex-1" $ Editor.widget uploadPrb
+      editorContent' :: R.Dynamic t Text <- R.elClass "div" "flex-1" $ Editor.widget uploadPrb
       R.elClass "div" "flex-1" $ do
-        -- PdfViewer.widget (R.constDyn "") (R.constDyn False) (R.constDyn Nothing) (R.constDyn False)
-        let pdfData = maybe "" Compile.pdfContent <$> compileResponse
+        let pdfData :: R.Dynamic t Text = maybe "" Compile.pdfContent <$> compileResponse
         PdfViewer.widget pdfData loading compileResponse errorsToggle
-      return editorContent
+      return editorContent'
       
     return ()
 

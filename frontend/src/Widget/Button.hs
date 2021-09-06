@@ -19,7 +19,7 @@ primary
   :: forall t m.
      ( R.DomBuilder t m
      )
-  => Text
+  => Text -- ^ Button text
   -> m ()
 primary t = R'.elAttrClass
   "button"
@@ -31,7 +31,7 @@ secondary
   :: forall t m.
      ( R.DomBuilder t m
      )
-  => Text
+  => Text -- ^ Button text
   -> m ()
 secondary t = R'.elAttrClass
   "button"
@@ -43,7 +43,7 @@ primary'
   :: forall t m.
      ( R.DomBuilder t m
      )
-  => Text
+  => Text -- ^ Button text
   -> m (R.Event t ())
 primary' t = do
   (e, _) <- R'.elAttrClass'
@@ -57,10 +57,10 @@ primaryClass'
   :: forall t m.
      ( R.DomBuilder t m
      )
-  => Text -- ^ Style
-  -> Text
+  => Text -- ^ Button text
+  -> Text -- ^ Class
   -> m (R.Event t ())
-primaryClass' c t = do
+primaryClass' t c = do
   (e, _) <- R'.elAttrClass'
     "button"
     ("type" =: "button")
@@ -72,7 +72,7 @@ primarySmall
   :: forall t m.
      ( R.DomBuilder t m
      )
-  => Text
+  => Text -- ^ Button text
   -> m ()
 primarySmall t = R'.elAttrClass
   "button"
@@ -84,7 +84,7 @@ primarySmall'
   :: forall t m.
      ( R.DomBuilder t m
      )
-  => Text
+  => Text -- ^ Button text
   -> m (R.Event t ())
 primarySmall' t = do
   (e, _) <- R'.elAttrClass'
@@ -98,10 +98,10 @@ primarySmallClass
   :: forall t m.
      ( R.DomBuilder t m
      )
-  => Text -- ^ Style
-  -> Text
+  => Text -- ^ Button text
+  -> Text -- ^ Class
   -> m ()
-primarySmallClass c t = R'.elAttrClass
+primarySmallClass t c = R'.elAttrClass
   "button"
   ("type" =: "button")
   (cs $ "bg-brand-primary rounded text-white font-medium px-2 py-1 text-brand-sm " ++ cs c)
@@ -111,10 +111,10 @@ primarySmallClass'
   :: forall t m.
      ( R.DomBuilder t m
      )
-  => Text -- ^ Style
-  -> Text
+  => Text -- ^ Button text
+  -> Text -- ^ Class
   -> m (R.Event t ())
-primarySmallClass' c t = do
+primarySmallClass' t c = do
   (e, _) <- R'.elAttrClass'
     "button"
     ("type" =: "button")
@@ -126,7 +126,7 @@ secondary'
   :: forall t m.
      ( R.DomBuilder t m
      )
-  => Text
+  => Text -- ^ Button text
   -> m (R.Event t ())
 secondary' t = do
   (e, _) <- R'.elAttrClass'
