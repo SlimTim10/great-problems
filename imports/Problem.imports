@@ -21,7 +21,7 @@ import qualified Common.File ( FileWithName )
 import qualified Common.Compile
     ( CompileResponse,
       CompileRequest(CompileRequest),
-      OutputOption(QuestionOnly, WithSolutionAndAnswer) )
+      OutputOption(..) )
 import qualified Problem.SelectTopic as SelectTopic ( widget )
 import qualified Problem.Summary as Summary ( widget )
 import qualified Problem.Figures as Figures ( widget )

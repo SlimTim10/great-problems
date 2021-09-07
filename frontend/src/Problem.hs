@@ -42,13 +42,20 @@ widget = mdo
   ( figures
     , randomizeVariablesAction
     , resetVariablesAction
-    , showAnswer
-    , showSolution
+    , showAnswerAction
+    , showSolutionAction
+    , outputOption
     ) <- leftPane editorContent prbName
     
   ( editorContent
     , prbName
-    ) <- mainPane figures randomizeVariablesAction resetVariablesAction
+    ) <- mainPane
+    figures
+    randomizeVariablesAction
+    resetVariablesAction
+    showAnswerAction
+    showSolutionAction
+    outputOption
 
   return ()
 
@@ -61,8 +68,9 @@ widget = mdo
           $ Summary.widget
         ( randomizeVariablesAction
           , resetVariablesAction
-          , showAnswer
-          , showSolution
+          , showAnswerAction
+          , showSolutionAction
+          , outputOption
           ) <- outputOptionsPane editorContent prbName figures
         figures :: R.Dynamic t [Common.File.FileWithName] <- R.elClass "div" "py-3 border-b border-brand-light-gray"
           $ Figures.widget
@@ -70,31 +78,31 @@ widget = mdo
           Button.primaryClass' "Save & Publish" "w-full active:bg-blue-400"
         R.performEvent_ $ R.ffor publish $ \_ -> do
           Util.consoleLog ("Publish" :: Text)
-        return (figures, randomizeVariablesAction, resetVariablesAction, showAnswer, showSolution)
+        return (figures, randomizeVariablesAction, resetVariablesAction, showAnswerAction, showSolutionAction, outputOption)
 
     outputOptionsPane editorContent prbName figures = do
-      R.elClass "div" "py-3 border-b border-brand-light-gray" $ do
+      R.elClass "div" "py-3 border-b border-brand-light-gray" $ mdo
         (randomizeVariablesAction, resetVariablesAction) <- R.elClass "div" "flex gap-2 mb-2" $ do
           randomizeVariables :: R.Event t () <- Button.primarySmallClass' "Randomize variables" "active:bg-blue-400"
-          randomizeVariablesAction :: R.Dynamic t (WithLoading (Maybe Common.Compile.CompileResponse)) <- do
+          randomizeVariablesAction' :: R.Dynamic t (WithLoading (Maybe Common.Compile.CompileResponse)) <- do
             (fmap . fmap $ uncurry WithLoading) $ do
               Compile.performRequest randomizeVariables $ Common.Compile.CompileRequest
                 <$> editorContent
                 <*> prbName
                 <*> R.constDyn True
-                <*> R.constDyn Common.Compile.WithSolutionAndAnswer -- TODO: use checkboxes
+                <*> outputOption
                 <*> figures
           resetVariables :: R.Event t () <- Button.primarySmallClass' "Reset variables" "active:bg-blue-400"
-          resetVariablesAction :: R.Dynamic t (WithLoading (Maybe Common.Compile.CompileResponse)) <- do
+          resetVariablesAction' :: R.Dynamic t (WithLoading (Maybe Common.Compile.CompileResponse)) <- do
             (fmap . fmap $ uncurry WithLoading) $ do
               Compile.performRequest resetVariables $ Common.Compile.CompileRequest
                 <$> editorContent
                 <*> prbName
                 <*> R.constDyn False
-                <*> R.constDyn Common.Compile.WithSolutionAndAnswer -- TODO: use checkboxes
+                <*> outputOption
                 <*> figures
-          return (randomizeVariablesAction, resetVariablesAction)
-        (showAnswer, showSolution) <- R.elClass "div" "flex gap-4" $ do
+          return (randomizeVariablesAction', resetVariablesAction')
+        (showAnswerAction, showSolutionAction, outputOption) <- R.elClass "div" "flex gap-4" $ do
           R.elClass "p" "font-medium text-brand-primary"
             $ R.text "Show problem with:"
           R.elClass "div" "flex flex-col" $ do
@@ -102,20 +110,44 @@ widget = mdo
               "cursor-pointer mr-2 checkbox-brand-primary"
               "font-medium text-brand-primary cursor-pointer"
               "Answer"
+            showAnswerAction' :: R.Dynamic t (WithLoading (Maybe Common.Compile.CompileResponse)) <- do
+              (fmap . fmap $ uncurry WithLoading) $ do
+              Compile.performRequest (R.updated $ const () <$> showAnswer) $ Common.Compile.CompileRequest
+                <$> editorContent
+                <*> prbName
+                <*> R.constDyn False
+                <*> outputOption
+                <*> figures
             showSolution :: R.Dynamic t Bool <- Input.checkboxClass
               "cursor-pointer mr-2 checkbox-brand-primary"
               "font-medium text-brand-primary cursor-pointer"
               "Solution"
-            return (showAnswer, showSolution)
-        return (randomizeVariablesAction, resetVariablesAction, showAnswer, showSolution)
+            showSolutionAction' :: R.Dynamic t (WithLoading (Maybe Common.Compile.CompileResponse)) <- do
+              (fmap . fmap $ uncurry WithLoading) $ do
+              Compile.performRequest (R.updated $ const () <$> showSolution) $ Common.Compile.CompileRequest
+                <$> editorContent
+                <*> prbName
+                <*> R.constDyn False
+                <*> outputOption
+                <*> figures
+            let outputOption' :: R.Dynamic t Common.Compile.OutputOption =
+                  (\showAnswer' showSolution' ->
+                     case (showAnswer', showSolution') of
+                       (False, False) -> Common.Compile.QuestionOnly
+                       (False, True) -> Common.Compile.WithSolution
+                       (True, False) -> Common.Compile.WithAnswer
+                       (True, True) -> Common.Compile.WithSolutionAndAnswer
+                  ) <$> showAnswer <*> showSolution
+            return (showAnswerAction', showSolutionAction', outputOption')
+        return (randomizeVariablesAction, resetVariablesAction, showAnswerAction, showSolutionAction, outputOption)
 
-    mainPane figures randomizeVariablesAction resetVariablesAction = do
+    mainPane figures randomizeVariablesAction resetVariablesAction showAnswerAction showSolutionAction outputOption = do
       R.elClass "div" "pl-2 flex-1 h-full flex flex-col" $ mdo
-        (uploadPrb, prbName, compileButtonAction, errorsToggle) <- upperPane editorContent figures
+        (uploadPrb, prbName, compileButtonAction, errorsToggle) <- upperPane editorContent figures outputOption
         editorContent <- R.elClass "div" "h-full flex" $ do
           editorContent' :: R.Dynamic t Text <- R.elClass "div" "flex-1" $ Editor.widget uploadPrb
           R.elClass "div" "flex-1" $ do
-            let actions = [compileButtonAction, randomizeVariablesAction, resetVariablesAction]
+            let actions = [compileButtonAction, randomizeVariablesAction, resetVariablesAction, showAnswerAction, showSolutionAction]
             anyResponse :: R.Dynamic t (Maybe Common.Compile.CompileResponse) <- R.holdDyn Nothing
               $ R.leftmost . map (R.updated . fmap action)
               $ actions
@@ -126,7 +158,7 @@ widget = mdo
           return editorContent'
         return (editorContent, prbName)
 
-    upperPane editorContent figures = do
+    upperPane editorContent figures outputOption = do
       R.elClass "div" "bg-brand-light-gray p-1 flex justify-between" $ do
         (uploadPrb, prbName) <- do
           R.elClass "div" "flex-1 flex justify-center" $ do
@@ -146,7 +178,7 @@ widget = mdo
                 <$> editorContent
                 <*> prbName
                 <*> R.constDyn False
-                <*> R.constDyn Common.Compile.QuestionOnly -- TODO: use checkboxes
+                <*> outputOption
                 <*> figures
         errorsToggle :: R.Dynamic t Bool <- R.elClass "div" "flex-1 flex justify-center ml-auto" $ do
           R.elClass "span" "ml-auto" $ ErrorsToggle.widget (action <$> compileButtonAction) (R.updated $ loading <$> compileButtonAction)
