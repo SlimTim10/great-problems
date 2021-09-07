@@ -30,7 +30,7 @@ switchView
   -> Bool
   -> m ()
 switchView pdfData loading compileResponse errorsToggle
-  | loading = R.text "Loading..."
+  | loading = loadingWidget
   | errorsToggle = errorsWidget compileResponse
   | Text.null pdfData = R.text "Press compile to view PDF"
   | otherwise = R.elAttr "iframe" attrs $ R.blank
@@ -55,3 +55,9 @@ errorsWidget (Just res) = R.elClass "div" "flex flex-col w-full h-full" $ do
     R.text (Compile.errorIcemaker res)
   R.elClass "p" "flex-1 overflow-y-auto" $
     R.text (Compile.errorLatex res)
+
+loadingWidget
+  :: R.DomBuilder t m
+  => m ()
+loadingWidget = R.elClass "div" "flex w-full h-full items-center justify-center" $ do
+  R.elAttr "img" ("src" =: "/static/spinner.svg" <> "alt" =: "loading") $ R.blank
