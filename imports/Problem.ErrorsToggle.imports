@@ -1,5 +1,4 @@
-import qualified Data.Maybe as Maybe ( fromJust, isNothing )
-import qualified Data.Text as T ( null )
+import qualified Data.Text as T ( empty, null )
 import qualified Reflex.Dom.Core as R
     ( leftmost,
       foldDyn,
@@ -10,4 +9,4 @@ import qualified Reflex.Dom.Core as R
 import qualified Common.Compile as Compile
     ( CompileResponse(pdfContent, errorIcemaker) )
 import qualified Util ( buttonDynClass )
-import Global ( MonadFix, Text )
+import Global ( MonadFix, Text, isNothing )

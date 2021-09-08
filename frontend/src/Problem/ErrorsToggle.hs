@@ -2,9 +2,7 @@ module Problem.ErrorsToggle
   ( widget
   ) where
 
-import qualified Data.Maybe as Maybe
 import qualified Data.Text as T
-
 import qualified Reflex.Dom.Core as R
 
 import qualified Common.Compile as Compile
@@ -44,7 +42,7 @@ widget compileResponse reset = do
       | otherwise =
           "border border-brand-primary rounded bg-white text-blue-700 font-medium px-2 py-1 text-brand-sm"
       where
-        pdfContent = Compile.pdfContent . Maybe.fromJust $ compileResponse'
+        pdfContent = maybe T.empty Compile.pdfContent compileResponse'
 
 showErrors
   :: Bool
@@ -52,9 +50,9 @@ showErrors
   -> Bool
 showErrors activeToggled compileResponse
   | activeToggled = True
-  | Maybe.isNothing compileResponse = False
+  | isNothing compileResponse = False
   | not . T.null $ pdfContent = False
   | T.null pdfContent = True
   | otherwise = False
   where
-    pdfContent = Compile.pdfContent . Maybe.fromJust $ compileResponse
+    pdfContent = maybe T.empty Compile.pdfContent compileResponse
