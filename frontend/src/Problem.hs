@@ -99,7 +99,7 @@ widget = mdo
         publish :: R.Event t () <- R.elClass "div" "py-3" $ do
           Button.primaryClass' "Save & Publish" "w-full active:bg-blue-400"
         R.performEvent_ $ R.ffor publish $ \_ -> do
-          Util.consoleLog ("Publish" :: Text)
+          Util.consoleLog ("Publish" :: Text) -- TODO create API route and perform request to it
         return (figures, randomizeVariablesAction, resetVariablesAction, showAnswerAction, showSolutionAction, outputOption)
 
     outputOptionsPane editorContent prbName figures = do
