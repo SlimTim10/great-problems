@@ -49,13 +49,26 @@ widget = mdo
     
   ( editorContent
     , prbName
+    , compileButtonAction
     ) <- mainPane
     figures
-    randomizeVariablesAction
-    resetVariablesAction
-    showAnswerAction
-    showSolutionAction
+    anyResponse
+    anyLoading
     outputOption
+
+  let actions =
+        [ compileButtonAction
+        , randomizeVariablesAction
+        , resetVariablesAction
+        , showAnswerAction
+        , showSolutionAction
+        ]
+  anyResponse :: R.Dynamic t (Maybe Common.Compile.CompileResponse) <- R.holdDyn Nothing
+    $ R.leftmost . map (R.updated . fmap action)
+    $ actions
+  anyLoading :: R.Dynamic t Bool <- R.holdDyn False
+    $ R.leftmost . map (R.updated . fmap loading)
+    $ actions
 
   return ()
 
@@ -141,24 +154,17 @@ widget = mdo
             return (showAnswerAction', showSolutionAction', outputOption')
         return (randomizeVariablesAction, resetVariablesAction, showAnswerAction, showSolutionAction, outputOption)
 
-    mainPane figures randomizeVariablesAction resetVariablesAction showAnswerAction showSolutionAction outputOption = do
+    mainPane figures anyResponse anyLoading outputOption = do
       R.elClass "div" "pl-2 flex-1 h-full flex flex-col" $ mdo
-        (uploadPrb, prbName, compileButtonAction, errorsToggle) <- upperPane editorContent figures outputOption
+        (uploadPrb, prbName, compileButtonAction, errorsToggle) <-
+          upperPane editorContent figures outputOption anyResponse anyLoading
         editorContent <- R.elClass "div" "h-full flex" $ do
           editorContent' :: R.Dynamic t Text <- R.elClass "div" "flex-1" $ Editor.widget uploadPrb
-          R.elClass "div" "flex-1" $ do
-            let actions = [compileButtonAction, randomizeVariablesAction, resetVariablesAction, showAnswerAction, showSolutionAction]
-            anyResponse :: R.Dynamic t (Maybe Common.Compile.CompileResponse) <- R.holdDyn Nothing
-              $ R.leftmost . map (R.updated . fmap action)
-              $ actions
-            anyLoading :: R.Dynamic t Bool <- R.holdDyn False
-              $ R.leftmost . map (R.updated . fmap loading)
-              $ actions
-            PdfViewer.widget anyResponse anyLoading errorsToggle
+          R.elClass "div" "flex-1" $ PdfViewer.widget anyResponse anyLoading errorsToggle
           return editorContent'
-        return (editorContent, prbName)
+        return (editorContent, prbName, compileButtonAction)
 
-    upperPane editorContent figures outputOption = do
+    upperPane editorContent figures outputOption anyResponse anyLoading = do
       R.elClass "div" "bg-brand-light-gray p-1 flex justify-between" $ do
         (uploadPrb, prbName) <- do
           R.elClass "div" "flex-1 flex justify-center" $ do
@@ -181,5 +187,5 @@ widget = mdo
                 <*> outputOption
                 <*> figures
         errorsToggle :: R.Dynamic t Bool <- R.elClass "div" "flex-1 flex justify-center ml-auto" $ do
-          R.elClass "span" "ml-auto" $ ErrorsToggle.widget (action <$> compileButtonAction) (R.updated $ loading <$> compileButtonAction)
+          R.elClass "span" "ml-auto" $ ErrorsToggle.widget anyResponse (R.updated anyLoading)
         return (uploadPrb, prbName, compileButtonAction, errorsToggle)
