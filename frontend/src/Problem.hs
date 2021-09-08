@@ -27,7 +27,8 @@ data WithLoading a = WithLoading
   }
 
 widget
-  :: ( R.DomBuilder t m
+  :: forall t m.
+     ( R.DomBuilder t m
      , R.PostBuild t m
      , R.MonadHold t m
      , MonadFix m
@@ -36,6 +37,7 @@ widget
      , R.HasJSContext (R.Performable m)
      , R.PerformEvent t m
      , R.TriggerEvent t m
+     , R.MonadSample t (R.Performable m)
      )
   => m ()
 widget = mdo
@@ -52,7 +54,7 @@ widget = mdo
     , compileButtonAction
     ) <- mainPane
     figures
-    anyResponse
+    latestResponse
     anyLoading
     outputOption
 
@@ -63,12 +65,19 @@ widget = mdo
         , showAnswerAction
         , showSolutionAction
         ]
-  anyResponse :: R.Dynamic t (Maybe Common.Compile.CompileResponse) <- R.holdDyn Nothing
+
+  -- Only the latest response matters and it is what we show
+  latestResponse :: R.Dynamic t (Maybe Common.Compile.CompileResponse) <- R.holdDyn Nothing
     $ R.leftmost . map (R.updated . fmap action)
     $ actions
-  anyLoading :: R.Dynamic t Bool <- R.holdDyn False
-    $ R.leftmost . map (R.updated . fmap loading)
-    $ actions
+
+  -- If any response is still loading, we want to show the loading spinner
+  let loadings :: [R.Event t Bool] = map (R.updated . fmap loading) $ actions
+  anyLoading :: R.Dynamic t Bool <- do
+    anyLoading' :: R.Event t Bool <- R.performEvent $ R.ffor (R.leftmost loadings) $ \_ -> do
+      loadingSamples <- mapM (R.sample . R.current) . map (fmap loading) $ actions
+      return $ any (== True) loadingSamples
+    R.holdDyn False anyLoading'
 
   return ()
 
@@ -154,17 +163,17 @@ widget = mdo
             return (showAnswerAction', showSolutionAction', outputOption')
         return (randomizeVariablesAction, resetVariablesAction, showAnswerAction, showSolutionAction, outputOption)
 
-    mainPane figures anyResponse anyLoading outputOption = do
+    mainPane figures latestResponse anyLoading outputOption = do
       R.elClass "div" "pl-2 flex-1 h-full flex flex-col" $ mdo
         (uploadPrb, prbName, compileButtonAction, errorsToggle) <-
-          upperPane editorContent figures outputOption anyResponse anyLoading
+          upperPane editorContent figures outputOption latestResponse anyLoading
         editorContent <- R.elClass "div" "h-full flex" $ do
           editorContent' :: R.Dynamic t Text <- R.elClass "div" "flex-1" $ Editor.widget uploadPrb
-          R.elClass "div" "flex-1" $ PdfViewer.widget anyResponse anyLoading errorsToggle
+          R.elClass "div" "flex-1" $ PdfViewer.widget latestResponse anyLoading errorsToggle
           return editorContent'
         return (editorContent, prbName, compileButtonAction)
 
-    upperPane editorContent figures outputOption anyResponse anyLoading = do
+    upperPane editorContent figures outputOption latestResponse anyLoading = do
       R.elClass "div" "bg-brand-light-gray p-1 flex justify-between" $ do
         (uploadPrb, prbName) <- do
           R.elClass "div" "flex-1 flex justify-center" $ do
@@ -187,5 +196,5 @@ widget = mdo
                 <*> outputOption
                 <*> figures
         errorsToggle :: R.Dynamic t Bool <- R.elClass "div" "flex-1 flex justify-center ml-auto" $ do
-          R.elClass "span" "ml-auto" $ ErrorsToggle.widget anyResponse (R.updated anyLoading)
+          R.elClass "span" "ml-auto" $ ErrorsToggle.widget latestResponse (R.updated anyLoading)
         return (uploadPrb, prbName, compileButtonAction, errorsToggle)
