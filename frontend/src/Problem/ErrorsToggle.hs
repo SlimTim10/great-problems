@@ -23,7 +23,7 @@ widget
   -> m (R.Dynamic t Bool)
 widget compileResponse reset = do
   rec
-    e <- Util.buttonDynClass "Error log" $ style <$> btnOrReset <*> hasErrors
+    e <- Util.buttonDynClass "Error log" $ style <$> btnOrReset <*> compileResponse <*> hasErrors
     btnOrReset <- R.foldDyn ($) False $ R.leftmost [not <$ e, const False <$ reset]
   return $ showErrors <$> btnOrReset <*> compileResponse
   where
@@ -33,18 +33,25 @@ widget compileResponse reset = do
     f (Just res) = not . T.null $ Compile.errorIcemaker res
     style
       :: Bool -- ^ Active toggled
+      -> Maybe Compile.CompileResponse -- ^ Response from compile request
       -> Bool -- ^ Errors are present
       -> Text
-    style True _ = "border border-brand-primary rounded bg-brand-primary text-white font-medium px-2 py-1 text-brand-sm"
-    style False False = "border border-brand-primary rounded bg-white text-blue-700 font-medium px-2 py-1 text-brand-sm"
-    style False True = "border border-brand-primary rounded bg-red-200 text-blue-700 font-medium px-2 py-1 text-brand-sm"
+    style activeToggled compileResponse' hasErrors'
+      | hasErrors' == True && (activeToggled == False || T.null pdfContent) =
+          "border border-brand-primary rounded bg-red-200 text-blue-700 font-medium px-2 py-1 text-brand-sm"
+      | activeToggled == True =
+          "border border-brand-primary rounded bg-brand-primary text-white font-medium px-2 py-1 text-brand-sm"
+      | otherwise =
+          "border border-brand-primary rounded bg-white text-blue-700 font-medium px-2 py-1 text-brand-sm"
+      where
+        pdfContent = Compile.pdfContent . Maybe.fromJust $ compileResponse'
 
 showErrors
   :: Bool
   -> Maybe Compile.CompileResponse
   -> Bool
-showErrors btn compileResponse
-  | btn = True
+showErrors activeToggled compileResponse
+  | activeToggled = True
   | Maybe.isNothing compileResponse = False
   | not . T.null $ pdfContent = False
   | T.null pdfContent = True
