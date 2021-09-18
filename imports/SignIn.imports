@@ -2,11 +2,7 @@ import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Data.Aeson as JSON ( ToJSON )
 import qualified Data.CaseInsensitive as CI ( mk )
 import qualified Reflex.Dom.Core as R
-    ( DomBuilder,
-      MonadHold(holdDyn),
-      PerformEvent(performEvent, Performable),
-      Reflex(updated, Event, Dynamic),
-      ffor,
+    ( ffor,
       zipDyn,
       eitherDyn,
       tagPromptlyDyn,
@@ -17,9 +13,13 @@ import qualified Reflex.Dom.Core as R
       decodeXhrResponse,
       performRequestAsync,
       postJson,
+      MonadHold(holdDyn),
+      Reflex(updated, Event, Dynamic),
+      PerformEvent(performEvent, Performable),
       PostBuild,
       TriggerEvent,
       HasJSContext,
+      DomBuilder,
       XhrRequest )
 import qualified Obelisk.Route.Frontend as Ob
     ( R, SetRoute(setRoute) )

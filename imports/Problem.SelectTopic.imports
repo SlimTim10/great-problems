@@ -1,15 +1,15 @@
 import qualified Data.Map as Map ( insert, empty )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Reflex.Dom.Core as R
-    ( DomBuilder,
-      MonadHold(holdDyn),
-      PerformEvent(Performable),
-      Reflex(Event, Dynamic),
-      elClass,
+    ( elClass,
       text,
+      MonadHold(holdDyn),
+      Reflex(Event, Dynamic),
+      PerformEvent(Performable),
       PostBuild,
       TriggerEvent,
-      HasJSContext )
+      HasJSContext,
+      DomBuilder )
 import qualified Common.Api.Topic as Topic
     ( Topic(name, id, parent_id) )
 import qualified Common.Route as Route ( Api(Api_Topics), apiHref )

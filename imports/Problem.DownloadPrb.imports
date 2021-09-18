@@ -7,12 +7,12 @@ import qualified Language.Javascript.JSaddle as JS
 import qualified Foreign.JavaScript.Utils as Utils
     ( bsToArrayBuffer )
 import qualified Reflex.Dom.Core as R
-    ( DomBuilder,
-      MonadHold(holdDyn),
-      PerformEvent(performEvent, Performable),
-      Reflex(updated, Event, Dynamic),
-      ffor,
+    ( ffor,
       elDynAttr,
-      PostBuild )
+      MonadHold(holdDyn),
+      Reflex(updated, Event, Dynamic),
+      PerformEvent(performEvent, Performable),
+      PostBuild,
+      DomBuilder )
 import qualified Widget.Button as Button ( primarySmallClass )
 import Global ( Text, Map, (^.), (=:) )

@@ -19,6 +19,7 @@ import qualified Common.Api.Error as Error
 import qualified Database
 import qualified Database.Queries as Queries
 import qualified Common.Api.User as User
+import qualified Common.Api.Role as Role
 import qualified Common.Api.Auth as Auth
 import qualified Common.Api.NewProblem as NewProblem
 import Global
@@ -56,7 +57,9 @@ backend = Ob.Backend
                       case JSON.decode rawBody :: Maybe NewProblem.NewProblem of
                         Nothing -> writeJSON $ Error.mk "Invalid problem"
                         Just newProblem -> do
-                          if NewProblem.author_id newProblem /= User.id user
+                          if
+                            NewProblem.author_id newProblem /= User.id user
+                            || not (User.role user == Role.Contributor || User.role user == Role.Moderator)
                             then writeJSON $ Error.mk "No access"
                             else writeJSON =<< IO.liftIO (Queries.addProblem conn newProblem)
                 _ -> return () -- TODO: implement put, delete

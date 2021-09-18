@@ -2,19 +2,19 @@ import qualified Data.CaseInsensitive as CI ( CI(original) )
 import qualified Control.Monad.Fix as Fix ( MonadFix )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Obelisk.Route.Frontend as Ob
-    ( R, SetRoute, RouteToUrl, routeLink )
+    ( R, routeLink, RouteToUrl, SetRoute )
 import qualified Reflex.Dom.Core as R
-    ( DomBuilder,
-      MonadHold(holdDyn),
-      PerformEvent(Performable),
-      Reflex(Event, Dynamic),
-      simpleList,
+    ( simpleList,
       el,
       elClass,
       text,
+      MonadHold(holdDyn),
+      Reflex(Event, Dynamic),
+      PerformEvent(Performable),
       PostBuild,
       TriggerEvent,
       HasJSContext,
+      DomBuilder,
       Prerender )
 import qualified Common.Api.Topic as Topic ( Topic(Topic) )
 import qualified Common.Api.ProblemSet as ProblemSet

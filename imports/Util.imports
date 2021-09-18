@@ -6,25 +6,25 @@ import qualified Control.Monad.IO.Class as IO ( MonadIO )
 import qualified Crypto.PasswordStore
     ( makePassword, verifyPassword )
 import qualified Reflex.Dom.Core as R
-    ( DomBuilder(DomBuilderSpace),
-      Adjustable,
-      PerformEvent(Performable),
-      EventName(Click),
-      Reflex(Event, Dynamic),
-      DomSpace(RawDocument),
-      NotReady,
-      constDyn,
+    ( constDyn,
       ffor,
       tagPromptlyDyn,
       dyn_,
       elDynClass',
       text,
       getAndDecode,
+      Adjustable,
+      Reflex(Event, Dynamic),
+      NotReady,
+      PerformEvent(Performable),
       PostBuild(..),
       TriggerEvent,
       HasJSContext,
+      DomBuilder(DomBuilderSpace),
+      DomSpace(RawDocument),
       HasDocument(..),
-      HasDomEvent(domEvent) )
+      HasDomEvent(domEvent),
+      EventName(Click) )
 import qualified "jsaddle-dom" GHCJS.DOM.Document as DOM
     ( IsDocument, getCookie )
 import qualified Web.Cookie as Cookie ( parseCookies, Cookies )

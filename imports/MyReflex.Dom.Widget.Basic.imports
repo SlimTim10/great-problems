@@ -1,7 +1,7 @@
 import qualified Reflex.Dom.Core as R
-    ( Element,
-      EventResult,
+    ( elAttr,
       elAttr',
       DomBuilder(DomBuilderSpace),
-      elAttr )
+      Element,
+      EventResult )
 import Global ( Text, Map, (=:) )

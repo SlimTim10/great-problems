@@ -3,14 +3,14 @@ import qualified Obelisk.Route.Frontend as Ob
     ( R, routeLink, subRoute_, Routed(askRoute) )
 import qualified Obelisk.Generated.Static as Ob ( static )
 import qualified Reflex.Dom.Core as R
-    ( Reflex(Dynamic),
-      prerender_,
+    ( prerender_,
       blank,
       display,
       el,
       elAttr,
       elClass,
-      text )
+      text,
+      Reflex(Dynamic) )
 import qualified Common.Route as Route
     ( ProblemsRoute(..),
       TopicsRoute(..),

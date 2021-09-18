@@ -1,4 +1,4 @@
 import qualified Reflex.Dom.Core as R
-    ( DomBuilder, Reflex(Dynamic), el, elClass, text )
+    ( el, elClass, text, Reflex(Dynamic), DomBuilder )
 import qualified Widget.Input as Input ( textAreaClass )
 import Global ( Text )

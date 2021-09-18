@@ -11,7 +11,7 @@ import GHCJS.DOM.File ( getName )
 import GHCJS.DOM.Types ( File, IsBlob )
 import Language.Javascript.JSaddle.Monad ( MonadJSM, liftJSM )
 import Reflex
-    ( PerformEvent(Performable), Reflex(Event), ffor, TriggerEvent )
+    ( ffor, Reflex(Event), PerformEvent(Performable), TriggerEvent )
 import Reflex.Dom.Xhr
     ( performMkRequestsAsync,
       xhrRequest,

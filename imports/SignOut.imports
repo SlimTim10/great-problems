@@ -1,14 +1,14 @@
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Reflex.Dom.Core as R
-    ( DomBuilder,
-      PerformEvent(Performable),
-      Reflex(Event),
-      decodeXhrResponse,
+    ( decodeXhrResponse,
       performRequestAsync,
       postJson,
+      Reflex(Event),
+      PerformEvent(Performable),
       PostBuild(..),
       TriggerEvent,
-      HasJSContext )
+      HasJSContext,
+      DomBuilder )
 import qualified Obelisk.Route.Frontend as Ob
     ( R, SetRoute(setRoute) )
 import qualified Common.Route as Route

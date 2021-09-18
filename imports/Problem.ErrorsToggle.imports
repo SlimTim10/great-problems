@@ -1,11 +1,11 @@
-import qualified Data.Text as T ( null, empty )
+import qualified Data.Text as T ( empty, null )
 import qualified Reflex.Dom.Core as R
-    ( DomBuilder,
+    ( leftmost,
+      foldDyn,
       MonadHold,
       Reflex(Event, Dynamic),
-      leftmost,
-      foldDyn,
-      PostBuild )
+      PostBuild,
+      DomBuilder )
 import qualified Common.Compile as Compile
     ( CompileResponse(pdfContent, errorIcemaker) )
 import qualified Util ( buttonDynClass )

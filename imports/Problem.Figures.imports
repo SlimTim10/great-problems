@@ -5,12 +5,7 @@ import qualified JSDOM.File ( getName )
 import qualified JSDOM.Types ( File )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Reflex.Dom.Core as R
-    ( DomBuilder(inputElement),
-      def,
-      MonadHold,
-      PerformEvent(performEvent, Performable),
-      Reflex(current, switch, updated, Event, Dynamic),
-      InputElement(_inputElement_files),
+    ( def,
       ffor,
       mergeWith,
       listWithKey,
@@ -19,8 +14,13 @@ import qualified Reflex.Dom.Core as R
       el,
       elClass,
       text,
+      MonadHold,
+      Reflex(current, switch, updated, Event, Dynamic),
+      PerformEvent(performEvent, Performable),
       PostBuild,
-      InitialAttributes(initialAttributes) )
+      DomBuilder(inputElement),
+      InitialAttributes(initialAttributes),
+      InputElement(_inputElement_files) )
 import qualified Common.File as File
     ( FileWithName(FileWithName, name), FileMap )
 import qualified Widget.Button as Button ( primarySmall' )

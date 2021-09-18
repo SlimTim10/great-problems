@@ -40,6 +40,7 @@ import qualified Database ( connect )
 import qualified Database.Queries as Queries
     ( getProblems,
       getProblemById,
+      addProblem,
       getTopics,
       getTopicById,
       getRootTopics,
@@ -47,9 +48,10 @@ import qualified Database.Queries as Queries
       getTopicHierarchy,
       getUsers,
       getUserById,
-      authenticate,
-      addProblem )
-import qualified Common.Api.User as User ( User(id) )
+      authenticate )
+import qualified Common.Api.User as User ( User(role, id) )
+import qualified Common.Api.Role as Role
+    ( Role(Moderator, Contributor) )
 import qualified Common.Api.Auth as Auth ( Auth )
 import qualified Common.Api.NewProblem as NewProblem
     ( NewProblem(author_id) )

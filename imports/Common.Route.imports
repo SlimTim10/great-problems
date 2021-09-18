@@ -17,11 +17,7 @@ import Data.Text ( Text )
 import Data.Functor.Identity ( Identity )
 import Obelisk.Route ( pattern (:/) )
 import qualified Obelisk.Route as Ob
-    ( R,
-      Encoder,
-      FullRoute(FullRoute_Backend),
-      PageName,
-      checkEncoder,
+    ( checkEncoder,
       maybeEncoder,
       mkFullRouteEncoder,
       pathComponentEncoder,
@@ -31,6 +27,10 @@ import qualified Obelisk.Route as Ob
       singlePathSegmentEncoder,
       unitEncoder,
       unsafeTshowEncoder,
+      Encoder,
+      FullRoute(FullRoute_Backend),
+      PageName,
+      R,
       SegmentResult(PathEnd, PathSegment) )
 import qualified Obelisk.Route.TH as Ob ( deriveRouteComponent )
 import qualified Data.Map as Map ( lookup )

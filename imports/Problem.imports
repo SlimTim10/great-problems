@@ -4,13 +4,7 @@ import qualified Data.Aeson as JSON ( ToJSON )
 import qualified "jsaddle-dom" GHCJS.DOM.Document as DOM
     ( IsDocument )
 import qualified Reflex.Dom.Core as R
-    ( DomBuilder(inputElement, DomBuilderSpace),
-      def,
-      MonadHold(holdDyn),
-      MonadSample(..),
-      PerformEvent(..),
-      Reflex(current, updated, Event, Dynamic),
-      DomSpace(RawDocument),
+    ( def,
       constDyn,
       ffor,
       leftmost,
@@ -23,9 +17,15 @@ import qualified Reflex.Dom.Core as R
       decodeXhrResponse,
       performRequestAsync,
       postJson,
+      MonadHold(holdDyn),
+      MonadSample(..),
+      Reflex(current, updated, Event, Dynamic),
+      PerformEvent(..),
       PostBuild,
       TriggerEvent,
       HasJSContext,
+      DomBuilder(inputElement, DomBuilderSpace),
+      DomSpace(RawDocument),
       HasDocument,
       HasValue(value),
       XhrRequest )
