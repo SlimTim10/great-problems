@@ -20,6 +20,7 @@ import qualified Database
 import qualified Database.Queries as Queries
 import qualified Common.Api.User as User
 import qualified Common.Api.Auth as Auth
+import qualified Common.Api.NewProblem as NewProblem
 import Global
 
 authCheck
@@ -38,13 +39,27 @@ backend = Ob.Backend
       conn <- Database.connect
 
       jwk <- SAS.generateKey
-      let jwtCfg = SAS.defaultJWTSettings jwk
+      let jwtCfg :: SAS.JWTSettings = SAS.defaultJWTSettings jwk
       
       serve $ \case
         Route.BackendRoute_Missing :/ () -> return ()
         Route.BackendRoute_Api :/ apiRoute -> case apiRoute of
           Route.Api_Problems :/ subRoute -> case subRoute of
-            (Nothing, query) -> writeJSON =<< IO.liftIO (Queries.getProblems conn Nothing query)
+            (Nothing, query) -> do
+              Snap.rqMethod <$> Snap.getRequest >>= \case
+                Snap.GET -> writeJSON =<< IO.liftIO (Queries.getProblems conn Nothing query)
+                Snap.POST -> do
+                  verifyJWTUser jwtCfg >>= \case
+                    Nothing -> writeJSON $ Error.mk "No access"
+                    Just user -> do
+                      rawBody <- Snap.readRequestBody maxRequestBodySize
+                      case JSON.decode rawBody :: Maybe NewProblem.NewProblem of
+                        Nothing -> writeJSON $ Error.mk "Invalid problem"
+                        Just newProblem -> do
+                          if NewProblem.author_id newProblem /= User.id user
+                            then writeJSON $ Error.mk "No access"
+                            else writeJSON =<< IO.liftIO (Queries.addProblem conn newProblem)
+                _ -> return () -- TODO: implement put, delete
             (Just problemId, query) -> writeJSON =<< IO.liftIO (Queries.getProblemById conn problemId query)
           Route.Api_Topics :/ query -> do
             topics <- case fromMaybe Nothing (Map.lookup "parent" query) of
@@ -81,6 +96,11 @@ backend = Ob.Backend
             removeCookie "JWT-Cookie"
   , Ob._backend_routeEncoder = Route.fullRouteEncoder
   }
+
+verifyJWTUser :: SAS.JWTSettings -> Snap.Snap (Maybe User.User)
+verifyJWTUser jwtCfg = do
+  jwt :: Text <- Snap.readCookie "JWT-Cookie"
+  IO.liftIO $ SAS.verifyJWT jwtCfg (cs jwt)
 
 makeJWTCookie
   :: ( IO.MonadIO m

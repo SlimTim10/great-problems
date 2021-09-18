@@ -504,6 +504,10 @@ Get the hierarchy of topics, ending with the children of the given topic. The Ei
 
 Get a list of problems. Optional query parameters for topic, author, expanding the topic or author, and including the topic path. The topic parameter is for any topic in the branch; not necessarily a direct match.
 
+~POST /api/problems/~
+
+Create a new problem. Request body should contain a Common.Api.NewProblem as JSON.
+
 ~GET /api/problems/{id}?expand=author,topic&include=topic_path~
 
 Get a single problem.

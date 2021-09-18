@@ -5,16 +5,16 @@ import qualified JSDOM.EventM as EventM ( on )
 import qualified Language.Javascript.JSaddle as JS
     ( MonadJSM, FromJSVal(fromJSVal), ToJSVal(toJSVal), liftJSM )
 import qualified Reflex.Dom.Core as R
-    ( def,
+    ( DomBuilder(inputElement),
+      def,
+      PerformEvent(performEvent_, Performable),
+      Reflex(updated, Event),
+      InputElement(_inputElement_files),
       fmapMaybe,
       wrapDomEvent,
       elClass,
       text,
-      Reflex(updated, Event),
-      PerformEvent(performEvent_, Performable),
       TriggerEvent,
-      DomBuilder(inputElement),
-      InitialAttributes(initialAttributes),
-      InputElement(_inputElement_files) )
+      InitialAttributes(initialAttributes) )
 import qualified Util ( headMay )
 import Global ( Text, (<=<), (&), (.~), (=:) )

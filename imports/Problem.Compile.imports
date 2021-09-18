@@ -3,19 +3,19 @@ import qualified Data.Text as T ( concat )
 import qualified JSDOM.Types ( File )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Reflex.Dom.Core as R
-    ( ffor,
+    ( DomBuilder,
+      MonadHold(holdDyn),
+      PerformEvent(performEvent, Performable),
+      Reflex(updated, Dynamic, Event),
+      ffor,
       zipDyn,
       zipDynWith,
       count,
       tagPromptlyDyn,
       decodeText,
       xhrResponse_responseText,
-      MonadHold(holdDyn),
-      Reflex(updated, Dynamic, Event),
-      PerformEvent(performEvent, Performable),
       TriggerEvent,
       HasJSContext,
-      DomBuilder,
       XhrResponse )
 import qualified MyReflex.Dom.Xhr.FormData as R'
     ( FormValue(..), postForms )

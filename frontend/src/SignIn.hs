@@ -30,6 +30,7 @@ widget
   => m ()
 widget = do
   R.elClass "div" "mt-10 flex justify-center" $ do
+    -- TODO: event should also be handled on pressing Enter
     R.elClass "div" "flex flex-col gap-4 w-80" $ do
       email :: R.Dynamic t Text <- R.elClass "div" "flex justify-between" $ do
         R.elClass "p" "font-normal text-brand-lg" $ R.text "Email"
@@ -63,5 +64,5 @@ widget = do
 
     signInRequest :: JSON.ToJSON a => a -> R.XhrRequest Text
     signInRequest body = R.postJson url body
-     where
-       url = Route.apiHref (Route.Api_SignIn :/ ())
+      where
+        url = Route.apiHref (Route.Api_SignIn :/ ())

@@ -1,7 +1,7 @@
 import qualified Obelisk.Route.Frontend as Ob
-    ( R, routeLink, RouteToUrl, SetRoute )
+    ( R, SetRoute, RouteToUrl, routeLink )
 import qualified Reflex.Dom.Core as R
-    ( elClass, text, DomBuilder, Prerender )
+    ( DomBuilder, elClass, text, Prerender )
 import qualified Common.Route as Route
     ( ExploreRoute(ExploreRoute_ProblemSets, ExploreRoute_Problems),
       FrontendRoute(FrontendRoute_Explore) )

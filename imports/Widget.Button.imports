@@ -1,9 +1,9 @@
 import qualified Reflex.Dom.Core as R
-    ( text,
+    ( DomBuilder,
+      EventName(Click),
       Reflex(Event),
-      DomBuilder,
-      HasDomEvent(domEvent),
-      EventName(Click) )
+      text,
+      HasDomEvent(domEvent) )
 import qualified MyReflex.Dom.Widget.Basic as R'
     ( elAttrClass, elAttrClass' )
 import Global ( Text, cs, (=:) )

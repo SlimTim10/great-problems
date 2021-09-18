@@ -1,6 +1,7 @@
 module Database.Queries
   ( getProblems
   , getProblemById
+  , addProblem
   , getTopics
   , getTopicById
   , getRootTopics
@@ -16,6 +17,7 @@ import qualified Database.PostgreSQL.Simple.ToField as SQL
 import qualified Data.Text as Text
 
 import qualified Common.Api.Problem as Problem
+import qualified Common.Api.NewProblem as NewProblem
 import qualified Common.Api.Topic as Topic
 import qualified Common.Api.User as User
 import qualified Common.Api.Role as Role
@@ -106,6 +108,20 @@ getProblems conn problemId routeQuery = do
 getProblemById :: SQL.Connection -> Integer -> Route.Query -> IO (Maybe Problem.Problem)
 getProblemById conn problemId routeQuery = Util.headMay
   <$> getProblems conn (Just problemId) routeQuery
+
+addProblem :: SQL.Connection -> NewProblem.NewProblem -> IO (Maybe Problem.Problem)
+addProblem conn newProblem = do
+  mProblemId :: Maybe (SQL.Only Integer) <- Util.headMay
+    <$> SQL.query conn
+    "INSERT INTO problems(summary, contents, topic_id, author_id) VALUES (?,?,?,?) returning id"
+    ( NewProblem.summary newProblem
+    , NewProblem.contents newProblem
+    , NewProblem.topic_id newProblem
+    , NewProblem.author_id newProblem
+    )
+  flip (maybe (pure Nothing))
+    (SQL.fromOnly <$> mProblemId)
+    $ \problemId -> getProblemById conn problemId mempty
 
 getTopics :: SQL.Connection -> IO [Topic.Topic]
 getTopics conn = SQL.query_ conn "SELECT * FROM topics"

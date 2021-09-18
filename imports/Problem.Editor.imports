@@ -7,22 +7,22 @@ import qualified Reflex.Dom.Ace as Ace
       AceDynConfig(AceDynConfig),
       AceTheme(AceTheme_Clouds) )
 import qualified Reflex.Dom.Core as R
-    ( def,
+    ( elAttr',
+      DomBuilder,
+      def,
+      MonadHold(holdDyn),
+      PerformEvent(Performable),
+      EventName(Load),
+      Reflex(updated, never, Dynamic, Event),
       constDyn,
       ffor,
       switchDyn,
       blank,
       el,
       elAttr,
-      elAttr',
       text,
       widgetHold,
-      MonadHold(holdDyn),
-      Reflex(updated, never, Dynamic, Event),
-      PerformEvent(Performable),
       PostBuild,
       TriggerEvent,
-      DomBuilder,
-      HasDomEvent(domEvent),
-      EventName(Load) )
+      HasDomEvent(domEvent) )
 import Global ( Text, (<&>), void, (=:) )

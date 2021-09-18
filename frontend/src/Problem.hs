@@ -1,12 +1,19 @@
+{-# LANGUAGE PackageImports #-}
 module Problem
   ( widget
   ) where
 
 import qualified Language.Javascript.JSaddle as JS
+import qualified Data.Aeson as JSON
+import qualified "jsaddle-dom" GHCJS.DOM.Document as DOM
 import qualified Reflex.Dom.Core as R
 
+import qualified Common.Route as Route
 import qualified Common.File
 import qualified Common.Compile
+import qualified Common.Api.NewProblem as NewProblem
+import qualified Common.Api.Problem as Problem
+import qualified Common.Api.User as User
 import qualified Problem.SelectTopic as SelectTopic
 import qualified Problem.Summary as Summary
 import qualified Problem.Figures as Figures
@@ -38,6 +45,8 @@ widget
      , R.PerformEvent t m
      , R.TriggerEvent t m
      , R.MonadSample t (R.Performable m)
+     , DOM.IsDocument (R.RawDocument (R.DomBuilderSpace m))
+     , R.HasDocument m
      )
   => m ()
 widget = mdo
@@ -98,9 +107,32 @@ widget = mdo
           $ Figures.widget
         publish :: R.Event t () <- R.elClass "div" "py-3" $ do
           Button.primaryClass' "Save & Publish" "w-full active:bg-blue-400"
-        R.performEvent_ $ R.ffor publish $ \_ -> do
-          Util.consoleLog ("Publish" :: Text) -- TODO create API route and perform request to it
+        userId :: R.Dynamic t Integer <- Util.getCurrentUser >>=
+          pure
+          . R.constDyn
+          . fromMaybe 0
+          . fmap User.id
+        let newProblem :: R.Dynamic t NewProblem.NewProblem = NewProblem.NewProblem
+              <$> summary
+              <*> editorContent
+              <*> selectedTopicId
+              <*> userId
+        let ev :: R.Event t NewProblem.NewProblem = R.tagPromptlyDyn newProblem publish
+        r <- R.performRequestAsync $ (\newProblem' -> newProblemRequest newProblem') <$> ev
+        let response :: R.Event t (Maybe Problem.Problem) = R.decodeXhrResponse <$> r
+        R.performEvent_ $ R.ffor response $ \case
+          -- TODO: show error to user
+          Nothing -> Util.consoleLog ("Error" :: Text)
+          Just publishedProblem -> do
+            -- TODO: show publish message and link, or redirect to edit problem
+            Util.consoleLog ("Published problem:" :: Text)
+            Util.consoleLog $ show publishedProblem
         return (figures, randomizeVariablesAction, resetVariablesAction, showAnswerAction, showSolutionAction, outputOption)
+
+    newProblemRequest :: JSON.ToJSON a => a -> R.XhrRequest Text
+    newProblemRequest body = R.postJson url body
+      where
+        url = Route.apiHref (Route.Api_Problems :/ (Nothing, mempty))
 
     outputOptionsPane editorContent prbName figures = do
       R.elClass "div" "py-3 border-b border-brand-light-gray" $ mdo

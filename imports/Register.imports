@@ -1,5 +1,5 @@
 import qualified Reflex.Dom.Core as R
-    ( blank, elClass, text, DomBuilder )
+    ( DomBuilder, blank, elClass, text )
 import qualified MyReflex.Dom.Widget.Basic as R' ( elAttrClass )
 import qualified Widget.Button as Button ( primary )
 import Global ( (=:) )

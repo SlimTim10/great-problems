@@ -1,9 +1,11 @@
 import qualified Database.PostgreSQL.Simple as SQL
-    ( query, query_, Only(Only), Connection, In(In), Query )
+    ( query, query_, Only(..), Connection, In(In), Query )
 import qualified Database.PostgreSQL.Simple.ToField as SQL
     ( Action, ToField(..) )
 import qualified Data.Text as Text ( splitOn )
 import qualified Common.Api.Problem as Problem ( Problem(..) )
+import qualified Common.Api.NewProblem as NewProblem
+    ( NewProblem(author_id, topic_id, contents, summary) )
 import qualified Common.Api.Topic as Topic ( Topic(id, parent_id) )
 import qualified Common.Api.User as User ( User(..) )
 import qualified Common.Api.Role as Role ( Role(..) )
