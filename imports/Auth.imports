@@ -1,0 +1,22 @@
+import qualified Database.PostgreSQL.Simple as SQL ( Connection )
+import qualified Servant.Auth.Server as SAS
+    ( defaultCookieSettings,
+      makeSessionCookieBS,
+      verifyJWT,
+      ToJWT,
+      JWTSettings,
+      AuthResult(Authenticated, Indefinite) )
+import qualified Snap.Core as Snap
+    ( Snap,
+      Cookie(Cookie),
+      MonadSnap,
+      expireCookie,
+      modifyResponse,
+      readCookie,
+      addResponseCookie )
+import qualified Control.Monad.IO.Class as IO ( MonadIO(..) )
+import qualified Data.ByteString as B ( ByteString )
+import qualified Common.Api.User as User ( User )
+import qualified Common.Api.Auth as Auth ( Auth )
+import qualified Database.Queries as Queries ( authenticate )
+import Global ( Text, cs )

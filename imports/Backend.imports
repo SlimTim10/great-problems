@@ -1,34 +1,23 @@
 import Obelisk.Route ( pattern (:/) )
 import qualified Obelisk.Backend as Ob ( Backend(..) )
-import qualified Control.Monad.IO.Class as IO ( MonadIO(..) )
+import qualified Control.Monad.IO.Class as IO ( MonadIO(liftIO) )
 import qualified Snap.Core as Snap
-    ( Snap,
-      Cookie(Cookie),
-      MonadSnap,
-      expireCookie,
+    ( MonadSnap,
       getRequest,
       modifyResponse,
-      readCookie,
       readRequestBody,
       writeLBS,
-      addResponseCookie,
       setHeader,
       Method(POST, GET),
       Request(rqMethod) )
 import qualified Servant.Auth.Server as SAS
     ( generateKey,
-      defaultCookieSettings,
       defaultJWTSettings,
-      makeSessionCookieBS,
-      verifyJWT,
-      ToJWT,
       JWTSettings,
-      AuthResult(Authenticated, Indefinite) )
+      AuthResult(Authenticated) )
 import qualified Data.Aeson as JSON ( decode, encode, ToJSON )
 import qualified Data.Map as Map ( lookup )
-import qualified Database.PostgreSQL.Simple as SQL ( Connection )
 import qualified Data.Word as Word ( Word64 )
-import qualified Data.ByteString as B ( ByteString )
 import qualified Common.Route as Route
     ( FrontendRoute,
       Api(Api_SignOut, Api_SignIn, Api_TopicHierarchy, Api_Users,
@@ -47,12 +36,17 @@ import qualified Database.Queries as Queries
       getTopicsByParentId,
       getTopicHierarchy,
       getUsers,
-      getUserById,
-      authenticate )
+      getUserById )
 import qualified Common.Api.User as User ( User(role, id) )
 import qualified Common.Api.Role as Role
     ( Role(Moderator, Contributor) )
-import qualified Common.Api.Auth as Auth ( Auth )
 import qualified Common.Api.NewProblem as NewProblem
     ( NewProblem(author_id) )
-import Global ( Text, fromMaybe, cs, readMaybe )
+import qualified Auth
+    ( Auth,
+      authCheck,
+      signOut,
+      verifyJWTUser,
+      makeJWTCookie,
+      addCookie )
+import Global ( fromMaybe, cs, readMaybe )
