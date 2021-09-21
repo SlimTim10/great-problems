@@ -3,22 +3,26 @@
 {-# LANGUAGE PatternSynonyms #-}
 module Backend where
 
-import Obelisk.Route ( pattern (:/) )
-import qualified Obelisk.Backend as Ob
+import qualified Data.Text as Text
 import qualified Control.Monad.IO.Class as IO
-import qualified Snap.Core as Snap
-import qualified Servant.Auth.Server as SAS
 import qualified Data.Aeson as JSON
 import qualified Data.Map as Map
 import qualified Data.Word as Word
+import qualified Data.CaseInsensitive as CI
+import qualified Snap.Core as Snap
+import qualified Servant.Auth.Server as SAS
+import qualified Obelisk.Backend as Ob
+import Obelisk.Route ( pattern (:/) )
 
 import qualified Common.Route as Route
 import qualified Common.Api.Error as Error
 import qualified Database
 import qualified Database.Queries as Queries
 import qualified Common.Api.User as User
+import qualified Common.Api.Register as Register
 import qualified Common.Api.Role as Role
 import qualified Common.Api.NewProblem as NewProblem
+import qualified Common.Api.OkResponse as OkResponse
 import qualified Auth
 import Global
 
@@ -55,8 +59,7 @@ backend = Ob.Backend
                         case JSON.decode rawBody :: Maybe NewProblem.NewProblem of
                           Nothing -> writeJSON $ Error.mk "Invalid problem"
                           Just newProblem -> do
-                            if
-                              NewProblem.author_id newProblem /= User.id user
+                            if NewProblem.author_id newProblem /= User.id user
                               || not (User.role user == Role.Contributor || User.role user == Role.Moderator)
                               then writeJSON $ Error.mk "No access"
                               else writeJSON =<< IO.liftIO (Queries.addProblem conn newProblem)
@@ -79,9 +82,38 @@ backend = Ob.Backend
                 IO.liftIO (Queries.getTopicById conn topicId) >>= \case
                   Nothing -> writeJSON $ Error.mk "Topic not found"
                   Just topic -> writeJSON =<< IO.liftIO (Queries.getTopicHierarchy conn topic)
+            Route.Api_Register :/ () -> do
+              rawBody <- Snap.readRequestBody maxRequestBodySize
+              case JSON.decode rawBody :: Maybe Register.Register of
+                Nothing -> writeJSON $ Error.mk "Something went wrong"
+                Just register -> do
+                  if any Text.null
+                    [ CI.original $ Register.full_name register
+                    , CI.original $ Register.email register
+                    , Register.password register
+                    ]
+                    then writeJSON $ Error.mk "Fields must not be empty"
+                    else do
+                    IO.liftIO (Queries.getUserByEmail conn (Register.email register)) >>= \case
+                      Just _ -> writeJSON $ Error.mk "Email already registered"
+                      Nothing -> do
+                        IO.liftIO (Queries.registerUser conn register) >>= \case
+                          Nothing -> writeJSON $ Error.mk "Something went wrong"
+                          Just user -> do
+                            secret <- IO.liftIO (Queries.newEmailVerification conn (User.id user))
+                            IO.liftIO $ print ("-------------------------------- secret:" :: Text) -- DEBUG
+                            IO.liftIO $ print secret -- DEBUG
+                            -- send email with link http://localhost:8080/api/verify-email/secret
+                            writeJSON OkResponse.OkResponse
+            Route.Api_VerifyEmail :/ secret -> do
+              verify <- IO.liftIO (Queries.verifyEmail conn secret)
+              if verify
+                then writeJSON OkResponse.OkResponse
+                else writeJSON $ Error.mk "Invalid secret"
             Route.Api_SignIn :/ () -> do
               rawBody <- Snap.readRequestBody maxRequestBodySize
               case JSON.decode rawBody :: Maybe Auth.Auth of
+                Nothing -> writeJSON $ Error.mk "Something went wrong"
                 Just auth -> do
                   IO.liftIO (Auth.authCheck conn auth) >>= \case
                     SAS.Authenticated user -> do
@@ -89,9 +121,8 @@ backend = Ob.Backend
                         Just rawJWTCookie -> do
                           Auth.addCookie "user" (cs $ JSON.encode user)
                           Snap.modifyResponse $ Snap.setHeader "Set-Cookie" rawJWTCookie
-                        Nothing -> writeJSON $ Error.mk "No cookie"
+                        Nothing -> writeJSON $ Error.mk "Something went wrong"
                     _ -> writeJSON $ Error.mk "Incorrect email or password. Please try again."
-                Nothing -> writeJSON $ Error.mk "No auth in body"
             Route.Api_SignOut :/ () -> Auth.signOut
   , Ob._backend_routeEncoder = Route.fullRouteEncoder
   }

@@ -10,6 +10,7 @@ module Global
   , module Data.Functor
   , module Data.List
   , module Data.Either
+  , module Data.Word
   , module Control.Monad
   , module Control.Lens
   , MonadFix
@@ -28,6 +29,7 @@ import Data.Traversable (for)
 import Data.Functor ((<&>))
 import Data.List (intercalate, intersperse)
 import Data.Either (fromLeft)
+import Data.Word (Word64)
 import Control.Monad (void, (<=<), forM_, when, unless, (>=>))
 import Control.Lens ((^.), iforM_, _1)
 import Control.Monad.Fix (MonadFix)

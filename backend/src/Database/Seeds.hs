@@ -27,15 +27,15 @@ load conn = do
     [roleUser, roleContributor, roleModerator]
 
   let
-    userAlice = (1, "Alice", "alice@email.com", password, 3)
-    userBob = (2, "Bob", "bob@email.com", password, 2)
-    userCarol = (3, "Carol", "carol@email.com", password, 1)
-      :: (Integer, Text, Text, Text, Integer)
+    userAlice = (1, "Alice", "alice@email.com", password, 3, True)
+    userBob = (2, "Bob", "bob@email.com", password, 2, True)
+    userCarol = (3, "Carol", "carol@email.com", password, 1, True)
+      :: (Integer, Text, Text, Text, Integer, Bool)
   void $ SQL.executeMany conn [SqlQQ.sql|
     INSERT INTO
-      users(id, full_name, email, password, role_id)
+      users(id, full_name, email, password, role_id, verified)
     VALUES
-      (?,?,?,?,?)
+      (?,?,?,?,?,?)
   |]
     [ userAlice
     , userBob
@@ -155,6 +155,18 @@ load conn = do
     [ (problemCalculusCompoundRate^._1, problemSetCalculusRates^._1)
       :: (Integer, Integer)
     ]
+
+  -- Fix sequences for auto-incrementing IDs
+  _ <- SQL.query_ conn [SqlQQ.sql|
+    SELECT setval(pg_get_serial_sequence('roles', 'id'), COALESCE((SELECT MAX(id)+1 FROM roles), 1), false);
+    SELECT setval(pg_get_serial_sequence('users', 'id'), COALESCE((SELECT MAX(id)+1 FROM users), 1), false);
+    SELECT setval(pg_get_serial_sequence('topics', 'id'), COALESCE((SELECT MAX(id)+1 FROM topics), 1), false);
+    SELECT setval(pg_get_serial_sequence('problems', 'id'), COALESCE((SELECT MAX(id)+1 FROM problems), 1), false);
+    SELECT setval(pg_get_serial_sequence('figures', 'id'), COALESCE((SELECT MAX(id)+1 FROM figures), 1), false);
+    SELECT setval(pg_get_serial_sequence('problem_sets', 'id'), COALESCE((SELECT MAX(id)+1 FROM problem_sets), 1), false);
+  |] :: IO [SQL.Only Int]
+
+  return ()
 
 prbCalculusCompoundRate :: Text
 prbCalculusCompoundRate = [QQ.r|

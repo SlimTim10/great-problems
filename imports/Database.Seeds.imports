@@ -1,5 +1,5 @@
 import qualified Database.PostgreSQL.Simple as SQL
-    ( executeMany, Connection )
+    ( executeMany, query_, Only, Connection )
 import qualified Database.PostgreSQL.Simple.SqlQQ as SqlQQ ( sql )
 import qualified Text.RawString.QQ as QQ ( r )
 import qualified Util ( hashPassword )

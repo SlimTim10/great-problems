@@ -8,24 +8,34 @@ module Database.Queries
   , getTopicsByParentId
   , getUsers
   , getUserById
+  , getUserByEmail
+  , registerUser
   , getTopicHierarchy
   , authenticate
+  , verifyEmail
+  , newEmailVerification
   ) where
 
 import qualified Database.PostgreSQL.Simple as SQL
 import qualified Database.PostgreSQL.Simple.ToField as SQL
 import qualified Data.Text as Text
+import qualified Data.CaseInsensitive as CI
+import qualified System.Random as Random
+import qualified Data.ByteString.Base64.URL as B64URL
+import qualified Data.Text.Encoding as TE
 
+import qualified Common.Route as Route
 import qualified Common.Api.Problem as Problem
 import qualified Common.Api.NewProblem as NewProblem
 import qualified Common.Api.Topic as Topic
+import qualified Common.Api.Register as Register
 import qualified Common.Api.User as User
 import qualified Common.Api.Role as Role
 import qualified Common.Api.Auth as Auth
-import qualified Common.Route as Route
 import qualified Database.Types.Problem as DbProblem
 import qualified Database.Types.User as DbUser
 import qualified Database.Types.Role as DbRole
+import qualified Database.Types.EmailVerification as DbEmailVerification
 import qualified Util
 import Global
 
@@ -226,20 +236,47 @@ getUsers conn = do
         , User.full_name = DbUser.full_name dbUser
         , User.email = DbUser.email dbUser
         , User.role = Role.User
+        , User.verified = DbUser.verified dbUser
         }
       Just role -> return $ User.User
         { User.id = DbUser.id dbUser
         , User.full_name = DbUser.full_name dbUser
         , User.email = DbUser.email dbUser
         , User.role = role
+        , User.verified = DbUser.verified dbUser
         }
 
 getUserById :: SQL.Connection -> Integer -> IO (Maybe User.User)
 getUserById conn userId = do
-  mDbUser :: Maybe DbUser.User <- Util.headMay
+  Util.headMay
     <$> SQL.query conn "SELECT * FROM users WHERE id = ?" (SQL.Only userId)
-  flip (maybe (pure Nothing)) mDbUser $ \dbUser ->
-    withRole dbUser <$> getRoleById conn (DbUser.role_id dbUser)
+    >>= \case
+    Nothing -> return Nothing
+    Just (dbUser :: DbUser.User) -> withRole dbUser <$> getRoleById conn (DbUser.role_id dbUser)
+
+getUserByEmail :: SQL.Connection -> CI Text -> IO (Maybe User.User)
+getUserByEmail conn email = do
+  Util.headMay
+    <$> SQL.query conn "SELECT * FROM users WHERE email = ?" (SQL.Only $ CI.original email)
+    >>= \case
+    Nothing -> return Nothing
+    Just (dbUser :: DbUser.User) -> withRole dbUser <$> getRoleById conn (DbUser.role_id dbUser)
+
+registerUser :: SQL.Connection -> Register.Register -> IO (Maybe User.User)
+registerUser conn user = do
+  password <- Util.hashPassword $ Register.password user
+  role :: DbRole.Role <- head <$> SQL.query_ conn "SELECT * FROM roles WHERE name = 'User'"
+  mUserId :: Maybe (SQL.Only Integer) <- Util.headMay
+    <$> SQL.query conn
+    "INSERT INTO users(full_name, email, password, role_id) VALUES (?,?,?,?) returning id"
+    ( Register.full_name user
+    , Register.email user
+    , password
+    , DbRole.id role
+    )
+  flip (maybe (pure Nothing))
+    (SQL.fromOnly <$> mUserId)
+    $ \userId -> getUserById conn userId
 
 withRole :: DbUser.User -> Maybe Role.Role -> Maybe User.User
 withRole dbUser mRole = do
@@ -249,14 +286,50 @@ withRole dbUser mRole = do
     , User.full_name = DbUser.full_name dbUser
     , User.email = DbUser.email dbUser
     , User.role = role
+    , User.verified = DbUser.verified dbUser
     }
 
 authenticate :: SQL.Connection -> Auth.Auth -> IO (Maybe User.User)
 authenticate conn auth = do
-  mDbUser :: Maybe DbUser.User <- Util.headMay
-    <$> SQL.query conn "SELECT * FROM users WHERE email = ?"
-    (SQL.Only (Auth.email auth))
-  flip (maybe (pure Nothing)) mDbUser $ \dbUser -> do
-    if Util.verifyPassword (Auth.password auth) (DbUser.password dbUser)
-      then withRole dbUser <$> getRoleById conn (DbUser.role_id dbUser)
-      else return Nothing
+  Util.headMay
+    <$> SQL.query conn "SELECT * FROM users WHERE email = ?" (SQL.Only (Auth.email auth))
+    >>= \case
+    Nothing -> return Nothing
+    Just (dbUser :: DbUser.User) ->
+      if Util.verifyPassword (Auth.password auth) (DbUser.password dbUser)
+        then withRole dbUser <$> getRoleById conn (DbUser.role_id dbUser)
+        else return Nothing
+
+getEmailVerificationBySecret
+  :: SQL.Connection
+  -> Text
+  -> IO (Maybe DbEmailVerification.EmailVerification)
+getEmailVerificationBySecret conn secret = Util.headMay
+  <$> SQL.query conn "SELECT * FROM email_verifications WHERE secret = ?" (SQL.Only secret)
+
+verifyEmail :: SQL.Connection -> Text -> IO Bool
+verifyEmail conn secret = do
+  getEmailVerificationBySecret conn secret
+    >>= \case
+    Nothing -> return False
+    Just (x :: DbEmailVerification.EmailVerification) -> do
+      setUserVerified conn (DbEmailVerification.user_id x)
+      void $ SQL.execute conn "DELETE FROM email_verifications WHERE id = ?"
+        (SQL.Only $ DbEmailVerification.id x)
+      return True
+
+setUserVerified :: SQL.Connection -> Integer -> IO ()
+setUserVerified conn userId = void
+  $ SQL.execute conn "UPDATE users SET verified = TRUE WHERE id = ?" (SQL.Only userId)
+
+-- | Returns secret
+newEmailVerification :: SQL.Connection -> Integer -> IO Text
+newEmailVerification conn userId = do
+  let generateSecret = do
+        secret <- (Random.randomIO :: IO Word64) >>= return . TE.decodeUtf8 . B64URL.encode . cs . show
+        getEmailVerificationBySecret conn secret >>= \case
+          Nothing -> return secret
+          Just _ -> generateSecret
+  secret <- generateSecret
+  void $ SQL.execute conn "INSERT INTO email_verifications(secret, user_id) VALUES (?,?)" (secret, userId)
+  return secret

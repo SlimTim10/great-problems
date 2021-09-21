@@ -122,11 +122,11 @@ widget = mdo
         let response :: R.Event t (Maybe Problem.Problem) = R.decodeXhrResponse <$> r
         R.performEvent_ $ R.ffor response $ \case
           -- TODO: show error to user
-          Nothing -> Util.consoleLog ("Error" :: Text)
+          Nothing -> Util.consoleLog ("Error" :: Text) -- DEBUG
           Just publishedProblem -> do
             -- TODO: show publish message and link, or redirect to edit problem
-            Util.consoleLog ("Published problem:" :: Text)
-            Util.consoleLog $ show publishedProblem
+            Util.consoleLog ("Published problem:" :: Text) -- DEBUG
+            Util.consoleLog $ show publishedProblem -- DEBUG
         return (figures, randomizeVariablesAction, resetVariablesAction, showAnswerAction, showSolutionAction, outputOption)
 
     newProblemRequest :: JSON.ToJSON a => a -> R.XhrRequest Text

@@ -37,6 +37,8 @@ data Api :: * -> * where
   Api_Topics :: Api Query
   Api_Users :: Api (Maybe Integer)
   Api_TopicHierarchy :: Api (Maybe Integer)
+  Api_Register :: Api ()
+  Api_VerifyEmail :: Api (Text)
   Api_SignIn :: Api ()
   Api_SignOut :: Api ()
 
@@ -69,6 +71,10 @@ idPathSegmentEncoder
   :: Ob.Encoder (Either Text) (Either Text) Integer Ob.PageName
 idPathSegmentEncoder = Ob.unsafeTshowEncoder >>> Ob.singlePathSegmentEncoder
 
+textPathSegmentEncoder
+  :: Ob.Encoder (Either Text) (Either Text) Text Ob.PageName
+textPathSegmentEncoder = Ob.unsafeTshowEncoder >>> Ob.singlePathSegmentEncoder
+
 fullRouteEncoder
   :: Ob.Encoder (Either Text) Identity (Ob.R (Ob.FullRoute BackendRoute FrontendRoute)) Ob.PageName
 fullRouteEncoder = Ob.mkFullRouteEncoder
@@ -85,6 +91,8 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
           Ob.maybeEncoder (Ob.unitEncoder mempty) $ idPathSegmentEncoder
         Api_TopicHierarchy -> Ob.PathSegment "topic-hierarchy" $
           Ob.maybeEncoder (Ob.unitEncoder mempty) $ idPathSegmentEncoder
+        Api_Register -> Ob.PathSegment "register" $ Ob.unitEncoder mempty
+        Api_VerifyEmail -> Ob.PathSegment "verify-email" $ textPathSegmentEncoder
         Api_SignIn -> Ob.PathSegment "sign-in" $ Ob.unitEncoder mempty
         Api_SignOut -> Ob.PathSegment "sign-out" $ Ob.unitEncoder mempty
   )

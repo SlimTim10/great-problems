@@ -1,0 +1,2 @@
+import qualified Data.Aeson as JSON ( FromJSON, ToJSON )
+import GHC.Generics ( Generic )

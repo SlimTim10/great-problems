@@ -34,12 +34,10 @@ widget = do
     R.elClass "div" "flex flex-col gap-4 w-80" $ do
       email :: R.Dynamic t Text <- R.elClass "div" "flex justify-between" $ do
         R.elClass "p" "font-normal text-brand-lg" $ R.text "Email"
-        email <- Input.emailClass "border px-1"
-        return email
+        Input.emailClass "border px-1"
       password :: R.Dynamic t Text <- R.elClass "div" "flex justify-between" $ do
         R.elClass "p" "font-normal text-brand-lg" $ R.text "Password"
-        password <- Input.passwordClass "border px-1"
-        return password
+        Input.passwordClass "border px-1"
       signIn :: R.Event t () <- Button.primary' "Sign in"
       
       response <- signInAttempt email password signIn
@@ -50,8 +48,8 @@ widget = do
       signInErrorText :: R.Dynamic t Text <- R.holdDyn "" $ fromLeft "" <$> signInError
       R.elClass "p" "text-red-500" $ R.dynText signInErrorText
       
-      signInSuccess :: R.Event t (Either (R.Dynamic t Text) (R.Dynamic t ())) <- fmap R.updated $
-        R.eitherDyn =<< R.holdDyn (Left "") signInError
+      signInSuccess :: R.Event t (Either (R.Dynamic t Text) (R.Dynamic t ())) <- fmap R.updated
+        $ R.eitherDyn =<< R.holdDyn (Left "") signInError
       Ob.setRoute $ Route.FrontendRoute_Explore :/ Nothing <$ signInSuccess
       
       R.blank
@@ -59,10 +57,11 @@ widget = do
     signInAttempt :: R.Dynamic t Text -> R.Dynamic t Text -> R.Event t () -> m (R.Event t (Maybe Error.Error))
     signInAttempt email password signIn = do
       let ev :: R.Event t (Text, Text) = R.tagPromptlyDyn (R.zipDyn email password) signIn
-      r <- R.performRequestAsync $ (\(email', password') -> signInRequest (Auth.Auth (CI.mk email') password')) <$> ev
+      r <- R.performRequestAsync
+        $ (\(email', password') -> signInRequest $ Auth.Auth (CI.mk email') password')
+        <$> ev
       return $ R.decodeXhrResponse <$> r
 
     signInRequest :: JSON.ToJSON a => a -> R.XhrRequest Text
     signInRequest body = R.postJson url body
-      where
-        url = Route.apiHref (Route.Api_SignIn :/ ())
+      where url = Route.apiHref (Route.Api_SignIn :/ ())
