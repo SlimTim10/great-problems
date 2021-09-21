@@ -72,3 +72,8 @@ removeCookie
   => Text -- ^ cookie name
   -> m ()
 removeCookie name = Snap.expireCookie $ mkCookie name ""
+
+-- generateSessionId = do
+--   x <- randomIO :: IO Int64
+--   let sessionId = _
+--   -- check for sessionId in db

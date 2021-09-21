@@ -7,13 +7,13 @@ import qualified Servant.Auth.Server as SAS
       JWTSettings,
       AuthResult(Authenticated, Indefinite) )
 import qualified Snap.Core as Snap
-    ( Snap,
-      Cookie(Cookie),
-      MonadSnap,
-      expireCookie,
+    ( expireCookie,
       modifyResponse,
       readCookie,
-      addResponseCookie )
+      addResponseCookie,
+      MonadSnap,
+      Snap,
+      Cookie(Cookie) )
 import qualified Control.Monad.IO.Class as IO ( MonadIO(..) )
 import qualified Data.ByteString as B ( ByteString )
 import qualified Common.Api.User as User ( User )

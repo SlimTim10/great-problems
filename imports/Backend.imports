@@ -2,12 +2,12 @@ import Obelisk.Route ( pattern (:/) )
 import qualified Obelisk.Backend as Ob ( Backend(..) )
 import qualified Control.Monad.IO.Class as IO ( MonadIO(liftIO) )
 import qualified Snap.Core as Snap
-    ( MonadSnap,
-      getRequest,
+    ( getRequest,
       modifyResponse,
       readRequestBody,
       writeLBS,
       setHeader,
+      MonadSnap,
       Method(POST, GET),
       Request(rqMethod) )
 import qualified Servant.Auth.Server as SAS
