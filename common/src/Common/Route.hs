@@ -38,7 +38,7 @@ data Api :: * -> * where
   Api_Users :: Api (Maybe Integer)
   Api_TopicHierarchy :: Api (Maybe Integer)
   Api_Register :: Api ()
-  Api_VerifyEmail :: Api (Text)
+  Api_VerifyEmail :: Api Text
   Api_SignIn :: Api ()
   Api_SignOut :: Api ()
 
@@ -46,6 +46,7 @@ data FrontendRoute :: * -> * where
   FrontendRoute_Home :: FrontendRoute ()
   FrontendRoute_Explore :: FrontendRoute (Maybe (Ob.R ExploreRoute))
   FrontendRoute_Register :: FrontendRoute ()
+  FrontendRoute_VerifyEmail :: FrontendRoute Text
   FrontendRoute_SignIn :: FrontendRoute ()
   FrontendRoute_SignOut :: FrontendRoute ()
   FrontendRoute_Profile :: FrontendRoute ()
@@ -71,10 +72,6 @@ idPathSegmentEncoder
   :: Ob.Encoder (Either Text) (Either Text) Integer Ob.PageName
 idPathSegmentEncoder = Ob.unsafeTshowEncoder >>> Ob.singlePathSegmentEncoder
 
-textPathSegmentEncoder
-  :: Ob.Encoder (Either Text) (Either Text) Text Ob.PageName
-textPathSegmentEncoder = Ob.unsafeTshowEncoder >>> Ob.singlePathSegmentEncoder
-
 fullRouteEncoder
   :: Ob.Encoder (Either Text) Identity (Ob.R (Ob.FullRoute BackendRoute FrontendRoute)) Ob.PageName
 fullRouteEncoder = Ob.mkFullRouteEncoder
@@ -92,7 +89,7 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
         Api_TopicHierarchy -> Ob.PathSegment "topic-hierarchy" $
           Ob.maybeEncoder (Ob.unitEncoder mempty) $ idPathSegmentEncoder
         Api_Register -> Ob.PathSegment "register" $ Ob.unitEncoder mempty
-        Api_VerifyEmail -> Ob.PathSegment "verify-email" $ textPathSegmentEncoder
+        Api_VerifyEmail -> Ob.PathSegment "verify-email" Ob.singlePathSegmentEncoder
         Api_SignIn -> Ob.PathSegment "sign-in" $ Ob.unitEncoder mempty
         Api_SignOut -> Ob.PathSegment "sign-out" $ Ob.unitEncoder mempty
   )
@@ -103,6 +100,7 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
         ExploreRoute_Problems -> Ob.PathSegment "problems" $ Ob.unitEncoder mempty
         ExploreRoute_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.unitEncoder mempty
       FrontendRoute_Register -> Ob.PathSegment "register" $ Ob.unitEncoder mempty
+      FrontendRoute_VerifyEmail -> Ob.PathSegment "verify-email" Ob.singlePathSegmentEncoder
       FrontendRoute_SignIn -> Ob.PathSegment "sign-in" $ Ob.unitEncoder mempty
       FrontendRoute_SignOut -> Ob.PathSegment "sign-out" $ Ob.unitEncoder mempty
       FrontendRoute_Profile -> Ob.PathSegment "profile" $ Ob.unitEncoder mempty

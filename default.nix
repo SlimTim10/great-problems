@@ -46,5 +46,11 @@ project ./. ({ pkgs, ... }: {
       sha256 = "1x5zi6l6ihc4xyqi4vl5pzna83bgpn1kz3zmp6jnk7x7yxh370y4";
     } {});
 
+    wreq = pkgs.haskell.lib.dontCheck (self.callHackageDirect {
+      pkg = "wreq";
+      ver = "0.5.3.3";
+      sha256 = "1s13nb89w3k2x6i6y90s91v4dlpksnzxlyas4w7cvclflh1k6zg8";
+    } {});
+
   };
 })

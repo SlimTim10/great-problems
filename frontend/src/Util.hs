@@ -9,6 +9,8 @@ import qualified Crypto.PasswordStore
 import qualified Reflex.Dom.Core as R
 import qualified "jsaddle-dom" GHCJS.DOM.Document as DOM
 import qualified Web.Cookie as Cookie
+import qualified System.Environment as Env
+import qualified Text.Read
 
 import qualified Common.Api.User as User
 import Global
@@ -79,3 +81,11 @@ getCurrentUser = do
   rawCookies :: Text <- DOM.getCookie =<< R.askDocument
   let cookies :: Cookie.Cookies = Cookie.parseCookies (cs rawCookies)
   return $ JSON.decode . cs =<< lookup "user" cookies
+
+-- | Look up an environment variable, given a default to fall back to.
+lookupSetting :: Read a => String -> a -> IO a
+lookupSetting env def = do
+  maybeEnv <- Env.lookupEnv env
+  case maybeEnv of
+    Nothing -> pure def
+    Just str -> maybe (pure . read . show $ str) pure (Text.Read.readMaybe str)

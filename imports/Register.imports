@@ -6,7 +6,6 @@ import qualified Reflex.Dom.Core as R
       ffor,
       eitherDyn,
       tagPromptlyDyn,
-      blank,
       dynText,
       elClass,
       text,

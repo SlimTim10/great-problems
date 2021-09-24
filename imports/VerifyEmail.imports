@@ -1,0 +1,19 @@
+import qualified Control.Monad.IO.Class as IO ( MonadIO )
+import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
+import qualified Reflex.Dom.Core as R
+    ( tagPromptlyDyn,
+      dynText,
+      el,
+      elClass,
+      getAndDecode,
+      MonadHold(holdDyn),
+      Reflex(Event, Dynamic),
+      PerformEvent(Performable),
+      PostBuild(..),
+      TriggerEvent,
+      HasJSContext,
+      DomBuilder )
+import qualified Common.Route as Route
+    ( Api(Api_VerifyEmail), apiHref )
+import qualified Common.Api.Error as Error ( Error(message) )
+import Global ( Text, fromMaybe, (:/) )

@@ -24,6 +24,7 @@ import qualified Common.Api.Role as Role
 import qualified Common.Api.NewProblem as NewProblem
 import qualified Common.Api.OkResponse as OkResponse
 import qualified Auth
+import qualified Email
 import Global
 
 maxRequestBodySize :: Word.Word64
@@ -101,15 +102,13 @@ backend = Ob.Backend
                           Nothing -> writeJSON $ Error.mk "Something went wrong"
                           Just user -> do
                             secret <- IO.liftIO (Queries.newEmailVerification conn (User.id user))
-                            IO.liftIO $ print ("-------------------------------- secret:" :: Text) -- DEBUG
-                            IO.liftIO $ print secret -- DEBUG
-                            -- send email with link http://localhost:8080/api/verify-email/secret
+                            Email.sendEmailVerification user secret
                             writeJSON OkResponse.OkResponse
             Route.Api_VerifyEmail :/ secret -> do
-              verify <- IO.liftIO (Queries.verifyEmail conn secret)
+              verify <- IO.liftIO (Queries.verifyEmail conn (cs secret))
               if verify
                 then writeJSON OkResponse.OkResponse
-                else writeJSON $ Error.mk "Invalid secret"
+                else writeJSON $ Error.mk "Invalid email verification code"
             Route.Api_SignIn :/ () -> do
               rawBody <- Snap.readRequestBody maxRequestBodySize
               case JSON.decode rawBody :: Maybe Auth.Auth of

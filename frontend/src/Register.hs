@@ -42,22 +42,19 @@ widget = do
       register :: R.Event t () <- Button.primary' "Create my account"
 
       response <- registerAttempt fullName email password register
+      
       registerError :: R.Event t (Either Text ()) <- R.performEvent $ R.ffor response $ \case
         Just e -> return $ Left (Error.message e)
         Nothing -> return $ Right ()
-
       registerErrorText :: R.Dynamic t Text <- R.holdDyn "" $ fromLeft "" <$> registerError
       R.elClass "p" "text-red-500" $ R.dynText registerErrorText
 
       registerSuccess :: R.Event t (Either (R.Dynamic t Text) (R.Dynamic t ())) <- fmap R.updated
         $ R.eitherDyn =<< R.holdDyn (Left mempty) registerError
-
       registerSuccessText :: R.Dynamic t Text <- R.holdDyn ""
         $ "Almost done... We'll send you an email in 5 minutes. Open it up to activate your account."
         <$ registerSuccess
-      R.elClass "p" "text-green-500" $ R.dynText registerSuccessText
-
-      R.blank
+      R.elClass "p" "text-green-600" $ R.dynText registerSuccessText
   where
     registerAttempt
       :: R.Dynamic t Text

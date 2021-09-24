@@ -14,6 +14,7 @@ import qualified Tabs
 import qualified ProblemCards
 import qualified ProblemSetCards
 import qualified Register
+import qualified VerifyEmail
 import qualified SignIn
 import qualified SignOut
 import qualified Profile
@@ -58,6 +59,10 @@ frontend = Ob.Frontend
         R.elClass "div" "bg-brand-light-gray flex justify-center py-4" $ do
           R.elClass "p" "text-brand-lg font-light" $ R.text "Register"
         Register.widget
+      Route.FrontendRoute_VerifyEmail -> do
+        Header.widget
+        secret :: R.Dynamic t Text <- Ob.askRoute
+        VerifyEmail.widget secret
       Route.FrontendRoute_SignIn -> do
         Header.widget
         R.elClass "div" "bg-brand-light-gray flex justify-center py-4" $ do

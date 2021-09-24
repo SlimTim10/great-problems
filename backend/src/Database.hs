@@ -3,12 +3,11 @@ module Database where
 import Prelude hiding (drop)
 
 import qualified Database.PostgreSQL.Simple as SQL
-import qualified System.Environment as Env
 import qualified Configuration.Dotenv as Dotenv
-import qualified Text.Read
 
 import qualified Database.Schema
 import qualified Database.Seeds
+import qualified Util
 import Global
 
 -- | Connect to the database using the variables in db.env, or default values.
@@ -20,11 +19,11 @@ connect = do
     }
   putStrLn "Loaded db.env"
     `Dotenv.onMissingFile` putStrLn (configPath ++ " not found")
-  host <- lookupSetting "DB_HOST" "localhost"
-  port <- lookupSetting "DB_PORT" 5432
-  user <- lookupSetting "DB_USER" "root"
-  password <- lookupSetting "DB_PASSWORD" "root"
-  name <- lookupSetting "DB_NAME" "great_problems"
+  host <- Util.lookupSetting "DB_HOST" "localhost"
+  port <- Util.lookupSetting "DB_PORT" 5432
+  user <- Util.lookupSetting "DB_USER" "root"
+  password <- Util.lookupSetting "DB_PASSWORD" "root"
+  name <- Util.lookupSetting "DB_NAME" "great_problems"
   SQL.connect SQL.defaultConnectInfo
     { SQL.connectHost = host
     , SQL.connectPort = port
@@ -58,11 +57,3 @@ setup = do
   Database.Seeds.load conn
   putStrLn "Complete!"
   return conn
-
--- | Look up an environment variable, given a default to fall back to.
-lookupSetting :: Read a => String -> a -> IO a
-lookupSetting env def = do
-  maybeEnv <- Env.lookupEnv env
-  case maybeEnv of
-    Nothing -> pure def
-    Just str -> maybe (pure . read . show $ str) pure (Text.Read.readMaybe str)
