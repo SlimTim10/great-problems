@@ -1,74 +1,45 @@
 module Auth
   ( authCheck
-  , signOut
-  , verifyJWTUser
-  , makeJWTCookie
-  , addCookie
+  , newSession
+  , removeSession
+  , getUser
   , Auth.Auth
+  , Session
+  , AuthResult(..)
   ) where
 
 import qualified Database.PostgreSQL.Simple as SQL
-import qualified Servant.Auth.Server as SAS
-import qualified Snap.Core as Snap
-import qualified Control.Monad.IO.Class as IO
-import qualified Data.ByteString as B
 
 import qualified Common.Api.User as User
 import qualified Common.Api.Auth as Auth
 import qualified Database.Queries as Queries
 import Global
 
-authCheck
-  :: SQL.Connection
-  -> Auth.Auth
-  -> IO (SAS.AuthResult User.User)
-authCheck conn auth = maybe SAS.Indefinite SAS.Authenticated <$> Queries.authenticate conn auth
+type Session = Text
 
-signOut :: Snap.Snap ()
-signOut = do
-  removeCookie "user"
-  removeCookie "JWT-Cookie"
+-- | The result of an authentication attempt.
+-- Similar to Servant.Auth.Server.Internal.Types.AuthResult
+data AuthResult val
+  = Authenticated val
+  | Unverified val
+  | Indefinite
+  deriving (Eq, Show, Read)
 
-verifyJWTUser :: SAS.JWTSettings -> Snap.Snap (Maybe User.User)
-verifyJWTUser jwtCfg = do
-  jwt :: Text <- Snap.readCookie "JWT-Cookie"
-  IO.liftIO $ SAS.verifyJWT jwtCfg (cs jwt)
+authCheck :: SQL.Connection -> Auth.Auth -> IO (AuthResult User.User)
+authCheck conn auth = Queries.authenticate conn auth >>= \case
+  Nothing -> return Indefinite
+  Just user -> if not (User.verified user)
+    then return $ Unverified user
+    else return $ Authenticated user
 
-makeJWTCookie
-  :: ( IO.MonadIO m
-     , SAS.ToJWT v
-     )
-  => SAS.JWTSettings
-  -> v
-  -> m (Maybe B.ByteString)
-makeJWTCookie jwtCfg user = IO.liftIO $
-  SAS.makeSessionCookieBS SAS.defaultCookieSettings jwtCfg user
+newSession :: SQL.Connection -> User.User -> IO Session
+newSession conn user = do
+  -- Remove any existing (stale) sessions for this user
+  Queries.removeSessionsByUserId conn (User.id user)
+  Queries.newSession conn (User.id user)
 
-mkCookie
-  :: Text -- ^ name
-  -> Text -- ^ value
-  -> Snap.Cookie
-mkCookie name value = Snap.Cookie
-  (cs name :: B.ByteString)
-  (cs value :: B.ByteString)
-  Nothing
-  Nothing
-  (Just "/")
-  False
-  False
+removeSession :: SQL.Connection -> Session -> IO ()
+removeSession conn session = Queries.removeSessionById conn session
 
-addCookie
-  :: Snap.MonadSnap m
-  => Text -- ^ cookie name
-  -> Text -- ^ cookie value
-  -> m ()
-addCookie name value =
-  Snap.modifyResponse
-  $ Snap.addResponseCookie
-  $ mkCookie name value
-
-removeCookie
-  :: Snap.MonadSnap m
-  => Text -- ^ cookie name
-  -> m ()
-removeCookie name = Snap.expireCookie $ mkCookie name ""
+getUser :: SQL.Connection -> Session -> IO (Maybe User.User)
+getUser conn session = Queries.getUserFromSession conn session

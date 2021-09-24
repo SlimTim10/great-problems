@@ -1,3 +1,4 @@
+import qualified Data.ByteString as BS ( ByteString )
 import qualified Data.Text as Text ( null )
 import qualified Control.Monad.IO.Class as IO ( MonadIO(liftIO) )
 import qualified Data.Aeson as JSON ( decode, encode, ToJSON )
@@ -5,19 +6,18 @@ import qualified Data.Map as Map ( lookup )
 import qualified Data.Word as Word ( Word64 )
 import qualified Data.CaseInsensitive as CI ( CI(original) )
 import qualified Snap.Core as Snap
-    ( getRequest,
+    ( expireCookie,
+      getCookie,
+      getRequest,
       modifyResponse,
       readRequestBody,
       writeLBS,
+      addResponseCookie,
       setHeader,
       MonadSnap,
+      Cookie(Cookie, cookieValue),
       Method(POST, GET),
       Request(rqMethod) )
-import qualified Servant.Auth.Server as SAS
-    ( generateKey,
-      defaultJWTSettings,
-      JWTSettings,
-      AuthResult(Authenticated) )
 import qualified Obelisk.Backend as Ob ( Backend(..) )
 import Obelisk.Route ( pattern (:/) )
 import qualified Common.Route as Route
@@ -54,10 +54,11 @@ import qualified Common.Api.OkResponse as OkResponse
     ( OkResponse(OkResponse) )
 import qualified Auth
     ( Auth,
+      AuthResult(Authenticated, Unverified, Indefinite),
+      Session,
       authCheck,
-      signOut,
-      verifyJWTUser,
-      makeJWTCookie,
-      addCookie )
+      newSession,
+      removeSession,
+      getUser )
 import qualified Email ( sendEmailVerification )
-import Global ( fromMaybe, cs, readMaybe )
+import Global ( Text, fromMaybe, cs, readMaybe )

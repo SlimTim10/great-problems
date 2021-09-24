@@ -14,6 +14,10 @@ module Database.Queries
   , authenticate
   , verifyEmail
   , newEmailVerification
+  , newSession
+  , removeSessionsByUserId
+  , removeSessionById
+  , getUserFromSession
   ) where
 
 import qualified Database.PostgreSQL.Simple as SQL
@@ -36,6 +40,7 @@ import qualified Database.Types.Problem as DbProblem
 import qualified Database.Types.User as DbUser
 import qualified Database.Types.Role as DbRole
 import qualified Database.Types.EmailVerification as DbEmailVerification
+import qualified Database.Types.Session as DbSession
 import qualified Util
 import Global
 
@@ -49,6 +54,10 @@ exprFromRouteParam
 exprFromRouteParam param expr cast routeQuery = do
   y <- Route.readParamFromQuery param routeQuery
   Just (expr, SQL.toField $ cast y)
+
+generateRandomSecret :: IO Text
+generateRandomSecret = (Random.randomIO :: IO Word64)
+  >>= return . TE.decodeUtf8 . B64URL.encode . cs . show
 
 getProblems :: SQL.Connection -> Maybe Integer -> Route.Query -> IO [Problem.Problem]
 getProblems conn problemId routeQuery = do
@@ -326,10 +335,46 @@ setUserVerified conn userId = void
 newEmailVerification :: SQL.Connection -> Integer -> IO Text
 newEmailVerification conn userId = do
   let generateSecret = do
-        secret <- (Random.randomIO :: IO Word64) >>= return . TE.decodeUtf8 . B64URL.encode . cs . show
+        secret <- generateRandomSecret
         getEmailVerificationBySecret conn secret >>= \case
           Nothing -> return secret
           Just _ -> generateSecret
   secret <- generateSecret
-  void $ SQL.execute conn "INSERT INTO email_verifications(secret, user_id) VALUES (?,?)" (secret, userId)
+  void $ SQL.execute conn
+    "INSERT INTO email_verifications(secret, user_id) VALUES (?,?)" (secret, userId)
   return secret
+
+getSessionById :: SQL.Connection -> Text -> IO (Maybe DbSession.Session)
+getSessionById conn sessionId = Util.headMay
+  <$> SQL.query conn "SELECT * FROM sessions WHERE id = ?" (SQL.Only sessionId)
+
+removeSessionsByUserId :: SQL.Connection -> Integer -> IO ()
+removeSessionsByUserId conn userId = do
+  sessions :: [DbSession.Session] <- SQL.query conn
+    "SELECT * FROM sessions WHERE user_id = ?" (SQL.Only userId)
+  void
+    $ SQL.executeMany conn "DELETE FROM sessions WHERE id = ?"
+    $ map (SQL.Only . DbSession.id) sessions
+  return ()
+
+newSession :: SQL.Connection -> Integer -> IO Text
+newSession conn userId = do
+  let generateSessionId = do
+        sessionId <- generateRandomSecret
+        getSessionById conn sessionId >>= \case
+          Nothing -> return sessionId
+          Just _ -> generateSessionId
+  sessionId <- generateSessionId
+  void $ SQL.execute conn
+    "INSERT INTO sessions(id, user_id) VALUES (?,?)" (sessionId, userId)
+  return sessionId
+
+removeSessionById :: SQL.Connection -> Text -> IO ()
+removeSessionById conn sessionId = void $ SQL.execute conn
+  "DELETE FROM sessions WHERE id = ?" (SQL.Only sessionId)
+
+getUserFromSession :: SQL.Connection -> Text -> IO (Maybe User.User)
+getUserFromSession conn sessionId = do
+  getSessionById conn sessionId >>= \case
+    Nothing -> return Nothing
+    Just session -> getUserById conn (DbSession.user_id session)

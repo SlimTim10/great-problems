@@ -3,6 +3,7 @@
 {-# LANGUAGE PatternSynonyms #-}
 module Backend where
 
+import qualified Data.ByteString as BS
 import qualified Data.Text as Text
 import qualified Control.Monad.IO.Class as IO
 import qualified Data.Aeson as JSON
@@ -10,7 +11,6 @@ import qualified Data.Map as Map
 import qualified Data.Word as Word
 import qualified Data.CaseInsensitive as CI
 import qualified Snap.Core as Snap
-import qualified Servant.Auth.Server as SAS
 import qualified Obelisk.Backend as Ob
 import Obelisk.Route ( pattern (:/) )
 
@@ -36,12 +36,14 @@ backend = Ob.Backend
       -- Connect to the database
       conn <- Database.connect
 
-      jwk <- SAS.generateKey
-      let jwtCfg :: SAS.JWTSettings = SAS.defaultJWTSettings jwk
-      
       serve $ \case
         Route.BackendRoute_Missing :/ () -> return ()
         Route.BackendRoute_Api :/ apiRoute -> do
+          mSession :: Maybe Auth.Session <- maybe
+            Nothing
+            (pure . cs . Snap.cookieValue)
+            <$> Snap.getCookie "sessionId"
+          mUser :: Maybe User.User <- IO.liftIO $ maybe (pure Nothing) (Auth.getUser conn) mSession
           -- IO.liftIO $ print ("--------------------------------- user:" :: Text)
           -- user :: Maybe User.User <- verifyJWTUser jwtCfg
           -- IO.liftIO $ print ("--------------------------------- user:" :: Text)
@@ -53,7 +55,7 @@ backend = Ob.Backend
                 Snap.rqMethod <$> Snap.getRequest >>= \case
                   Snap.GET -> writeJSON =<< IO.liftIO (Queries.getProblems conn Nothing query)
                   Snap.POST -> do
-                    Auth.verifyJWTUser jwtCfg >>= \case
+                    case mUser of
                       Nothing -> writeJSON $ Error.mk "No access"
                       Just user -> do
                         rawBody <- Snap.readRequestBody maxRequestBodySize
@@ -68,11 +70,11 @@ backend = Ob.Backend
               (Just problemId, query) -> writeJSON =<< IO.liftIO (Queries.getProblemById conn problemId query)
             Route.Api_Topics :/ query -> do
               topics <- case fromMaybe Nothing (Map.lookup "parent" query) of
-                Just "null" -> IO.liftIO (Queries.getRootTopics conn)
+                Just "null" -> IO.liftIO $ Queries.getRootTopics conn
                 Just x -> case readMaybe (cs x) :: Maybe Integer of
-                  Just parentId -> IO.liftIO (Queries.getTopicsByParentId conn parentId)
-                  Nothing -> IO.liftIO (Queries.getTopics conn)
-                Nothing -> IO.liftIO (Queries.getTopics conn)
+                  Just parentId -> IO.liftIO $ Queries.getTopicsByParentId conn parentId
+                  Nothing -> IO.liftIO $ Queries.getTopics conn
+                Nothing -> IO.liftIO $ Queries.getTopics conn
               writeJSON topics
             Route.Api_Users :/ subRoute -> case subRoute of
               Nothing -> writeJSON =<< IO.liftIO (Queries.getUsers conn)
@@ -101,11 +103,11 @@ backend = Ob.Backend
                         IO.liftIO (Queries.registerUser conn register) >>= \case
                           Nothing -> writeJSON $ Error.mk "Something went wrong"
                           Just user -> do
-                            secret <- IO.liftIO (Queries.newEmailVerification conn (User.id user))
+                            secret <- IO.liftIO $ Queries.newEmailVerification conn (User.id user)
                             Email.sendEmailVerification user secret
                             writeJSON OkResponse.OkResponse
             Route.Api_VerifyEmail :/ secret -> do
-              verify <- IO.liftIO (Queries.verifyEmail conn (cs secret))
+              verify <- IO.liftIO $ Queries.verifyEmail conn (cs secret)
               if verify
                 then writeJSON OkResponse.OkResponse
                 else writeJSON $ Error.mk "Invalid email verification code"
@@ -115,14 +117,17 @@ backend = Ob.Backend
                 Nothing -> writeJSON $ Error.mk "Something went wrong"
                 Just auth -> do
                   IO.liftIO (Auth.authCheck conn auth) >>= \case
-                    SAS.Authenticated user -> do
-                      Auth.makeJWTCookie jwtCfg user >>= \case
-                        Just rawJWTCookie -> do
-                          Auth.addCookie "user" (cs $ JSON.encode user)
-                          Snap.modifyResponse $ Snap.setHeader "Set-Cookie" rawJWTCookie
-                        Nothing -> writeJSON $ Error.mk "Something went wrong"
-                    _ -> writeJSON $ Error.mk "Incorrect email or password. Please try again."
-            Route.Api_SignOut :/ () -> Auth.signOut
+                    Auth.Indefinite -> writeJSON $ Error.mk "Incorrect email or password. Please try again."
+                    Auth.Unverified _ -> writeJSON $ Error.mk "Account not verified. Please check your email to complete the verification process."
+                    Auth.Authenticated user -> do
+                      session <- IO.liftIO $ Auth.newSession conn user
+                      addCookie "sessionId" session
+                      addCookie "user" (cs $ JSON.encode user)
+                      writeJSON OkResponse.OkResponse
+            Route.Api_SignOut :/ () -> do
+              IO.liftIO $ mapM_ (Auth.removeSession conn) mSession
+              removeCookie "sessionId"
+              removeCookie "user"
   , Ob._backend_routeEncoder = Route.fullRouteEncoder
   }
 
@@ -137,3 +142,32 @@ writeJSON a = do
 jsonResponse :: Snap.MonadSnap m => m ()
 jsonResponse = Snap.modifyResponse $
   Snap.setHeader "Content-Type" "application/json"
+
+mkCookie
+  :: Text -- ^ name
+  -> Text -- ^ value
+  -> Snap.Cookie
+mkCookie name value = Snap.Cookie
+  (cs name :: BS.ByteString)
+  (cs value :: BS.ByteString)
+  Nothing
+  Nothing
+  (Just "/")
+  False
+  False
+
+addCookie
+  :: Snap.MonadSnap m
+  => Text -- ^ cookie name
+  -> Text -- ^ cookie value
+  -> m ()
+addCookie name value =
+  Snap.modifyResponse
+  $ Snap.addResponseCookie
+  $ mkCookie name value
+
+removeCookie
+  :: Snap.MonadSnap m
+  => Text -- ^ cookie name
+  -> m ()
+removeCookie name = Snap.expireCookie $ mkCookie name ""
