@@ -61,4 +61,4 @@ import qualified Auth
       removeSession,
       getUser )
 import qualified Email ( sendEmailVerification )
-import Global ( Text, fromMaybe, cs, readMaybe )
+import Global ( when, Text, fromMaybe, isNothing, cs, readMaybe )

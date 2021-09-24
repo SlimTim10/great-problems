@@ -44,11 +44,9 @@ backend = Ob.Backend
             (pure . cs . Snap.cookieValue)
             <$> Snap.getCookie "sessionId"
           mUser :: Maybe User.User <- IO.liftIO $ maybe (pure Nothing) (Auth.getUser conn) mSession
-          -- IO.liftIO $ print ("--------------------------------- user:" :: Text)
-          -- user :: Maybe User.User <- verifyJWTUser jwtCfg
-          -- IO.liftIO $ print ("--------------------------------- user:" :: Text)
-          -- IO.liftIO $ print user
-          -- when (isNothing user) signOut
+          when (isNothing mUser) $ do
+            removeCookie "sessionId"
+            removeCookie "user"
           case apiRoute of
             Route.Api_Problems :/ subRoute -> case subRoute of
               (Nothing, query) -> do
