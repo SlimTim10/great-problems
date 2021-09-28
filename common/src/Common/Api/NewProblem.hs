@@ -11,7 +11,7 @@ data NewProblem = NewProblem
   { summary :: Text
   , contents :: Text
   , topic_id :: Integer
-  , author_id :: Integer -- should have? If so, needs to verify the right user
+  , author_id :: Integer
   } deriving
   ( Eq
   , Show

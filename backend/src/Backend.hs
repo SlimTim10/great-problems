@@ -59,11 +59,15 @@ backend = Ob.Backend
                         rawBody <- Snap.readRequestBody maxRequestBodySize
                         case JSON.decode rawBody :: Maybe NewProblem.NewProblem of
                           Nothing -> writeJSON $ Error.mk "Invalid problem"
-                          Just newProblem -> do
-                            if NewProblem.author_id newProblem /= User.id user
+                          Just newProblem -> if
+                            | NewProblem.author_id newProblem /= User.id user
                               || not (User.role user == Role.Contributor || User.role user == Role.Moderator)
-                              then writeJSON $ Error.mk "No access"
-                              else writeJSON =<< IO.liftIO (Queries.addProblem conn newProblem)
+                              -> writeJSON $ Error.mk "No access"
+                            | Text.null $ NewProblem.contents newProblem
+                              -> writeJSON $ Error.mk "Problem content cannot be empty"
+                            | Text.null $ NewProblem.summary newProblem
+                              -> writeJSON $ Error.mk "Summary cannot be empty"
+                            | otherwise -> writeJSON =<< IO.liftIO (Queries.addProblem conn newProblem)
                   _ -> return () -- TODO: implement put, delete
               (Just problemId, query) -> writeJSON =<< IO.liftIO (Queries.getProblemById conn problemId query)
             Route.Api_Topics :/ query -> do

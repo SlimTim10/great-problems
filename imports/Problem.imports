@@ -16,6 +16,7 @@ import qualified Reflex.Dom.Core as R
       inputElementConfig_elementConfig,
       inputElementConfig_initialValue,
       blank,
+      dynText,
       dyn_,
       el,
       elClass,
@@ -49,6 +50,7 @@ import qualified Common.Compile
       OutputOption(..) )
 import qualified Common.Api.NewProblem as NewProblem
     ( NewProblem(NewProblem) )
+import qualified Common.Api.Error as Error ( Error(message) )
 import qualified Common.Api.Problem as Problem ( Problem(id) )
 import qualified Common.Api.User as User ( User(id) )
 import qualified Problem.SelectTopic as SelectTopic ( widget )

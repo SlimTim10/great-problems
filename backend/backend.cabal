@@ -27,6 +27,7 @@ library
              OverloadedStrings
              ScopedTypeVariables
              LambdaCase
+             MultiWayIf
 
 executable backend
   main-is: main.hs

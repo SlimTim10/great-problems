@@ -13,6 +13,7 @@ import qualified Common.Route as Route
 import qualified Common.File
 import qualified Common.Compile
 import qualified Common.Api.NewProblem as NewProblem
+import qualified Common.Api.Error as Error
 import qualified Common.Api.Problem as Problem
 import qualified Common.Api.User as User
 import qualified Problem.SelectTopic as SelectTopic
@@ -112,8 +113,7 @@ widget = mdo
         publish :: R.Event t () <- R.elClass "div" "py-3" $ do
           Button.primaryClass' "Save & Publish" "w-full active:bg-blue-400"
         publishMessage <- R.holdDyn R.blank $ \case
-          Nothing -> do
-            R.elClass "p" "text-red-500" $ R.text "Something went wrong"
+          Nothing -> R.elClass "p" "text-red-500" $ R.dynText errorMessage
           Just publishedProblem -> do
             R.el "p" $ R.text "Published!"
             Ob.routeLink
@@ -140,8 +140,11 @@ widget = mdo
               <*> selectedTopicId
               <*> userId
         let ev :: R.Event t NewProblem.NewProblem = R.tagPromptlyDyn newProblem publish
-        r <- R.performRequestAsync $ newProblemRequest <$> ev
-        let publishResponse :: R.Event t (Maybe Problem.Problem) = R.decodeXhrResponse <$> r
+        publishRequest <- R.performRequestAsync $ newProblemRequest <$> ev
+        let publishResponse :: R.Event t (Maybe Problem.Problem) = R.decodeXhrResponse <$> publishRequest
+        let publishError :: R.Event t (Maybe Error.Error) = R.decodeXhrResponse <$> publishRequest
+        errorMessage :: R.Dynamic t Text <- R.holdDyn ""
+          $ maybe "Something went wrong" Error.message <$> publishError
         
         return
           ( figures

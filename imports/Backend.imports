@@ -49,7 +49,7 @@ import qualified Common.Api.Register as Register
 import qualified Common.Api.Role as Role
     ( Role(Moderator, Contributor) )
 import qualified Common.Api.NewProblem as NewProblem
-    ( NewProblem(author_id) )
+    ( NewProblem(summary, contents, author_id) )
 import qualified Common.Api.OkResponse as OkResponse
     ( OkResponse(OkResponse) )
 import qualified Auth
