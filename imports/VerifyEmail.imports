@@ -16,4 +16,4 @@ import qualified Reflex.Dom.Core as R
 import qualified Common.Route as Route
     ( Api(Api_VerifyEmail), apiHref )
 import qualified Common.Api.Error as Error ( Error(message) )
-import Global ( Text, fromMaybe, (:/) )
+import Global ( Text, (:/) )

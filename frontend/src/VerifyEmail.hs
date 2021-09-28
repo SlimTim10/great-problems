@@ -29,16 +29,10 @@ widget secret = do
     let url :: R.Dynamic t Text = fmap (\x -> Route.apiHref (Route.Api_VerifyEmail :/ x)) secret
     let endpoint :: R.Event t Text = R.tagPromptlyDyn url onload
     response :: R.Event t (Maybe Error.Error) <- R.getAndDecode endpoint
-
-    errorText :: R.Dynamic t Text <- R.holdDyn ""
-      $ fromMaybe mempty . (fmap Error.message)
-      <$> response
-    R.el "p" $ R.dynText errorText
-
-    successText :: R.Dynamic t Text <- R.holdDyn ""
+    message :: R.Dynamic t Text <- R.holdDyn ""
       $ (\case
             Nothing -> "Thank you for completing the registration process. You can now sign in to start exploring Great Problems!"
-            Just _ -> ""
+            Just err -> err
         ) . (fmap Error.message)
       <$> response
-    R.el "p" $ R.dynText successText
+    R.el "p" $ R.dynText message

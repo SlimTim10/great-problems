@@ -82,7 +82,9 @@ problemCardWidget problemCard = do
               (Route.FrontendRoute_Topics :/ (tid, Route.TopicsRoute_Problems :/ ())) $ do
               R.elClass "p" "hover:underline text-brand-sm text-brand-gray" $ R.text name
         R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "#" ++ show (Problem.id problem))
-      Ob.routeLink (Route.FrontendRoute_Problems :/ (Problem.id problem, Route.ProblemsRoute_View :/ ())) $ do
+      Ob.routeLink
+        (Route.FrontendRoute_Problems :/
+         (Problem.id problem, Route.ProblemsRoute_View :/ ())) $ do
         R.elClass "div" "group" $ do
           R.elClass "p" "text-brand-primary font-medium group-hover:underline" $ R.text (Problem.summary problem)
           R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "Updated " ++ updatedAt)
