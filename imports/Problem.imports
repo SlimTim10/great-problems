@@ -4,13 +4,14 @@ import qualified Data.Aeson as JSON ( ToJSON )
 import qualified "jsaddle-dom" GHCJS.DOM.Document as DOM
     ( IsDocument )
 import qualified Obelisk.Route.Frontend as Ob
-    ( R, routeLink, RouteToUrl, SetRoute )
+    ( R, routeLink, RouteToUrl, SetRoute(setRoute) )
 import qualified Reflex.Dom.Core as R
     ( def,
       constDyn,
       ffor,
       leftmost,
       tagPromptlyDyn,
+      tickLossyFromPostBuildTime,
       elementConfig_initialAttributes,
       inputElementConfig_elementConfig,
       inputElementConfig_initialValue,
@@ -27,6 +28,7 @@ import qualified Reflex.Dom.Core as R
       Reflex(current, updated, Event, Dynamic),
       PerformEvent(performEvent, Performable),
       PostBuild,
+      TickInfo,
       TriggerEvent,
       HasJSContext,
       DomBuilder(inputElement, DomBuilderSpace),
@@ -36,7 +38,7 @@ import qualified Reflex.Dom.Core as R
       HasValue(value),
       XhrRequest )
 import qualified Common.Route as Route
-    ( ProblemsRoute(ProblemsRoute_View),
+    ( ProblemsRoute(ProblemsRoute_Edit, ProblemsRoute_View),
       FrontendRoute(FrontendRoute_Problems),
       Api(Api_Problems),
       apiHref )

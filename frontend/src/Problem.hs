@@ -121,6 +121,10 @@ widget = mdo
                 (Problem.id publishedProblem, Route.ProblemsRoute_View :/ ())) $ do
               R.elClass "p" "text-brand-primary font-medium hover:underline" $ do
                 R.text "Click here to view your published problem"
+            timer :: R.Event t R.TickInfo <- R.tickLossyFromPostBuildTime 0.01
+            Ob.setRoute $ do
+              (Route.FrontendRoute_Problems :/
+               (Problem.id publishedProblem, Route.ProblemsRoute_Edit :/ ())) <$ timer
           <$> publishResponse
         R.dyn_ publishMessage
 
