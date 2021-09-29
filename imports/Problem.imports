@@ -44,10 +44,8 @@ import qualified Common.Route as Route
       Api(Api_Problems),
       apiHref )
 import qualified Common.File ( FileWithName )
-import qualified Common.Compile
-    ( CompileResponse,
-      CompileRequest(CompileRequest),
-      OutputOption(..) )
+import qualified Common.Api.Compile as Compile
+    ( Response, Request(Request), OutputOption(..) )
 import qualified Common.Api.NewProblem as NewProblem
     ( NewProblem(NewProblem) )
 import qualified Common.Api.Error as Error ( Error(message) )
@@ -59,8 +57,7 @@ import qualified Problem.Figures as Figures ( widget )
 import qualified Problem.Editor as Editor ( widget )
 import qualified Problem.ErrorsToggle as ErrorsToggle ( widget )
 import qualified Problem.PdfViewer as PdfViewer ( widget )
-import qualified Problem.Compile as Compile
-    ( widget, performRequest )
+import qualified Problem.Compile ( widget, performRequest )
 import qualified Problem.UploadPrb as UploadPrb ( widget )
 import qualified Problem.DownloadPrb as DownloadPrb ( widget )
 import qualified Widget.Button as Button

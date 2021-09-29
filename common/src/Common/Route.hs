@@ -41,6 +41,7 @@ data Api :: * -> * where
   Api_VerifyEmail :: Api Text
   Api_SignIn :: Api ()
   Api_SignOut :: Api ()
+  Api_Compile :: Api ()
 
 data FrontendRoute :: * -> * where
   FrontendRoute_Home :: FrontendRoute ()
@@ -81,7 +82,7 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
       BackendRoute_Api -> Ob.PathSegment "api" $ Ob.pathComponentEncoder $ \case
         Api_Problems -> Ob.PathSegment "problems" $ Ob.pathSegmentEncoder .
           bimap (Ob.maybeEncoder (Ob.unitEncoder mempty) Ob.unsafeTshowEncoder) Ob.queryOnlyEncoder
-        -- Api_Problems -> Ob.PathSegment "problem-sets" $ Ob.pathSegmentEncoder .
+        -- Api_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.pathSegmentEncoder .
         --   bimap (Ob.maybeEncoder (Ob.unitEncoder mempty) Ob.unsafeTshowEncoder) Ob.queryOnlyEncoder
         Api_Topics -> Ob.PathSegment "topics" Ob.queryOnlyEncoder
         Api_Users -> Ob.PathSegment "users" $
@@ -92,6 +93,7 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
         Api_VerifyEmail -> Ob.PathSegment "verify-email" Ob.singlePathSegmentEncoder
         Api_SignIn -> Ob.PathSegment "sign-in" $ Ob.unitEncoder mempty
         Api_SignOut -> Ob.PathSegment "sign-out" $ Ob.unitEncoder mempty
+        Api_Compile -> Ob.PathSegment "compile" $ Ob.unitEncoder mempty
   )
   (\case
       FrontendRoute_Home -> Ob.PathEnd $ Ob.unitEncoder mempty

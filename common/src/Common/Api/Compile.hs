@@ -1,20 +1,24 @@
 {-# LANGUAGE DeriveGeneric #-}
-module Common.Compile
-  ( CompileRequest(..)
-  , CompileResponse(..)
+{-# LANGUAGE DeriveAnyClass #-}
+module Common.Api.Compile
+  ( Request(..)
+  , RequestParam(..)
+  , Response(..)
   , OutputOption(..)
+  , IcemakerResponse(..)
   ) where
 
 import qualified Data.Char as Char
 import qualified Data.Text as T
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Aeson as JSON
-import qualified GHC.Generics as Generics
+import GHC.Generics (Generic)
 
 import qualified Common.File as File
 import Global
 
 data OutputOption = WithSolution | WithAnswer | WithSolutionAndAnswer | QuestionOnly
+  deriving (Eq, Generic, JSON.FromJSON)
 
 instance Show OutputOption where
   show WithSolution = "flagSolutions"
@@ -22,23 +26,47 @@ instance Show OutputOption where
   show WithSolutionAndAnswer = "flagSolAns"
   show QuestionOnly = "flagQuestions"
 
-data CompileRequest = CompileRequest
+data Request = Request
   { prbText :: Text
-  , prbName :: Text
   , randomizeVariables :: Bool
   , outputOption :: OutputOption
   , figures :: [File.FileWithName]
   }
 
-data CompileResponse = CompileResponse
+data RequestParam = PrbText | RandomizeVariables | OutputOption | Figures
+  deriving (Eq, Ord)
+instance Show RequestParam where
+  show PrbText = "prbText"
+  show RandomizeVariables = "randomizeVariables"
+  show OutputOption = "outputOption"
+  show Figures = "figures"
+
+data Response = Response
+  { resErrorIcemaker :: Text
+  , resErrorLatex :: Text
+  , resPdfContent :: Text
+  , resTerminalOutput :: Text
+  } deriving
+  ( Eq
+  , Show
+  , Generic
+  , JSON.FromJSON
+  , JSON.ToJSON
+  )
+
+data IcemakerResponse = IcemakerResponse
   { errorIcemaker :: Text
   , errorLatex :: Text
   , pdfContent :: Text
   , pdfName :: Text
   , terminalOutput :: Text
-  } deriving (Generics.Generic, Show)
+  } deriving
+  ( Eq
+  , Show
+  , Generic
+  )
 
-instance JSON.FromJSON CompileResponse where
+instance JSON.FromJSON IcemakerResponse where
   parseJSON = JSON.genericParseJSON opts . jsonLower
     where opts = JSON.defaultOptions { JSON.fieldLabelModifier = map Char.toLower }
 

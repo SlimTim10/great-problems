@@ -5,7 +5,7 @@ module Problem.ErrorsToggle
 import qualified Data.Text as T
 import qualified Reflex.Dom.Core as R
 
-import qualified Common.Compile as Compile
+import qualified Common.Api.Compile as Compile
 import qualified Util
 import Global
 
@@ -16,7 +16,7 @@ widget
      , MonadFix m
      , R.PostBuild t m
      )
-  => R.Dynamic t (Maybe Compile.CompileResponse) -- ^ Response from compile attempt, which should contain the errors to show
+  => R.Dynamic t (Maybe Compile.Response) -- ^ Response from compile attempt, which should contain the errors to show
   -> R.Event t a -- ^ Force reset
   -> m (R.Dynamic t Bool)
 widget compileResponse reset = do
@@ -26,12 +26,12 @@ widget compileResponse reset = do
   return $ showErrors <$> btnOrReset <*> compileResponse
   where
     hasErrors :: R.Dynamic t Bool = f <$> compileResponse
-    f :: Maybe Compile.CompileResponse -> Bool
+    f :: Maybe Compile.Response -> Bool
     f Nothing = False
-    f (Just res) = not . T.null $ Compile.errorIcemaker res
+    f (Just res) = not . T.null $ Compile.resErrorIcemaker res
     style
       :: Bool -- ^ Active toggled
-      -> Maybe Compile.CompileResponse -- ^ Response from compile request
+      -> Maybe Compile.Response -- ^ Response from compile request
       -> Bool -- ^ Errors are present
       -> Text
     style activeToggled compileResponse' hasErrors'
@@ -42,11 +42,11 @@ widget compileResponse reset = do
       | otherwise =
           "border border-brand-primary rounded bg-white text-blue-700 font-medium px-2 py-1 text-brand-sm"
       where
-        pdfContent = maybe T.empty Compile.pdfContent compileResponse'
+        pdfContent = maybe T.empty Compile.resPdfContent compileResponse'
 
 showErrors
   :: Bool
-  -> Maybe Compile.CompileResponse
+  -> Maybe Compile.Response
   -> Bool
 showErrors activeToggled compileResponse
   | activeToggled = True
@@ -55,4 +55,4 @@ showErrors activeToggled compileResponse
   | T.null pdfContent = True
   | otherwise = False
   where
-    pdfContent = maybe T.empty Compile.pdfContent compileResponse
+    pdfContent = maybe T.empty Compile.resPdfContent compileResponse

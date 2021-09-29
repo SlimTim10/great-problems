@@ -6,7 +6,7 @@ import qualified Data.Text as Text
 
 import qualified Reflex.Dom.Core as R
 
-import qualified Common.Compile as Compile
+import qualified Common.Api.Compile as Compile
 import Global
 
 widget
@@ -14,19 +14,19 @@ widget
      ( R.DomBuilder t m
      , R.PostBuild t m
      )
-  => R.Dynamic t (Maybe Compile.CompileResponse)
+  => R.Dynamic t (Maybe Compile.Response)
   -> R.Dynamic t Bool
   -> R.Dynamic t Bool
   -> m ()
 widget compileResponse loading errorsToggle = do
-  let pdfData :: R.Dynamic t Text = maybe "" Compile.pdfContent <$> compileResponse
+  let pdfData :: R.Dynamic t Text = maybe "" Compile.resPdfContent <$> compileResponse
   R.dyn_ $ switchView <$> pdfData <*> loading <*> compileResponse <*> errorsToggle
 
 switchView
   :: R.DomBuilder t m
   => Text
   -> Bool
-  -> Maybe Compile.CompileResponse
+  -> Maybe Compile.Response
   -> Bool
   -> m ()
 switchView pdfData loading compileResponse errorsToggle
@@ -47,14 +47,14 @@ switchView pdfData loading compileResponse errorsToggle
 
 errorsWidget
   :: R.DomBuilder t m
-  => Maybe Compile.CompileResponse
+  => Maybe Compile.Response
   -> m ()
 errorsWidget Nothing = R.text ""
 errorsWidget (Just res) = R.elClass "div" "flex flex-col w-full h-full" $ do
   R.elClass "p" "flex-1 overflow-y-auto border-b-2" $
-    R.text (Compile.errorIcemaker res)
+    R.text $ Compile.resErrorIcemaker res
   R.elClass "p" "flex-1 overflow-y-auto" $
-    R.text (Compile.errorLatex res)
+    R.text $ Compile.resErrorLatex res
 
 loadingWidget
   :: R.DomBuilder t m

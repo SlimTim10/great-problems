@@ -10,7 +10,11 @@ import qualified Data.Aeson as JSON
 import qualified Data.Map as Map
 import qualified Data.Word as Word
 import qualified Data.CaseInsensitive as CI
+import qualified Network.Wreq as Wreq
 import qualified Snap.Core as Snap
+import qualified Snap.Util.FileUploads as Snap
+import qualified System.Directory as Dir
+import System.FilePath ((</>))
 import qualified Obelisk.Backend as Ob
 import Obelisk.Route ( pattern (:/) )
 
@@ -23,6 +27,7 @@ import qualified Common.Api.Register as Register
 import qualified Common.Api.Role as Role
 import qualified Common.Api.NewProblem as NewProblem
 import qualified Common.Api.OkResponse as OkResponse
+import qualified Common.Api.Compile as Compile
 import qualified Auth
 import qualified Email
 import Global
@@ -130,6 +135,54 @@ backend = Ob.Backend
               IO.liftIO $ mapM_ (Auth.removeSession conn) mSession
               removeCookie "sessionId"
               removeCookie "user"
+            Route.Api_Compile :/ () -> do
+              Snap.rqMethod <$> Snap.getRequest >>= \case
+                Snap.POST -> do
+                  tmpDir <- IO.liftIO Dir.getTemporaryDirectory
+                  let targetDir = tmpDir </> "greatproblems"
+                  let renameFile info = \case
+                        Left e -> do
+                          print e
+                          return Nothing
+                        Right fp -> case Snap.partFileName info of
+                          Nothing -> return Nothing
+                          Just fileName -> do
+                            let fp' = targetDir </> cs fileName
+                            Dir.createDirectoryIfMissing True targetDir
+                            Dir.renameFile fp fp'
+                            return . Just $ (Wreq.partFile "multiplefiles" fp', fp')
+                  fileParts <- Snap.handleFileUploads
+                    tmpDir
+                    Snap.defaultUploadPolicy
+                    (const $ Snap.allowWithMaximumSize 20000) -- 20 kB max file size
+                    renameFile
+                    <&> catMaybes
+                  let getTextParam :: Compile.RequestParam -> Snap.Snap Text = \param -> do
+                        Snap.rqPostParam (cs . show $ param)
+                          <$> Snap.getRequest
+                          <&> cs . BS.concat . fromMaybe mempty
+                  prbText <- getTextParam Compile.PrbText
+                  randomizeVariables <- getTextParam Compile.RandomizeVariables
+                  outputOption <- getTextParam Compile.OutputOption
+                  response <- IO.liftIO $ Wreq.post
+                    "https://icewire.ca/uploadprb"
+                    $ [ Wreq.partText "prbText" prbText
+                      , Wreq.partText "prbName" "tmp"
+                      , Wreq.partText "random" randomizeVariables
+                      , Wreq.partText "outFlag" outputOption
+                      , Wreq.partText "submit1" "putDatabase"
+                      ] ++ map fst fileParts
+                  -- Delete the uploaded files from the server
+                  IO.liftIO $ forM_ fileParts $ \(_, fp) -> Dir.removeFile fp
+                  case JSON.decode (response ^. Wreq.responseBody) :: Maybe Compile.IcemakerResponse of
+                    Nothing -> writeJSON $ Error.mk "Something went wrong"
+                    Just r -> writeJSON Compile.Response
+                      { Compile.resErrorIcemaker = Compile.errorIcemaker r
+                      , Compile.resErrorLatex = Compile.errorLatex r
+                      , Compile.resPdfContent = Compile.pdfContent r
+                      , Compile.resTerminalOutput = Compile.terminalOutput r
+                      }
+                _ -> return ()
   , Ob._backend_routeEncoder = Route.fullRouteEncoder
   }
 

@@ -8,6 +8,6 @@ import qualified Reflex.Dom.Core as R
       Reflex(Dynamic),
       PostBuild,
       DomBuilder )
-import qualified Common.Compile as Compile
-    ( CompileResponse(errorLatex, errorIcemaker, pdfContent) )
+import qualified Common.Api.Compile as Compile
+    ( Response(resErrorLatex, resErrorIcemaker, resPdfContent) )
 import Global ( Text, Map, (=:) )
