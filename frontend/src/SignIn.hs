@@ -64,4 +64,4 @@ widget = do
 
     signInRequest :: JSON.ToJSON a => a -> R.XhrRequest Text
     signInRequest body = R.postJson url body
-      where url = Route.apiHref (Route.Api_SignIn :/ ())
+      where url = Route.apiHref $ Route.Api_SignIn :/ ()
