@@ -70,7 +70,7 @@ problemCardWidget
   -> m ()
 problemCardWidget problemCard = do
   Util.dynFor problemCard $ \problem -> do
-    let updatedAt = show $ Problem.updated_at problem
+    let updatedAt = show $ Problem.updatedAt problem
     R.elClass "div" "p-2 border border-brand-light-gray flex flex-col gap-1" $ do
       R.elClass "div" "flex justify-between" $ do
         R.elClass "div" "flex" $ do

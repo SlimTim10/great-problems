@@ -21,7 +21,7 @@ import qualified Common.Api.Problem as Problem
     ( ProblemParamInclude(TopicPath),
       ProblemParams(ProblemParams, paramTopic, paramInclude,
                     paramExpand),
-      Problem(author, summary, id, topicPath, updated_at),
+      Problem(author, summary, id, topicPath, updatedAt),
       problemParamsToRouteQuery )
 import qualified Common.Api.User as User ( User(full_name, id) )
 import qualified Common.Route as Route

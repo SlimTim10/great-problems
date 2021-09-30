@@ -87,8 +87,8 @@ getProblems conn problemId routeQuery = do
         , Problem.topic = Left $ DbProblem.topic_id dbProblem
         , Problem.author = Left $ DbProblem.author_id dbProblem
         , Problem.topicPath = Nothing
-        , Problem.created_at = DbProblem.created_at dbProblem
-        , Problem.updated_at = DbProblem.updated_at dbProblem
+        , Problem.createdAt = DbProblem.created_at dbProblem
+        , Problem.updatedAt = DbProblem.updated_at dbProblem
         }
   let expands = maybe [] (Text.splitOn ",") $ Route.textParamFromQuery "expand" routeQuery
   let includeTopicPath = Route.textParamFromQuery "include" routeQuery == Just "topic_path"

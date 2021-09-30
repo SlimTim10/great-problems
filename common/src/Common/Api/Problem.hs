@@ -21,8 +21,8 @@ data Problem = Problem
   , topic :: Either Integer Topic.Topic
   , author :: Either Integer User.User
   , topicPath :: Maybe [Topic.Topic]
-  , created_at :: Time.UTCTime
-  , updated_at :: Time.UTCTime
+  , createdAt :: Time.UTCTime
+  , updatedAt :: Time.UTCTime
   } deriving
   ( Eq
   , Show
