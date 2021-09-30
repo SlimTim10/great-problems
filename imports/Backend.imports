@@ -73,7 +73,7 @@ import qualified Common.Api.Compile as Compile
                        errorIcemaker),
       Response(Response, resTerminalOutput, resPdfContent, resErrorLatex,
                resErrorIcemaker),
-      RequestParam(OutputOption, RandomizeVariables, PrbText) )
+      RequestParam(OutputOption, RandomizeVariables, Contents) )
 import qualified Auth
     ( Auth,
       AuthResult(Authenticated, Unverified, Indefinite),

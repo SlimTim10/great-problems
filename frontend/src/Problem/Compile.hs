@@ -52,7 +52,7 @@ performRequest e compileRequest = do
     $ R.ffor (R.tagPromptlyDyn compileRequest e) $ \cr -> do
     let
       formDataParams :: Map Compile.RequestParam (R'.FormValue JSDOM.Types.File) = (
-        Compile.PrbText =: R'.FormValue_Text (Compile.prbText cr)
+        Compile.Contents =: R'.FormValue_Text (Compile.contents cr)
         <> Compile.RandomizeVariables =: R'.FormValue_Text (formBool . Compile.randomizeVariables $ cr)
         <> Compile.OutputOption =: R'.FormValue_Text (cs . show . Compile.outputOption $ cr)
         <> Compile.Figures =: R'.FormValue_List (map formFile . Compile.figures $ cr)

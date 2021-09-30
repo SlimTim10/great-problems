@@ -25,7 +25,7 @@ import qualified Common.Route as Route
 import qualified Common.Api.Compile as Compile
     ( Response,
       RequestParam(..),
-      Request(figures, outputOption, randomizeVariables, prbText) )
+      Request(figures, outputOption, randomizeVariables, contents) )
 import qualified Common.File as File ( FileWithName(name, file) )
 import qualified Widget.Button as Button ( primarySmallClass' )
 import Global ( MonadFix, Text, Map, cs, (:/), (=:) )

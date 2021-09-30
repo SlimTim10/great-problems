@@ -161,12 +161,12 @@ backend = Ob.Backend
                         Snap.rqPostParam (cs . show $ param)
                           <$> Snap.getRequest
                           <&> cs . BS.concat . fromMaybe mempty
-                  prbText <- getTextParam Compile.PrbText
+                  contents <- getTextParam Compile.Contents
                   randomizeVariables <- getTextParam Compile.RandomizeVariables
                   outputOption <- getTextParam Compile.OutputOption
                   response <- IO.liftIO $ Wreq.post
                     "https://icewire.ca/uploadprb"
-                    $ [ Wreq.partText "prbText" prbText
+                    $ [ Wreq.partText "prbText" contents
                       , Wreq.partText "prbName" "tmp"
                       , Wreq.partText "random" randomizeVariables
                       , Wreq.partText "outFlag" outputOption

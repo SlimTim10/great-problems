@@ -27,16 +27,16 @@ instance Show OutputOption where
   show QuestionOnly = "flagQuestions"
 
 data Request = Request
-  { prbText :: Text
+  { contents :: Text
   , randomizeVariables :: Bool
   , outputOption :: OutputOption
   , figures :: [File.FileWithName]
   }
 
-data RequestParam = PrbText | RandomizeVariables | OutputOption | Figures
+data RequestParam = Contents | RandomizeVariables | OutputOption | Figures
   deriving (Eq, Ord)
 instance Show RequestParam where
-  show PrbText = "prbText"
+  show Contents = "contents"
   show RandomizeVariables = "randomizeVariables"
   show OutputOption = "outputOption"
   show Figures = "figures"
