@@ -127,7 +127,7 @@ widget = mdo
               (Route.FrontendRoute_Problems :/
                (Problem.id publishedProblem, Route.ProblemsRoute_Edit :/ ())) <$ timer
           <$> publishResponse
-        savingMessage :: R.Event t (m ()) <- R.performEvent $ R.ffor publish $ \_ -> do
+        savingMessage <- R.performEvent $ R.ffor publish $ \_ -> do
           return $ R.el "p" $ R.text "Saving..."
         message <- R.holdDyn R.blank $ R.leftmost [savingMessage, R.updated publishMessage]
         R.dyn_ message
