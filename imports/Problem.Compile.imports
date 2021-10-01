@@ -1,6 +1,4 @@
 import qualified Data.Map as Map ( mapKeys )
-import qualified Control.Lens as Lens ( view )
-import qualified Data.Text as T ( concat )
 import qualified JSDOM.Types ( File )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Reflex.Dom.Core as R
@@ -10,22 +8,20 @@ import qualified Reflex.Dom.Core as R
       count,
       tagPromptlyDyn,
       decodeText,
-      xhrResponse_responseText,
       MonadHold(holdDyn),
       Reflex(updated, Dynamic, Event),
       PerformEvent(performEvent, Performable),
       TriggerEvent,
       HasJSContext,
-      DomBuilder,
-      XhrResponse )
+      DomBuilder )
 import qualified MyReflex.Dom.Xhr.FormData as R'
-    ( FormValue(..), postForms )
+    ( FormValue(FormValue_List, FormValue_Text) )
 import qualified Common.Route as Route
     ( Api(Api_Compile), apiHref )
 import qualified Common.Api.Compile as Compile
     ( Response,
       RequestParam(..),
-      Request(figures, outputOption, randomizeVariables, contents) )
-import qualified Common.File as File ( FileWithName(name, file) )
+      Request(figures, outputOption, randomizeVariables, content) )
 import qualified Widget.Button as Button ( primarySmallClass' )
+import qualified Util ( formFile, formBool, postForm )
 import Global ( MonadFix, Text, Map, cs, (:/), (=:) )

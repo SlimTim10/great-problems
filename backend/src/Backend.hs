@@ -4,12 +4,14 @@
 module Backend where
 
 import qualified Data.ByteString as BS
-import qualified Data.Text as Text
+import qualified Data.ByteString.Lazy as LBS
+import qualified Data.Text as T
 import qualified Control.Monad.IO.Class as IO
 import qualified Data.Aeson as JSON
 import qualified Data.Map as Map
 import qualified Data.Word as Word
 import qualified Data.CaseInsensitive as CI
+import qualified Database.PostgreSQL.Simple as SQL
 import qualified Network.Wreq as Wreq
 import qualified Snap.Core as Snap
 import qualified Snap.Util.FileUploads as Snap
@@ -25,9 +27,9 @@ import qualified Database.Queries as Queries
 import qualified Common.Api.User as User
 import qualified Common.Api.Register as Register
 import qualified Common.Api.Role as Role
-import qualified Common.Api.NewProblem as NewProblem
 import qualified Common.Api.OkResponse as OkResponse
 import qualified Common.Api.Compile as Compile
+import qualified Common.Api.Problem as Problem
 import qualified Auth
 import qualified Email
 import Global
@@ -57,22 +59,9 @@ backend = Ob.Backend
               (Nothing, query) -> do
                 Snap.rqMethod <$> Snap.getRequest >>= \case
                   Snap.GET -> writeJSON =<< IO.liftIO (Queries.getProblems conn Nothing query)
-                  Snap.POST -> do
-                    case mUser of
-                      Nothing -> writeJSON $ Error.mk "No access"
-                      Just user -> do
-                        rawBody <- Snap.readRequestBody maxRequestBodySize
-                        case JSON.decode rawBody :: Maybe NewProblem.NewProblem of
-                          Nothing -> writeJSON $ Error.mk "Invalid problem"
-                          Just newProblem -> if
-                            | NewProblem.author_id newProblem /= User.id user
-                              || not (User.role user == Role.Contributor || User.role user == Role.Moderator)
-                              -> writeJSON $ Error.mk "No access"
-                            | Text.null $ NewProblem.contents newProblem
-                              -> writeJSON $ Error.mk "Problem content cannot be empty"
-                            | Text.null $ NewProblem.summary newProblem
-                              -> writeJSON $ Error.mk "Summary cannot be empty"
-                            | otherwise -> writeJSON =<< IO.liftIO (Queries.addProblem conn newProblem)
+                  Snap.POST -> case mUser of
+                    Nothing -> writeJSON $ Error.mk "No access"
+                    Just user -> handleSaveProblem conn user
                   _ -> return () -- TODO: implement put, delete
               (Just problemId, query) -> writeJSON =<< IO.liftIO (Queries.getProblemById conn problemId query)
             Route.Api_Topics :/ query -> do
@@ -97,7 +86,7 @@ backend = Ob.Backend
               case JSON.decode rawBody :: Maybe Register.Register of
                 Nothing -> writeJSON $ Error.mk "Something went wrong"
                 Just register -> do
-                  if any Text.null
+                  if any T.null
                     [ CI.original $ Register.full_name register
                     , CI.original $ Register.email register
                     , Register.password register
@@ -137,51 +126,9 @@ backend = Ob.Backend
               removeCookie "user"
             Route.Api_Compile :/ () -> do
               Snap.rqMethod <$> Snap.getRequest >>= \case
-                Snap.POST -> do
-                  tmpDir <- IO.liftIO Dir.getTemporaryDirectory
-                  let targetDir = tmpDir </> "greatproblems"
-                  let renameFile info = \case
-                        Left e -> do
-                          print e
-                          return Nothing
-                        Right fp -> case Snap.partFileName info of
-                          Nothing -> return Nothing
-                          Just fileName -> do
-                            let fp' = targetDir </> cs fileName
-                            Dir.createDirectoryIfMissing True targetDir
-                            Dir.renameFile fp fp'
-                            return . Just $ (Wreq.partFile "multiplefiles" fp', fp')
-                  fileParts <- Snap.handleFileUploads
-                    tmpDir
-                    Snap.defaultUploadPolicy
-                    (const $ Snap.allowWithMaximumSize 20000) -- 20 kB max file size
-                    renameFile
-                    <&> catMaybes
-                  let getTextParam :: Compile.RequestParam -> Snap.Snap Text = \param -> do
-                        Snap.rqPostParam (cs . show $ param)
-                          <$> Snap.getRequest
-                          <&> cs . BS.concat . fromMaybe mempty
-                  contents <- getTextParam Compile.Contents
-                  randomizeVariables <- getTextParam Compile.RandomizeVariables
-                  outputOption <- getTextParam Compile.OutputOption
-                  response <- IO.liftIO $ Wreq.post
-                    "https://icewire.ca/uploadprb"
-                    $ [ Wreq.partText "prbText" contents
-                      , Wreq.partText "prbName" "tmp"
-                      , Wreq.partText "random" randomizeVariables
-                      , Wreq.partText "outFlag" outputOption
-                      , Wreq.partText "submit1" "putDatabase"
-                      ] ++ map fst fileParts
-                  -- Delete the uploaded files from the server
-                  IO.liftIO $ forM_ fileParts $ \(_, fp) -> Dir.removeFile fp
-                  case JSON.decode (response ^. Wreq.responseBody) :: Maybe Compile.IcemakerResponse of
-                    Nothing -> writeJSON $ Error.mk "Something went wrong"
-                    Just r -> writeJSON Compile.Response
-                      { Compile.resErrorIcemaker = Compile.errorIcemaker r
-                      , Compile.resErrorLatex = Compile.errorLatex r
-                      , Compile.resPdfContent = Compile.pdfContent r
-                      , Compile.resTerminalOutput = Compile.terminalOutput r
-                      }
+                Snap.POST -> case mUser of
+                  Nothing -> writeJSON $ Error.mk "No access"
+                  Just _ -> handleCompileProblem
                 _ -> return ()
   , Ob._backend_routeEncoder = Route.fullRouteEncoder
   }
@@ -226,3 +173,137 @@ removeCookie
   => Text -- ^ cookie name
   -> m ()
 removeCookie name = Snap.expireCookie $ mkCookie name ""
+
+-- Create or update problem
+handleSaveProblem :: SQL.Connection -> User.User -> Snap.Snap ()
+handleSaveProblem conn user = do
+  fileUploads <- handleFileUploads
+  let getTextParam :: Problem.RequestParam -> Snap.Snap Text = \param -> do
+        Snap.rqPostParam (cs . show $ param)
+          <$> Snap.getRequest
+          <&> cs . BS.concat . fromMaybe mempty
+  problemId <- getTextParam Problem.ParamProblemId
+  summary <- getTextParam Problem.ParamSummary
+  content <- getTextParam Problem.ParamContent
+  topicId <- getTextParam Problem.ParamTopicId
+  authorId <- getTextParam Problem.ParamAuthorId
+  if
+    | (read . cs $ authorId) /= User.id user
+      || not (User.role user == Role.Contributor || User.role user == Role.Moderator)
+      -> writeJSON $ Error.mk "No access"
+    | T.null content
+      -> writeJSON $ Error.mk "Problem content cannot be empty"
+    | T.null summary
+      -> writeJSON $ Error.mk "Summary cannot be empty"
+    | otherwise -> do
+        response :: LBS.ByteString <- requestIcemakerCompileProblem
+          content
+          Nothing
+          Nothing
+          fileUploads
+        case JSON.decode response :: Maybe Compile.IcemakerResponse of
+          Nothing -> writeJSON $ Error.mk "Something went wrong"
+          Just r -> if
+            | (not . T.null $ Compile.errorIcemaker r) || (not . T.null $ Compile.errorLatex r)
+              -> writeJSON $ Error.mk "Invalid problem. Please check that your problem compiles with no errors before saving."
+            | T.null problemId -> do
+                let newProblem = Problem.CreateProblem
+                      { Problem.cpSummary = summary
+                      , Problem.cpContent = content
+                      , Problem.cpTopicId = read . cs $ topicId
+                      , Problem.cpAuthorId = read . cs $ authorId
+                      }
+                writeJSON =<< IO.liftIO (Queries.createProblem conn newProblem)
+            | otherwise -> do
+                let updateProblem = Problem.UpdateProblem
+                      { Problem.upProblemId = read . cs $ problemId
+                      , Problem.upSummary = summary
+                      , Problem.upContent = content
+                      , Problem.upTopicId = read . cs $ topicId
+                      , Problem.upAuthorId = read . cs $ authorId
+                      }
+                -- TODO: implement updateProblem
+                -- writeJSON =<< IO.liftIO (Queries.updateProblem conn newProblem)
+                return ()
+  -- Delete the uploaded files from the server
+  IO.liftIO $ forM_ (map filePath fileUploads) $ \fp -> Dir.removeFile fp
+
+handleCompileProblem :: Snap.Snap ()
+handleCompileProblem = do
+  fileUploads <- handleFileUploads
+  let getTextParam :: Compile.RequestParam -> Snap.Snap Text = \param -> do
+        Snap.rqPostParam (cs . show $ param)
+          <$> Snap.getRequest
+          <&> cs . BS.concat . fromMaybe mempty
+  content <- getTextParam Compile.ParamContent
+  randomizeVariables <- getTextParam Compile.ParamRandomizeVariables
+  outputOption <- getTextParam Compile.ParamOutputOption
+  if
+    | T.null content
+      -> writeJSON $ Error.mk "Problem content cannot be empty"
+    | otherwise -> do
+        response :: LBS.ByteString <- requestIcemakerCompileProblem
+          content
+          (Just randomizeVariables)
+          (Just outputOption)
+          fileUploads
+        case JSON.decode response :: Maybe Compile.IcemakerResponse of
+          Nothing -> writeJSON $ Error.mk "Something went wrong"
+          Just r -> writeJSON Compile.Response
+            { Compile.resErrorIcemaker = Compile.errorIcemaker r
+            , Compile.resErrorLatex = Compile.errorLatex r
+            , Compile.resPdfContent = Compile.pdfContent r
+            , Compile.resTerminalOutput = Compile.terminalOutput r
+            }
+  -- Delete the uploaded files from the server
+  IO.liftIO $ forM_ (map filePath fileUploads) $ \fp -> Dir.removeFile fp
+
+requestIcemakerCompileProblem
+  :: IO.MonadIO m
+  => Text -- ^ Problem content
+  -> Maybe Text -- Randomize variables
+  -> Maybe Text -- Output option
+  -> [FileUpload] -- Files
+  -> m LBS.ByteString
+requestIcemakerCompileProblem content mRandomizeVariables mOutputOption fileUploads = do
+  let randomizeVariables = fromMaybe "false" mRandomizeVariables
+  let outputOption = fromMaybe (cs . show $ Compile.QuestionOnly) mOutputOption
+  response <- IO.liftIO $ Wreq.post
+    "https://icewire.ca/uploadprb"
+    $ [ Wreq.partText "prbText" content
+      , Wreq.partText "prbName" "tmp"
+      , Wreq.partText "random" randomizeVariables
+      , Wreq.partText "outFlag" outputOption
+      , Wreq.partText "submit1" "putDatabase"
+      ] ++ map filePart fileUploads
+  return $ response ^. Wreq.responseBody
+
+-- | Get the files from the POST request and make them persist in the temporary directory.
+-- Returns a list of the files as form parts and their paths.
+-- This must be called before getting other POST parameters from the request.
+handleFileUploads :: Snap.Snap [FileUpload]
+handleFileUploads = do
+  tmpDir <- IO.liftIO Dir.getTemporaryDirectory
+  let targetDir = tmpDir </> "greatproblems"
+  let renameFile info = \case
+        Left e -> do
+          print e
+          return Nothing
+        Right fp -> case Snap.partFileName info of
+          Nothing -> return Nothing
+          Just fileName -> do
+            let fp' = targetDir </> cs fileName
+            Dir.createDirectoryIfMissing True targetDir
+            Dir.renameFile fp fp'
+            return . Just $ FileUpload (Wreq.partFile "multiplefiles" fp') fp'
+  Snap.handleFileUploads
+    tmpDir
+    Snap.defaultUploadPolicy
+    (const $ Snap.allowWithMaximumSize 20000) -- 20 kB max file size
+    renameFile
+    <&> catMaybes
+
+data FileUpload = FileUpload
+  { filePart :: Wreq.Part
+  , filePath :: FilePath
+  }

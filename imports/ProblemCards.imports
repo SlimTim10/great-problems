@@ -18,11 +18,10 @@ import qualified Reflex.Dom.Core as R
       Prerender )
 import qualified Common.Api.Topic as Topic ( Topic(Topic) )
 import qualified Common.Api.Problem as Problem
-    ( ProblemParamInclude(TopicPath),
-      ProblemParams(ProblemParams, paramTopic, paramInclude,
-                    paramExpand),
+    ( GetParamInclude(TopicPath),
+      GetParams(GetParams, gpTopic, gpInclude, gpExpand),
       Problem(author, summary, id, topicPath, updatedAt),
-      problemParamsToRouteQuery )
+      getParamsToRouteQuery )
 import qualified Common.Api.User as User ( User(full_name, id) )
 import qualified Common.Route as Route
     ( ProblemsRoute(ProblemsRoute_View),

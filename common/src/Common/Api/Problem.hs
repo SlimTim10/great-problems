@@ -12,12 +12,13 @@ import GHC.Generics (Generic)
 import qualified Common.Api.Topic as Topic
 import qualified Common.Api.User as User
 import qualified Common.Route as Route
+import qualified Common.File as File
 import Global
 
 data Problem = Problem
   { id :: Integer
   , summary :: Text
-  , contents :: Text
+  , content :: Text
   , topic :: Either Integer Topic.Topic
   , author :: Either Integer User.User
   , topicPath :: Maybe [Topic.Topic]
@@ -31,17 +32,54 @@ data Problem = Problem
   , JSON.ToJSON
   )
 
-data ProblemParams = ProblemParams
-  { paramExpand :: Maybe [Text]
-  , paramInclude :: Maybe ProblemParamInclude
-  , paramTopic :: Maybe Integer
+data GetParams = GetParams
+  { gpExpand :: Maybe [Text]
+  , gpInclude :: Maybe GetParamInclude
+  , gpTopic :: Maybe Integer
   }
 
-data ProblemParamInclude = TopicPath
+data GetParamInclude = TopicPath
 
-problemParamsToRouteQuery :: ProblemParams -> Route.Query
-problemParamsToRouteQuery p =
-  ( "topic" =: (paramTopic p >>= \t -> Just (cs $ show t))
-    <> "expand" =: (paramExpand p >>= \xs -> Just (Text.intercalate "," xs))
-    <> "include" =: (paramInclude p >>= \case TopicPath -> Just "topic_path")
+getParamsToRouteQuery :: GetParams -> Route.Query
+getParamsToRouteQuery gps =
+  ( "topic" =: (gpTopic gps >>= \t -> Just (cs $ show t))
+    <> "expand" =: (gpExpand gps >>= \xs -> Just (Text.intercalate "," xs))
+    <> "include" =: (gpInclude gps >>= \case TopicPath -> Just "topic_path")
   )
+
+data CreateProblem = CreateProblem
+  { cpSummary :: Text
+  , cpContent :: Text
+  , cpTopicId :: Integer
+  , cpAuthorId :: Integer
+  }
+
+data UpdateProblem = UpdateProblem
+  { upProblemId :: Integer
+  , upSummary :: Text
+  , upContent :: Text
+  , upTopicId :: Integer
+  , upAuthorId :: Integer
+  }
+
+-- Update or publish new problem
+data RequestSave = RequestSave
+  { rsProblem :: Either CreateProblem UpdateProblem
+  , rsFigures :: [File.FileWithName]
+  }
+
+data RequestParam
+  = ParamProblemId
+  | ParamSummary
+  | ParamContent
+  | ParamTopicId
+  | ParamAuthorId
+  | ParamFigures
+  deriving (Eq, Ord)
+instance Show RequestParam where
+  show ParamProblemId = "problemId"
+  show ParamSummary = "summary"
+  show ParamContent = "content"
+  show ParamTopicId = "topicId"
+  show ParamAuthorId = "authorId"
+  show ParamFigures = "figures"

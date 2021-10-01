@@ -20,4 +20,3 @@ instance Show FileWithName where
 
 instance Eq FileWithName where
   (==) a b = name a == name b
-

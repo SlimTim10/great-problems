@@ -3,16 +3,18 @@ module Problem
   ( widget
   ) where
 
+import qualified Data.Map as Map
 import qualified Language.Javascript.JSaddle as JS
-import qualified Data.Aeson as JSON
 import qualified "jsaddle-dom" GHCJS.DOM.Document as DOM
+import qualified JSDOM.Types
 import qualified Obelisk.Route.Frontend as Ob
 import qualified Reflex.Dom.Core as R
+-- Import patch
+import qualified MyReflex.Dom.Xhr.FormData as R'
 
 import qualified Common.Route as Route
 import qualified Common.File
 import qualified Common.Api.Compile as Compile
-import qualified Common.Api.NewProblem as NewProblem
 import qualified Common.Api.Error as Error
 import qualified Common.Api.Problem as Problem
 import qualified Common.Api.User as User
@@ -125,7 +127,10 @@ widget = mdo
               (Route.FrontendRoute_Problems :/
                (Problem.id publishedProblem, Route.ProblemsRoute_Edit :/ ())) <$ timer
           <$> publishResponse
-        R.dyn_ publishMessage
+        savingMessage :: R.Event t (m ()) <- R.performEvent $ R.ffor publish $ \_ -> do
+          return $ R.el "p" $ R.text "Saving..."
+        void $ R.dyn_
+          <$> R.holdDyn R.blank (R.leftmost [savingMessage, R.updated publishMessage])
 
         userId :: R.Dynamic t Integer <-
           pure
@@ -133,18 +138,51 @@ widget = mdo
           . fromMaybe 0
           . fmap User.id
           =<< Util.getCurrentUser
-        let newProblem :: R.Dynamic t NewProblem.NewProblem = NewProblem.NewProblem
+        let createProblem :: R.Dynamic t Problem.CreateProblem = Problem.CreateProblem
               <$> summary
               <*> editorContent
               <*> selectedTopicId
               <*> userId
-        let ev :: R.Event t NewProblem.NewProblem = R.tagPromptlyDyn newProblem publish
-        publishRequest <- R.performRequestAsync $ newProblemRequest <$> ev
-        let publishResponse :: R.Event t (Maybe Problem.Problem) = R.decodeXhrResponse <$> publishRequest
-        let publishError :: R.Event t (Maybe Error.Error) = R.decodeXhrResponse <$> publishRequest
+        let e :: R.Event t Problem.CreateProblem = R.tagPromptlyDyn createProblem publish
+
+        let createProblemRequest :: R.Dynamic t Problem.RequestSave = Problem.RequestSave
+              <$> (Left <$> createProblem)
+              <*> figures
+        formData :: R.Event t (Map Text (R'.FormValue JSDOM.Types.File)) <- R.performEvent
+          $ R.ffor (R.tagPromptlyDyn createProblemRequest e) $ \req -> do
+          let
+            formDataParams :: Map Problem.RequestParam (R'.FormValue JSDOM.Types.File) =
+              case Problem.rsProblem req of
+                Left createProblem' -> (
+                  Problem.ParamSummary =: R'.FormValue_Text (Problem.cpSummary createProblem')
+                  <> Problem.ParamContent =: R'.FormValue_Text (Problem.cpContent createProblem')
+                  <> Problem.ParamTopicId =: R'.FormValue_Text
+                    (cs . show . Problem.cpTopicId $ createProblem')
+                  <> Problem.ParamAuthorId =: R'.FormValue_Text
+                    (cs . show . Problem.cpAuthorId $ createProblem')
+                  <> Problem.ParamFigures =: R'.FormValue_List (map Util.formFile . Problem.rsFigures $ req)
+                  )
+                Right updateProblem' -> (
+                  Problem.ParamProblemId =: R'.FormValue_Text
+                    (cs . show . Problem.upProblemId $ updateProblem')
+                  <> Problem.ParamSummary =: R'.FormValue_Text (Problem.upSummary updateProblem')
+                  <> Problem.ParamContent =: R'.FormValue_Text (Problem.upContent updateProblem')
+                  <> Problem.ParamTopicId =: R'.FormValue_Text
+                    (cs . show . Problem.upTopicId $  updateProblem')
+                  <> Problem.ParamAuthorId =: R'.FormValue_Text
+                    (cs . show . Problem.upAuthorId $ updateProblem')
+                  <> Problem.ParamFigures =: R'.FormValue_List (map Util.formFile . Problem.rsFigures $ req)
+                  )
+            formDataText = Map.mapKeys (cs . show) formDataParams
+          return formDataText
+        response :: R.Event t Text <- Util.postForm
+          (Route.apiHref $ Route.Api_Problems :/ (Nothing, mempty))
+          formData
+        let publishResponse :: R.Event t (Maybe Problem.Problem) = R.decodeText <$> response
+        let errorResponse :: R.Event t (Maybe Error.Error) = R.decodeText <$> response
         errorMessage :: R.Dynamic t Text <- R.holdDyn ""
-          $ maybe "Something went wrong" Error.message <$> publishError
-        
+          $ maybe "Something went wrong" Error.message <$> errorResponse
+
         return
           ( figures
           , randomizeVariablesAction
@@ -153,10 +191,6 @@ widget = mdo
           , showSolutionAction
           , outputOption
           )
-
-    newProblemRequest :: JSON.ToJSON a => a -> R.XhrRequest Text
-    newProblemRequest body = R.postJson url body
-      where url = Route.apiHref (Route.Api_Problems :/ (Nothing, mempty))
 
     outputOptionsPane editorContent figures = do
       R.elClass "div" "py-3 border-b border-brand-light-gray" $ mdo

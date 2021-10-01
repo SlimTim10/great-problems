@@ -39,21 +39,21 @@ widget topicId = do
         Nothing -> Util.getOnload
           $ Route.apiHref
           $ Route.Api_Problems :/
-          ( Nothing, Problem.problemParamsToRouteQuery
-            $ Problem.ProblemParams
-            { Problem.paramExpand = Just ["author", "topic"]
-            , Problem.paramInclude = Just Problem.TopicPath
-            , Problem.paramTopic = Nothing
+          ( Nothing, Problem.getParamsToRouteQuery
+            $ Problem.GetParams
+            { Problem.gpExpand = Just ["author", "topic"]
+            , Problem.gpInclude = Just Problem.TopicPath
+            , Problem.gpTopic = Nothing
             }
           )
         Just tid -> Util.getOnload
           $ Route.apiHref
           $ Route.Api_Problems :/
-          ( Nothing, Problem.problemParamsToRouteQuery
-            $ Problem.ProblemParams
-            { Problem.paramExpand = Just ["author", "topic"]
-            , Problem.paramInclude = Just Problem.TopicPath
-            , Problem.paramTopic = Just tid
+          ( Nothing, Problem.getParamsToRouteQuery
+            $ Problem.GetParams
+            { Problem.gpExpand = Just ["author", "topic"]
+            , Problem.gpInclude = Just Problem.TopicPath
+            , Problem.gpTopic = Just tid
             }
           )
       problemCards :: R.Dynamic t [Problem.Problem] <- R.holdDyn [] $ fromMaybe [] <$> response

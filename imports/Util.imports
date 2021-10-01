@@ -1,10 +1,17 @@
 import qualified Language.Javascript.JSaddle as JS
     ( MonadJSM, ToJSVal, JSVal(JSVal), js1, jsg, liftJSM )
-import qualified Data.Text as T ( pack )
+import qualified Data.Text as T ( concat, pack )
+import qualified Control.Lens as Lens ( view )
 import qualified Data.Aeson as JSON ( decode, FromJSON )
+import qualified Text.Read ( readMaybe )
 import qualified Control.Monad.IO.Class as IO ( MonadIO )
 import qualified Crypto.PasswordStore
     ( makePassword, verifyPassword )
+import qualified "jsaddle-dom" GHCJS.DOM.Document as DOM
+    ( IsDocument, getCookie )
+import qualified JSDOM.Types ( File )
+import qualified Web.Cookie as Cookie ( parseCookies, Cookies )
+import qualified System.Environment as Env ( lookupEnv )
 import qualified Reflex.Dom.Core as R
     ( constDyn,
       ffor,
@@ -13,10 +20,12 @@ import qualified Reflex.Dom.Core as R
       elDynClass',
       text,
       getAndDecode,
+      xhrResponse_responseText,
       Adjustable,
-      Reflex(Event, Dynamic),
+      MonadHold,
+      Reflex(Dynamic, Event),
       NotReady,
-      PerformEvent(Performable),
+      PerformEvent(performEvent, Performable),
       PostBuild(..),
       TriggerEvent,
       HasJSContext,
@@ -25,10 +34,8 @@ import qualified Reflex.Dom.Core as R
       HasDocument(..),
       HasDomEvent(domEvent),
       EventName(Click) )
-import qualified "jsaddle-dom" GHCJS.DOM.Document as DOM
-    ( IsDocument, getCookie )
-import qualified Web.Cookie as Cookie ( parseCookies, Cookies )
-import qualified System.Environment as Env ( lookupEnv )
-import qualified Text.Read ( readMaybe )
+import qualified MyReflex.Dom.Xhr.FormData as R'
+    ( FormValue(FormValue_File), postForms )
 import qualified Common.Api.User as User ( User )
-import Global ( Text, void, (^.), cs )
+import qualified Common.File as File ( FileWithName(name, file) )
+import Global ( Text, Map, void, (^.), cs )

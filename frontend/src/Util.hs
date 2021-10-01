@@ -3,16 +3,21 @@ module Util where
 
 import qualified Language.Javascript.JSaddle as JS
 import qualified Data.Text as T
+import qualified Control.Lens as Lens
 import qualified Data.Aeson as JSON
+import qualified Text.Read
 import qualified Control.Monad.IO.Class as IO
 import qualified Crypto.PasswordStore
-import qualified Reflex.Dom.Core as R
 import qualified "jsaddle-dom" GHCJS.DOM.Document as DOM
+import qualified JSDOM.Types
 import qualified Web.Cookie as Cookie
 import qualified System.Environment as Env
-import qualified Text.Read
+import qualified Reflex.Dom.Core as R
+-- Import patch
+import qualified MyReflex.Dom.Xhr.FormData as R'
 
 import qualified Common.Api.User as User
+import qualified Common.File as File
 import Global
 
 showText :: Show s => s -> Text
@@ -89,3 +94,29 @@ lookupSetting env def = do
   case maybeEnv of
     Nothing -> pure def
     Just str -> maybe (pure . read . show $ str) pure (Text.Read.readMaybe str)
+
+formFile :: File.FileWithName -> R'.FormValue JSDOM.Types.File
+formFile f = R'.FormValue_File (File.file f) (Just (File.name f))
+
+formBool :: Bool -> Text
+formBool True = "true"
+formBool False = "false"
+
+-- | Make posting forms less awkward. Send a single map of params return the response as text.
+postForm
+  :: forall t m.
+     ( R.MonadHold t m
+     , R.HasJSContext (R.Performable m)
+     , JS.MonadJSM (R.Performable m)
+     , R.PerformEvent t m
+     , R.TriggerEvent t m
+     )
+  => Text
+  -> R.Event t (Map Text (R'.FormValue JSDOM.Types.File))
+  -> m (R.Event t Text)
+postForm url formData = do
+  formDatas :: R.Event t [Map Text (R'.FormValue JSDOM.Types.File)] <- R.performEvent
+    $ R.ffor formData $ \fd -> return [fd]
+  responses <- R'.postForms url formDatas
+  let results :: R.Event t [Maybe Text] = map (Lens.view R.xhrResponse_responseText) <$> responses
+  return $ T.concat . map (maybe "" id) <$> results

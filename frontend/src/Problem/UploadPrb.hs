@@ -33,12 +33,12 @@ widget = do
       <> "class" =: "hidden"
       )
     return fi1
-  readFileContents
+  readFileContent
     . R.fmapMaybe id
     . R.updated
     $ Util.headMay <$> R._inputElement_files fi
 
-readFileContents
+readFileContent
   :: forall t m.
      ( JS.MonadJSM m
      , R.TriggerEvent t m
@@ -48,7 +48,7 @@ readFileContents
      )
   => R.Event t JSDOM.Types.File
   -> m (R.Event t Text)
-readFileContents file = do
+readFileContent file = do
   fr <- JS.liftJSM FileReader.newFileReader
   R.performEvent_ (fmap (\f -> FileReader.readAsText fr (Just f) (Just "utf8" :: Maybe Text)) file)
   e :: R.Event t (Maybe Text) <- R.wrapDomEvent fr (`EventM.on` FileReader.load) . JS.liftJSM $ do

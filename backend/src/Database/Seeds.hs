@@ -109,7 +109,7 @@ load conn = do
          )
   void $ SQL.executeMany conn [SqlQQ.sql|
     INSERT INTO
-      problems(id, summary, contents, topic_id, author_id, created_at, updated_at)
+      problems(id, summary, content, topic_id, author_id, created_at, updated_at)
     VALUES
       (?,?,?,?,?,?,?)
   |]

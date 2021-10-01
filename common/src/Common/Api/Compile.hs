@@ -19,7 +19,6 @@ import Global
 
 data OutputOption = WithSolution | WithAnswer | WithSolutionAndAnswer | QuestionOnly
   deriving (Eq, Generic, JSON.FromJSON)
-
 instance Show OutputOption where
   show WithSolution = "flagSolutions"
   show WithAnswer = "flagAnswers"
@@ -27,19 +26,19 @@ instance Show OutputOption where
   show QuestionOnly = "flagQuestions"
 
 data Request = Request
-  { contents :: Text
+  { content :: Text
   , randomizeVariables :: Bool
   , outputOption :: OutputOption
   , figures :: [File.FileWithName]
   }
 
-data RequestParam = Contents | RandomizeVariables | OutputOption | Figures
+data RequestParam = ParamContent | ParamRandomizeVariables | ParamOutputOption | ParamFigures
   deriving (Eq, Ord)
 instance Show RequestParam where
-  show Contents = "contents"
-  show RandomizeVariables = "randomizeVariables"
-  show OutputOption = "outputOption"
-  show Figures = "figures"
+  show ParamContent = "content"
+  show ParamRandomizeVariables = "randomizeVariables"
+  show ParamOutputOption = "outputOption"
+  show ParamFigures = "figures"
 
 data Response = Response
   { resErrorIcemaker :: Text

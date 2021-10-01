@@ -16,9 +16,9 @@ import qualified Data.ByteString.Base64.URL as B64URL ( encode )
 import qualified Data.Text.Encoding as TE ( decodeUtf8 )
 import qualified Common.Route as Route
     ( Query, readParamFromQuery, textParamFromQuery )
-import qualified Common.Api.Problem as Problem ( Problem(..) )
-import qualified Common.Api.NewProblem as NewProblem
-    ( NewProblem(author_id, topic_id, contents, summary) )
+import qualified Common.Api.Problem as Problem
+    ( CreateProblem(cpAuthorId, cpTopicId, cpContent, cpSummary),
+      Problem(..) )
 import qualified Common.Api.Topic as Topic ( Topic(id, parent_id) )
 import qualified Common.Api.Register as Register
     ( Register(email, full_name, password) )
@@ -26,7 +26,7 @@ import qualified Common.Api.User as User ( User(..) )
 import qualified Common.Api.Role as Role ( Role(..) )
 import qualified Common.Api.Auth as Auth ( Auth(password, email) )
 import qualified Database.Types.Problem as DbProblem
-    ( Problem(updated_at, created_at, author_id, topic_id, contents,
+    ( Problem(updated_at, created_at, author_id, topic_id, content,
               summary, id) )
 import qualified Database.Types.User as DbUser
     ( User(password, verified, email, full_name, id, role_id) )

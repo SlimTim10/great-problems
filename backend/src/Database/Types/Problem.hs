@@ -13,7 +13,7 @@ import Global
 data Problem = Problem
   { id :: Integer
   , summary :: Text
-  , contents :: Text
+  , content :: Text
   , topic_id :: Integer
   , author_id :: Integer
   , created_at :: Time.UTCTime

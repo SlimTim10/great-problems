@@ -1,7 +1,7 @@
 module Database.Queries
   ( getProblems
   , getProblemById
-  , addProblem
+  , createProblem
   , getTopics
   , getTopicById
   , getRootTopics
@@ -30,7 +30,6 @@ import qualified Data.Text.Encoding as TE
 
 import qualified Common.Route as Route
 import qualified Common.Api.Problem as Problem
-import qualified Common.Api.NewProblem as NewProblem
 import qualified Common.Api.Topic as Topic
 import qualified Common.Api.Register as Register
 import qualified Common.Api.User as User
@@ -83,7 +82,7 @@ getProblems conn problemId routeQuery = do
         Problem.Problem
         { Problem.id = DbProblem.id dbProblem
         , Problem.summary = DbProblem.summary dbProblem
-        , Problem.contents = DbProblem.contents dbProblem
+        , Problem.content = DbProblem.content dbProblem
         , Problem.topic = Left $ DbProblem.topic_id dbProblem
         , Problem.author = Left $ DbProblem.author_id dbProblem
         , Problem.topicPath = Nothing
@@ -128,15 +127,15 @@ getProblemById :: SQL.Connection -> Integer -> Route.Query -> IO (Maybe Problem.
 getProblemById conn problemId routeQuery = Util.headMay
   <$> getProblems conn (Just problemId) routeQuery
 
-addProblem :: SQL.Connection -> NewProblem.NewProblem -> IO (Maybe Problem.Problem)
-addProblem conn newProblem = do
+createProblem :: SQL.Connection -> Problem.CreateProblem -> IO (Maybe Problem.Problem)
+createProblem conn newProblem = do
   mProblemId :: Maybe (SQL.Only Integer) <- Util.headMay
     <$> SQL.query conn
-    "INSERT INTO problems(summary, contents, topic_id, author_id) VALUES (?,?,?,?) returning id"
-    ( NewProblem.summary newProblem
-    , NewProblem.contents newProblem
-    , NewProblem.topic_id newProblem
-    , NewProblem.author_id newProblem
+    "INSERT INTO problems(summary, content, topic_id, author_id) VALUES (?,?,?,?) returning id"
+    ( Problem.cpSummary newProblem
+    , Problem.cpContent newProblem
+    , Problem.cpTopicId newProblem
+    , Problem.cpAuthorId newProblem
     )
   flip (maybe (pure Nothing))
     (SQL.fromOnly <$> mProblemId)
