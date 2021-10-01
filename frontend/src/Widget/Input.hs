@@ -3,7 +3,9 @@ module Widget.Input
   , emailClass
   , passwordClass
   , textAreaClass
+  , textAreaClass'
   , dropdownClass
+  , dropdownClass'
   , checkboxClass
   ) where
 
@@ -54,8 +56,21 @@ textAreaClass
   => Text -- ^ Style
   -> m (R.Dynamic t Text)
 textAreaClass c = fmap R.value $ R.textAreaElement $
-  R.def & R.textAreaElementConfig_elementConfig . R.elementConfig_initialAttributes .~
+  R.def
+  & R.textAreaElementConfig_elementConfig . R.elementConfig_initialAttributes .~
   ("class" =: c)
+
+textAreaClass'
+  :: forall t m.
+     ( R.DomBuilder t m
+     )
+  => Text -- ^ Style
+  -> R.Event t Text -- ^ Set value
+  -> m (R.Dynamic t Text)
+textAreaClass' c setValue = fmap R.value $ R.textAreaElement $
+  R.def
+  & R.textAreaElementConfig_elementConfig . R.elementConfig_initialAttributes .~ ("class" =: c)
+  & R.textAreaElementConfig_setValue .~ setValue
 
 dropdownClass
   :: forall t m k.
@@ -73,6 +88,26 @@ dropdownClass c k0 options = do
   fmap R.value $ R.dropdown k0 options $
     R.def & R.dropdownConfig_attributes .~
     R.constDyn ("class" =: c)
+
+dropdownClass'
+  :: forall t m k.
+     ( R.DomBuilder t m
+     , MonadFix m
+     , R.MonadHold t m
+     , R.PostBuild t m
+     , Ord k
+     )
+  => Text -- ^ Style
+  -> k -- ^ Default option selected
+  -> R.Dynamic t (Map k Text) -- ^ Options
+  -> R.Event t k -- ^ Set value
+  -> m (R.Dynamic t k) 
+dropdownClass' c k0 options setValue = do
+  fmap R.value $ R.dropdown k0 options $
+    R.def
+    & R.dropdownConfig_attributes .~ R.constDyn ("class" =: c)
+    & R.dropdownConfig_setValue .~ setValue
+    
 
 checkboxClass
   :: forall t m.

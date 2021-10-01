@@ -80,9 +80,8 @@ frontend = Ob.Frontend
           R.elClass "div" "flex-none"
             Header.widget
           R.elClass "div" "flex-1 mx-2 flex justify-center" $ do
-            Problem.widget
+            Problem.widget Nothing
       Route.FrontendRoute_Problems -> do
-        Header.widget
         path :: R.Dynamic t (Integer, Ob.R Route.ProblemsRoute) <- Ob.askRoute
         Util.dynFor path $ \(problemId, route) -> do
           case route of
@@ -90,8 +89,11 @@ frontend = Ob.Frontend
               R.el "p" $ R.text "View problem"
               R.el "p" $ R.text (cs . show $ problemId)
             Route.ProblemsRoute_Edit :/ () -> do
-              R.el "p" $ R.text "Edit problem"
-              R.el "p" $ R.text (cs . show $ problemId)
+              R.elClass "div" "h-screen flex flex-col gap-3" $ do
+                R.elClass "div" "flex-none"
+                  Header.widget
+                R.elClass "div" "flex-1 mx-2 flex justify-center" $ do
+                  Problem.widget $ Just problemId
             _ -> pure () -- Type refinement through unification
       Route.FrontendRoute_ViewProblemSet -> do
         Header.widget

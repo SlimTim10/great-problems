@@ -25,7 +25,7 @@ import qualified Reflex.Dom.Core as R
       decodeText,
       MonadHold(holdDyn),
       MonadSample(..),
-      Reflex(current, updated, Event, Dynamic),
+      Reflex(current, never, updated, Dynamic, Event),
       PerformEvent(performEvent, Performable),
       PostBuild,
       TickInfo,
@@ -53,7 +53,8 @@ import qualified Common.Api.Problem as Problem
       UpdateProblem(upAuthorId, upTopicId, upContent, upSummary,
                     upProblemId),
       CreateProblem(..),
-      Problem(id) )
+      Problem(content, id, summary, topic) )
+import qualified Common.Api.Topic as Topic ( Topic(id) )
 import qualified Common.Api.User as User ( User(id) )
 import qualified Problem.SelectTopic as SelectTopic ( widget )
 import qualified Problem.Summary as Summary ( widget )
@@ -67,6 +68,7 @@ import qualified Problem.DownloadPrb as DownloadPrb ( widget )
 import qualified Widget.Button as Button
     ( primaryClass', primarySmallClass' )
 import qualified Widget.Input as Input ( checkboxClass )
-import qualified Util ( getCurrentUser, formFile, postForm )
+import qualified Util
+    ( getOnload, getCurrentUser, formFile, postForm )
 import Global
     ( MonadFix, Text, Map, fromMaybe, (&), (.~), cs, (:/), (=:) )

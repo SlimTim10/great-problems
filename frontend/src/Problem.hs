@@ -17,6 +17,7 @@ import qualified Common.File
 import qualified Common.Api.Compile as Compile
 import qualified Common.Api.Error as Error
 import qualified Common.Api.Problem as Problem
+import qualified Common.Api.Topic as Topic
 import qualified Common.Api.User as User
 import qualified Problem.SelectTopic as SelectTopic
 import qualified Problem.Summary as Summary
@@ -55,19 +56,29 @@ widget
      , Ob.SetRoute t (Ob.R Route.FrontendRoute) m
      , R.Prerender js t m
      )
-  => m ()
-widget = mdo
+  => Maybe Integer
+  -> m ()
+widget problemId = mdo
+  preloadedProblem :: R.Dynamic t (Maybe Problem.Problem) <- do
+    response :: R.Event t (Maybe Problem.Problem) <- case problemId of
+      Nothing -> return R.never
+      Just pid -> do
+        Util.getOnload
+          $ Route.apiHref $ Route.Api_Problems :/ (Just pid, mempty)
+    R.holdDyn Nothing response
+  
   ( figures
     , randomizeVariablesAction
     , resetVariablesAction
     , showAnswerAction
     , showSolutionAction
     , outputOption
-    ) <- leftPane editorContent
+    ) <- leftPane preloadedProblem editorContent
     
   ( editorContent
     , compileButtonAction
     ) <- mainPane
+    preloadedProblem
     figures
     latestResponse
     anyLoading
@@ -97,12 +108,19 @@ widget = mdo
   return ()
 
   where
-    leftPane editorContent = do
+    leftPane preloadedProblem editorContent = do
       R.elClass "div" "w-96 flex-none flex flex-col pr-2 border-r border-brand-light-gray" $ mdo
+        let setTopicId :: R.Event t Integer =
+              fromMaybe 0
+              . fmap (either id Topic.id . Problem.topic)
+              <$> R.updated preloadedProblem
         selectedTopicId :: R.Dynamic t Integer <- R.elClass "div" "pb-3 border-b border-brand-light-gray"
-          $ SelectTopic.widget
+          $ SelectTopic.widget setTopicId
+        let setSummaryValue :: R.Event t Text = fromMaybe "" . fmap Problem.summary
+              <$> R.updated preloadedProblem
         summary :: R.Dynamic t Text <- R.elClass "div" "py-3 border-b border-brand-light-gray"
-          $ Summary.widget
+          $ Summary.widget setSummaryValue
+              
         ( randomizeVariablesAction
           , resetVariablesAction
           , showAnswerAction
@@ -249,12 +267,15 @@ widget = mdo
             return (showAnswerAction', showSolutionAction', outputOption')
         return (randomizeVariablesAction, resetVariablesAction, showAnswerAction, showSolutionAction, outputOption)
 
-    mainPane figures latestResponse anyLoading outputOption = do
+    mainPane preloadedProblem figures latestResponse anyLoading outputOption = do
       R.elClass "div" "pl-2 flex-1 h-full flex flex-col" $ mdo
         (uploadPrb, compileButtonAction, errorsToggle) <-
           upperPane editorContent figures outputOption latestResponse anyLoading
+        let contentFromPreloadedProblem :: R.Event t Text = fromMaybe "" . fmap Problem.content
+              <$> R.updated preloadedProblem
+        let setContentValue = R.leftmost [contentFromPreloadedProblem, uploadPrb]
         editorContent <- R.elClass "div" "h-full flex" $ do
-          editorContent' :: R.Dynamic t Text <- R.elClass "div" "flex-1" $ Editor.widget uploadPrb
+          editorContent' :: R.Dynamic t Text <- R.elClass "div" "flex-1" $ Editor.widget setContentValue
           R.elClass "div" "flex-1" $ PdfViewer.widget latestResponse anyLoading errorsToggle
           return editorContent'
         return (editorContent, compileButtonAction)
