@@ -156,18 +156,32 @@ widget problemId = mdo
           . fromMaybe 0
           . fmap User.id
           =<< Util.getCurrentUser
-        let createProblem :: R.Dynamic t Problem.CreateProblem = Problem.CreateProblem
-              <$> summary
-              <*> editorContent
-              <*> selectedTopicId
-              <*> userId
-        let e :: R.Event t Problem.CreateProblem = R.tagPromptlyDyn createProblem publish
-
-        let createProblemRequest :: R.Dynamic t Problem.RequestSave = Problem.RequestSave
-              <$> (Left <$> createProblem)
-              <*> figures
+          
+        let saveProblemRequest :: R.Dynamic t Problem.RequestSave = case problemId of
+              Nothing -> Problem.RequestSave
+                <$> (
+                fmap Left
+                  $ Problem.CreateProblem
+                  <$> summary
+                  <*> editorContent
+                  <*> selectedTopicId
+                  <*> userId
+                )
+                <*> figures
+              Just pid -> Problem.RequestSave
+                <$> (
+                fmap Right
+                  $ Problem.UpdateProblem
+                  <$> R.constDyn pid
+                  <*> summary
+                  <*> editorContent
+                  <*> selectedTopicId
+                  <*> userId
+                )
+                <*> figures
+              
         formData :: R.Event t (Map Text (R'.FormValue JSDOM.Types.File)) <- R.performEvent
-          $ R.ffor (R.tagPromptlyDyn createProblemRequest e) $ \req -> do
+          $ R.ffor (R.tagPromptlyDyn saveProblemRequest publish) $ \req -> do
           let
             formDataParams :: Map Problem.RequestParam (R'.FormValue JSDOM.Types.File) =
               case Problem.rsProblem req of
