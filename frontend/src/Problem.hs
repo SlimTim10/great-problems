@@ -129,8 +129,8 @@ widget = mdo
           <$> publishResponse
         savingMessage :: R.Event t (m ()) <- R.performEvent $ R.ffor publish $ \_ -> do
           return $ R.el "p" $ R.text "Saving..."
-        void $ R.dyn_
-          <$> R.holdDyn R.blank (R.leftmost [savingMessage, R.updated publishMessage])
+        message <- R.holdDyn R.blank $ R.leftmost [savingMessage, R.updated publishMessage]
+        R.dyn_ message
 
         userId :: R.Dynamic t Integer <-
           pure
