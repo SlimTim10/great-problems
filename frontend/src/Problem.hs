@@ -110,6 +110,15 @@ widget problemId = mdo
   where
     leftPane preloadedProblem editorContent = do
       R.elClass "div" "w-96 flex-none flex flex-col pr-2 border-r border-brand-light-gray" $ mdo
+        when (isJust problemId) $ do
+          R.elClass "div" "pb-3 border-b border-brand-light-gray" $ do
+            R.elClass "p" "font-medium mb-2" $ R.text "View"
+            Ob.routeLink
+              (Route.FrontendRoute_Problems :/
+                (fromJust problemId, Route.ProblemsRoute_View :/ ())) $ do
+              R.elClass "p" "text-brand-primary font-medium hover:underline" $ do
+                R.text "Click here to view this problem"
+          R.elClass "div" "pb-3" R.blank
         let setTopicId :: R.Event t Integer =
               fromMaybe 0
               . fmap (either id Topic.id . Problem.topic)
@@ -131,23 +140,25 @@ widget problemId = mdo
           $ Figures.widget
         publish :: R.Event t () <- R.elClass "div" "py-3" $ do
           Button.primaryClass' "Save & Publish" "w-full active:bg-blue-400"
-        publishMessage <- R.holdDyn R.blank $ \case
+        let isEditing = isJust problemId
+        finishMessage <- R.holdDyn R.blank $ saveResponse <&> \case
           Nothing -> R.elClass "p" "text-red-500" $ R.dynText errorMessage
-          Just publishedProblem -> do
-            R.el "p" $ R.text "Published!"
-            Ob.routeLink
-              (Route.FrontendRoute_Problems :/
-                (Problem.id publishedProblem, Route.ProblemsRoute_View :/ ())) $ do
-              R.elClass "p" "text-brand-primary font-medium hover:underline" $ do
-                R.text "Click here to view your published problem"
-            timer :: R.Event t R.TickInfo <- R.tickLossyFromPostBuildTime 0.01
-            Ob.setRoute $ do
-              (Route.FrontendRoute_Problems :/
-               (Problem.id publishedProblem, Route.ProblemsRoute_Edit :/ ())) <$ timer
-          <$> publishResponse
+          Just savedProblem -> case isEditing of
+            True -> R.elClass "p" "text-green-600" $ R.text "Saved!"
+            False -> do
+              R.el "p" $ R.text "Published!"
+              Ob.routeLink
+                (Route.FrontendRoute_Problems :/
+                  (Problem.id savedProblem, Route.ProblemsRoute_View :/ ())) $ do
+                R.elClass "p" "text-brand-primary font-medium hover:underline" $ do
+                  R.text "Click here to view your published problem"
+              timer :: R.Event t R.TickInfo <- R.tickLossyFromPostBuildTime 0.01
+              Ob.setRoute $ do
+                (Route.FrontendRoute_Problems :/
+                 (Problem.id savedProblem, Route.ProblemsRoute_Edit :/ ())) <$ timer
         savingMessage <- R.performEvent $ R.ffor publish $ \_ -> do
           return $ R.el "p" $ R.text "Saving..."
-        message <- R.holdDyn R.blank $ R.leftmost [savingMessage, R.updated publishMessage]
+        message <- R.holdDyn R.blank $ R.leftmost [savingMessage, R.updated finishMessage]
         R.dyn_ message
 
         userId :: R.Dynamic t Integer <-
@@ -210,7 +221,7 @@ widget problemId = mdo
         response :: R.Event t Text <- Util.postForm
           (Route.apiHref $ Route.Api_Problems :/ (Nothing, mempty))
           formData
-        let publishResponse :: R.Event t (Maybe Problem.Problem) = R.decodeText <$> response
+        let saveResponse :: R.Event t (Maybe Problem.Problem) = R.decodeText <$> response
         let errorResponse :: R.Event t (Maybe Error.Error) = R.decodeText <$> response
         errorMessage :: R.Dynamic t Text <- R.holdDyn ""
           $ maybe "Something went wrong" Error.message <$> errorResponse

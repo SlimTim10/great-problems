@@ -1,6 +1,7 @@
 import Data.Text ( Text )
 import Data.Map ( Map )
-import Data.Maybe ( fromMaybe, isNothing, catMaybes )
+import Data.Maybe
+    ( fromMaybe, isNothing, isJust, catMaybes, fromJust )
 import Data.Bool ( bool )
 import Data.Traversable ( for )
 import Data.Functor ( (<&>) )

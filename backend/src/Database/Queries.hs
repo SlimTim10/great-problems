@@ -2,6 +2,7 @@ module Database.Queries
   ( getProblems
   , getProblemById
   , createProblem
+  , updateProblem
   , getTopics
   , getTopicById
   , getRootTopics
@@ -136,6 +137,20 @@ createProblem conn newProblem = do
     , Problem.cpContent newProblem
     , Problem.cpTopicId newProblem
     , Problem.cpAuthorId newProblem
+    )
+  flip (maybe (pure Nothing))
+    (SQL.fromOnly <$> mProblemId)
+    $ \problemId -> getProblemById conn problemId mempty
+
+updateProblem :: SQL.Connection -> Problem.UpdateProblem -> IO (Maybe Problem.Problem)
+updateProblem conn problem = do
+  mProblemId :: Maybe (SQL.Only Integer) <- Util.headMay
+    <$> SQL.query conn
+    "UPDATE problems SET (summary, content, topic_id, updated_at) = (?, ?, ?, DEFAULT) WHERE id = ? returning id"
+    ( Problem.upSummary problem
+    , Problem.upContent problem
+    , Problem.upTopicId problem
+    , Problem.upProblemId problem
     )
   flip (maybe (pure Nothing))
     (SQL.fromOnly <$> mProblemId)

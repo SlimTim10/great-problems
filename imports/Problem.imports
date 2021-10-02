@@ -72,4 +72,16 @@ import qualified Widget.Input as Input ( checkboxClass )
 import qualified Util
     ( getOnload, getCurrentUser, formFile, postForm )
 import Global
-    ( MonadFix, Text, Map, fromMaybe, (&), (.~), cs, (:/), (=:) )
+    ( MonadFix,
+      when,
+      Text,
+      Map,
+      fromMaybe,
+      fromJust,
+      isJust,
+      (<&>),
+      (&),
+      (.~),
+      cs,
+      (:/),
+      (=:) )

@@ -213,6 +213,7 @@ handleSaveProblem conn user = do
                       , Problem.cpTopicId = read . cs $ topicId
                       , Problem.cpAuthorId = read . cs $ authorId
                       }
+                -- TODO: save problem figures too
                 writeJSON =<< IO.liftIO (Queries.createProblem conn newProblem)
             | otherwise -> do
                 let updateProblem = Problem.UpdateProblem
@@ -222,9 +223,8 @@ handleSaveProblem conn user = do
                       , Problem.upTopicId = read . cs $ topicId
                       , Problem.upAuthorId = read . cs $ authorId
                       }
-                -- TODO: implement updateProblem
-                -- writeJSON =<< IO.liftIO (Queries.updateProblem conn newProblem)
-                return ()
+                -- TODO: save problem figures too
+                writeJSON =<< IO.liftIO (Queries.updateProblem conn updateProblem)
   -- Delete the uploaded files from the server
   IO.liftIO $ forM_ (map filePath fileUploads) $ \fp -> Dir.removeFile fp
 

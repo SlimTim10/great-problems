@@ -60,7 +60,8 @@ import qualified Database.Queries as Queries
       getUserByEmail,
       registerUser,
       verifyEmail,
-      newEmailVerification )
+      newEmailVerification,
+      updateProblem )
 import qualified Common.Api.User as User ( User(role, id) )
 import qualified Common.Api.Register as Register
     ( Register(password, email, full_name) )

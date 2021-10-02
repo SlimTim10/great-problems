@@ -17,7 +17,8 @@ import qualified Data.Text.Encoding as TE ( decodeUtf8 )
 import qualified Common.Route as Route
     ( Query, readParamFromQuery, textParamFromQuery )
 import qualified Common.Api.Problem as Problem
-    ( CreateProblem(cpAuthorId, cpTopicId, cpContent, cpSummary),
+    ( UpdateProblem(upProblemId, upTopicId, upContent, upSummary),
+      CreateProblem(cpAuthorId, cpTopicId, cpContent, cpSummary),
       Problem(..) )
 import qualified Common.Api.Topic as Topic ( Topic(id, parent_id) )
 import qualified Common.Api.Register as Register
