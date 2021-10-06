@@ -239,10 +239,6 @@ requestIcemakerCompileProblem
   -> [FileUpload] -- Files
   -> m LBS.ByteString
 requestIcemakerCompileProblem content mRandomizeVariables mOutputOption fileUploads = do
-  IO.liftIO $ print content -- DEBUG
-  IO.liftIO $ print mRandomizeVariables -- DEBUG
-  IO.liftIO $ print mOutputOption -- DEBUG
-  IO.liftIO $ print (length fileUploads) -- DEBUG
   let randomizeVariables = fromMaybe "false" mRandomizeVariables
   let outputOption = fromMaybe (cs . show $ Compile.QuestionOnly) mOutputOption
   response <- IO.liftIO $ Wreq.post
