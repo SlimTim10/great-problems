@@ -67,7 +67,7 @@ import qualified Problem.Compile ( widget, performRequest )
 import qualified Problem.UploadPrb as UploadPrb ( widget )
 import qualified Problem.DownloadPrb as DownloadPrb ( widget )
 import qualified Problem.Loading as Loading
-    ( WithLoading(WithLoading), anyLoading, latestAction )
+    ( WithLoading, anyLoading, latestAction )
 import qualified Widget.Button as Button
     ( primaryClass', primarySmallClass' )
 import qualified Widget.Input as Input ( checkboxClass )

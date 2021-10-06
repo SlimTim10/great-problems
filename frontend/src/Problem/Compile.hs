@@ -13,6 +13,7 @@ import qualified MyReflex.Dom.Xhr.FormData as R'
 import qualified Common.Route as Route
 import qualified Common.Api.Compile as Compile
 import qualified Widget.Button as Button
+import qualified Problem.Loading as Loading
 import qualified Util
 import Global
 
@@ -27,7 +28,7 @@ widget
      , MonadFix m
      )
   => R.Dynamic t Compile.Request
-  -> m (R.Dynamic t (Maybe Compile.Response, Bool)) -- ^ Response, loading
+  -> m (R.Dynamic t (Loading.WithLoading (Maybe Compile.Response))) -- ^ Response
 widget compileRequest = do
   compile :: R.Event t () <- Button.primarySmallClass' "Compile" "active:bg-blue-400"
   performRequest compile compileRequest
@@ -44,7 +45,7 @@ performRequest
      )
   => R.Event t () -- ^ Event to trigger request
   -> R.Dynamic t Compile.Request
-  -> m (R.Dynamic t (Maybe Compile.Response, Bool)) -- ^ Response, loading
+  -> m (R.Dynamic t (Loading.WithLoading (Maybe Compile.Response))) -- ^ Response
 performRequest e compileRequest = do
   formData :: R.Event t (Map Text (R'.FormValue JSDOM.Types.File)) <- R.performEvent
     $ R.ffor (R.tagPromptlyDyn compileRequest e) $ \req -> do
@@ -64,4 +65,4 @@ performRequest e compileRequest = do
   compileResponse :: R.Dynamic t (Maybe Compile.Response) <- R.holdDyn Nothing
     $ R.decodeText <$> response
   loading <- compileResponse `Util.updatedAfter` e
-  return $ R.zipDyn compileResponse loading
+  return $ Loading.WithLoading <$> compileResponse <*> loading

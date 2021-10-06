@@ -230,20 +230,18 @@ widget problemId = mdo
         (randomizeVariablesAction, resetVariablesAction) <- R.elClass "div" "flex gap-2 mb-2" $ do
           randomizeVariables :: R.Event t () <- Button.primarySmallClass' "Randomize variables" "active:bg-blue-400"
           randomizeVariablesAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-            (fmap . fmap $ uncurry Loading.WithLoading) $ do
-              Problem.Compile.performRequest randomizeVariables $ Compile.Request
-                <$> editorContent
-                <*> R.constDyn True
-                <*> outputOption
-                <*> figures
+            Problem.Compile.performRequest randomizeVariables $ Compile.Request
+              <$> editorContent
+              <*> R.constDyn True
+              <*> outputOption
+              <*> figures
           resetVariables :: R.Event t () <- Button.primarySmallClass' "Reset variables" "active:bg-blue-400"
           resetVariablesAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-            (fmap . fmap $ uncurry Loading.WithLoading) $ do
-              Problem.Compile.performRequest resetVariables $ Compile.Request
-                <$> editorContent
-                <*> R.constDyn False
-                <*> outputOption
-                <*> figures
+            Problem.Compile.performRequest resetVariables $ Compile.Request
+              <$> editorContent
+              <*> R.constDyn False
+              <*> outputOption
+              <*> figures
           return (randomizeVariablesAction', resetVariablesAction')
         (showAnswerAction, showSolutionAction, outputOption) <- R.elClass "div" "flex gap-4" $ do
           R.elClass "p" "font-medium text-brand-primary"
@@ -254,7 +252,6 @@ widget problemId = mdo
               "font-medium text-brand-primary cursor-pointer"
               "Answer"
             showAnswerAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-              (fmap . fmap $ uncurry Loading.WithLoading) $ do
               Problem.Compile.performRequest (R.updated $ const () <$> showAnswer) $ Compile.Request
                 <$> editorContent
                 <*> R.constDyn False
@@ -265,7 +262,6 @@ widget problemId = mdo
               "font-medium text-brand-primary cursor-pointer"
               "Solution"
             showSolutionAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-              (fmap . fmap $ uncurry Loading.WithLoading) $ do
               Problem.Compile.performRequest (R.updated $ const () <$> showSolution) $ Compile.Request
                 <$> editorContent
                 <*> R.constDyn False
@@ -309,13 +305,12 @@ widget problemId = mdo
                 & R.inputElementConfig_initialValue .~ "untitled"
               return uploadPrb
         compileButtonAction :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-          (fmap . fmap $ uncurry Loading.WithLoading) $ do
-            R.elClass "div" "flex-1 flex justify-center" $ do
-              Problem.Compile.widget $ Compile.Request
-                <$> editorContent
-                <*> R.constDyn False
-                <*> outputOption
-                <*> figures
+          R.elClass "div" "flex-1 flex justify-center" $ do
+            Problem.Compile.widget $ Compile.Request
+              <$> editorContent
+              <*> R.constDyn False
+              <*> outputOption
+              <*> figures
         errorsToggle :: R.Dynamic t Bool <- R.elClass "div" "flex-1 flex justify-center ml-auto" $ do
           R.elClass "span" "ml-auto" $ ErrorsToggle.widget latestResponse (R.updated anyLoading)
         return (uploadPrb, compileButtonAction, errorsToggle)

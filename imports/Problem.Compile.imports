@@ -3,7 +3,6 @@ import qualified JSDOM.Types ( File )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Reflex.Dom.Core as R
     ( ffor,
-      zipDyn,
       tagPromptlyDyn,
       decodeText,
       MonadHold(holdDyn),
@@ -21,6 +20,8 @@ import qualified Common.Api.Compile as Compile
       RequestParam(..),
       Request(figures, outputOption, randomizeVariables, content) )
 import qualified Widget.Button as Button ( primarySmallClass' )
+import qualified Problem.Loading as Loading
+    ( WithLoading(WithLoading) )
 import qualified Util
     ( formFile, formBool, postForm, updatedAfter )
 import Global ( MonadFix, Text, Map, cs, (:/), (=:) )
