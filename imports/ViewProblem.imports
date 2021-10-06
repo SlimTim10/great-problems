@@ -5,8 +5,6 @@ import qualified Data.CaseInsensitive as CI ( CI(original) )
 import qualified Reflex.Dom.Core as R
     ( constDyn,
       ffor,
-      zipDynWith,
-      count,
       tagPromptlyDyn,
       blank,
       dyn_,
@@ -41,5 +39,6 @@ import qualified Widget.Button as Button ( primarySmallClass' )
 import qualified Widget.Input as Input ( checkboxClass )
 import qualified Problem.Loading as Loading
     ( WithLoading(WithLoading), anyLoading, latestAction )
-import qualified Util ( getOnload, formBool, postForm )
+import qualified Util
+    ( getOnload, formBool, postForm, updatedAfter )
 import Global ( MonadFix, Text, Map, cs, (:/), (=:) )

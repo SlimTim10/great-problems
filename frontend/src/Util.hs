@@ -120,3 +120,17 @@ postForm url formData = do
   responses <- R'.postForms url formDatas
   let results :: R.Event t [Maybe Text] = map (Lens.view R.xhrResponse_responseText) <$> responses
   return $ T.concat . map (maybe "" id) <$> results
+
+-- | Create a new Dynamic that is true if the first supplied Dynamic has occurred since the supplied Event has occurred, otherwise false.
+updatedAfter
+  :: forall t m a b.
+     ( R.Reflex t
+     , R.MonadHold t m
+     , MonadFix m
+     )
+  => R.Dynamic t a
+  -> R.Event t b
+  -> m (R.Dynamic t Bool)
+updatedAfter dyn ev = R.zipDynWith
+  (\(bef :: Integer) (aft :: Integer) -> bef > 0 && aft > bef)
+  <$> R.count (R.updated dyn) <*> R.count ev

@@ -195,9 +195,5 @@ widget problemId = mdo
         formData
       compileResponse :: R.Dynamic t (Maybe Compile.Response) <- R.holdDyn Nothing
         $ R.decodeText <$> rawCompileResponse
-      -- The response is loading when the event has been triggered and the response has yet to update
-      loading :: R.Dynamic t Bool <- R.zipDynWith
-        (\(x :: Integer) (y :: Integer) -> x > 0 && x > y)
-        <$> R.count e <*> R.count (R.updated compileResponse)
-      -- loading :: R.Dynamic t Bool <- Util.updatedAfter compileResponse e
+      loading :: R.Dynamic t Bool <- compileResponse `Util.updatedAfter` e
       return $ Loading.WithLoading <$> compileResponse <*> loading

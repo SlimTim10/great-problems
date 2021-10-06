@@ -63,8 +63,5 @@ performRequest e compileRequest = do
     formData
   compileResponse :: R.Dynamic t (Maybe Compile.Response) <- R.holdDyn Nothing
     $ R.decodeText <$> response
-  -- The response is loading when the event has been triggered and the response has yet to update
-  loading <- R.zipDynWith
-    (\(x :: Integer) (y :: Integer) -> x > 0 && x > y)
-    <$> R.count e <*> R.count (R.updated compileResponse)
+  loading <- compileResponse `Util.updatedAfter` e
   return $ R.zipDyn compileResponse loading

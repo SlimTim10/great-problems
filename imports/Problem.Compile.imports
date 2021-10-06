@@ -4,12 +4,10 @@ import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Reflex.Dom.Core as R
     ( ffor,
       zipDyn,
-      zipDynWith,
-      count,
       tagPromptlyDyn,
       decodeText,
       MonadHold(holdDyn),
-      Reflex(updated, Dynamic, Event),
+      Reflex(Dynamic, Event),
       PerformEvent(performEvent, Performable),
       TriggerEvent,
       HasJSContext,
@@ -23,5 +21,6 @@ import qualified Common.Api.Compile as Compile
       RequestParam(..),
       Request(figures, outputOption, randomizeVariables, content) )
 import qualified Widget.Button as Button ( primarySmallClass' )
-import qualified Util ( formFile, formBool, postForm )
+import qualified Util
+    ( formFile, formBool, postForm, updatedAfter )
 import Global ( MonadFix, Text, Map, cs, (:/), (=:) )
