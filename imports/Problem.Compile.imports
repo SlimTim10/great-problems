@@ -23,5 +23,5 @@ import qualified Widget.Button as Button ( primarySmallClass' )
 import qualified Problem.Loading as Loading
     ( WithLoading(WithLoading) )
 import qualified Util
-    ( formFile, formBool, postForm, updatedAfter )
+    ( formFile, formBool, postForm, notUpdatedSince )
 import Global ( MonadFix, Text, Map, cs, (:/), (=:) )

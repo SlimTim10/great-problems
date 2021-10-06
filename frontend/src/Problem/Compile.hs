@@ -64,5 +64,5 @@ performRequest e compileRequest = do
     formData
   compileResponse :: R.Dynamic t (Maybe Compile.Response) <- R.holdDyn Nothing
     $ R.decodeText <$> response
-  loading <- compileResponse `Util.updatedAfter` e
+  loading <- compileResponse `Util.notUpdatedSince` e
   return $ Loading.WithLoading <$> compileResponse <*> loading

@@ -2,6 +2,8 @@ import qualified Data.Map as Map ( mapKeys )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified JSDOM.Types ( File )
 import qualified Data.CaseInsensitive as CI ( CI(original) )
+import qualified Obelisk.Route.Frontend as Ob
+    ( R, routeLink, RouteToUrl, SetRoute )
 import qualified Reflex.Dom.Core as R
     ( constDyn,
       ffor,
@@ -18,11 +20,14 @@ import qualified Reflex.Dom.Core as R
       PostBuild(..),
       TriggerEvent,
       HasJSContext,
-      DomBuilder )
+      DomBuilder,
+      Prerender )
 import qualified MyReflex.Dom.Xhr.FormData as R'
     ( FormValue(FormValue_Text) )
 import qualified Common.Route as Route
-    ( Api(Api_Problems, Api_Compile), apiHref )
+    ( FrontendRoute(FrontendRoute_Explore),
+      Api(Api_Problems, Api_Compile),
+      apiHref )
 import qualified Common.Api.Compile as Compile
     ( Response,
       RequestParam(ParamOutputOption, ParamRandomizeVariables),
@@ -35,10 +40,11 @@ import qualified Common.Api.Problem as Problem
       getParamsToRouteQuery )
 import qualified Common.Api.User as User ( User(fullName) )
 import qualified Problem.PdfViewer as PdfViewer ( widget )
-import qualified Widget.Button as Button ( primarySmallClass' )
+import qualified Widget.Button as Button
+    ( secondarySmall, primarySmallClass' )
 import qualified Widget.Input as Input ( checkboxClass )
 import qualified Problem.Loading as Loading
     ( WithLoading(WithLoading), anyLoading, latestAction )
 import qualified Util
-    ( getOnload, formBool, postForm, updatedAfter )
+    ( getOnload, formBool, postForm, notUpdatedSince )
 import Global ( MonadFix, Text, Map, cs, (:/), (=:) )

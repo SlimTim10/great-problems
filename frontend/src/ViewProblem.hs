@@ -6,7 +6,7 @@ import qualified Data.Map as Map
 import qualified Language.Javascript.JSaddle as JS
 import qualified JSDOM.Types
 import qualified Data.CaseInsensitive as CI
--- import qualified Obelisk.Route.Frontend as Ob
+import qualified Obelisk.Route.Frontend as Ob
 import qualified Reflex.Dom.Core as R
 -- Import patch
 import qualified MyReflex.Dom.Xhr.FormData as R'
@@ -23,7 +23,7 @@ import qualified Util
 import Global
 
 widget
-  :: forall t m.
+  :: forall t m js.
      ( R.DomBuilder t m
      , R.PostBuild t m
      , R.MonadHold t m
@@ -34,6 +34,9 @@ widget
      , R.PerformEvent t m
      , R.TriggerEvent t m
      , R.MonadSample t (R.Performable m)
+     , Ob.SetRoute t (Ob.R Route.FrontendRoute) m
+     , Ob.RouteToUrl (Ob.R Route.FrontendRoute) m
+     , R.Prerender js t m
      )
   => Integer
   -> m ()
@@ -153,6 +156,9 @@ widget problemId = mdo
                      (True, True) -> Compile.WithSolutionAndAnswer
                 ) <$> showAnswer <*> showSolution
           return (showAnswerAction', showSolutionAction', outputOption')
+      R.elClass "div" "pt-3 border-t border-brand-light-gray" $ do
+        Ob.routeLink (Route.FrontendRoute_Explore :/ Nothing) $ do
+          Button.secondarySmall "Edit this problem"
       return
         ( randomizeVariablesAction
         , resetVariablesAction
@@ -195,5 +201,5 @@ widget problemId = mdo
         formData
       compileResponse :: R.Dynamic t (Maybe Compile.Response) <- R.holdDyn Nothing
         $ R.decodeText <$> rawCompileResponse
-      loading :: R.Dynamic t Bool <- compileResponse `Util.updatedAfter` e
+      loading :: R.Dynamic t Bool <- compileResponse `Util.notUpdatedSince` e
       return $ Loading.WithLoading <$> compileResponse <*> loading

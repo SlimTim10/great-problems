@@ -107,7 +107,7 @@ widget problemId = mdo
               (Route.FrontendRoute_Problems :/
                 (fromJust problemId, Route.ProblemsRoute_View :/ ())) $ do
               R.elClass "p" "text-brand-primary font-medium hover:underline" $ do
-                R.text "Click here to view this problem"
+                Button.secondarySmall "Public view of this problem"
           R.elClass "div" "pb-3" R.blank
         let setTopicId :: R.Event t Integer =
               fromMaybe 0

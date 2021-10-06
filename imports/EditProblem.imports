@@ -69,7 +69,7 @@ import qualified Problem.DownloadPrb as DownloadPrb ( widget )
 import qualified Problem.Loading as Loading
     ( WithLoading, anyLoading, latestAction )
 import qualified Widget.Button as Button
-    ( primaryClass', primarySmallClass' )
+    ( primaryClass', secondarySmall, primarySmallClass' )
 import qualified Widget.Input as Input ( checkboxClass )
 import qualified Util
     ( getOnload, getCurrentUser, formFile, postForm )

@@ -122,7 +122,7 @@ postForm url formData = do
   return $ T.concat . map (maybe "" id) <$> results
 
 -- | Create a new Dynamic that is true if the first supplied Dynamic has occurred since the supplied Event has occurred, otherwise false.
-updatedAfter
+updatedSince
   :: forall t m a b.
      ( R.Reflex t
      , R.MonadHold t m
@@ -131,6 +131,17 @@ updatedAfter
   => R.Dynamic t a
   -> R.Event t b
   -> m (R.Dynamic t Bool)
-updatedAfter dyn ev = R.zipDynWith
-  (\(bef :: Integer) (aft :: Integer) -> bef > 0 && aft > bef)
-  <$> R.count (R.updated dyn) <*> R.count ev
+updatedSince d e = R.zipDynWith
+  (\(x :: Integer) (y :: Integer) -> x >= y)
+  <$> R.count (R.updated d) <*> R.count e
+
+notUpdatedSince
+  :: forall t m a b.
+     ( R.Reflex t
+     , R.MonadHold t m
+     , MonadFix m
+     )
+  => R.Dynamic t a
+  -> R.Event t b
+  -> m (R.Dynamic t Bool)
+notUpdatedSince d e = fmap not <$> updatedSince d e
