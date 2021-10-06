@@ -24,8 +24,8 @@ import qualified Reflex.Dom.Core as R
       text,
       decodeText,
       MonadHold(holdDyn),
-      MonadSample(..),
-      Reflex(current, never, updated, Dynamic, Event),
+      MonadSample,
+      Reflex(never, updated, Dynamic, Event),
       PerformEvent(performEvent, Performable),
       PostBuild,
       TickInfo,
@@ -66,6 +66,8 @@ import qualified Problem.PdfViewer as PdfViewer ( widget )
 import qualified Problem.Compile ( widget, performRequest )
 import qualified Problem.UploadPrb as UploadPrb ( widget )
 import qualified Problem.DownloadPrb as DownloadPrb ( widget )
+import qualified Problem.Loading as Loading
+    ( WithLoading(WithLoading), anyLoading, latestAction )
 import qualified Widget.Button as Button
     ( primaryClass', primarySmallClass' )
 import qualified Widget.Input as Input ( checkboxClass )

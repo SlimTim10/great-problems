@@ -48,7 +48,7 @@ widget = R.elClass "header" "h-14 py-2 px-3 flex items-center justify-between bo
               Ob.routeLink (Route.FrontendRoute_NewProblem :/ ()) $ do
                 Button.primary "Contribute"
           Ob.routeLink (Route.FrontendRoute_Profile :/ ()) $ do
-            R.elClass "p" "font-medium mr-2" $ R.text $ CI.original $ User.full_name user
+            R.elClass "p" "font-medium mr-2" $ R.text $ CI.original $ User.fullName user
       Nothing -> do
         R.elClass "span" "pr-2" $ do
           Ob.routeLink (Route.FrontendRoute_Register :/ ()) $ do

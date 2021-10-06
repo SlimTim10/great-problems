@@ -16,7 +16,8 @@ import qualified Common.Route as Route
       TopicsRoute(..),
       ExploreRoute(..),
       FrontendRoute(..) )
-import qualified Problem ( widget )
+import qualified ViewProblem ( widget )
+import qualified EditProblem ( widget )
 import qualified Home ( widget )
 import qualified Header ( widget )
 import qualified Topics ( widget )
@@ -29,4 +30,4 @@ import qualified SignIn ( widget )
 import qualified SignOut ( widget )
 import qualified Profile ( widget )
 import qualified Util ( dynFor )
-import Global ( Text, cs, (:/), (=:) )
+import Global ( Text, (:/), (=:) )

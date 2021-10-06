@@ -164,7 +164,7 @@ getTopicById conn topicId = Util.headMay
   <$> SQL.query conn "SELECT * FROM topics WHERE id = ?" (SQL.Only topicId)
 
 getParentTopic :: SQL.Connection -> Topic.Topic -> IO (Maybe Topic.Topic)
-getParentTopic conn topic = case Topic.parent_id topic of
+getParentTopic conn topic = case Topic.parentId topic of
   Nothing -> return Nothing
   Just parentId -> Util.headMay <$> SQL.query conn "SELECT * FROM topics WHERE id = ?" (SQL.Only parentId)
 
@@ -178,7 +178,7 @@ getTopicsByParentId conn parentId = SQL.query conn "SELECT * FROM topics WHERE p
 -- For example, given the topic Limits, return [Mathematics, Calculus, Limits].
 getTopicPath :: SQL.Connection -> Topic.Topic -> IO [Topic.Topic]
 getTopicPath conn topic
-  | isNothing (Topic.parent_id topic) = return [topic]
+  | isNothing (Topic.parentId topic) = return [topic]
   | otherwise = do
       topicPath <- getParentTopic conn topic >>= \case
         Nothing -> return []
@@ -229,7 +229,7 @@ getTopicHierarchy conn topic = do
   where
     getSiblings :: Topic.Topic -> IO [Either Topic.Topic Topic.Topic]
     getSiblings t = do
-      xs <- case Topic.parent_id t of
+      xs <- case Topic.parentId t of
         Nothing -> SQL.query_ conn "SELECT * FROM topics WHERE parent_id IS NULL"
         Just pid -> SQL.query conn "SELECT * FROM topics WHERE parent_id = ?" (SQL.Only pid)
       return $ map (\x -> if x == t then Right x else Left x) xs
@@ -256,14 +256,14 @@ getUsers conn = do
     getRoleById conn (DbUser.role_id dbUser) >>= \case
       Nothing -> return $ User.User
         { User.id = DbUser.id dbUser
-        , User.full_name = DbUser.full_name dbUser
+        , User.fullName = DbUser.full_name dbUser
         , User.email = DbUser.email dbUser
         , User.role = Role.User
         , User.verified = DbUser.verified dbUser
         }
       Just role -> return $ User.User
         { User.id = DbUser.id dbUser
-        , User.full_name = DbUser.full_name dbUser
+        , User.fullName = DbUser.full_name dbUser
         , User.email = DbUser.email dbUser
         , User.role = role
         , User.verified = DbUser.verified dbUser
@@ -292,7 +292,7 @@ registerUser conn user = do
   mUserId :: Maybe (SQL.Only Integer) <- Util.headMay
     <$> SQL.query conn
     "INSERT INTO users(full_name, email, password, role_id) VALUES (?,?,?,?) returning id"
-    ( Register.full_name user
+    ( Register.fullName user
     , Register.email user
     , password
     , DbRole.id role
@@ -306,7 +306,7 @@ withRole dbUser mRole = do
   role <- mRole
   return User.User
     { User.id = DbUser.id dbUser
-    , User.full_name = DbUser.full_name dbUser
+    , User.fullName = DbUser.full_name dbUser
     , User.email = DbUser.email dbUser
     , User.role = role
     , User.verified = DbUser.verified dbUser

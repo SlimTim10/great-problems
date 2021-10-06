@@ -59,7 +59,7 @@ performRequest e compileRequest = do
     return formDataText
 
   response :: R.Event t Text <- Util.postForm
-    (Route.apiHref $ Route.Api_Compile :/ ())
+    (Route.apiHref $ Route.Api_Compile :/ Nothing)
     formData
   compileResponse :: R.Dynamic t (Maybe Compile.Response) <- R.holdDyn Nothing
     $ R.decodeText <$> response

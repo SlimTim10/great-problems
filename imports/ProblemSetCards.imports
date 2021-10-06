@@ -18,10 +18,10 @@ import qualified Reflex.Dom.Core as R
       Prerender )
 import qualified Common.Api.Topic as Topic ( Topic(Topic) )
 import qualified Common.Api.ProblemSet as ProblemSet
-    ( ProblemSet(summary, id, updated_at) )
+    ( ProblemSet(summary, id, updatedAt) )
 import qualified Common.Api.ProblemSetCard as ProblemSetCard
     ( ProblemSetCard(ProblemSetCard) )
-import qualified Common.Api.User as User ( User(full_name, id) )
+import qualified Common.Api.User as User ( User(fullName, id) )
 import qualified Common.Route as Route
     ( TopicsRoute(TopicsRoute_ProblemSets),
       FrontendRoute(FrontendRoute_ViewUser, FrontendRoute_ViewProblemSet,

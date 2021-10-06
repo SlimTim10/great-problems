@@ -13,7 +13,7 @@ import GHC.Generics (Generic)
 import Global
 
 data Register = Register
-  { full_name :: CI Text
+  { fullName :: CI Text
   , email :: CI Text
   , password :: Text
   } deriving

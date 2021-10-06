@@ -10,7 +10,10 @@ import qualified Database.PostgreSQL.Simple as SQL ( Connection )
 import qualified Network.Wreq as Wreq
     ( partFile, partText, post, responseBody, Part )
 import qualified Snap.Core as Snap
-    ( expireCookie,
+    ( Snap,
+      Cookie(Cookie, cookieValue),
+      MonadSnap,
+      expireCookie,
       getCookie,
       getRequest,
       modifyResponse,
@@ -19,15 +22,13 @@ import qualified Snap.Core as Snap
       addResponseCookie,
       rqPostParam,
       setHeader,
-      MonadSnap,
-      Snap,
-      Cookie(Cookie, cookieValue),
       Method(POST, GET),
       Request(rqMethod) )
 import qualified Snap.Util.FileUploads as Snap
     ( allowWithMaximumSize,
       defaultUploadPolicy,
       handleFileUploads,
+      handleMultipart,
       PartInfo(partFileName) )
 import qualified System.Directory as Dir
     ( createDirectoryIfMissing,
@@ -50,6 +51,7 @@ import qualified Database.Queries as Queries
     ( getProblems,
       getProblemById,
       createProblem,
+      updateProblem,
       getTopics,
       getTopicById,
       getRootTopics,
@@ -60,11 +62,10 @@ import qualified Database.Queries as Queries
       getUserByEmail,
       registerUser,
       verifyEmail,
-      newEmailVerification,
-      updateProblem )
+      newEmailVerification )
 import qualified Common.Api.User as User ( User(role, id) )
 import qualified Common.Api.Register as Register
-    ( Register(password, email, full_name) )
+    ( Register(password, email, fullName) )
 import qualified Common.Api.Role as Role
     ( Role(Moderator, Contributor) )
 import qualified Common.Api.OkResponse as OkResponse
@@ -83,7 +84,8 @@ import qualified Common.Api.Problem as Problem
       UpdateProblem(UpdateProblem, upAuthorId, upTopicId, upContent,
                     upSummary, upProblemId),
       CreateProblem(CreateProblem, cpAuthorId, cpTopicId, cpContent,
-                    cpSummary) )
+                    cpSummary),
+      Problem(content) )
 import qualified Auth
     ( Auth,
       AuthResult(Authenticated, Unverified, Indefinite),
@@ -100,6 +102,8 @@ import Global
       catMaybes,
       isNothing,
       (<&>),
+      void,
+      mfilter,
       forM_,
       (^.),
       cs,

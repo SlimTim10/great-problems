@@ -53,7 +53,7 @@ problemSetCardWidget
   => R.Dynamic t ProblemSetCard.ProblemSetCard
   -> m ()
 problemSetCardWidget problemSetCard = Util.dynFor problemSetCard $ \(ProblemSetCard.ProblemSetCard problemSet topics author) -> do
-  let updatedAt = show $ ProblemSet.updated_at problemSet
+  let updatedAt = show $ ProblemSet.updatedAt problemSet
   R.elClass "div" "p-2 border border-brand-light-gray flex flex-col gap-1" $ do
     R.elClass "div" "flex justify-between" $ do
       R.elClass "div" "flex" $ do
@@ -72,4 +72,4 @@ problemSetCardWidget problemSetCard = Util.dynFor problemSetCard $ \(ProblemSetC
       R.elClass "p" "text-brand-sm text-brand-gray mr-1" $ R.text "by"
       Ob.routeLink (Route.FrontendRoute_ViewUser :/ (User.id author)) $ do
         R.elClass "div" "hover:underline text-brand-sm text-brand-gray font-bold" $ do
-          R.text (CI.original $ User.full_name author)
+          R.text (CI.original $ User.fullName author)

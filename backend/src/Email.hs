@@ -39,7 +39,7 @@ sendEmailVerification user secret = do
     to = Wreq.partText "to" (CI.original $ User.email user)
     subject = Wreq.partText
       "subject"
-      ("Hi " <> (CI.original $ User.full_name user) <> ", please verify your Great Problems account")
+      ("Hi " <> (CI.original $ User.fullName user) <> ", please verify your Great Problems account")
     body = Wreq.partText "template" "email_verification"
     templateLink = Wreq.partText "v:link" link
   let opts = Wreq.defaults

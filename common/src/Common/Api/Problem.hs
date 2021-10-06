@@ -33,9 +33,9 @@ data Problem = Problem
   )
 
 data GetParams = GetParams
-  { gpExpand :: Maybe [Text]
-  , gpInclude :: Maybe GetParamInclude
-  , gpTopic :: Maybe Integer
+  { gpExpand :: Maybe [Text] -- Expand topic or author (instead of only IDs)
+  , gpInclude :: Maybe GetParamInclude -- Include extra information
+  , gpTopic :: Maybe Integer -- Filter by topic ID
   }
 
 data GetParamInclude = TopicPath

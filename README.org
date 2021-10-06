@@ -45,8 +45,100 @@ $ ob repl
 #+END_SRC
 This will create the empty tables (dropping if they exist) and insert the seeds.
 
+*** Setting up S3 for files
+
+- Create an [[https://www.linode.com/docs/products/storage/object-storage/get-started/][Object Storage bucket with Linode]]
+- [[https://www.linode.com/docs/products/storage/object-storage/guides/s3cmd/][Install and configure s3cmd]]
+- Edit the environment variables in ~config/backend/s3.env~
+
 ** API Routes
 
+*** Problems
+~GET /api/problems/?topic={id}&author={id}&expand=author,topic&include=topic_path~
+
+Get a list of problems. Optional query parameters for topic, author, expanding the topic or author, and including the topic path. The topic parameter is for any topic in the branch; not necessarily a direct match.
+
+~POST /api/problems/~
+
+Create a new problem. Request body should contain a Common.Api.NewProblem as JSON.
+
+~GET /api/problems/{id}?expand=author,topic&include=topic_path~
+
+Get a single problem.
+
+**** Samples
+~GET /api/problems/~
+#+begin_src js
+[
+  {
+    "summary": "Find the present value ...",
+    "topicPath": null,
+    "contents": "\n\\runParam{paramFormat = decimal}\n ...",
+    "topic": {
+      "Left": 14
+    },
+    "updated_at": "2021-08-07T12:03:21.678487Z",
+    "created_at": "2021-08-07T12:03:21.678487Z",
+    "author": {
+      "Left": 2
+    },
+    "id": 1
+  },
+  {
+    "summary": "Consider the wide-swing current mirror ...",
+    "topicPath": null,
+    "contents": "\n\\runParam{I_D = [30, 20, 10, 40]  ...",
+    "topic": {
+      "Left": 9
+    },
+    "updated_at": "2021-08-07T12:03:21.678487Z",
+    "created_at": "2021-08-07T12:03:21.678487Z",
+    "author": {
+      "Left": 1
+    },
+    "id": 2
+  }
+]
+#+end_src
+
+~GET /api/problems/?topic=9&expand=author,topic&include=topic_path~
+#+begin_src js
+[
+  {
+    "summary": "Consider the wide-swing current mirror ...",
+    "topicPath": [
+      {
+        "name": "Electrical Engineering",
+        "id": 4,
+        "parent_id": null
+      },
+      {
+        "name": "Analog Circuits",
+        "id": 9,
+        "parent_id": 4
+      }
+    ],
+    "contents": "\n\\runParam{I_D = [30, 20, 10, 40] ...",
+    "topic": {
+      "Right": {
+        "name": "Analog Circuits",
+        "id": 9,
+        "parent_id": 4
+      }
+    },
+    "updated_at": "2021-08-07T12:03:21.678487Z",
+    "created_at": "2021-08-07T12:03:21.678487Z",
+    "author": {
+      "Right": {
+        "email": "alice@email.com",
+        "full_name": "Alice",
+        "id": 1
+      }
+    },
+    "id": 2
+  }
+]
+#+end_src
 *** Topics
 ~GET /api/topics?parent={null|id}~
 
@@ -499,92 +591,24 @@ Get the hierarchy of topics, ending with the children of the given topic. The Ei
 }
 #+end_src
 
-*** Problems
-~GET /api/problems/?topic={id}&author={id}&expand=author,topic&include=topic_path~
 
-Get a list of problems. Optional query parameters for topic, author, expanding the topic or author, and including the topic path. The topic parameter is for any topic in the branch; not necessarily a direct match.
+*** Users
+(TODO)
 
-~POST /api/problems/~
+*** Register
+(TODO)
 
-Create a new problem. Request body should contain a Common.Api.NewProblem as JSON.
+*** VerifyEmail
+(TODO)
 
-~GET /api/problems/{id}?expand=author,topic&include=topic_path~
+*** SignIn
+(TODO)
 
-Get a single problem.
+*** SignOut
+(TODO)
 
-**** Samples
-~GET /api/problems/~
-#+begin_src js
-[
-  {
-    "summary": "Find the present value ...",
-    "topicPath": null,
-    "contents": "\n\\runParam{paramFormat = decimal}\n ...",
-    "topic": {
-      "Left": 14
-    },
-    "updated_at": "2021-08-07T12:03:21.678487Z",
-    "created_at": "2021-08-07T12:03:21.678487Z",
-    "author": {
-      "Left": 2
-    },
-    "id": 1
-  },
-  {
-    "summary": "Consider the wide-swing current mirror ...",
-    "topicPath": null,
-    "contents": "\n\\runParam{I_D = [30, 20, 10, 40]  ...",
-    "topic": {
-      "Left": 9
-    },
-    "updated_at": "2021-08-07T12:03:21.678487Z",
-    "created_at": "2021-08-07T12:03:21.678487Z",
-    "author": {
-      "Left": 1
-    },
-    "id": 2
-  }
-]
-#+end_src
-
-~GET /api/problems/?topic=9&expand=author,topic&include=topic_path~
-#+begin_src js
-[
-  {
-    "summary": "Consider the wide-swing current mirror ...",
-    "topicPath": [
-      {
-        "name": "Electrical Engineering",
-        "id": 4,
-        "parent_id": null
-      },
-      {
-        "name": "Analog Circuits",
-        "id": 9,
-        "parent_id": 4
-      }
-    ],
-    "contents": "\n\\runParam{I_D = [30, 20, 10, 40] ...",
-    "topic": {
-      "Right": {
-        "name": "Analog Circuits",
-        "id": 9,
-        "parent_id": 4
-      }
-    },
-    "updated_at": "2021-08-07T12:03:21.678487Z",
-    "created_at": "2021-08-07T12:03:21.678487Z",
-    "author": {
-      "Right": {
-        "email": "alice@email.com",
-        "full_name": "Alice",
-        "id": 1
-      }
-    },
-    "id": 2
-  }
-]
-#+end_src
+*** Compile
+(TODO)
 
 ** Development
 

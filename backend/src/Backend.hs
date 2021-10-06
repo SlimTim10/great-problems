@@ -55,15 +55,15 @@ backend = Ob.Backend
             removeCookie "sessionId"
             removeCookie "user"
           case apiRoute of
-            Route.Api_Problems :/ subRoute -> case subRoute of
-              (Nothing, query) -> do
-                Snap.rqMethod <$> Snap.getRequest >>= \case
-                  Snap.GET -> writeJSON =<< IO.liftIO (Queries.getProblems conn Nothing query)
-                  Snap.POST -> case mUser of
-                    Nothing -> writeJSON $ Error.mk "No access"
-                    Just user -> handleSaveProblem conn user
-                  _ -> return () -- TODO: implement put, delete
-              (Just problemId, query) -> writeJSON =<< IO.liftIO (Queries.getProblemById conn problemId query)
+            Route.Api_Problems :/ (Nothing, query) -> do
+              Snap.rqMethod <$> Snap.getRequest >>= \case
+                Snap.GET -> writeJSON =<< IO.liftIO (Queries.getProblems conn Nothing query)
+                Snap.POST -> case mUser of
+                  Nothing -> writeJSON $ Error.mk "No access"
+                  Just user -> handleSaveProblem conn user
+                _ -> return () -- TODO: implement put, delete
+            Route.Api_Problems :/ (Just problemId, query) -> do
+              writeJSON =<< IO.liftIO (Queries.getProblemById conn problemId query)
             Route.Api_Topics :/ query -> do
               topics <- case fromMaybe Nothing (Map.lookup "parent" query) of
                 Just "null" -> IO.liftIO $ Queries.getRootTopics conn
@@ -72,22 +72,23 @@ backend = Ob.Backend
                   Nothing -> IO.liftIO $ Queries.getTopics conn
                 Nothing -> IO.liftIO $ Queries.getTopics conn
               writeJSON topics
-            Route.Api_Users :/ subRoute -> case subRoute of
-              Nothing -> writeJSON =<< IO.liftIO (Queries.getUsers conn)
-              Just userId -> writeJSON =<< IO.liftIO (Queries.getUserById conn userId)
-            Route.Api_TopicHierarchy :/ subRoute -> case subRoute of
-              Nothing -> writeJSON $ Error.mk "Not yet implemented"
-              Just topicId -> do
-                IO.liftIO (Queries.getTopicById conn topicId) >>= \case
-                  Nothing -> writeJSON $ Error.mk "Topic not found"
-                  Just topic -> writeJSON =<< IO.liftIO (Queries.getTopicHierarchy conn topic)
+            Route.Api_Users :/ Nothing -> do
+              writeJSON =<< IO.liftIO (Queries.getUsers conn)
+            Route.Api_Users :/ (Just userId) -> do
+              writeJSON =<< IO.liftIO (Queries.getUserById conn userId)
+            Route.Api_TopicHierarchy :/ Nothing -> do
+              writeJSON $ Error.mk "Not yet implemented"
+            Route.Api_TopicHierarchy :/ Just topicId -> do
+              IO.liftIO (Queries.getTopicById conn topicId) >>= \case
+                Nothing -> writeJSON $ Error.mk "Topic not found"
+                Just topic -> writeJSON =<< IO.liftIO (Queries.getTopicHierarchy conn topic)
             Route.Api_Register :/ () -> do
               rawBody <- Snap.readRequestBody maxRequestBodySize
               case JSON.decode rawBody :: Maybe Register.Register of
                 Nothing -> writeJSON $ Error.mk "Something went wrong"
                 Just register -> do
                   if any T.null
-                    [ CI.original $ Register.full_name register
+                    [ CI.original $ Register.fullName register
                     , CI.original $ Register.email register
                     , Register.password register
                     ]
@@ -124,12 +125,14 @@ backend = Ob.Backend
               IO.liftIO $ mapM_ (Auth.removeSession conn) mSession
               removeCookie "sessionId"
               removeCookie "user"
-            Route.Api_Compile :/ () -> do
-              Snap.rqMethod <$> Snap.getRequest >>= \case
-                Snap.POST -> case mUser of
-                  Nothing -> writeJSON $ Error.mk "No access"
-                  Just _ -> handleCompileProblem
-                _ -> return ()
+            Route.Api_Compile :/ Nothing -> Snap.rqMethod <$> Snap.getRequest >>= \case
+              Snap.POST -> case mUser of
+                Nothing -> writeJSON $ Error.mk "No access"
+                Just _ -> handleCompileProblem
+              _ -> return ()
+            Route.Api_Compile :/ Just problemId -> Snap.rqMethod <$> Snap.getRequest >>= \case
+              Snap.POST -> handleCompileProblemById conn problemId
+              _ -> return ()
   , Ob._backend_routeEncoder = Route.fullRouteEncoder
   }
 
@@ -228,6 +231,30 @@ handleSaveProblem conn user = do
   -- Delete the uploaded files from the server
   IO.liftIO $ forM_ (map filePath fileUploads) $ \fp -> Dir.removeFile fp
 
+requestIcemakerCompileProblem
+  :: IO.MonadIO m
+  => Text -- ^ Problem content
+  -> Maybe Text -- Randomize variables
+  -> Maybe Text -- Output option
+  -> [FileUpload] -- Files
+  -> m LBS.ByteString
+requestIcemakerCompileProblem content mRandomizeVariables mOutputOption fileUploads = do
+  IO.liftIO $ print content -- DEBUG
+  IO.liftIO $ print mRandomizeVariables -- DEBUG
+  IO.liftIO $ print mOutputOption -- DEBUG
+  IO.liftIO $ print (length fileUploads) -- DEBUG
+  let randomizeVariables = fromMaybe "false" mRandomizeVariables
+  let outputOption = fromMaybe (cs . show $ Compile.QuestionOnly) mOutputOption
+  response <- IO.liftIO $ Wreq.post
+    "https://icewire.ca/uploadprb"
+    $ [ Wreq.partText "prbText" content
+      , Wreq.partText "prbName" "tmp"
+      , Wreq.partText "random" randomizeVariables
+      , Wreq.partText "outFlag" outputOption
+      , Wreq.partText "submit1" "putDatabase"
+      ] ++ map filePart fileUploads
+  return $ response ^. Wreq.responseBody
+
 handleCompileProblem :: Snap.Snap ()
 handleCompileProblem = do
   fileUploads <- handleFileUploads
@@ -258,25 +285,38 @@ handleCompileProblem = do
   -- Delete the uploaded files from the server
   IO.liftIO $ forM_ (map filePath fileUploads) $ \fp -> Dir.removeFile fp
 
-requestIcemakerCompileProblem
-  :: IO.MonadIO m
-  => Text -- ^ Problem content
-  -> Maybe Text -- Randomize variables
-  -> Maybe Text -- Output option
-  -> [FileUpload] -- Files
-  -> m LBS.ByteString
-requestIcemakerCompileProblem content mRandomizeVariables mOutputOption fileUploads = do
-  let randomizeVariables = fromMaybe "false" mRandomizeVariables
-  let outputOption = fromMaybe (cs . show $ Compile.QuestionOnly) mOutputOption
-  response <- IO.liftIO $ Wreq.post
-    "https://icewire.ca/uploadprb"
-    $ [ Wreq.partText "prbText" content
-      , Wreq.partText "prbName" "tmp"
-      , Wreq.partText "random" randomizeVariables
-      , Wreq.partText "outFlag" outputOption
-      , Wreq.partText "submit1" "putDatabase"
-      ] ++ map filePart fileUploads
-  return $ response ^. Wreq.responseBody
+handleCompileProblemById :: SQL.Connection -> Integer -> Snap.Snap ()
+handleCompileProblemById conn problemId = do
+  -- Need this to prepare POST parameters
+  void $ Snap.handleMultipart
+    Snap.defaultUploadPolicy
+    (const . const $ return ())
+  let getTextParam :: Compile.RequestParam -> Snap.Snap Text = \param -> do
+        Snap.rqPostParam (cs . show $ param)
+          <$> Snap.getRequest
+          <&> cs . BS.concat . fromMaybe mempty
+  randomizeVariables <- fmap (mfilter (not . T.null) . Just)
+    $ getTextParam Compile.ParamRandomizeVariables
+  outputOption <- fmap (mfilter (not . T.null) . Just)
+    $ getTextParam Compile.ParamOutputOption
+  IO.liftIO (Queries.getProblemById conn problemId mempty) >>= \case
+    Nothing -> writeJSON $ Error.mk "Problem does not exist"
+    Just problem -> do
+      response :: LBS.ByteString <- requestIcemakerCompileProblem
+        (Problem.content problem)
+        randomizeVariables
+        outputOption
+        [] -- TODO: use files from S3 bucket
+      case JSON.decode response :: Maybe Compile.IcemakerResponse of
+        Nothing -> writeJSON $ Error.mk "Something went wrong"
+        Just r -> writeJSON Compile.Response
+          { Compile.resErrorIcemaker = Compile.errorIcemaker r
+          , Compile.resErrorLatex = Compile.errorLatex r
+          , Compile.resPdfContent = Compile.pdfContent r
+          , Compile.resTerminalOutput = Compile.terminalOutput r
+          }
+  -- Delete the uploaded files from the server
+  -- IO.liftIO $ forM_ (map filePath fileUploads) $ \fp -> Dir.removeFile fp
 
 -- | Get the files from the POST request and make them persist in the temporary directory.
 -- Returns a list of the files as form parts and their paths.

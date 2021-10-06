@@ -97,4 +97,4 @@ problemCardWidget problemCard = do
               Right author -> do
                Ob.routeLink (Route.FrontendRoute_ViewUser :/ User.id author) $ do
                  R.elClass "div" "hover:underline text-brand-sm text-brand-gray font-bold" $ do
-                   R.text (CI.original $ User.full_name author)
+                   R.text (CI.original $ User.fullName author)

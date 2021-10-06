@@ -44,11 +44,11 @@ data TopicWithChildren = TopicWithChildren
 topicsToHierarchy :: [Topic.Topic] -> [TopicWithChildren]
 topicsToHierarchy allTopics = map (f 0) rootTopics
   where
-    rootTopics = filter (\x -> isNothing (Topic.parent_id x)) allTopics
+    rootTopics = filter (\x -> isNothing (Topic.parentId x)) allTopics
     f :: Integer -> Topic.Topic -> TopicWithChildren
     f l t = TopicWithChildren t (map (f (l + 1)) $ getChildren t) l
     getChildren :: Topic.Topic -> [Topic.Topic]
-    getChildren t = filter (\x -> Topic.parent_id x == Just (Topic.id t)) allTopics
+    getChildren t = filter (\x -> Topic.parentId x == Just (Topic.id t)) allTopics
 
 flattenHierarchy :: [TopicWithChildren] -> [(Integer, Text, Integer)]
 flattenHierarchy = go []

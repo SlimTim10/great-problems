@@ -20,9 +20,9 @@ import qualified Common.Api.Problem as Problem
     ( UpdateProblem(upProblemId, upTopicId, upContent, upSummary),
       CreateProblem(cpAuthorId, cpTopicId, cpContent, cpSummary),
       Problem(..) )
-import qualified Common.Api.Topic as Topic ( Topic(id, parent_id) )
+import qualified Common.Api.Topic as Topic ( Topic(id, parentId) )
 import qualified Common.Api.Register as Register
-    ( Register(email, full_name, password) )
+    ( Register(email, fullName, password) )
 import qualified Common.Api.User as User ( User(..) )
 import qualified Common.Api.Role as Role ( Role(..) )
 import qualified Common.Api.Auth as Auth ( Auth(password, email) )

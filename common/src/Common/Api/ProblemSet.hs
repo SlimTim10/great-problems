@@ -14,10 +14,10 @@ import Global
 data ProblemSet = ProblemSet
   { id :: Integer
   , summary :: Text
-  , topic_id :: Integer
-  , author_id :: Integer
-  , created_at :: Time.UTCTime
-  , updated_at :: Time.UTCTime
+  , topicId :: Integer
+  , authorId :: Integer
+  , createdAt :: Time.UTCTime
+  , updatedAt :: Time.UTCTime
   } deriving
   ( Eq
   , Show

@@ -69,7 +69,14 @@ body > header {
 }
 
 .w-brand-screen-lg {
-  width: 1024px;
+  width: 100%;
+  margin-left: 0.5em;
+  margin-right: 0.5em;
+}
+@media only screen and (min-width: 1024px) {
+  .w-brand-screen-lg {
+    max-width: 1200px;
+  }
 }
 
 .checkbox-brand-primary {

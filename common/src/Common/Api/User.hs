@@ -16,7 +16,7 @@ import Global
 
 data User = User
   { id :: Integer
-  , full_name :: CI Text
+  , fullName :: CI Text
   , email :: CI Text
   , role :: Role.Role
   , verified :: Bool

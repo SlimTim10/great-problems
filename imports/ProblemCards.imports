@@ -22,7 +22,7 @@ import qualified Common.Api.Problem as Problem
       GetParams(GetParams, gpTopic, gpInclude, gpExpand),
       Problem(author, summary, id, topicPath, updatedAt),
       getParamsToRouteQuery )
-import qualified Common.Api.User as User ( User(full_name, id) )
+import qualified Common.Api.User as User ( User(fullName, id) )
 import qualified Common.Route as Route
     ( ProblemsRoute(ProblemsRoute_View),
       TopicsRoute(TopicsRoute_Problems),

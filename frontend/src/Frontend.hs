@@ -6,7 +6,8 @@ import qualified Obelisk.Generated.Static as Ob
 import qualified Reflex.Dom.Core as R
 
 import qualified Common.Route as Route
-import qualified Problem
+import qualified ViewProblem
+import qualified EditProblem
 import qualified Home
 import qualified Header
 import qualified Topics
@@ -80,20 +81,23 @@ frontend = Ob.Frontend
           R.elClass "div" "flex-none"
             Header.widget
           R.elClass "div" "flex-1 mx-2 flex justify-center" $ do
-            Problem.widget Nothing
+            EditProblem.widget Nothing
       Route.FrontendRoute_Problems -> do
         path :: R.Dynamic t (Integer, Ob.R Route.ProblemsRoute) <- Ob.askRoute
         Util.dynFor path $ \(problemId, route) -> do
           case route of
             Route.ProblemsRoute_View :/ () -> do
-              R.el "p" $ R.text "View problem"
-              R.el "p" $ R.text (cs . show $ problemId)
+              R.elClass "div" "h-screen flex flex-col gap-3" $ do
+                R.elClass "div" "flex-none"
+                  Header.widget
+                R.elClass "div" "flex-1 mx-2 flex justify-center" $ do
+                  ViewProblem.widget problemId
             Route.ProblemsRoute_Edit :/ () -> do
               R.elClass "div" "h-screen flex flex-col gap-3" $ do
                 R.elClass "div" "flex-none"
                   Header.widget
                 R.elClass "div" "flex-1 mx-2 flex justify-center" $ do
-                  Problem.widget $ Just problemId
+                  EditProblem.widget $ Just problemId
             _ -> pure () -- Type refinement through unification
       Route.FrontendRoute_ViewProblemSet -> do
         Header.widget

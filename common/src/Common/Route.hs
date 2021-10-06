@@ -35,13 +35,13 @@ data BackendRoute :: * -> * where
 data Api :: * -> * where
   Api_Problems :: Api (Maybe Integer, Query)
   Api_Topics :: Api Query
-  Api_Users :: Api (Maybe Integer)
   Api_TopicHierarchy :: Api (Maybe Integer)
+  Api_Users :: Api (Maybe Integer)
   Api_Register :: Api ()
   Api_VerifyEmail :: Api Text
   Api_SignIn :: Api ()
   Api_SignOut :: Api ()
-  Api_Compile :: Api ()
+  Api_Compile :: Api (Maybe Integer)
 
 data FrontendRoute :: * -> * where
   FrontendRoute_Home :: FrontendRoute ()
@@ -93,7 +93,8 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
         Api_VerifyEmail -> Ob.PathSegment "verify-email" Ob.singlePathSegmentEncoder
         Api_SignIn -> Ob.PathSegment "sign-in" $ Ob.unitEncoder mempty
         Api_SignOut -> Ob.PathSegment "sign-out" $ Ob.unitEncoder mempty
-        Api_Compile -> Ob.PathSegment "compile" $ Ob.unitEncoder mempty
+        Api_Compile -> Ob.PathSegment "compile" $
+          Ob.maybeEncoder (Ob.unitEncoder mempty) $ idPathSegmentEncoder
   )
   (\case
       FrontendRoute_Home -> Ob.PathEnd $ Ob.unitEncoder mempty

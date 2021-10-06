@@ -20,7 +20,7 @@ import qualified Common.Route as Route
                     FrontendRoute_Profile, FrontendRoute_NewProblem,
                     FrontendRoute_Explore, FrontendRoute_Home) )
 import qualified Widget.Button as Button ( primary, secondary )
-import qualified Common.Api.User as User ( User(full_name, role) )
+import qualified Common.Api.User as User ( User(fullName, role) )
 import qualified Common.Api.Role as Role
     ( Role(Moderator, Contributor) )
 import qualified Util ( getCurrentUser )

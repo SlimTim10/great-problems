@@ -13,7 +13,7 @@ import Global
 data Topic = Topic
   { id :: Integer
   , name :: Text
-  , parent_id :: Maybe Integer
+  , parentId :: Maybe Integer
   } deriving
   ( Eq
   , Show

@@ -11,7 +11,7 @@ import qualified Reflex.Dom.Core as R
       HasJSContext,
       DomBuilder )
 import qualified Common.Api.Topic as Topic
-    ( Topic(name, id, parent_id) )
+    ( Topic(name, id, parentId) )
 import qualified Common.Route as Route ( Api(Api_Topics), apiHref )
 import qualified Widget.Input as Input ( dropdownClass' )
 import qualified Util ( getOnload )
