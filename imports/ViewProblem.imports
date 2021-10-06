@@ -1,5 +1,8 @@
 import qualified Data.Map as Map ( mapKeys )
-import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
+import qualified Language.Javascript.JSaddle as JS
+    ( MonadJSM, JSVal(JSVal) )
+import qualified "jsaddle-dom" GHCJS.DOM.Document as DOM
+    ( IsDocument )
 import qualified JSDOM.Types ( File )
 import qualified Data.CaseInsensitive as CI ( CI(original) )
 import qualified Obelisk.Route.Frontend as Ob
@@ -20,12 +23,15 @@ import qualified Reflex.Dom.Core as R
       PostBuild(..),
       TriggerEvent,
       HasJSContext,
-      DomBuilder,
+      DomBuilder(DomBuilderSpace),
+      DomSpace(RawDocument),
+      HasDocument,
       Prerender )
 import qualified MyReflex.Dom.Xhr.FormData as R'
     ( FormValue(FormValue_Text) )
 import qualified Common.Route as Route
-    ( FrontendRoute(FrontendRoute_Explore),
+    ( ProblemsRoute(ProblemsRoute_Edit),
+      FrontendRoute(FrontendRoute_Problems),
       Api(Api_Problems, Api_Compile),
       apiHref )
 import qualified Common.Api.Compile as Compile
@@ -38,7 +44,7 @@ import qualified Common.Api.Problem as Problem
       GetParams(GetParams, gpTopic, gpInclude, gpExpand),
       Problem(author, updatedAt, summary, id),
       getParamsToRouteQuery )
-import qualified Common.Api.User as User ( User(fullName) )
+import qualified Common.Api.User as User ( User(fullName, id) )
 import qualified Problem.PdfViewer as PdfViewer ( widget )
 import qualified Widget.Button as Button
     ( secondarySmall, primarySmallClass' )
@@ -46,5 +52,6 @@ import qualified Widget.Input as Input ( checkboxClass )
 import qualified Problem.Loading as Loading
     ( WithLoading(WithLoading), anyLoading, latestAction )
 import qualified Util
-    ( getOnload, formBool, postForm, notUpdatedSince )
-import Global ( MonadFix, Text, Map, cs, (:/), (=:) )
+    ( getOnload, getCurrentUser, formBool, postForm, notUpdatedSince )
+import Global
+    ( MonadFix, when, Text, Map, fromMaybe, cs, (:/), (=:) )

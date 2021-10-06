@@ -1,9 +1,11 @@
+{-# LANGUAGE PackageImports #-}
 module ViewProblem
   ( widget
   ) where
 
 import qualified Data.Map as Map
 import qualified Language.Javascript.JSaddle as JS
+import qualified "jsaddle-dom" GHCJS.DOM.Document as DOM
 import qualified JSDOM.Types
 import qualified Data.CaseInsensitive as CI
 import qualified Obelisk.Route.Frontend as Ob
@@ -37,10 +39,19 @@ widget
      , Ob.SetRoute t (Ob.R Route.FrontendRoute) m
      , Ob.RouteToUrl (Ob.R Route.FrontendRoute) m
      , R.Prerender js t m
+     , R.HasDocument m
+     , DOM.IsDocument (R.RawDocument (R.DomBuilderSpace m))
      )
   => Integer
   -> m ()
 widget problemId = mdo
+  userId :: R.Dynamic t Integer <-
+    pure
+    . R.constDyn
+    . fromMaybe 0
+    . fmap User.id
+    =<< Util.getCurrentUser
+    
   problem :: R.Dynamic t (Maybe Problem.Problem) <- do
     r :: R.Event t (Maybe Problem.Problem) <- Util.getOnload
       $ Route.apiHref $ Route.Api_Problems :/
@@ -156,9 +167,17 @@ widget problemId = mdo
                      (True, True) -> Compile.WithSolutionAndAnswer
                 ) <$> showAnswer <*> showSolution
           return (showAnswerAction', showSolutionAction', outputOption')
-      R.elClass "div" "pt-3 border-t border-brand-light-gray" $ do
-        Ob.routeLink (Route.FrontendRoute_Explore :/ Nothing) $ do
-          Button.secondarySmall "Edit this problem"
+      let showEditLink uid = \case
+            Nothing -> R.blank
+            Just p -> do
+              let authorId = either id User.id (Problem.author p)
+              when (authorId == uid) $ do
+                R.elClass "div" "pt-3 border-t border-brand-light-gray" $ do
+                  Ob.routeLink
+                    (Route.FrontendRoute_Problems :/
+                      (problemId, Route.ProblemsRoute_Edit :/ ())) $ do
+                    Button.secondarySmall "Edit this problem"
+      R.dyn_ $ showEditLink <$> userId <*> problem
       return
         ( randomizeVariablesAction
         , resetVariablesAction

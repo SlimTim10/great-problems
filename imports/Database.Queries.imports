@@ -1,12 +1,5 @@
 import qualified Database.PostgreSQL.Simple as SQL
-    ( execute,
-      executeMany,
-      query,
-      query_,
-      Only(..),
-      Connection,
-      In(In),
-      Query )
+    ( execute, query, query_, Only(..), Connection, In(In), Query )
 import qualified Database.PostgreSQL.Simple.ToField as SQL
     ( Action, ToField(..) )
 import qualified Data.Text as Text ( splitOn )
@@ -35,7 +28,7 @@ import qualified Database.Types.Role as DbRole ( Role(Role, id) )
 import qualified Database.Types.EmailVerification as DbEmailVerification
     ( EmailVerification(id, user_id) )
 import qualified Database.Types.Session as DbSession
-    ( Session(user_id, id) )
+    ( Session(user_id) )
 import qualified Util
     ( headMay, whenM, hashPassword, verifyPassword )
 import Global
