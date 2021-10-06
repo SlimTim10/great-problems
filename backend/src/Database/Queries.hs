@@ -363,13 +363,8 @@ getSessionById conn sessionId = Util.headMay
   <$> SQL.query conn "SELECT * FROM sessions WHERE id = ?" (SQL.Only sessionId)
 
 removeSessionsByUserId :: SQL.Connection -> Integer -> IO ()
-removeSessionsByUserId conn userId = do
-  sessions :: [DbSession.Session] <- SQL.query conn
-    "SELECT * FROM sessions WHERE user_id = ?" (SQL.Only userId)
-  void
-    $ SQL.executeMany conn "DELETE FROM sessions WHERE id = ?"
-    $ map (SQL.Only . DbSession.id) sessions
-  return ()
+removeSessionsByUserId conn userId = void $ SQL.execute conn
+  "DELETE FROM sessions WHERE user_id = ?" (SQL.Only userId)
 
 newSession :: SQL.Connection -> Integer -> IO Text
 newSession conn userId = do
