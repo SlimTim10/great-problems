@@ -25,9 +25,6 @@ import qualified Database.PostgreSQL.Simple as SQL
 import qualified Database.PostgreSQL.Simple.ToField as SQL
 import qualified Data.Text as Text
 import qualified Data.CaseInsensitive as CI
-import qualified System.Random as Random
-import qualified Data.ByteString.Base64.URL as B64URL
-import qualified Data.Text.Encoding as TE
 
 import qualified Common.Route as Route
 import qualified Common.Api.Problem as Problem
@@ -54,10 +51,6 @@ exprFromRouteParam
 exprFromRouteParam param expr cast routeQuery = do
   y <- Route.readParamFromQuery param routeQuery
   Just (expr, SQL.toField $ cast y)
-
-generateRandomSecret :: IO Text
-generateRandomSecret = (Random.randomIO :: IO Word64)
-  >>= return . TE.decodeUtf8 . B64URL.encode . cs . show
 
 getProblems :: SQL.Connection -> Maybe Integer -> Route.Query -> IO [Problem.Problem]
 getProblems conn problemId routeQuery = do
@@ -349,7 +342,7 @@ setUserVerified conn userId = void
 newEmailVerification :: SQL.Connection -> Integer -> IO Text
 newEmailVerification conn userId = do
   let generateSecret = do
-        secret <- generateRandomSecret
+        secret <- Util.generateRandomText
         getEmailVerificationBySecret conn secret >>= \case
           Nothing -> return secret
           Just _ -> generateSecret
@@ -369,7 +362,7 @@ removeSessionsByUserId conn userId = void $ SQL.execute conn
 newSession :: SQL.Connection -> Integer -> IO Text
 newSession conn userId = do
   let generateSessionId = do
-        sessionId <- generateRandomSecret
+        sessionId <- Util.generateRandomText
         getSessionById conn sessionId >>= \case
           Nothing -> return sessionId
           Just _ -> generateSessionId

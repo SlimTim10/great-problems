@@ -8,10 +8,13 @@ import qualified Data.Aeson as JSON
 import qualified Text.Read
 import qualified Control.Monad.IO.Class as IO
 import qualified Crypto.PasswordStore
-import qualified "jsaddle-dom" GHCJS.DOM.Document as DOM
-import qualified JSDOM.Types
 import qualified Web.Cookie as Cookie
 import qualified System.Environment as Env
+import qualified System.Random as Random
+import qualified Data.ByteString.Base64.URL as B64URL
+import qualified Data.Text.Encoding as TE
+import qualified "jsaddle-dom" GHCJS.DOM.Document as DOM
+import qualified JSDOM.Types
 import qualified Reflex.Dom.Core as R
 -- Import patch
 import qualified MyReflex.Dom.Xhr.FormData as R'
@@ -145,3 +148,7 @@ notUpdatedSince
   -> R.Event t b
   -> m (R.Dynamic t Bool)
 notUpdatedSince d e = fmap not <$> updatedSince d e
+
+generateRandomText :: IO Text
+generateRandomText = (Random.randomIO :: IO Word64)
+  >>= return . TE.decodeUtf8 . B64URL.encode . cs . show

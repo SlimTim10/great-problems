@@ -15,7 +15,7 @@ import qualified Database.PostgreSQL.Simple as SQL
 import qualified Network.Wreq as Wreq
 import qualified Snap.Core as Snap
 import qualified Snap.Util.FileUploads as Snap
-import qualified System.Directory as Dir
+import qualified System.Directory as Sys
 import System.FilePath ((</>))
 import qualified Obelisk.Backend as Ob
 import Obelisk.Route ( pattern (:/) )
@@ -33,6 +33,7 @@ import qualified Common.Api.Compile as Compile
 import qualified Common.Api.Problem as Problem
 import qualified Auth
 import qualified Email
+import qualified Util
 import Global
 
 maxRequestBodySize :: Word.Word64
@@ -190,7 +191,7 @@ data FileUpload = FileUpload
 -- Create or update problem
 handleSaveProblem :: SQL.Connection -> S3.Env -> User.User -> Snap.Snap ()
 handleSaveProblem conn s3env user = do
-  fileUploads <- handleFileUploads
+  (dir, fileUploads) <- handleFileUploads
   let getTextParam :: Problem.RequestParam -> Snap.Snap Text = \param -> do
         Snap.rqPostParam (cs . show $ param)
           <$> Snap.getRequest
@@ -219,6 +220,7 @@ handleSaveProblem conn s3env user = do
           Just r -> if
             | (not . T.null $ Compile.errorIcemaker r) || (not . T.null $ Compile.errorLatex r)
               -> writeJSON $ Error.mk "Invalid problem. Please check that your problem compiles with no errors before saving."
+            -- Creating a new problem
             | T.null problemId -> do
                 let newProblem = Problem.CreateProblem
                       { Problem.cpSummary = summary
@@ -230,9 +232,11 @@ handleSaveProblem conn s3env user = do
                   Nothing -> writeJSON $ Error.mk "Something went wrong"
                   Just createdProblem -> do
                     let pid = Problem.id createdProblem
-                    forM_ fileUploads $ \fu -> do
-                      IO.liftIO $ S3.putFigure s3env (filePath fu) pid (cs $ fileName fu)
+                    IO.liftIO $ S3.putFigureDirectory s3env dir pid
+                    -- forM_ fileUploads $ \fu -> do
+                    --   IO.liftIO $ S3.putFigure s3env (filePath fu) pid (cs $ fileName fu)
                     writeJSON createdProblem
+            -- Updating an existing problem
             | otherwise -> do
                 let updateProblem = Problem.UpdateProblem
                       { Problem.upProblemId = read . cs $ problemId
@@ -241,10 +245,15 @@ handleSaveProblem conn s3env user = do
                       , Problem.upTopicId = read . cs $ topicId
                       , Problem.upAuthorId = read . cs $ authorId
                       }
-                -- TODO: save problem figures too
-                writeJSON =<< IO.liftIO (Queries.updateProblem conn updateProblem)
-  -- Delete the uploaded files from the server
-  IO.liftIO $ forM_ (map filePath fileUploads) $ \fp -> Dir.removeFile fp
+                IO.liftIO (Queries.updateProblem conn updateProblem) >>= \case
+                  Nothing -> writeJSON $ Error.mk "Something went wrong"
+                  Just updatedProblem -> do
+                    let pid = Problem.id updatedProblem
+                    forM_ fileUploads $ \fu -> do
+                      IO.liftIO $ S3.putFigure s3env (filePath fu) pid (cs $ fileName fu)
+                    writeJSON updatedProblem
+  -- Delete the uploaded files from the filesystem
+  IO.liftIO $ Sys.removeDirectory dir
 
 requestIcemakerCompileProblem
   :: IO.MonadIO m
@@ -268,7 +277,7 @@ requestIcemakerCompileProblem content mRandomizeVariables mOutputOption fileUplo
 
 handleCompileProblem :: Snap.Snap ()
 handleCompileProblem = do
-  fileUploads <- handleFileUploads
+  (dir, fileUploads) <- handleFileUploads
   let getTextParam :: Compile.RequestParam -> Snap.Snap Text = \param -> do
         Snap.rqPostParam (cs . show $ param)
           <$> Snap.getRequest
@@ -294,7 +303,7 @@ handleCompileProblem = do
             , Compile.resTerminalOutput = Compile.terminalOutput r
             }
   -- Delete the uploaded files from the server
-  IO.liftIO $ forM_ (map filePath fileUploads) $ \fp -> Dir.removeFile fp
+  IO.liftIO $ Sys.removeDirectory dir
 
 handleCompileProblemById :: SQL.Connection -> Integer -> Snap.Snap ()
 handleCompileProblemById conn problemId = do
@@ -327,15 +336,16 @@ handleCompileProblemById conn problemId = do
           , Compile.resTerminalOutput = Compile.terminalOutput r
           }
   -- Delete the uploaded files from the server
-  -- IO.liftIO $ forM_ (map filePath fileUploads) $ \fp -> Dir.removeFile fp
+  -- IO.liftIO $ Sys.removeDirectory dir
 
 -- | Get the files from the POST request and make them persist in the temporary directory.
--- Returns a list of the files as form parts and their paths.
+-- Returns the path to the newly created directory and a list of the files as form parts and their paths.
 -- This must be called before getting other POST parameters from the request.
-handleFileUploads :: Snap.Snap [FileUpload]
+handleFileUploads :: Snap.Snap (String, [FileUpload])
 handleFileUploads = do
-  tmpDir <- IO.liftIO Dir.getTemporaryDirectory
-  let targetDir = tmpDir </> "greatproblems"
+  tmpDir <- IO.liftIO Sys.getTemporaryDirectory
+  randomDirectory <- IO.liftIO $ cs <$> Util.generateRandomText
+  let targetDir = tmpDir </> "greatproblems" </> "figures" </> randomDirectory
   let renameFile info = \case
         Left e -> do
           print e
@@ -344,12 +354,13 @@ handleFileUploads = do
           Nothing -> return Nothing
           Just fName -> do
             let fp' = targetDir </> cs fName
-            Dir.createDirectoryIfMissing True targetDir
-            Dir.renameFile fp fp'
+            Sys.createDirectoryIfMissing True targetDir
+            Sys.renameFile fp fp'
             return . Just $ FileUpload (Wreq.partFile "multiplefiles" fp') fp' (cs fName)
-  Snap.handleFileUploads
+  fileUploads <- Snap.handleFileUploads
     tmpDir
     Snap.defaultUploadPolicy
     (const $ Snap.allowWithMaximumSize 20000) -- 20 kB max file size
     renameFile
     <&> catMaybes
+  return (targetDir, fileUploads)

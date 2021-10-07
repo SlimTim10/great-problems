@@ -7,11 +7,14 @@ import qualified Text.Read ( readMaybe )
 import qualified Control.Monad.IO.Class as IO ( MonadIO )
 import qualified Crypto.PasswordStore
     ( makePassword, verifyPassword )
+import qualified Web.Cookie as Cookie ( parseCookies, Cookies )
+import qualified System.Environment as Env ( lookupEnv )
+import qualified System.Random as Random ( Random(randomIO) )
+import qualified Data.ByteString.Base64.URL as B64URL ( encode )
+import qualified Data.Text.Encoding as TE ( decodeUtf8 )
 import qualified "jsaddle-dom" GHCJS.DOM.Document as DOM
     ( IsDocument, getCookie )
 import qualified JSDOM.Types ( File )
-import qualified Web.Cookie as Cookie ( parseCookies, Cookies )
-import qualified System.Environment as Env ( lookupEnv )
 import qualified Reflex.Dom.Core as R
     ( constDyn,
       ffor,
@@ -40,4 +43,4 @@ import qualified MyReflex.Dom.Xhr.FormData as R'
     ( FormValue(FormValue_File), postForms )
 import qualified Common.Api.User as User ( User )
 import qualified Common.File as File ( FileWithName(name, file) )
-import Global ( MonadFix, Text, Map, void, (^.), cs )
+import Global ( MonadFix, Word64, Text, Map, void, (^.), cs )

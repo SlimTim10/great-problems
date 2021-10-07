@@ -1,7 +1,7 @@
 module S3 where
 
 import qualified Configuration.Dotenv as Dotenv
-import qualified System.Process as Proc
+import qualified System.Process as Sys
 
 import qualified Util
 import Global
@@ -30,7 +30,7 @@ put
   -> String -- ^ Path to file
   -> String -- ^ Destination (s3://BUCKET[/PREFIX])
   -> IO ()
-put env file destination = Proc.callProcess (s3cmdPath env) ["put", file, destination]
+put env file destination = Sys.callProcess (s3cmdPath env) ["put", file, destination]
 
 -- | Put problem figure into bucket.
 putFigure
@@ -46,3 +46,24 @@ putFigure env file problemId name = do
         <> show problemId <> "/"
         <> name
   put env file destination
+
+-- | Synchronize a directory tree to S3 (checks files freshness using size and md5 checksum, unless overridden by options (see https://s3tools.org/usage).
+sync
+  :: Env
+  -> String -- ^ Local or remote directory
+  -> String -- ^ Local or remote directory
+  -> IO ()
+sync env a b = Sys.callProcess (s3cmdPath env) ["sync", a, b]
+
+-- | Put problem figures from directory into bucket.
+putFigureDirectory
+  :: Env
+  -> String -- ^ Path to directory
+  -> Integer -- ^ Problem ID that these figures belong to
+  -> IO ()
+putFigureDirectory env dir problemId = do
+  let destination = cs $ "s3://"
+        <> (bucket env)
+        <> "/figures/"
+        <> show problemId <> "/"
+  sync env dir destination

@@ -30,10 +30,10 @@ import qualified Snap.Util.FileUploads as Snap
       handleFileUploads,
       handleMultipart,
       PartInfo(partFileName) )
-import qualified System.Directory as Dir
+import qualified System.Directory as Sys
     ( createDirectoryIfMissing,
       getTemporaryDirectory,
-      removeFile,
+      removeDirectory,
       renameFile )
 import System.FilePath ( (</>) )
 import qualified Obelisk.Backend as Ob ( Backend(..) )
@@ -63,7 +63,7 @@ import qualified Database.Queries as Queries
       registerUser,
       verifyEmail,
       newEmailVerification )
-import qualified S3 ( Env, setup, putFigure )
+import qualified S3 ( Env, setup, putFigure, putFigureDirectory )
 import qualified Common.Api.User as User ( User(role, id) )
 import qualified Common.Api.Register as Register
     ( Register(password, email, fullName) )
@@ -96,6 +96,7 @@ import qualified Auth
       removeSession,
       getUser )
 import qualified Email ( sendEmailVerification )
+import qualified Util ( generateRandomText )
 import Global
     ( when,
       Text,
