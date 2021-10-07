@@ -28,7 +28,7 @@ widget
      , JS.MonadJSM m
      )
   => m ()
-widget = R.elClass "header" "h-14 py-2 px-3 flex items-center justify-between border-b" $ do
+widget = R.elClass "header" "h-14 py-2 px-3 flex items-center justify-between border-b border-brand-light-gray" $ do
   Ob.routeLink (Route.FrontendRoute_Home :/ ()) $ do
     R.elClass "p" "font-medium text-xl"
       $ R.text "Great Problems"

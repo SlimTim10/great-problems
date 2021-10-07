@@ -87,11 +87,12 @@ frontend = Ob.Frontend
         Util.dynFor path $ \(problemId, route) -> do
           case route of
             Route.ProblemsRoute_View :/ () -> do
-              R.elClass "div" "h-screen flex flex-col gap-3" $ do
+              R.elClass "div" "h-screen flex flex-col" $ do
                 R.elClass "div" "flex-none"
                   Header.widget
-                R.elClass "div" "flex-1 mx-2 flex justify-center" $ do
-                  ViewProblem.widget problemId
+                -- R.elClass "div" "bg-brand-light-gray flex justify-center py-4" $ do
+                --   R.elClass "p" "text-brand-lg font-light" $ R.text "Sign in"
+                ViewProblem.widget problemId
             Route.ProblemsRoute_Edit :/ () -> do
               R.elClass "div" "h-screen flex flex-col gap-3" $ do
                 R.elClass "div" "flex-none"

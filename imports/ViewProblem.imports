@@ -31,7 +31,8 @@ import qualified MyReflex.Dom.Xhr.FormData as R'
     ( FormValue(FormValue_Text) )
 import qualified Common.Route as Route
     ( ProblemsRoute(ProblemsRoute_Edit),
-      FrontendRoute(FrontendRoute_Problems),
+      TopicsRoute(TopicsRoute_Problems),
+      FrontendRoute(FrontendRoute_Problems, FrontendRoute_Topics),
       Api(Api_Problems, Api_Compile),
       apiHref )
 import qualified Common.Api.Compile as Compile
@@ -42,9 +43,10 @@ import qualified Common.Api.Compile as Compile
 import qualified Common.Api.Problem as Problem
     ( GetParamInclude(TopicPath),
       GetParams(GetParams, gpTopic, gpInclude, gpExpand),
-      Problem(author, updatedAt, summary, id),
+      Problem(author, updatedAt, summary, id, topicPath),
       getParamsToRouteQuery )
 import qualified Common.Api.User as User ( User(fullName, id) )
+import qualified Common.Api.Topic as Topic ( Topic(Topic) )
 import qualified Problem.PdfViewer as PdfViewer ( widget )
 import qualified Widget.Button as Button
     ( secondarySmall, primarySmallClass' )
@@ -52,6 +54,20 @@ import qualified Widget.Input as Input ( checkboxClass )
 import qualified Problem.Loading as Loading
     ( WithLoading(WithLoading), anyLoading, latestAction )
 import qualified Util
-    ( getOnload, getCurrentUser, formBool, postForm, notUpdatedSince )
+    ( getOnload,
+      dynFor,
+      getCurrentUser,
+      formBool,
+      postForm,
+      notUpdatedSince )
 import Global
-    ( MonadFix, when, Text, Map, fromMaybe, cs, (:/), (=:) )
+    ( MonadFix,
+      when,
+      Text,
+      Map,
+      fromMaybe,
+      unless,
+      forM_,
+      cs,
+      (:/),
+      (=:) )
