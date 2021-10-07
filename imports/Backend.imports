@@ -63,6 +63,7 @@ import qualified Database.Queries as Queries
       registerUser,
       verifyEmail,
       newEmailVerification )
+import qualified S3 ( Env, setup, putFigure )
 import qualified Common.Api.User as User ( User(role, id) )
 import qualified Common.Api.Register as Register
     ( Register(password, email, fullName) )
@@ -85,7 +86,7 @@ import qualified Common.Api.Problem as Problem
                     upSummary, upProblemId),
       CreateProblem(CreateProblem, cpAuthorId, cpTopicId, cpContent,
                     cpSummary),
-      Problem(content) )
+      Problem(content, id) )
 import qualified Auth
     ( Auth,
       AuthResult(Authenticated, Unverified, Indefinite),

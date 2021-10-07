@@ -24,6 +24,7 @@ import qualified Common.Route as Route
 import qualified Common.Api.Error as Error
 import qualified Database
 import qualified Database.Queries as Queries
+import qualified S3
 import qualified Common.Api.User as User
 import qualified Common.Api.Register as Register
 import qualified Common.Api.Role as Role
@@ -43,6 +44,9 @@ backend = Ob.Backend
       -- Connect to the database
       conn <- Database.connect
 
+      -- Set up S3
+      s3env <- S3.setup
+
       serve $ \case
         Route.BackendRoute_Missing :/ () -> return ()
         Route.BackendRoute_Api :/ apiRoute -> do
@@ -60,7 +64,7 @@ backend = Ob.Backend
                 Snap.GET -> writeJSON =<< IO.liftIO (Queries.getProblems conn Nothing query)
                 Snap.POST -> case mUser of
                   Nothing -> writeJSON $ Error.mk "No access"
-                  Just user -> handleSaveProblem conn user
+                  Just user -> handleSaveProblem conn s3env user
                 _ -> return () -- TODO: implement put, delete
             Route.Api_Problems :/ (Just problemId, query) -> do
               writeJSON =<< IO.liftIO (Queries.getProblemById conn problemId query)
@@ -177,9 +181,15 @@ removeCookie
   -> m ()
 removeCookie name = Snap.expireCookie $ mkCookie name ""
 
+data FileUpload = FileUpload
+  { filePart :: Wreq.Part
+  , filePath :: FilePath
+  , fileName :: Text
+  }
+
 -- Create or update problem
-handleSaveProblem :: SQL.Connection -> User.User -> Snap.Snap ()
-handleSaveProblem conn user = do
+handleSaveProblem :: SQL.Connection -> S3.Env -> User.User -> Snap.Snap ()
+handleSaveProblem conn s3env user = do
   fileUploads <- handleFileUploads
   let getTextParam :: Problem.RequestParam -> Snap.Snap Text = \param -> do
         Snap.rqPostParam (cs . show $ param)
@@ -216,8 +226,13 @@ handleSaveProblem conn user = do
                       , Problem.cpTopicId = read . cs $ topicId
                       , Problem.cpAuthorId = read . cs $ authorId
                       }
-                -- TODO: save problem figures too
-                writeJSON =<< IO.liftIO (Queries.createProblem conn newProblem)
+                IO.liftIO (Queries.createProblem conn newProblem) >>= \case
+                  Nothing -> writeJSON $ Error.mk "Something went wrong"
+                  Just createdProblem -> do
+                    let pid = Problem.id createdProblem
+                    forM_ fileUploads $ \fu -> do
+                      IO.liftIO $ S3.putFigure s3env (filePath fu) pid (cs $ fileName fu)
+                    writeJSON createdProblem
             | otherwise -> do
                 let updateProblem = Problem.UpdateProblem
                       { Problem.upProblemId = read . cs $ problemId
@@ -327,19 +342,14 @@ handleFileUploads = do
           return Nothing
         Right fp -> case Snap.partFileName info of
           Nothing -> return Nothing
-          Just fileName -> do
-            let fp' = targetDir </> cs fileName
+          Just fName -> do
+            let fp' = targetDir </> cs fName
             Dir.createDirectoryIfMissing True targetDir
             Dir.renameFile fp fp'
-            return . Just $ FileUpload (Wreq.partFile "multiplefiles" fp') fp'
+            return . Just $ FileUpload (Wreq.partFile "multiplefiles" fp') fp' (cs fName)
   Snap.handleFileUploads
     tmpDir
     Snap.defaultUploadPolicy
     (const $ Snap.allowWithMaximumSize 20000) -- 20 kB max file size
     renameFile
     <&> catMaybes
-
-data FileUpload = FileUpload
-  { filePart :: Wreq.Part
-  , filePath :: FilePath
-  }
