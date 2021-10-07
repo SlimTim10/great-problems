@@ -47,13 +47,13 @@ putFigure env file problemId name = do
         <> name
   put env file destination
 
--- | Synchronize a directory tree to S3 (checks files freshness using size and md5 checksum, unless overridden by options (see https://s3tools.org/usage).
+-- | Synchronize a directory tree to S3 (checks files freshness using size and md5 checksum, deleting destination objects with no corresponding source file (see https://s3tools.org/usage).
 sync
   :: Env
   -> String -- ^ Local or remote directory
   -> String -- ^ Local or remote directory
   -> IO ()
-sync env a b = Sys.callProcess (s3cmdPath env) ["sync", a, b]
+sync env a b = Sys.callProcess (s3cmdPath env) ["--delete-removed", "sync", a, b]
 
 -- | Put problem figures from directory into bucket.
 putFigureDirectory
@@ -62,8 +62,13 @@ putFigureDirectory
   -> Integer -- ^ Problem ID that these figures belong to
   -> IO ()
 putFigureDirectory env dir problemId = do
+  -- Add missing slash at the end (otherwise s3cmd includes the directory name in the remote)
+  let dir' =
+        if last dir /= '/'
+        then dir ++ "/"
+        else dir
   let destination = cs $ "s3://"
         <> (bucket env)
         <> "/figures/"
         <> show problemId <> "/"
-  sync env dir destination
+  sync env dir' destination

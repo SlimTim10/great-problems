@@ -62,6 +62,15 @@ widget problemId = mdo
         Util.getOnload
           $ Route.apiHref $ Route.Api_Problems :/ (Just pid, mempty)
     R.holdDyn Nothing response
+
+  preloadedFigures :: R.Dynamic t [Common.File.FileWithName] <- do
+    response :: R.Event t [Common.File.FileWithName] <- case problemId of
+      Nothing -> return R.never
+      -- Just pid -> do
+      --   Util.getOnload
+      --     $ Route.apiHref $ Route.Api_Problems :/ (Just pid, mempty)
+      Just pid -> return R.never
+    R.holdDyn [] response
   
   ( figures
     , randomizeVariablesAction

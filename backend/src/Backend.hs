@@ -232,7 +232,8 @@ handleSaveProblem conn s3env user = do
                   Nothing -> writeJSON $ Error.mk "Something went wrong"
                   Just createdProblem -> do
                     let pid = Problem.id createdProblem
-                    IO.liftIO $ S3.putFigureDirectory s3env dir pid
+                    IO.liftIO $ S3.putFigureDirectory s3env (dir <> "/") pid
+                    -- TODO: save figures to database?
                     -- forM_ fileUploads $ \fu -> do
                     --   IO.liftIO $ S3.putFigure s3env (filePath fu) pid (cs $ fileName fu)
                     writeJSON createdProblem
@@ -249,11 +250,13 @@ handleSaveProblem conn s3env user = do
                   Nothing -> writeJSON $ Error.mk "Something went wrong"
                   Just updatedProblem -> do
                     let pid = Problem.id updatedProblem
-                    forM_ fileUploads $ \fu -> do
-                      IO.liftIO $ S3.putFigure s3env (filePath fu) pid (cs $ fileName fu)
+                    IO.liftIO $ S3.putFigureDirectory s3env (dir <> "/") pid
+                    -- TODO: save figures to database?
+                    -- forM_ fileUploads $ \fu -> do
+                    --   IO.liftIO $ S3.putFigure s3env (filePath fu) pid (cs $ fileName fu)
                     writeJSON updatedProblem
   -- Delete the uploaded files from the filesystem
-  IO.liftIO $ Sys.removeDirectory dir
+  IO.liftIO $ Sys.removeDirectoryRecursive dir
 
 requestIcemakerCompileProblem
   :: IO.MonadIO m
@@ -303,7 +306,7 @@ handleCompileProblem = do
             , Compile.resTerminalOutput = Compile.terminalOutput r
             }
   -- Delete the uploaded files from the server
-  IO.liftIO $ Sys.removeDirectory dir
+  IO.liftIO $ Sys.removeDirectoryRecursive dir
 
 handleCompileProblemById :: SQL.Connection -> Integer -> Snap.Snap ()
 handleCompileProblemById conn problemId = do
@@ -336,7 +339,7 @@ handleCompileProblemById conn problemId = do
           , Compile.resTerminalOutput = Compile.terminalOutput r
           }
   -- Delete the uploaded files from the server
-  -- IO.liftIO $ Sys.removeDirectory dir
+  -- IO.liftIO $ Sys.removeDirectoryRecursive dir
 
 -- | Get the files from the POST request and make them persist in the temporary directory.
 -- Returns the path to the newly created directory and a list of the files as form parts and their paths.

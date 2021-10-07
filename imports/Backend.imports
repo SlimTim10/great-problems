@@ -33,7 +33,7 @@ import qualified Snap.Util.FileUploads as Snap
 import qualified System.Directory as Sys
     ( createDirectoryIfMissing,
       getTemporaryDirectory,
-      removeDirectory,
+      removeDirectoryRecursive,
       renameFile )
 import System.FilePath ( (</>) )
 import qualified Obelisk.Backend as Ob ( Backend(..) )
@@ -63,7 +63,7 @@ import qualified Database.Queries as Queries
       registerUser,
       verifyEmail,
       newEmailVerification )
-import qualified S3 ( Env, setup, putFigure, putFigureDirectory )
+import qualified S3 ( Env, setup, putFigureDirectory )
 import qualified Common.Api.User as User ( User(role, id) )
 import qualified Common.Api.Register as Register
     ( Register(password, email, fullName) )
@@ -106,7 +106,6 @@ import Global
       (<&>),
       void,
       mfilter,
-      forM_,
       (^.),
       cs,
       readMaybe )
