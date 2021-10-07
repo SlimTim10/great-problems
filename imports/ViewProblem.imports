@@ -1,3 +1,4 @@
+import qualified Data.Text as T ( null )
 import qualified Data.Map as Map ( mapKeys )
 import qualified Language.Javascript.JSaddle as JS
     ( MonadJSM, JSVal(JSVal) )
@@ -36,7 +37,7 @@ import qualified Common.Route as Route
       Api(Api_Problems, Api_Compile),
       apiHref )
 import qualified Common.Api.Compile as Compile
-    ( Response,
+    ( Response(resErrorLatex, resErrorIcemaker),
       RequestParam(ParamOutputOption, ParamRandomizeVariables),
       Request(Request, outputOption, randomizeVariables),
       OutputOption(..) )

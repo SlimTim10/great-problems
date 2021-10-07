@@ -3,6 +3,7 @@ module ViewProblem
   ( widget
   ) where
 
+import qualified Data.Text as T
 import qualified Data.Map as Map
 import qualified Language.Javascript.JSaddle as JS
 import qualified "jsaddle-dom" GHCJS.DOM.Document as DOM
@@ -205,8 +206,14 @@ widget problemId = mdo
               )
 
         R.elClass "div" "pl-2 flex-1 h-full flex flex-col" $ do
-          let errorsToggle :: R.Dynamic t Bool = R.constDyn False
-          R.elClass "div" "flex-1" $ PdfViewer.widget latestResponse anyLoading errorsToggle
+          let showPdf = R.elClass "div" "flex-1" $
+                PdfViewer.widget latestResponse anyLoading (R.constDyn False)
+          Util.dynFor latestResponse $ \case
+            Nothing -> showPdf
+            Just res -> do
+              if any (not . T.null) [Compile.resErrorIcemaker res, Compile.resErrorLatex res]
+                then R.text "Something went wrong. Try again later or notify the administrator."
+                else showPdf
 
         return
           ( randomizeVariablesAction
