@@ -1,6 +1,6 @@
-module Common.File
-  ( FileMap
-  , FileWithName(..)
+module Common.FormFile
+  ( FormFileMap
+  , FormFile(..)
   ) where
 
 import qualified Data.Map as Map
@@ -8,15 +8,15 @@ import qualified JSDOM.Types
 
 import Global
 
-type FileMap = Map.Map Int FileWithName
+type FormFileMap = Map.Map Int FormFile
 
-data FileWithName = FileWithName
+data FormFile = FormFile
   { file :: JSDOM.Types.File
   , name :: Text
   }
 
-instance Show FileWithName where
+instance Show FormFile where
   show = show . name
 
-instance Eq FileWithName where
+instance Eq FormFile where
   (==) a b = name a == name b

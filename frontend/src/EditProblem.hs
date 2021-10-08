@@ -13,7 +13,7 @@ import qualified Reflex.Dom.Core as R
 import qualified MyReflex.Dom.Xhr.FormData as R'
 
 import qualified Common.Route as Route
-import qualified Common.File
+import qualified Common.FormFile as FormFile
 import qualified Common.Api.Compile as Compile
 import qualified Common.Api.Error as Error
 import qualified Common.Api.Problem as Problem
@@ -63,8 +63,8 @@ widget problemId = mdo
           $ Route.apiHref $ Route.Api_Problems :/ (Just pid, mempty)
     R.holdDyn Nothing response
 
-  preloadedFigures :: R.Dynamic t [Common.File.FileWithName] <- do
-    response :: R.Event t [Common.File.FileWithName] <- case problemId of
+  preloadedFigures :: R.Dynamic t [FormFile.FormFile] <- do
+    response :: R.Event t [FormFile.FormFile] <- case problemId of
       Nothing -> return R.never
       -- Just pid -> do
       --   Util.getOnload
@@ -135,7 +135,7 @@ widget problemId = mdo
           , showSolutionAction
           , outputOption
           ) <- outputOptionsPane editorContent figures
-        figures :: R.Dynamic t [Common.File.FileWithName] <- R.elClass "div" "py-3 border-b border-brand-light-gray"
+        figures :: R.Dynamic t [FormFile.FormFile] <- R.elClass "div" "py-3 border-b border-brand-light-gray"
           $ Figures.widget
         publish :: R.Event t () <- R.elClass "div" "py-3" $ do
           Button.primaryClass' "Save & Publish" "w-full active:bg-blue-400"

@@ -42,5 +42,6 @@ import qualified Reflex.Dom.Core as R
 import qualified MyReflex.Dom.Xhr.FormData as R'
     ( FormValue(FormValue_File), postForms )
 import qualified Common.Api.User as User ( User )
-import qualified Common.File as File ( FileWithName(name, file) )
+import qualified Common.FormFile as FormFile
+    ( FormFile(name, file) )
 import Global ( MonadFix, Word64, Text, Map, void, (^.), cs )

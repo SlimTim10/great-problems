@@ -9,5 +9,5 @@ import qualified Data.Aeson as JSON
       Value(Object),
       ToJSON )
 import GHC.Generics ( Generic )
-import qualified Common.File as File ( FileWithName )
+import qualified Common.FormFile as FormFile ( FormFile )
 import Global ( Text )

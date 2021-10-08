@@ -14,7 +14,7 @@ import qualified Data.HashMap.Strict as HM
 import qualified Data.Aeson as JSON
 import GHC.Generics (Generic)
 
-import qualified Common.File as File
+import qualified Common.FormFile as FormFile
 import Global
 
 data OutputOption = WithSolution | WithAnswer | WithSolutionAndAnswer | QuestionOnly
@@ -29,7 +29,7 @@ data Request = Request
   { content :: Text
   , randomizeVariables :: Bool
   , outputOption :: OutputOption
-  , figures :: [File.FileWithName]
+  , figures :: [FormFile.FormFile]
   }
 
 data RequestParam = ParamContent | ParamRandomizeVariables | ParamOutputOption | ParamFigures

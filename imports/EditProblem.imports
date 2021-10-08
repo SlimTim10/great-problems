@@ -5,7 +5,7 @@ import qualified "jsaddle-dom" GHCJS.DOM.Document as DOM
     ( IsDocument )
 import qualified JSDOM.Types ( File )
 import qualified Obelisk.Route.Frontend as Ob
-    ( R, routeLink, RouteToUrl, SetRoute(setRoute) )
+    ( R, SetRoute(setRoute), RouteToUrl, routeLink )
 import qualified Reflex.Dom.Core as R
     ( def,
       constDyn,
@@ -43,7 +43,7 @@ import qualified Common.Route as Route
       FrontendRoute(FrontendRoute_Problems),
       Api(Api_Problems),
       apiHref )
-import qualified Common.File ( FileWithName )
+import qualified Common.FormFile as FormFile ( FormFile )
 import qualified Common.Api.Compile as Compile
     ( Response, Request(Request), OutputOption(..) )
 import qualified Common.Api.Error as Error ( Error(message) )

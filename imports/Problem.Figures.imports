@@ -21,7 +21,7 @@ import qualified Reflex.Dom.Core as R
       DomBuilder(inputElement),
       InitialAttributes(initialAttributes),
       InputElement(_inputElement_files) )
-import qualified Common.File as File
-    ( FileWithName(FileWithName, name), FileMap )
+import qualified Common.FormFile as FormFile
+    ( FormFile(FormFile, name), FormFileMap )
 import qualified Widget.Button as Button ( primarySmall' )
 import Global ( Text, Map, (&), (.~), (=:) )

@@ -12,7 +12,7 @@ import GHC.Generics (Generic)
 import qualified Common.Api.Topic as Topic
 import qualified Common.Api.User as User
 import qualified Common.Route as Route
-import qualified Common.File as File
+import qualified Common.FormFile as FormFile
 import Global
 
 data Problem = Problem
@@ -65,7 +65,7 @@ data UpdateProblem = UpdateProblem
 -- Update or publish new problem
 data RequestSave = RequestSave
   { rsProblem :: Either CreateProblem UpdateProblem
-  , rsFigures :: [File.FileWithName]
+  , rsFigures :: [FormFile.FormFile]
   }
 
 data RequestParam

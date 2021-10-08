@@ -20,7 +20,7 @@ import qualified Reflex.Dom.Core as R
 import qualified MyReflex.Dom.Xhr.FormData as R'
 
 import qualified Common.Api.User as User
-import qualified Common.File as File
+import qualified Common.FormFile as FormFile
 import Global
 
 showText :: Show s => s -> Text
@@ -98,8 +98,8 @@ lookupSetting env def = do
     Nothing -> pure def
     Just str -> maybe (pure . read . show $ str) pure (Text.Read.readMaybe str)
 
-formFile :: File.FileWithName -> R'.FormValue JSDOM.Types.File
-formFile f = R'.FormValue_File (File.file f) (Just (File.name f))
+formFile :: FormFile.FormFile -> R'.FormValue JSDOM.Types.File
+formFile f = R'.FormValue_File (FormFile.file f) (Just (FormFile.name f))
 
 formBool :: Bool -> Text
 formBool True = "true"

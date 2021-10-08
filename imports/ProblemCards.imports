@@ -2,7 +2,7 @@ import qualified Data.CaseInsensitive as CI ( CI(original) )
 import qualified Control.Monad.Fix as Fix ( MonadFix )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Obelisk.Route.Frontend as Ob
-    ( R, routeLink, RouteToUrl, SetRoute )
+    ( R, SetRoute, RouteToUrl, routeLink )
 import qualified Reflex.Dom.Core as R
     ( simpleList,
       el,
