@@ -7,8 +7,8 @@ import qualified Data.CaseInsensitive as CI ( CI(original) )
 import qualified Common.Route as Route
     ( Query, readParamFromQuery, textParamFromQuery )
 import qualified Common.Api.Problem as Problem
-    ( BareProblem(bpProblemId, bpAuthorId, bpTopicId, bpContents,
-                  bpSummary),
+    ( BareProblem(bpProblemId, bpFigures, bpAuthorId, bpTopicId,
+                  bpContents, bpSummary),
       Problem(..) )
 import qualified Common.Api.Topic as Topic
     ( Topic(Topic, id, parentId) )
@@ -17,7 +17,8 @@ import qualified Common.Api.Register as Register
 import qualified Common.Api.User as User ( User(..) )
 import qualified Common.Api.Role as Role ( Role(..) )
 import qualified Common.Api.Auth as Auth ( Auth(password, email) )
-import qualified Common.Api.Figure as Figure ( Figure(..) )
+import qualified Common.Api.Figure as Figure
+    ( BareFigure(bfContents, bfName), Figure(..) )
 import qualified Database.Types.Problem as DbProblem
     ( Problem(updated_at, created_at, author_id, topic_id, contents,
               summary, id) )
@@ -39,4 +40,12 @@ import qualified Util
       verifyPassword,
       generateRandomText )
 import Global
-    ( Text, CI, catMaybes, isNothing, (<&>), void, intersperse, (>=>) )
+    ( Text,
+      CI,
+      catMaybes,
+      isNothing,
+      (<&>),
+      void,
+      intersperse,
+      (>=>),
+      forM_ )

@@ -139,9 +139,14 @@ createProblem conn newProblem = do
     , Problem.bpTopicId newProblem
     , Problem.bpAuthorId newProblem
     )
-  flip (maybe (pure Nothing))
-    (SQL.fromOnly <$> mProblemId)
-    $ \problemId -> getProblemById conn problemId mempty
+  case SQL.fromOnly <$> mProblemId of
+    Nothing -> return Nothing
+    Just problemId -> do
+      forM_ (Problem.bpFigures newProblem) $ \figure -> do
+        void $ SQL.execute conn
+          "INSERT INTO figures(name, contents, problem_id) VALUES (?,?,?)"
+          (Figure.bfName figure, Figure.bfContents figure, problemId)
+      getProblemById conn problemId mempty
 
 updateProblem :: SQL.Connection -> Problem.BareProblem -> IO (Maybe Problem.Problem)
 updateProblem conn problem = do
@@ -153,9 +158,17 @@ updateProblem conn problem = do
     , Problem.bpTopicId problem
     , Problem.bpProblemId problem
     )
-  flip (maybe (pure Nothing))
-    (SQL.fromOnly <$> mProblemId)
-    $ \problemId -> getProblemById conn problemId mempty
+  case SQL.fromOnly <$> mProblemId of
+    Nothing -> return Nothing
+    Just problemId -> do
+      void $ SQL.execute conn
+        "DELETE FROM figures WHERE problem_id = ?"
+        (SQL.Only problemId)
+      forM_ (Problem.bpFigures problem) $ \figure -> do
+        void $ SQL.execute conn
+          "INSERT INTO figures(name, contents, problem_id) VALUES (?,?,?)"
+          (Figure.bfName figure, Figure.bfContents figure, problemId)
+      getProblemById conn problemId mempty
 
 getTopics :: SQL.Connection -> IO [Topic.Topic]
 getTopics conn = do
