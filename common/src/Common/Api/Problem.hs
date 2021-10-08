@@ -66,31 +66,15 @@ data UpdateProblem = UpdateProblem
   , upFigures :: [Figure.BareFigure]
   }
 
-data CreateProblemRequest = CreateProblemRequest
-  { cprSummary :: Text
-  , cprContents :: Text
-  , cprTopicId :: Integer
-  , cprAuthorId :: Integer
-  , cprFigures :: [FormFile.FormFile]
-  }
-
-data UpdateProblemRequest = UpdateProblemRequest
-  { uprProblemId :: Integer
-  , uprSummary :: Text
-  , uprContents :: Text
-  , uprTopicId :: Integer
-  , uprAuthorId :: Integer
-  , uprFigures :: [FormFile.FormFile]
-  }
-
 -- Update or publish new problem
-type RequestSave = Either CreateProblemRequest UpdateProblemRequest
-
--- TODO
--- data RequestSave = RequestSave
---   { rsProblemId :: Maybe Integer
---   , ...
---   }
+data RequestSave = RequestSave
+  { rsProblemId :: Maybe Integer
+  , rsSummary :: Text
+  , rsContents :: Text
+  , rsTopicId :: Integer
+  , rsAuthorId :: Integer
+  , rsFigures :: [FormFile.FormFile]
+  }
 
 data RequestParam
   = ParamProblemId

@@ -168,16 +168,15 @@ widget problemId = mdo
           =<< Util.getCurrentUser
 
         let saveProblemRequest :: R.Dynamic t Problem.RequestSave = case problemId of
-              Nothing -> fmap Left
-                $ Problem.CreateProblemRequest
-                <$> summary
+              Nothing -> Problem.RequestSave
+                <$> R.constDyn Nothing
+                <*> summary
                 <*> editorContents
                 <*> selectedTopicId
                 <*> userId
                 <*> figures
-              Just pid -> fmap Right
-                $ Problem.UpdateProblemRequest
-                <$> R.constDyn pid
+              Just pid -> Problem.RequestSave
+                <$> R.constDyn (Just pid)
                 <*> summary
                 <*> editorContents
                 <*> selectedTopicId
@@ -188,29 +187,20 @@ widget problemId = mdo
           $ R.ffor (R.tagPromptlyDyn saveProblemRequest publish) $ \req -> do
           let
             formDataParams :: Map Problem.RequestParam (R'.FormValue JSDOM.Types.File) =
-              case req of
-                Left createProblem' -> (
-                  Problem.ParamSummary =: R'.FormValue_Text (Problem.cprSummary createProblem')
-                  <> Problem.ParamContents =: R'.FormValue_Text (Problem.cprContents createProblem')
-                  <> Problem.ParamTopicId =: R'.FormValue_Text
-                    (cs . show . Problem.cprTopicId $ createProblem')
-                  <> Problem.ParamAuthorId =: R'.FormValue_Text
-                    (cs . show . Problem.cprAuthorId $ createProblem')
-                  <> Problem.ParamFigures =: R'.FormValue_List
-                    (map Util.formFile . Problem.cprFigures $ createProblem')
-                  )
-                Right updateProblem' -> (
-                  Problem.ParamProblemId =: R'.FormValue_Text
-                    (cs . show . Problem.uprProblemId $ updateProblem')
-                  <> Problem.ParamSummary =: R'.FormValue_Text (Problem.uprSummary updateProblem')
-                  <> Problem.ParamContents =: R'.FormValue_Text (Problem.uprContents updateProblem')
-                  <> Problem.ParamTopicId =: R'.FormValue_Text
-                    (cs . show . Problem.uprTopicId $  updateProblem')
-                  <> Problem.ParamAuthorId =: R'.FormValue_Text
-                    (cs . show . Problem.uprAuthorId $ updateProblem')
-                  <> Problem.ParamFigures =: R'.FormValue_List
-                    (map Util.formFile . Problem.uprFigures $ updateProblem')
-                  )
+              ( Problem.ParamSummary =: R'.FormValue_Text (Problem.rsSummary req)
+                <> Problem.ParamContents =: R'.FormValue_Text (Problem.rsContents req)
+                <> Problem.ParamTopicId =: R'.FormValue_Text
+                (cs . show . Problem.rsTopicId $ req)
+                <> Problem.ParamAuthorId =: R'.FormValue_Text
+                (cs . show . Problem.rsAuthorId $ req)
+                <> Problem.ParamFigures =: R'.FormValue_List
+                (map Util.formFile . Problem.rsFigures $ req)
+              )
+              <> (maybe
+                   mempty
+                   (\id' -> Problem.ParamProblemId =: R'.FormValue_Text (cs . show $ id'))
+                   (Problem.rsProblemId req)
+                 )
             formDataText = Map.mapKeys (cs . show) formDataParams
           return formDataText
         response :: R.Event t Text <- Util.postForm
