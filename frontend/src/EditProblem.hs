@@ -78,9 +78,9 @@ widget problemId = mdo
     , showAnswerAction
     , showSolutionAction
     , outputOption
-    ) <- leftPane preloadedProblem editorContent
+    ) <- leftPane preloadedProblem editorContents
     
-  ( editorContent
+  ( editorContents
     , compileButtonAction
     ) <- mainPane
     preloadedProblem
@@ -107,7 +107,7 @@ widget problemId = mdo
   return ()
 
   where
-    leftPane preloadedProblem editorContent = do
+    leftPane preloadedProblem editorContents = do
       R.elClass "div" "w-96 flex-none flex flex-col pr-2 border-r border-brand-light-gray" $ mdo
         when (isJust problemId) $ do
           R.elClass "div" "pb-3 border-b border-brand-light-gray" $ do
@@ -134,7 +134,7 @@ widget problemId = mdo
           , showAnswerAction
           , showSolutionAction
           , outputOption
-          ) <- outputOptionsPane editorContent figures
+          ) <- outputOptionsPane editorContents figures
         figures :: R.Dynamic t [FormFile.FormFile] <- R.elClass "div" "py-3 border-b border-brand-light-gray"
           $ Figures.widget
         publish :: R.Event t () <- R.elClass "div" "py-3" $ do
@@ -173,7 +173,7 @@ widget problemId = mdo
                 fmap Left
                   $ Problem.CreateProblem
                   <$> summary
-                  <*> editorContent
+                  <*> editorContents
                   <*> selectedTopicId
                   <*> userId
                 )
@@ -184,7 +184,7 @@ widget problemId = mdo
                   $ Problem.UpdateProblem
                   <$> R.constDyn pid
                   <*> summary
-                  <*> editorContent
+                  <*> editorContents
                   <*> selectedTopicId
                   <*> userId
                 )
@@ -197,7 +197,7 @@ widget problemId = mdo
               case Problem.rsProblem req of
                 Left createProblem' -> (
                   Problem.ParamSummary =: R'.FormValue_Text (Problem.cpSummary createProblem')
-                  <> Problem.ParamContent =: R'.FormValue_Text (Problem.cpContent createProblem')
+                  <> Problem.ParamContents =: R'.FormValue_Text (Problem.cpContents createProblem')
                   <> Problem.ParamTopicId =: R'.FormValue_Text
                     (cs . show . Problem.cpTopicId $ createProblem')
                   <> Problem.ParamAuthorId =: R'.FormValue_Text
@@ -208,7 +208,7 @@ widget problemId = mdo
                   Problem.ParamProblemId =: R'.FormValue_Text
                     (cs . show . Problem.upProblemId $ updateProblem')
                   <> Problem.ParamSummary =: R'.FormValue_Text (Problem.upSummary updateProblem')
-                  <> Problem.ParamContent =: R'.FormValue_Text (Problem.upContent updateProblem')
+                  <> Problem.ParamContents =: R'.FormValue_Text (Problem.upContents updateProblem')
                   <> Problem.ParamTopicId =: R'.FormValue_Text
                     (cs . show . Problem.upTopicId $  updateProblem')
                   <> Problem.ParamAuthorId =: R'.FormValue_Text
@@ -234,20 +234,20 @@ widget problemId = mdo
           , outputOption
           )
 
-    outputOptionsPane editorContent figures = do
+    outputOptionsPane editorContents figures = do
       R.elClass "div" "py-3 border-b border-brand-light-gray" $ mdo
         (randomizeVariablesAction, resetVariablesAction) <- R.elClass "div" "flex gap-2 mb-2" $ do
           randomizeVariables :: R.Event t () <- Button.primarySmallClass' "Randomize variables" "active:bg-blue-400"
           randomizeVariablesAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
             Problem.Compile.performRequest randomizeVariables $ Compile.Request
-              <$> editorContent
+              <$> editorContents
               <*> R.constDyn True
               <*> outputOption
               <*> figures
           resetVariables :: R.Event t () <- Button.primarySmallClass' "Reset variables" "active:bg-blue-400"
           resetVariablesAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
             Problem.Compile.performRequest resetVariables $ Compile.Request
-              <$> editorContent
+              <$> editorContents
               <*> R.constDyn False
               <*> outputOption
               <*> figures
@@ -262,7 +262,7 @@ widget problemId = mdo
               "Answer"
             showAnswerAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
               Problem.Compile.performRequest (R.updated $ const () <$> showAnswer) $ Compile.Request
-                <$> editorContent
+                <$> editorContents
                 <*> R.constDyn False
                 <*> outputOption
                 <*> figures
@@ -272,7 +272,7 @@ widget problemId = mdo
               "Solution"
             showSolutionAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
               Problem.Compile.performRequest (R.updated $ const () <$> showSolution) $ Compile.Request
-                <$> editorContent
+                <$> editorContents
                 <*> R.constDyn False
                 <*> outputOption
                 <*> figures
@@ -290,23 +290,23 @@ widget problemId = mdo
     mainPane preloadedProblem figures latestResponse anyLoading outputOption = do
       R.elClass "div" "pl-2 flex-1 h-full flex flex-col" $ mdo
         (uploadPrb, compileButtonAction, errorsToggle) <-
-          upperPane editorContent figures outputOption latestResponse anyLoading
-        let contentFromPreloadedProblem :: R.Event t Text = fromMaybe "" . fmap Problem.content
+          upperPane editorContents figures outputOption latestResponse anyLoading
+        let contentsFromPreloadedProblem :: R.Event t Text = fromMaybe "" . fmap Problem.contents
               <$> R.updated preloadedProblem
-        let setContentValue = R.leftmost [contentFromPreloadedProblem, uploadPrb]
-        editorContent <- R.elClass "div" "h-full flex" $ do
-          editorContent' :: R.Dynamic t Text <- R.elClass "div" "flex-1" $ Editor.widget setContentValue
+        let setContentsValue = R.leftmost [contentsFromPreloadedProblem, uploadPrb]
+        editorContents <- R.elClass "div" "h-full flex" $ do
+          editorContents' :: R.Dynamic t Text <- R.elClass "div" "flex-1" $ Editor.widget setContentsValue
           R.elClass "div" "flex-1" $ PdfViewer.widget latestResponse anyLoading errorsToggle
-          return editorContent'
-        return (editorContent, compileButtonAction)
+          return editorContents'
+        return (editorContents, compileButtonAction)
 
-    upperPane editorContent figures outputOption latestResponse anyLoading = do
+    upperPane editorContents figures outputOption latestResponse anyLoading = do
       R.elClass "div" "bg-brand-light-gray p-1 flex justify-between" $ do
         uploadPrb <- do
           R.elClass "div" "flex-1 flex justify-center" $ do
             R.elClass "span" "mr-auto flex gap-2 items-center" $ mdo
               uploadPrb :: R.Event t Text <- UploadPrb.widget
-              DownloadPrb.widget prbName editorContent
+              DownloadPrb.widget prbName editorContents
               R.elClass "p" "ml-2" $ R.text "Filename"
               prbName :: R.Dynamic t Text <- fmap R.value $ R.inputElement
                 $ R.def & R.inputElementConfig_elementConfig . R.elementConfig_initialAttributes .~
@@ -316,7 +316,7 @@ widget problemId = mdo
         compileButtonAction :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
           R.elClass "div" "flex-1 flex justify-center" $ do
             Problem.Compile.widget $ Compile.Request
-              <$> editorContent
+              <$> editorContents
               <*> R.constDyn False
               <*> outputOption
               <*> figures

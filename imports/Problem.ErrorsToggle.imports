@@ -7,6 +7,6 @@ import qualified Reflex.Dom.Core as R
       PostBuild,
       DomBuilder )
 import qualified Common.Api.Compile as Compile
-    ( Response(resPdfContent, resErrorIcemaker) )
+    ( Response(resPdfContents, resErrorIcemaker) )
 import qualified Util ( buttonDynClass )
 import Global ( MonadFix, Text, isNothing )

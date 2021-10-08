@@ -35,14 +35,14 @@ widget compileResponse reset = do
       -> Bool -- ^ Errors are present
       -> Text
     style activeToggled compileResponse' hasErrors'
-      | hasErrors' == True && (activeToggled == False || T.null pdfContent) =
+      | hasErrors' == True && (activeToggled == False || T.null pdfContents) =
           "border border-brand-primary rounded bg-red-200 text-blue-700 font-medium px-2 py-1 text-brand-sm"
       | activeToggled == True =
           "border border-brand-primary rounded bg-brand-primary text-white font-medium px-2 py-1 text-brand-sm"
       | otherwise =
           "border border-brand-primary rounded bg-white text-blue-700 font-medium px-2 py-1 text-brand-sm"
       where
-        pdfContent = maybe T.empty Compile.resPdfContent compileResponse'
+        pdfContents = maybe T.empty Compile.resPdfContents compileResponse'
 
 showErrors
   :: Bool
@@ -51,8 +51,8 @@ showErrors
 showErrors activeToggled compileResponse
   | activeToggled = True
   | isNothing compileResponse = False
-  | not . T.null $ pdfContent = False
-  | T.null pdfContent = True
+  | not . T.null $ pdfContents = False
+  | T.null pdfContents = True
   | otherwise = False
   where
-    pdfContent = maybe T.empty Compile.resPdfContent compileResponse
+    pdfContents = maybe T.empty Compile.resPdfContents compileResponse

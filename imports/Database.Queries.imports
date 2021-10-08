@@ -7,8 +7,8 @@ import qualified Data.CaseInsensitive as CI ( CI(original) )
 import qualified Common.Route as Route
     ( Query, readParamFromQuery, textParamFromQuery )
 import qualified Common.Api.Problem as Problem
-    ( UpdateProblem(upProblemId, upTopicId, upContent, upSummary),
-      CreateProblem(cpAuthorId, cpTopicId, cpContent, cpSummary),
+    ( UpdateProblem(upProblemId, upTopicId, upContents, upSummary),
+      CreateProblem(cpAuthorId, cpTopicId, cpContents, cpSummary),
       Problem(..) )
 import qualified Common.Api.Topic as Topic
     ( Topic(Topic, id, parentId) )
@@ -19,7 +19,7 @@ import qualified Common.Api.Role as Role ( Role(..) )
 import qualified Common.Api.Auth as Auth ( Auth(password, email) )
 import qualified Common.Api.Figure as Figure ( Figure(..) )
 import qualified Database.Types.Problem as DbProblem
-    ( Problem(updated_at, created_at, author_id, topic_id, content,
+    ( Problem(updated_at, created_at, author_id, topic_id, contents,
               summary, id) )
 import qualified Database.Types.Topic as DbTopic
     ( Topic(parent_id, name, id) )

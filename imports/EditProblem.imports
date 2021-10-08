@@ -50,11 +50,11 @@ import qualified Common.Api.Error as Error ( Error(message) )
 import qualified Common.Api.Problem as Problem
     ( RequestParam(..),
       RequestSave(..),
-      UpdateProblem(UpdateProblem, upAuthorId, upTopicId, upContent,
+      UpdateProblem(UpdateProblem, upAuthorId, upTopicId, upContents,
                     upSummary, upProblemId),
-      CreateProblem(CreateProblem, cpAuthorId, cpTopicId, cpContent,
+      CreateProblem(CreateProblem, cpAuthorId, cpTopicId, cpContents,
                     cpSummary),
-      Problem(content, id, summary, topic) )
+      Problem(contents, id, summary, topic) )
 import qualified Common.Api.Topic as Topic ( Topic(id) )
 import qualified Common.Api.User as User ( User(id) )
 import qualified Problem.SelectTopic as SelectTopic ( widget )

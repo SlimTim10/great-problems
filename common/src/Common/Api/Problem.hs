@@ -19,7 +19,7 @@ import Global
 data Problem = Problem
   { id :: Integer
   , summary :: Text
-  , content :: Text
+  , contents :: Text
   , topic :: Either Integer Topic.Topic
   , author :: Either Integer User.User
   , topicPath :: Maybe [Topic.Topic]
@@ -51,7 +51,7 @@ getParamsToRouteQuery gps =
 
 data CreateProblem = CreateProblem
   { cpSummary :: Text
-  , cpContent :: Text
+  , cpContents :: Text
   , cpTopicId :: Integer
   , cpAuthorId :: Integer
   }
@@ -59,7 +59,7 @@ data CreateProblem = CreateProblem
 data UpdateProblem = UpdateProblem
   { upProblemId :: Integer
   , upSummary :: Text
-  , upContent :: Text
+  , upContents :: Text
   , upTopicId :: Integer
   , upAuthorId :: Integer
   }
@@ -73,7 +73,7 @@ data RequestSave = RequestSave
 data RequestParam
   = ParamProblemId
   | ParamSummary
-  | ParamContent
+  | ParamContents
   | ParamTopicId
   | ParamAuthorId
   | ParamFigures
@@ -81,7 +81,7 @@ data RequestParam
 instance Show RequestParam where
   show ParamProblemId = "problemId"
   show ParamSummary = "summary"
-  show ParamContent = "content"
+  show ParamContents = "contents"
   show ParamTopicId = "topicId"
   show ParamAuthorId = "authorId"
   show ParamFigures = "figures"

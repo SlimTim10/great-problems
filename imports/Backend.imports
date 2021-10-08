@@ -72,21 +72,21 @@ import qualified Common.Api.Role as Role
 import qualified Common.Api.OkResponse as OkResponse
     ( OkResponse(OkResponse) )
 import qualified Common.Api.Compile as Compile
-    ( IcemakerResponse(terminalOutput, pdfContent, errorLatex,
+    ( IcemakerResponse(terminalOutput, pdfContents, errorLatex,
                        errorIcemaker),
-      Response(Response, resTerminalOutput, resPdfContent, resErrorLatex,
-               resErrorIcemaker),
+      Response(Response, resTerminalOutput, resPdfContents,
+               resErrorLatex, resErrorIcemaker),
       RequestParam(ParamOutputOption, ParamRandomizeVariables,
-                   ParamContent),
+                   ParamContents),
       OutputOption(QuestionOnly) )
 import qualified Common.Api.Problem as Problem
-    ( RequestParam(ParamAuthorId, ParamTopicId, ParamContent,
+    ( RequestParam(ParamAuthorId, ParamTopicId, ParamContents,
                    ParamSummary, ParamProblemId),
-      UpdateProblem(UpdateProblem, upAuthorId, upTopicId, upContent,
+      UpdateProblem(UpdateProblem, upAuthorId, upTopicId, upContents,
                     upSummary, upProblemId),
-      CreateProblem(CreateProblem, cpAuthorId, cpTopicId, cpContent,
+      CreateProblem(CreateProblem, cpAuthorId, cpTopicId, cpContents,
                     cpSummary),
-      Problem(content, id) )
+      Problem(contents, id) )
 import qualified Auth
     ( Auth,
       AuthResult(Authenticated, Unverified, Indefinite),

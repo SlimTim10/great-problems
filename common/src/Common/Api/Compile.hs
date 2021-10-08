@@ -26,16 +26,16 @@ instance Show OutputOption where
   show QuestionOnly = "flagQuestions"
 
 data Request = Request
-  { content :: Text
+  { contents :: Text
   , randomizeVariables :: Bool
   , outputOption :: OutputOption
   , figures :: [FormFile.FormFile]
   }
 
-data RequestParam = ParamContent | ParamRandomizeVariables | ParamOutputOption | ParamFigures
+data RequestParam = ParamContents | ParamRandomizeVariables | ParamOutputOption | ParamFigures
   deriving (Eq, Ord)
 instance Show RequestParam where
-  show ParamContent = "content"
+  show ParamContents = "contents"
   show ParamRandomizeVariables = "randomizeVariables"
   show ParamOutputOption = "outputOption"
   show ParamFigures = "figures"
@@ -43,7 +43,7 @@ instance Show RequestParam where
 data Response = Response
   { resErrorIcemaker :: Text
   , resErrorLatex :: Text
-  , resPdfContent :: Text
+  , resPdfContents :: Text
   , resTerminalOutput :: Text
   } deriving
   ( Eq
@@ -56,7 +56,7 @@ data Response = Response
 data IcemakerResponse = IcemakerResponse
   { errorIcemaker :: Text
   , errorLatex :: Text
-  , pdfContent :: Text
+  , pdfContents :: Text
   , pdfName :: Text
   , terminalOutput :: Text
   } deriving

@@ -19,7 +19,7 @@ widget
   -> R.Dynamic t Bool
   -> m ()
 widget compileResponse loading errorsToggle = do
-  let pdfData :: R.Dynamic t Text = maybe "" Compile.resPdfContent <$> compileResponse
+  let pdfData :: R.Dynamic t Text = maybe "" Compile.resPdfContents <$> compileResponse
   R.dyn_ $ switchView <$> pdfData <*> loading <*> compileResponse <*> errorsToggle
 
 switchView

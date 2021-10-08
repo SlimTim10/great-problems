@@ -18,7 +18,7 @@ import qualified Common.Route as Route
 import qualified Common.Api.Compile as Compile
     ( Response,
       RequestParam(..),
-      Request(figures, outputOption, randomizeVariables, content) )
+      Request(figures, outputOption, randomizeVariables, contents) )
 import qualified Widget.Button as Button ( primarySmallClass' )
 import qualified Problem.Loading as Loading
     ( WithLoading(WithLoading) )

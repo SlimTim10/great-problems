@@ -78,7 +78,7 @@ getProblems conn problemId routeQuery = do
   let problems = dbProblems <&> \dbProblem -> Problem.Problem
         { Problem.id = DbProblem.id dbProblem
         , Problem.summary = DbProblem.summary dbProblem
-        , Problem.content = DbProblem.content dbProblem
+        , Problem.contents = DbProblem.contents dbProblem
         , Problem.topic = Left $ DbProblem.topic_id dbProblem
         , Problem.author = Left $ DbProblem.author_id dbProblem
         , Problem.topicPath = Nothing
@@ -133,9 +133,9 @@ createProblem :: SQL.Connection -> Problem.CreateProblem -> IO (Maybe Problem.Pr
 createProblem conn newProblem = do
   mProblemId :: Maybe (SQL.Only Integer) <- Util.headMay
     <$> SQL.query conn
-    "INSERT INTO problems(summary, content, topic_id, author_id) VALUES (?,?,?,?) returning id"
+    "INSERT INTO problems(summary, contents, topic_id, author_id) VALUES (?,?,?,?) returning id"
     ( Problem.cpSummary newProblem
-    , Problem.cpContent newProblem
+    , Problem.cpContents newProblem
     , Problem.cpTopicId newProblem
     , Problem.cpAuthorId newProblem
     )
@@ -147,9 +147,9 @@ updateProblem :: SQL.Connection -> Problem.UpdateProblem -> IO (Maybe Problem.Pr
 updateProblem conn problem = do
   mProblemId :: Maybe (SQL.Only Integer) <- Util.headMay
     <$> SQL.query conn
-    "UPDATE problems SET (summary, content, topic_id, updated_at) = (?, ?, ?, DEFAULT) WHERE id = ? returning id"
+    "UPDATE problems SET (summary, contents, topic_id, updated_at) = (?, ?, ?, DEFAULT) WHERE id = ? returning id"
     ( Problem.upSummary problem
-    , Problem.upContent problem
+    , Problem.upContents problem
     , Problem.upTopicId problem
     , Problem.upProblemId problem
     )

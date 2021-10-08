@@ -198,20 +198,20 @@ handleSaveProblem conn s3env user = do
           <&> cs . BS.concat . fromMaybe mempty
   problemId <- getTextParam Problem.ParamProblemId
   summary <- getTextParam Problem.ParamSummary
-  content <- getTextParam Problem.ParamContent
+  contents <- getTextParam Problem.ParamContents
   topicId <- getTextParam Problem.ParamTopicId
   authorId <- getTextParam Problem.ParamAuthorId
   if
     | (read . cs $ authorId) /= User.id user
       || not (User.role user == Role.Contributor || User.role user == Role.Moderator)
       -> writeJSON $ Error.mk "No access"
-    | T.null content
-      -> writeJSON $ Error.mk "Problem content cannot be empty"
+    | T.null contents
+      -> writeJSON $ Error.mk "Problem contents cannot be empty"
     | T.null summary
       -> writeJSON $ Error.mk "Summary cannot be empty"
     | otherwise -> do
         response :: LBS.ByteString <- requestIcemakerCompileProblem
-          content
+          contents
           Nothing
           Nothing
           fileUploads
@@ -224,7 +224,7 @@ handleSaveProblem conn s3env user = do
             | T.null problemId -> do
                 let newProblem = Problem.CreateProblem
                       { Problem.cpSummary = summary
-                      , Problem.cpContent = content
+                      , Problem.cpContents = contents
                       , Problem.cpTopicId = read . cs $ topicId
                       , Problem.cpAuthorId = read . cs $ authorId
                       }
@@ -242,7 +242,7 @@ handleSaveProblem conn s3env user = do
                 let updateProblem = Problem.UpdateProblem
                       { Problem.upProblemId = read . cs $ problemId
                       , Problem.upSummary = summary
-                      , Problem.upContent = content
+                      , Problem.upContents = contents
                       , Problem.upTopicId = read . cs $ topicId
                       , Problem.upAuthorId = read . cs $ authorId
                       }
@@ -260,17 +260,17 @@ handleSaveProblem conn s3env user = do
 
 requestIcemakerCompileProblem
   :: IO.MonadIO m
-  => Text -- ^ Problem content
+  => Text -- ^ Problem contents
   -> Maybe Text -- Randomize variables
   -> Maybe Text -- Output option
   -> [FileUpload] -- Files
   -> m LBS.ByteString
-requestIcemakerCompileProblem content mRandomizeVariables mOutputOption fileUploads = do
+requestIcemakerCompileProblem contents mRandomizeVariables mOutputOption fileUploads = do
   let randomizeVariables = fromMaybe "false" mRandomizeVariables
   let outputOption = fromMaybe (cs . show $ Compile.QuestionOnly) mOutputOption
   response <- IO.liftIO $ Wreq.post
     "https://icewire.ca/uploadprb"
-    $ [ Wreq.partText "prbText" content
+    $ [ Wreq.partText "prbText" contents
       , Wreq.partText "prbName" "tmp"
       , Wreq.partText "random" randomizeVariables
       , Wreq.partText "outFlag" outputOption
@@ -285,15 +285,15 @@ handleCompileProblem = do
         Snap.rqPostParam (cs . show $ param)
           <$> Snap.getRequest
           <&> cs . BS.concat . fromMaybe mempty
-  content <- getTextParam Compile.ParamContent
+  contents <- getTextParam Compile.ParamContents
   randomizeVariables <- getTextParam Compile.ParamRandomizeVariables
   outputOption <- getTextParam Compile.ParamOutputOption
   if
-    | T.null content
-      -> writeJSON $ Error.mk "Problem content cannot be empty"
+    | T.null contents
+      -> writeJSON $ Error.mk "Problem contents cannot be empty"
     | otherwise -> do
         response :: LBS.ByteString <- requestIcemakerCompileProblem
-          content
+          contents
           (Just randomizeVariables)
           (Just outputOption)
           fileUploads
@@ -302,7 +302,7 @@ handleCompileProblem = do
           Just r -> writeJSON Compile.Response
             { Compile.resErrorIcemaker = Compile.errorIcemaker r
             , Compile.resErrorLatex = Compile.errorLatex r
-            , Compile.resPdfContent = Compile.pdfContent r
+            , Compile.resPdfContents = Compile.pdfContents r
             , Compile.resTerminalOutput = Compile.terminalOutput r
             }
   -- Delete the uploaded files from the server
@@ -326,7 +326,7 @@ handleCompileProblemById conn problemId = do
     Nothing -> writeJSON $ Error.mk "Problem does not exist"
     Just problem -> do
       response :: LBS.ByteString <- requestIcemakerCompileProblem
-        (Problem.content problem)
+        (Problem.contents problem)
         randomizeVariables
         outputOption
         [] -- TODO: use files from S3 bucket
@@ -335,7 +335,7 @@ handleCompileProblemById conn problemId = do
         Just r -> writeJSON Compile.Response
           { Compile.resErrorIcemaker = Compile.errorIcemaker r
           , Compile.resErrorLatex = Compile.errorLatex r
-          , Compile.resPdfContent = Compile.pdfContent r
+          , Compile.resPdfContents = Compile.pdfContents r
           , Compile.resTerminalOutput = Compile.terminalOutput r
           }
   -- Delete the uploaded files from the server
