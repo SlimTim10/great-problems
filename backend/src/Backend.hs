@@ -262,11 +262,10 @@ requestIcemakerCompileProblem
 requestIcemakerCompileProblem contents mRandomizeVariables mOutputOption figures = do
   let randomizeVariables = fromMaybe "false" mRandomizeVariables
   let outputOption = fromMaybe (cs . show $ Compile.QuestionOnly) mOutputOption
-  -- let figureToPart = \fig -> Wreq.partBS "multiplefiles" (Figure.bfContents fig)
-  let figureToPart = \fig -> HTTP.partFileRequestBody
+  let figureToPart = \figure -> HTTP.partFileRequestBody
         "multiplefiles"
-        (cs $ Figure.bfName fig)
-        $ HTTP.RequestBodyBS (Figure.bfContents fig)
+        (cs $ Figure.bfName figure)
+        $ HTTP.RequestBodyBS (Figure.bfContents figure)
   response <- IO.liftIO $ Wreq.post
     "https://icewire.ca/uploadprb"
     $ [ Wreq.partText "prbText" contents
@@ -322,11 +321,16 @@ handleCompileProblemById conn problemId = do
   IO.liftIO (Queries.getProblemById conn problemId mempty) >>= \case
     Nothing -> writeJSON $ Error.mk "Problem does not exist"
     Just problem -> do
+      let figures = Problem.figures problem <&> \figure ->
+            Figure.BareFigure
+            { Figure.bfName = Figure.name figure
+            , Figure.bfContents = Figure.contents figure
+            }
       response :: LBS.ByteString <- requestIcemakerCompileProblem
         (Problem.contents problem)
         randomizeVariables
         outputOption
-        [] -- TODO: use files from database
+        figures
       case JSON.decode response :: Maybe Compile.IcemakerResponse of
         Nothing -> writeJSON $ Error.mk "Something went wrong"
         Just r -> writeJSON Compile.Response
