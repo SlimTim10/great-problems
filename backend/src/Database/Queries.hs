@@ -33,11 +33,14 @@ import qualified Common.Api.Register as Register
 import qualified Common.Api.User as User
 import qualified Common.Api.Role as Role
 import qualified Common.Api.Auth as Auth
+import qualified Common.Api.Figure as Figure
 import qualified Database.Types.Problem as DbProblem
+import qualified Database.Types.Topic as DbTopic
 import qualified Database.Types.User as DbUser
 import qualified Database.Types.Role as DbRole
 import qualified Database.Types.EmailVerification as DbEmailVerification
 import qualified Database.Types.Session as DbSession
+import qualified Database.Types.Figure as DbFigure
 import qualified Util
 import Global
 
@@ -72,21 +75,22 @@ getProblems conn problemId routeQuery = do
   dbProblems <- if not . all isNothing $ exprs
     then SQL.query conn ("SELECT * FROM problems WHERE " <> whereClause) whereParams
     else SQL.query_ conn "SELECT * FROM problems"
-  let problems = flip map dbProblems $ \dbProblem ->
-        Problem.Problem
+  let problems = dbProblems <&> \dbProblem -> Problem.Problem
         { Problem.id = DbProblem.id dbProblem
         , Problem.summary = DbProblem.summary dbProblem
         , Problem.content = DbProblem.content dbProblem
         , Problem.topic = Left $ DbProblem.topic_id dbProblem
         , Problem.author = Left $ DbProblem.author_id dbProblem
         , Problem.topicPath = Nothing
+        , Problem.figures = []
         , Problem.createdAt = DbProblem.created_at dbProblem
         , Problem.updatedAt = DbProblem.updated_at dbProblem
         }
   let expands = maybe [] (Text.splitOn ",") $ Route.textParamFromQuery "expand" routeQuery
   let includeTopicPath = Route.textParamFromQuery "include" routeQuery == Just "topic_path"
   foldr (>=>) return
-    [ Util.whenM ("author" `elem` expands) (sequence . map expandProblemAuthor)
+    [ sequence . map withFigures
+    , Util.whenM ("author" `elem` expands) (sequence . map expandProblemAuthor)
     , Util.whenM ("topic" `elem` expands) (sequence . map expandProblemTopic)
     , Util.whenM includeTopicPath (sequence . map withTopicPath)
     ]
@@ -116,6 +120,10 @@ getProblems conn problemId routeQuery = do
         Right x -> return x
       topicPath <- getTopicPath conn topic
       return $ problem { Problem.topicPath = Just topicPath}
+    withFigures :: Problem.Problem -> IO Problem.Problem
+    withFigures problem = do
+      figures <- getFiguresByProblemId conn (Problem.id problem)
+      return $ problem { Problem.figures = figures }
 
 getProblemById :: SQL.Connection -> Integer -> Route.Query -> IO (Maybe Problem.Problem)
 getProblemById conn problemId routeQuery = Util.headMay
@@ -150,22 +158,53 @@ updateProblem conn problem = do
     $ \problemId -> getProblemById conn problemId mempty
 
 getTopics :: SQL.Connection -> IO [Topic.Topic]
-getTopics conn = SQL.query_ conn "SELECT * FROM topics"
+getTopics conn = do
+  dbTopics <- SQL.query_ conn "SELECT * FROM topics"
+  return $ dbTopics <&> \dbTopic -> Topic.Topic
+    (DbTopic.id dbTopic)
+    (DbTopic.name dbTopic)
+    (DbTopic.parent_id dbTopic)
 
 getTopicById :: SQL.Connection -> Integer -> IO (Maybe Topic.Topic)
-getTopicById conn topicId = Util.headMay
-  <$> SQL.query conn "SELECT * FROM topics WHERE id = ?" (SQL.Only topicId)
+getTopicById conn topicId = do
+  mDbTopic <- Util.headMay
+    <$> SQL.query conn "SELECT * FROM topics WHERE id = ?" (SQL.Only topicId)
+  case mDbTopic of
+    Nothing -> return Nothing
+    Just dbTopic -> return . Just $ Topic.Topic
+      (DbTopic.id dbTopic)
+      (DbTopic.name dbTopic)
+      (DbTopic.parent_id dbTopic)
 
 getParentTopic :: SQL.Connection -> Topic.Topic -> IO (Maybe Topic.Topic)
 getParentTopic conn topic = case Topic.parentId topic of
   Nothing -> return Nothing
-  Just parentId -> Util.headMay <$> SQL.query conn "SELECT * FROM topics WHERE id = ?" (SQL.Only parentId)
+  Just parentId -> do
+    mDbTopic <- Util.headMay <$> SQL.query conn
+      "SELECT * FROM topics WHERE id = ?"
+      (SQL.Only parentId)
+    case mDbTopic of
+      Nothing -> return Nothing
+      Just dbTopic -> return . Just $ Topic.Topic
+        (DbTopic.id dbTopic)
+        (DbTopic.name dbTopic)
+        (DbTopic.parent_id dbTopic)
 
 getRootTopics :: SQL.Connection -> IO [Topic.Topic]
-getRootTopics conn = SQL.query_ conn "SELECT * FROM topics WHERE parent_id IS NULL"
+getRootTopics conn = do
+  dbTopics <- SQL.query_ conn "SELECT * FROM topics WHERE parent_id IS NULL"
+  return $ dbTopics <&> \dbTopic -> Topic.Topic
+    (DbTopic.id dbTopic)
+    (DbTopic.name dbTopic)
+    (DbTopic.parent_id dbTopic)
 
 getTopicsByParentId :: SQL.Connection -> Integer -> IO [Topic.Topic]
-getTopicsByParentId conn parentId = SQL.query conn "SELECT * FROM topics WHERE parent_id = ?" (SQL.Only parentId)
+getTopicsByParentId conn parentId = do
+  dbTopics <- SQL.query conn "SELECT * FROM topics WHERE parent_id = ?" (SQL.Only parentId)
+  return $ dbTopics <&> \dbTopic -> Topic.Topic
+    (DbTopic.id dbTopic)
+    (DbTopic.name dbTopic)
+    (DbTopic.parent_id dbTopic)
 
 -- | Get the path pertaining to a given topic, tracing its path to a root topic.
 -- For example, given the topic Limits, return [Mathematics, Calculus, Limits].
@@ -183,7 +222,11 @@ getTopicDescendants :: SQL.Connection -> Topic.Topic -> IO [Topic.Topic]
 getTopicDescendants conn topic = do
   (SQL.query conn "SELECT * FROM topics WHERE parent_id = ?" (SQL.Only $ Topic.id topic)) >>= \case
     [] -> return [topic]
-    children -> do
+    dbChildren -> do
+      let children = dbChildren <&> \dbTopic -> Topic.Topic
+            (DbTopic.id dbTopic)
+            (DbTopic.name dbTopic)
+            (DbTopic.parent_id dbTopic)
       ds <- mapM (getTopicDescendants conn) children
       return $ topic : concat ds
 
@@ -223,13 +266,13 @@ getTopicHierarchy conn topic = do
     getSiblings :: Topic.Topic -> IO [Either Topic.Topic Topic.Topic]
     getSiblings t = do
       xs <- case Topic.parentId t of
-        Nothing -> SQL.query_ conn "SELECT * FROM topics WHERE parent_id IS NULL"
-        Just pid -> SQL.query conn "SELECT * FROM topics WHERE parent_id = ?" (SQL.Only pid)
+        Nothing -> getRootTopics conn
+        Just pid -> getTopicsByParentId conn pid
       return $ map (\x -> if x == t then Right x else Left x) xs
       
     getChildren :: Topic.Topic -> IO [Either Topic.Topic Topic.Topic]
     getChildren t = do
-      xs <- SQL.query conn "SELECT * FROM topics WHERE parent_id = ?" (SQL.Only (Topic.id t))
+      xs <- getTopicsByParentId conn (Topic.id t)
       return $ map Left xs
 
 getRoleById :: SQL.Connection -> Integer -> IO (Maybe Role.Role)
@@ -380,3 +423,16 @@ getUserFromSession conn sessionId = do
   getSessionById conn sessionId >>= \case
     Nothing -> return Nothing
     Just session -> getUserById conn (DbSession.user_id session)
+
+getFiguresByProblemId :: SQL.Connection -> Integer -> IO [Figure.Figure]
+getFiguresByProblemId conn problemId = do
+  dbFigures <- SQL.query conn
+    "SELECT * FROM figures WHERE problem_id = ?"
+    (SQL.Only problemId)
+  return $ dbFigures <&> \dbFigure -> Figure.Figure
+    { Figure.id = DbFigure.id dbFigure
+    , Figure.name = DbFigure.name dbFigure
+    , Figure.contents = DbFigure.contents dbFigure
+    , Figure.createdAt = DbFigure.created_at dbFigure
+    , Figure.updatedAt = DbFigure.updated_at dbFigure
+    }

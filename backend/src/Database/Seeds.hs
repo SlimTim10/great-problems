@@ -2,6 +2,7 @@
 
 module Database.Seeds where
 
+import qualified Data.ByteString as B
 import qualified Database.PostgreSQL.Simple as SQL
 import qualified Database.PostgreSQL.Simple.SqlQQ as SqlQQ
 import qualified Text.RawString.QQ as QQ
@@ -119,12 +120,12 @@ load conn = do
 
   void $ SQL.executeMany conn [SqlQQ.sql|
     INSERT INTO
-      figures(id, url, problem_id)
+      figures(id, name, contents, problem_id)
     VALUES
-      (?,?,?)
+      (?,?,?,?)
   |]
-    [ (1, "http://filehost.com/currMirror01a.asc", problemCurrMirror01^._1)
-      :: (Integer, Text, Integer)
+    [ (1, "currMirror01a.asc", figCurrMirror01, problemCurrMirror01^._1)
+      :: (Integer, Text, B.ByteString, Integer)
     ]
 
   let
@@ -241,4 +242,32 @@ $r_o = L/(|\lambda_n'|I_D)$\\
 
 L = \valU{L}
 \end{answers}
+|]
+
+figCurrMirror01 :: B.ByteString
+figCurrMirror01 = [QQ.r|
+Version 4
+SHEET 1 1120 680
+WIRE 112 288 112 272
+WIRE 208 288 112 288
+WIRE 112 320 112 288
+WIRE 48 352 32 352
+WIRE 112 416 112 384
+WIRE 48 448 32 448
+WIRE 112 496 112 480
+FLAG 112 496 0
+FLAG 208 288 vo
+IOPIN 208 288 In
+FLAG 32 448 VB1
+IOPIN 32 448 In
+FLAG 32 352 VB2
+IOPIN 32 352 In
+SYMBOL svg/svg_nmos 48 400 R0
+SYMATTR InstName M1
+SYMBOL svg/svg_nmos 48 304 R0
+SYMATTR InstName M2
+SYMBOL svg_meas_I 160 256 R180
+SYMATTR InstName X1
+TEXT 152 216 Left 2 ;\\val={I_D}
+LINE Normal 112 272 112 192 1
 |]

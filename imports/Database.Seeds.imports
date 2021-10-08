@@ -1,3 +1,4 @@
+import qualified Data.ByteString as B ( ByteString )
 import qualified Database.PostgreSQL.Simple as SQL
     ( executeMany, query_, Only, Connection )
 import qualified Database.PostgreSQL.Simple.SqlQQ as SqlQQ ( sql )

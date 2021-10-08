@@ -4,7 +4,6 @@ module Common.Api.Topic
   ( Topic(..)
   ) where
 
-import qualified Database.PostgreSQL.Simple as SQL
 import qualified Data.Aeson as JSON
 import GHC.Generics (Generic)
 
@@ -18,8 +17,6 @@ data Topic = Topic
   ( Eq
   , Show
   , Generic
-  , SQL.FromRow
-  , SQL.ToRow
   , JSON.FromJSON
   , JSON.ToJSON
   )

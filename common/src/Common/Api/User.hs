@@ -9,7 +9,6 @@ module Common.Api.User
 import qualified Data.Aeson as JSON
 import qualified Data.CaseInsensitive as CI
 import GHC.Generics (Generic)
-import qualified Servant.Auth.Server as SAS
 
 import qualified Common.Api.Role as Role
 import Global
@@ -26,8 +25,6 @@ data User = User
   , Generic
   , JSON.FromJSON
   , JSON.ToJSON
-  , SAS.FromJWT
-  , SAS.ToJWT
   )
 
 instance (JSON.FromJSON (CI Text)) where

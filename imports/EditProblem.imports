@@ -5,7 +5,7 @@ import qualified "jsaddle-dom" GHCJS.DOM.Document as DOM
     ( IsDocument )
 import qualified JSDOM.Types ( File )
 import qualified Obelisk.Route.Frontend as Ob
-    ( R, SetRoute(setRoute), RouteToUrl, routeLink )
+    ( R, routeLink, RouteToUrl, SetRoute(setRoute) )
 import qualified Reflex.Dom.Core as R
     ( def,
       constDyn,

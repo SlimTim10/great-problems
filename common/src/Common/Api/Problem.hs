@@ -11,6 +11,7 @@ import GHC.Generics (Generic)
 
 import qualified Common.Api.Topic as Topic
 import qualified Common.Api.User as User
+import qualified Common.Api.Figure as Figure
 import qualified Common.Route as Route
 import qualified Common.FormFile as FormFile
 import Global
@@ -22,6 +23,7 @@ data Problem = Problem
   , topic :: Either Integer Topic.Topic
   , author :: Either Integer User.User
   , topicPath :: Maybe [Topic.Topic]
+  , figures :: [Figure.Figure]
   , createdAt :: Time.UTCTime
   , updatedAt :: Time.UTCTime
   } deriving

@@ -1,26 +1,23 @@
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Common.Api.Figure
   ( FileMap
   , Figure(..)
   ) where
 
-import qualified Control.Monad.IO.Class as IO
 import qualified Data.Aeson as JSON
 import qualified Data.Map as Map
 import qualified Data.ByteString as B
 import qualified Data.Time.Clock as Time
-import GHC.Generics (Generic)
-import Data.Aeson ((.:))
+import Data.Aeson ((.:), (.=))
 
 import Global
 
 type FileMap = Map.Map Int Figure
 
 data Figure = Figure
-  { contents :: B.ByteString
+  { id :: Integer
   , name :: Text
+  , contents :: B.ByteString
   , createdAt :: Time.UTCTime
   , updatedAt :: Time.UTCTime
   }
@@ -33,7 +30,16 @@ instance Eq Figure where
 
 instance JSON.FromJSON Figure where
   parseJSON = JSON.withObject "figure" $ \o -> do
-    name <- o .: "name"
-    createdAt <- o .: "createdAt"
-    updatedAt <- o .: "updatedAt"
-    return $ Figure B.empty name createdAt updatedAt
+    id' <- o .: "id"
+    name' <- o .: "name"
+    createdAt' <- o .: "createdAt"
+    updatedAt' <- o .: "updatedAt"
+    return $ Figure id' name' B.empty createdAt' updatedAt'
+
+instance JSON.ToJSON Figure where
+  toJSON (Figure id' name' _ createdAt' updatedAt') = JSON.object
+    [ "id" .= id'
+    , "name" .= name'
+    , "createdAt" .= createdAt'
+    , "updatedAt" .= updatedAt'
+    ]

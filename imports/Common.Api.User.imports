@@ -2,6 +2,5 @@ import qualified Data.Aeson as JSON
     ( FromJSON(parseJSON), Value(String), ToJSON(toJSON) )
 import qualified Data.CaseInsensitive as CI ( CI(original), mk )
 import GHC.Generics ( Generic )
-import qualified Servant.Auth.Server as SAS ( FromJWT, ToJWT )
 import qualified Common.Api.Role as Role ( Role )
 import Global ( Text, CI )

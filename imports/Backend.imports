@@ -10,10 +10,7 @@ import qualified Database.PostgreSQL.Simple as SQL ( Connection )
 import qualified Network.Wreq as Wreq
     ( partFile, partText, post, responseBody, Part )
 import qualified Snap.Core as Snap
-    ( Snap,
-      Cookie(Cookie, cookieValue),
-      MonadSnap,
-      expireCookie,
+    ( expireCookie,
       getCookie,
       getRequest,
       modifyResponse,
@@ -22,6 +19,9 @@ import qualified Snap.Core as Snap
       addResponseCookie,
       rqPostParam,
       setHeader,
+      MonadSnap,
+      Snap,
+      Cookie(Cookie, cookieValue),
       Method(POST, GET),
       Request(rqMethod) )
 import qualified Snap.Util.FileUploads as Snap

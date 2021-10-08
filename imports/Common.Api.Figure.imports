@@ -1,9 +1,7 @@
-import qualified Control.Monad.IO.Class as IO ()
 import qualified Data.Aeson as JSON
-    ( withObject, FromJSON(parseJSON) )
+    ( withObject, object, FromJSON(parseJSON), ToJSON(toJSON) )
 import qualified Data.Map as Map ( Map )
 import qualified Data.ByteString as B ( ByteString, empty )
 import qualified Data.Time.Clock as Time ( UTCTime )
-import GHC.Generics ()
-import Data.Aeson ( (.:) )
+import Data.Aeson ( (.:), (.=) )
 import Global ( Text )
