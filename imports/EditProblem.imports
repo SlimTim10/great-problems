@@ -49,11 +49,11 @@ import qualified Common.Api.Compile as Compile
 import qualified Common.Api.Error as Error ( Error(message) )
 import qualified Common.Api.Problem as Problem
     ( RequestParam(..),
-      RequestSave(..),
-      UpdateProblem(UpdateProblem, upAuthorId, upTopicId, upContents,
-                    upSummary, upProblemId),
-      CreateProblem(CreateProblem, cpAuthorId, cpTopicId, cpContents,
-                    cpSummary),
+      RequestSave,
+      UpdateProblemRequest(UpdateProblemRequest, uprFigures, uprAuthorId,
+                           uprTopicId, uprContents, uprSummary, uprProblemId),
+      CreateProblemRequest(CreateProblemRequest, cprFigures, cprAuthorId,
+                           cprTopicId, cprContents, cprSummary),
       Problem(contents, id, summary, topic) )
 import qualified Common.Api.Topic as Topic ( Topic(id) )
 import qualified Common.Api.User as User ( User(id) )

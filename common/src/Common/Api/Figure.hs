@@ -2,6 +2,7 @@
 module Common.Api.Figure
   ( FileMap
   , Figure(..)
+  , BareFigure(..)
   ) where
 
 import qualified Data.Aeson as JSON
@@ -43,3 +44,8 @@ instance JSON.ToJSON Figure where
     , "createdAt" .= createdAt'
     , "updatedAt" .= updatedAt'
     ]
+
+data BareFigure = BareFigure
+  { bfName :: Text
+  , bfContents :: B.ByteString
+  }

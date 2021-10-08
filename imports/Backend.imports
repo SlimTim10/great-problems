@@ -1,4 +1,5 @@
-import qualified Data.ByteString as BS ( ByteString, concat )
+import qualified Data.ByteString as BS
+    ( ByteString, concat, readFile )
 import qualified Data.ByteString.Lazy as LBS ( ByteString )
 import qualified Data.Text as T ( null )
 import qualified Control.Monad.IO.Class as IO ( MonadIO(..) )
@@ -8,7 +9,11 @@ import qualified Data.Word as Word ( Word64 )
 import qualified Data.CaseInsensitive as CI ( CI(original) )
 import qualified Database.PostgreSQL.Simple as SQL ( Connection )
 import qualified Network.Wreq as Wreq
-    ( partFile, partText, post, responseBody, Part )
+    ( partText, post, responseBody )
+import qualified Network.HTTP.Client as HTTP
+    ( RequestBody(RequestBodyBS) )
+import qualified Network.HTTP.Client.MultipartFormData as HTTP
+    ( partFileRequestBody )
 import qualified Snap.Core as Snap
     ( expireCookie,
       getCookie,
@@ -30,12 +35,7 @@ import qualified Snap.Util.FileUploads as Snap
       handleFileUploads,
       handleMultipart,
       PartInfo(partFileName) )
-import qualified System.Directory as Sys
-    ( createDirectoryIfMissing,
-      getTemporaryDirectory,
-      removeDirectoryRecursive,
-      renameFile )
-import System.FilePath ( (</>) )
+import qualified System.Directory as Sys ( getTemporaryDirectory )
 import qualified Obelisk.Backend as Ob ( Backend(..) )
 import Obelisk.Route ( pattern (:/) )
 import qualified Common.Route as Route
@@ -63,7 +63,7 @@ import qualified Database.Queries as Queries
       registerUser,
       verifyEmail,
       newEmailVerification )
-import qualified S3 ( Env, setup, putFigureDirectory )
+import qualified S3 ( Env, setup )
 import qualified Common.Api.User as User ( User(role, id) )
 import qualified Common.Api.Register as Register
     ( Register(password, email, fullName) )
@@ -72,7 +72,7 @@ import qualified Common.Api.Role as Role
 import qualified Common.Api.OkResponse as OkResponse
     ( OkResponse(OkResponse) )
 import qualified Common.Api.Compile as Compile
-    ( IcemakerResponse(terminalOutput, pdfContents, errorLatex,
+    ( IcemakerResponse(terminalOutput, pdfContent, errorLatex,
                        errorIcemaker),
       Response(Response, resTerminalOutput, resPdfContents,
                resErrorLatex, resErrorIcemaker),
@@ -82,11 +82,12 @@ import qualified Common.Api.Compile as Compile
 import qualified Common.Api.Problem as Problem
     ( RequestParam(ParamAuthorId, ParamTopicId, ParamContents,
                    ParamSummary, ParamProblemId),
-      UpdateProblem(UpdateProblem, upAuthorId, upTopicId, upContents,
-                    upSummary, upProblemId),
-      CreateProblem(CreateProblem, cpAuthorId, cpTopicId, cpContents,
-                    cpSummary),
+      UpdateProblem(UpdateProblem, upFigures, upAuthorId, upTopicId,
+                    upContents, upSummary, upProblemId),
+      CreateProblem(CreateProblem, cpFigures, cpAuthorId, cpTopicId,
+                    cpContents, cpSummary),
       Problem(contents, id) )
+import qualified Common.Api.Figure as Figure ( BareFigure(..) )
 import qualified Auth
     ( Auth,
       AuthResult(Authenticated, Unverified, Indefinite),
@@ -96,7 +97,6 @@ import qualified Auth
       removeSession,
       getUser )
 import qualified Email ( sendEmailVerification )
-import qualified Util ( generateRandomText )
 import Global
     ( when,
       Text,

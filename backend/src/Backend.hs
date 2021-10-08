@@ -13,10 +13,11 @@ import qualified Data.Word as Word
 import qualified Data.CaseInsensitive as CI
 import qualified Database.PostgreSQL.Simple as SQL
 import qualified Network.Wreq as Wreq
+import qualified Network.HTTP.Client as HTTP
+import qualified Network.HTTP.Client.MultipartFormData as HTTP
 import qualified Snap.Core as Snap
 import qualified Snap.Util.FileUploads as Snap
 import qualified System.Directory as Sys
-import System.FilePath ((</>))
 import qualified Obelisk.Backend as Ob
 import Obelisk.Route ( pattern (:/) )
 
@@ -31,9 +32,9 @@ import qualified Common.Api.Role as Role
 import qualified Common.Api.OkResponse as OkResponse
 import qualified Common.Api.Compile as Compile
 import qualified Common.Api.Problem as Problem
+import qualified Common.Api.Figure as Figure
 import qualified Auth
 import qualified Email
-import qualified Util
 import Global
 
 maxRequestBodySize :: Word.Word64
@@ -182,16 +183,10 @@ removeCookie
   -> m ()
 removeCookie name = Snap.expireCookie $ mkCookie name ""
 
-data FileUpload = FileUpload
-  { filePart :: Wreq.Part
-  , filePath :: FilePath
-  , fileName :: Text
-  }
-
 -- Create or update problem
 handleSaveProblem :: SQL.Connection -> S3.Env -> User.User -> Snap.Snap ()
 handleSaveProblem conn s3env user = do
-  (dir, fileUploads) <- handleFileUploads
+  figures <- handleFileUploads
   let getTextParam :: Problem.RequestParam -> Snap.Snap Text = \param -> do
         Snap.rqPostParam (cs . show $ param)
           <$> Snap.getRequest
@@ -214,7 +209,7 @@ handleSaveProblem conn s3env user = do
           contents
           Nothing
           Nothing
-          fileUploads
+          figures
         case JSON.decode response :: Maybe Compile.IcemakerResponse of
           Nothing -> writeJSON $ Error.mk "Something went wrong"
           Just r -> if
@@ -227,12 +222,12 @@ handleSaveProblem conn s3env user = do
                       , Problem.cpContents = contents
                       , Problem.cpTopicId = read . cs $ topicId
                       , Problem.cpAuthorId = read . cs $ authorId
+                      , Problem.cpFigures = figures
                       }
                 IO.liftIO (Queries.createProblem conn newProblem) >>= \case
                   Nothing -> writeJSON $ Error.mk "Something went wrong"
                   Just createdProblem -> do
                     let pid = Problem.id createdProblem
-                    IO.liftIO $ S3.putFigureDirectory s3env (dir <> "/") pid
                     -- TODO: save figures to database?
                     -- forM_ fileUploads $ \fu -> do
                     --   IO.liftIO $ S3.putFigure s3env (filePath fu) pid (cs $ fileName fu)
@@ -245,29 +240,32 @@ handleSaveProblem conn s3env user = do
                       , Problem.upContents = contents
                       , Problem.upTopicId = read . cs $ topicId
                       , Problem.upAuthorId = read . cs $ authorId
+                      , Problem.upFigures = figures
                       }
                 IO.liftIO (Queries.updateProblem conn updateProblem) >>= \case
                   Nothing -> writeJSON $ Error.mk "Something went wrong"
                   Just updatedProblem -> do
                     let pid = Problem.id updatedProblem
-                    IO.liftIO $ S3.putFigureDirectory s3env (dir <> "/") pid
                     -- TODO: save figures to database?
                     -- forM_ fileUploads $ \fu -> do
                     --   IO.liftIO $ S3.putFigure s3env (filePath fu) pid (cs $ fileName fu)
                     writeJSON updatedProblem
-  -- Delete the uploaded files from the filesystem
-  IO.liftIO $ Sys.removeDirectoryRecursive dir
 
 requestIcemakerCompileProblem
   :: IO.MonadIO m
   => Text -- ^ Problem contents
   -> Maybe Text -- Randomize variables
   -> Maybe Text -- Output option
-  -> [FileUpload] -- Files
+  -> [Figure.BareFigure] -- Files
   -> m LBS.ByteString
-requestIcemakerCompileProblem contents mRandomizeVariables mOutputOption fileUploads = do
+requestIcemakerCompileProblem contents mRandomizeVariables mOutputOption figures = do
   let randomizeVariables = fromMaybe "false" mRandomizeVariables
   let outputOption = fromMaybe (cs . show $ Compile.QuestionOnly) mOutputOption
+  -- let figureToPart = \fig -> Wreq.partBS "multiplefiles" (Figure.bfContents fig)
+  let figureToPart = \fig -> HTTP.partFileRequestBody
+        "multiplefiles"
+        (cs $ Figure.bfName fig)
+        $ HTTP.RequestBodyBS (Figure.bfContents fig)
   response <- IO.liftIO $ Wreq.post
     "https://icewire.ca/uploadprb"
     $ [ Wreq.partText "prbText" contents
@@ -275,12 +273,12 @@ requestIcemakerCompileProblem contents mRandomizeVariables mOutputOption fileUpl
       , Wreq.partText "random" randomizeVariables
       , Wreq.partText "outFlag" outputOption
       , Wreq.partText "submit1" "putDatabase"
-      ] ++ map filePart fileUploads
+      ] ++ map figureToPart figures
   return $ response ^. Wreq.responseBody
 
 handleCompileProblem :: Snap.Snap ()
 handleCompileProblem = do
-  (dir, fileUploads) <- handleFileUploads
+  figures <- handleFileUploads
   let getTextParam :: Compile.RequestParam -> Snap.Snap Text = \param -> do
         Snap.rqPostParam (cs . show $ param)
           <$> Snap.getRequest
@@ -296,17 +294,15 @@ handleCompileProblem = do
           contents
           (Just randomizeVariables)
           (Just outputOption)
-          fileUploads
+          figures
         case JSON.decode response :: Maybe Compile.IcemakerResponse of
           Nothing -> writeJSON $ Error.mk "Something went wrong"
           Just r -> writeJSON Compile.Response
             { Compile.resErrorIcemaker = Compile.errorIcemaker r
             , Compile.resErrorLatex = Compile.errorLatex r
-            , Compile.resPdfContents = Compile.pdfContents r
+            , Compile.resPdfContents = Compile.pdfContent r
             , Compile.resTerminalOutput = Compile.terminalOutput r
             }
-  -- Delete the uploaded files from the server
-  IO.liftIO $ Sys.removeDirectoryRecursive dir
 
 handleCompileProblemById :: SQL.Connection -> Integer -> Snap.Snap ()
 handleCompileProblemById conn problemId = do
@@ -329,41 +325,35 @@ handleCompileProblemById conn problemId = do
         (Problem.contents problem)
         randomizeVariables
         outputOption
-        [] -- TODO: use files from S3 bucket
+        [] -- TODO: use files from database
       case JSON.decode response :: Maybe Compile.IcemakerResponse of
         Nothing -> writeJSON $ Error.mk "Something went wrong"
         Just r -> writeJSON Compile.Response
           { Compile.resErrorIcemaker = Compile.errorIcemaker r
           , Compile.resErrorLatex = Compile.errorLatex r
-          , Compile.resPdfContents = Compile.pdfContents r
+          , Compile.resPdfContents = Compile.pdfContent r
           , Compile.resTerminalOutput = Compile.terminalOutput r
           }
-  -- Delete the uploaded files from the server
-  -- IO.liftIO $ Sys.removeDirectoryRecursive dir
 
--- | Get the files from the POST request and make them persist in the temporary directory.
--- Returns the path to the newly created directory and a list of the files as form parts and their paths.
+-- | Get the files from the POST request and store them in memory.
+-- Returns a list of the files.
 -- This must be called before getting other POST parameters from the request.
-handleFileUploads :: Snap.Snap (String, [FileUpload])
+handleFileUploads :: Snap.Snap [Figure.BareFigure]
 handleFileUploads = do
   tmpDir <- IO.liftIO Sys.getTemporaryDirectory
-  randomDirectory <- IO.liftIO $ cs <$> Util.generateRandomText
-  let targetDir = tmpDir </> "greatproblems" </> "figures" </> randomDirectory
-  let renameFile info = \case
+  let handleFile = \info -> \case
         Left e -> do
           print e
           return Nothing
         Right fp -> case Snap.partFileName info of
           Nothing -> return Nothing
           Just fName -> do
-            let fp' = targetDir </> cs fName
-            Sys.createDirectoryIfMissing True targetDir
-            Sys.renameFile fp fp'
-            return . Just $ FileUpload (Wreq.partFile "multiplefiles" fp') fp' (cs fName)
-  fileUploads <- Snap.handleFileUploads
+            contents <- BS.readFile fp
+            return . Just $ Figure.BareFigure (cs fName) contents
+  figures <- Snap.handleFileUploads
     tmpDir
     Snap.defaultUploadPolicy
     (const $ Snap.allowWithMaximumSize 20000) -- 20 kB max file size
-    renameFile
+    handleFile
     <&> catMaybes
-  return (targetDir, fileUploads)
+  return figures

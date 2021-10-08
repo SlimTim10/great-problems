@@ -56,7 +56,7 @@ data Response = Response
 data IcemakerResponse = IcemakerResponse
   { errorIcemaker :: Text
   , errorLatex :: Text
-  , pdfContents :: Text
+  , pdfContent :: Text
   , pdfName :: Text
   , terminalOutput :: Text
   } deriving
