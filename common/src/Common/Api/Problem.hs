@@ -49,21 +49,13 @@ getParamsToRouteQuery gps =
     <> "include" =: (gpInclude gps >>= \case TopicPath -> Just "topic_path")
   )
 
-data CreateProblem = CreateProblem
-  { cpSummary :: Text
-  , cpContents :: Text
-  , cpTopicId :: Integer
-  , cpAuthorId :: Integer
-  , cpFigures :: [Figure.BareFigure]
-  }
-
-data UpdateProblem = UpdateProblem
-  { upProblemId :: Integer
-  , upSummary :: Text
-  , upContents :: Text
-  , upTopicId :: Integer
-  , upAuthorId :: Integer
-  , upFigures :: [Figure.BareFigure]
+data BareProblem = BareProblem
+  { bpProblemId :: Maybe Integer
+  , bpSummary :: Text
+  , bpContents :: Text
+  , bpTopicId :: Integer
+  , bpAuthorId :: Integer
+  , bpFigures :: [Figure.BareFigure]
   }
 
 -- Update or publish new problem

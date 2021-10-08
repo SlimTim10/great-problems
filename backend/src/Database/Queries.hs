@@ -129,29 +129,29 @@ getProblemById :: SQL.Connection -> Integer -> Route.Query -> IO (Maybe Problem.
 getProblemById conn problemId routeQuery = Util.headMay
   <$> getProblems conn (Just problemId) routeQuery
 
-createProblem :: SQL.Connection -> Problem.CreateProblem -> IO (Maybe Problem.Problem)
+createProblem :: SQL.Connection -> Problem.BareProblem -> IO (Maybe Problem.Problem)
 createProblem conn newProblem = do
   mProblemId :: Maybe (SQL.Only Integer) <- Util.headMay
     <$> SQL.query conn
     "INSERT INTO problems(summary, contents, topic_id, author_id) VALUES (?,?,?,?) returning id"
-    ( Problem.cpSummary newProblem
-    , Problem.cpContents newProblem
-    , Problem.cpTopicId newProblem
-    , Problem.cpAuthorId newProblem
+    ( Problem.bpSummary newProblem
+    , Problem.bpContents newProblem
+    , Problem.bpTopicId newProblem
+    , Problem.bpAuthorId newProblem
     )
   flip (maybe (pure Nothing))
     (SQL.fromOnly <$> mProblemId)
     $ \problemId -> getProblemById conn problemId mempty
 
-updateProblem :: SQL.Connection -> Problem.UpdateProblem -> IO (Maybe Problem.Problem)
+updateProblem :: SQL.Connection -> Problem.BareProblem -> IO (Maybe Problem.Problem)
 updateProblem conn problem = do
   mProblemId :: Maybe (SQL.Only Integer) <- Util.headMay
     <$> SQL.query conn
     "UPDATE problems SET (summary, contents, topic_id, updated_at) = (?, ?, ?, DEFAULT) WHERE id = ? returning id"
-    ( Problem.upSummary problem
-    , Problem.upContents problem
-    , Problem.upTopicId problem
-    , Problem.upProblemId problem
+    ( Problem.bpSummary problem
+    , Problem.bpContents problem
+    , Problem.bpTopicId problem
+    , Problem.bpProblemId problem
     )
   flip (maybe (pure Nothing))
     (SQL.fromOnly <$> mProblemId)

@@ -217,12 +217,13 @@ handleSaveProblem conn s3env user = do
               -> writeJSON $ Error.mk "Invalid problem. Please check that your problem compiles with no errors before saving."
             -- Creating a new problem
             | T.null problemId -> do
-                let newProblem = Problem.CreateProblem
-                      { Problem.cpSummary = summary
-                      , Problem.cpContents = contents
-                      , Problem.cpTopicId = read . cs $ topicId
-                      , Problem.cpAuthorId = read . cs $ authorId
-                      , Problem.cpFigures = figures
+                let newProblem = Problem.BareProblem
+                      { Problem.bpProblemId = Nothing
+                      , Problem.bpSummary = summary
+                      , Problem.bpContents = contents
+                      , Problem.bpTopicId = read . cs $ topicId
+                      , Problem.bpAuthorId = read . cs $ authorId
+                      , Problem.bpFigures = figures
                       }
                 IO.liftIO (Queries.createProblem conn newProblem) >>= \case
                   Nothing -> writeJSON $ Error.mk "Something went wrong"
@@ -234,13 +235,13 @@ handleSaveProblem conn s3env user = do
                     writeJSON createdProblem
             -- Updating an existing problem
             | otherwise -> do
-                let updateProblem = Problem.UpdateProblem
-                      { Problem.upProblemId = read . cs $ problemId
-                      , Problem.upSummary = summary
-                      , Problem.upContents = contents
-                      , Problem.upTopicId = read . cs $ topicId
-                      , Problem.upAuthorId = read . cs $ authorId
-                      , Problem.upFigures = figures
+                let updateProblem = Problem.BareProblem
+                      { Problem.bpProblemId = Just $ (read . cs $ problemId :: Integer)
+                      , Problem.bpSummary = summary
+                      , Problem.bpContents = contents
+                      , Problem.bpTopicId = read . cs $ topicId
+                      , Problem.bpAuthorId = read . cs $ authorId
+                      , Problem.bpFigures = figures
                       }
                 IO.liftIO (Queries.updateProblem conn updateProblem) >>= \case
                   Nothing -> writeJSON $ Error.mk "Something went wrong"

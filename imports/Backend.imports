@@ -82,10 +82,8 @@ import qualified Common.Api.Compile as Compile
 import qualified Common.Api.Problem as Problem
     ( RequestParam(ParamAuthorId, ParamTopicId, ParamContents,
                    ParamSummary, ParamProblemId),
-      UpdateProblem(UpdateProblem, upFigures, upAuthorId, upTopicId,
-                    upContents, upSummary, upProblemId),
-      CreateProblem(CreateProblem, cpFigures, cpAuthorId, cpTopicId,
-                    cpContents, cpSummary),
+      BareProblem(BareProblem, bpFigures, bpAuthorId, bpTopicId,
+                  bpContents, bpSummary, bpProblemId),
       Problem(contents, id) )
 import qualified Common.Api.Figure as Figure ( BareFigure(..) )
 import qualified Auth

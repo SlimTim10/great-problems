@@ -7,8 +7,8 @@ import qualified Data.CaseInsensitive as CI ( CI(original) )
 import qualified Common.Route as Route
     ( Query, readParamFromQuery, textParamFromQuery )
 import qualified Common.Api.Problem as Problem
-    ( UpdateProblem(upProblemId, upTopicId, upContents, upSummary),
-      CreateProblem(cpAuthorId, cpTopicId, cpContents, cpSummary),
+    ( BareProblem(bpProblemId, bpAuthorId, bpTopicId, bpContents,
+                  bpSummary),
       Problem(..) )
 import qualified Common.Api.Topic as Topic
     ( Topic(Topic, id, parentId) )
