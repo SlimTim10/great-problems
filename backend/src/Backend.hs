@@ -213,7 +213,7 @@ handleSaveProblem conn s3env user = do
         case JSON.decode response :: Maybe Compile.IcemakerResponse of
           Nothing -> writeJSON $ Error.mk "Something went wrong"
           Just r -> if
-            | (not . T.null $ Compile.errorIcemaker r) || (not . T.null $ Compile.errorLatex r)
+            | (not . T.null $ Compile.iceErrorIcemaker r) || (not . T.null $ Compile.iceErrorLatex r)
               -> writeJSON $ Error.mk "Invalid problem. Please check that your problem compiles with no errors before saving."
             -- Creating a new problem
             | T.null problemId -> do
@@ -298,10 +298,10 @@ handleCompileProblem = do
         case JSON.decode response :: Maybe Compile.IcemakerResponse of
           Nothing -> writeJSON $ Error.mk "Something went wrong"
           Just r -> writeJSON Compile.Response
-            { Compile.resErrorIcemaker = Compile.errorIcemaker r
-            , Compile.resErrorLatex = Compile.errorLatex r
-            , Compile.resPdfContents = Compile.pdfContent r
-            , Compile.resTerminalOutput = Compile.terminalOutput r
+            { Compile.resErrorIcemaker = Compile.iceErrorIcemaker r
+            , Compile.resErrorLatex = Compile.iceErrorLatex r
+            , Compile.resPdfContents = Compile.icePdfContents r
+            , Compile.resTerminalOutput = Compile.iceTerminalOutput r
             }
 
 handleCompileProblemById :: SQL.Connection -> Integer -> Snap.Snap ()
@@ -329,10 +329,10 @@ handleCompileProblemById conn problemId = do
       case JSON.decode response :: Maybe Compile.IcemakerResponse of
         Nothing -> writeJSON $ Error.mk "Something went wrong"
         Just r -> writeJSON Compile.Response
-          { Compile.resErrorIcemaker = Compile.errorIcemaker r
-          , Compile.resErrorLatex = Compile.errorLatex r
-          , Compile.resPdfContents = Compile.pdfContent r
-          , Compile.resTerminalOutput = Compile.terminalOutput r
+          { Compile.resErrorIcemaker = Compile.iceErrorIcemaker r
+          , Compile.resErrorLatex = Compile.iceErrorLatex r
+          , Compile.resPdfContents = Compile.icePdfContents r
+          , Compile.resTerminalOutput = Compile.iceTerminalOutput r
           }
 
 -- | Get the files from the POST request and store them in memory.

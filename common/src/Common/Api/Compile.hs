@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE OverloadedStrings #-}
 module Common.Api.Compile
   ( Request(..)
   , RequestParam(..)
@@ -8,11 +9,9 @@ module Common.Api.Compile
   , IcemakerResponse(..)
   ) where
 
-import qualified Data.Char as Char
-import qualified Data.Text as T
-import qualified Data.HashMap.Strict as HM
 import qualified Data.Aeson as JSON
 import GHC.Generics (Generic)
+import Data.Aeson ((.:))
 
 import qualified Common.FormFile as FormFile
 import Global
@@ -54,23 +53,22 @@ data Response = Response
   )
 
 data IcemakerResponse = IcemakerResponse
-  { errorIcemaker :: Text
-  , errorLatex :: Text
-  , pdfContent :: Text
-  , pdfName :: Text
-  , terminalOutput :: Text
+  { iceErrorIcemaker :: Text
+  , iceErrorLatex :: Text
+  , icePdfContents :: Text
+  , icePdfName :: Text
+  , iceTerminalOutput :: Text
   } deriving
   ( Eq
   , Show
-  , Generic
   )
 
 instance JSON.FromJSON IcemakerResponse where
-  parseJSON = JSON.genericParseJSON opts . jsonLower
-    where opts = JSON.defaultOptions { JSON.fieldLabelModifier = map Char.toLower }
-
-jsonLower :: JSON.Value -> JSON.Value
-jsonLower (JSON.Object o) = JSON.Object . HM.fromList . map lowerPair . HM.toList $ o
-  where lowerPair (key, val) = (T.toLower key, val)
-jsonLower x = x
+  parseJSON = JSON.withObject "icemakerResponse" $ \o -> do
+    errorIcemaker <- o .: "ErrorIcemaker"
+    errorLatex <- o .: "ErrorLatex"
+    pdfContents <- o .: "PdfContent"
+    pdfName <- o .: "PdfName"
+    terminalOutput <- o .: "TerminalOutput"
+    return $ IcemakerResponse errorIcemaker errorLatex pdfContents pdfName terminalOutput
 

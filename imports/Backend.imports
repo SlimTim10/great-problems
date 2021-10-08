@@ -72,8 +72,8 @@ import qualified Common.Api.Role as Role
 import qualified Common.Api.OkResponse as OkResponse
     ( OkResponse(OkResponse) )
 import qualified Common.Api.Compile as Compile
-    ( IcemakerResponse(terminalOutput, pdfContent, errorLatex,
-                       errorIcemaker),
+    ( IcemakerResponse(iceTerminalOutput, icePdfContents,
+                       iceErrorLatex, iceErrorIcemaker),
       Response(Response, resTerminalOutput, resPdfContents,
                resErrorLatex, resErrorIcemaker),
       RequestParam(ParamOutputOption, ParamRandomizeVariables,
