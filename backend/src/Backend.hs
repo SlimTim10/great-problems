@@ -25,7 +25,6 @@ import qualified Common.Route as Route
 import qualified Common.Api.Error as Error
 import qualified Database
 import qualified Database.Queries as Queries
-import qualified S3
 import qualified Common.Api.User as User
 import qualified Common.Api.Register as Register
 import qualified Common.Api.Role as Role
@@ -46,9 +45,6 @@ backend = Ob.Backend
       -- Connect to the database
       conn <- Database.connect
 
-      -- Set up S3
-      s3env <- S3.setup
-
       serve $ \case
         Route.BackendRoute_Missing :/ () -> return ()
         Route.BackendRoute_Api :/ apiRoute -> do
@@ -66,7 +62,7 @@ backend = Ob.Backend
                 Snap.GET -> writeJSON =<< IO.liftIO (Queries.getProblems conn Nothing query)
                 Snap.POST -> case mUser of
                   Nothing -> writeJSON $ Error.mk "No access"
-                  Just user -> handleSaveProblem conn s3env user
+                  Just user -> handleSaveProblem conn user
                 _ -> return () -- TODO: implement put, delete
             Route.Api_Problems :/ (Just problemId, query) -> do
               writeJSON =<< IO.liftIO (Queries.getProblemById conn problemId query)
@@ -195,8 +191,8 @@ removeCookie
 removeCookie name = Snap.expireCookie $ mkCookie name ""
 
 -- Create or update problem
-handleSaveProblem :: SQL.Connection -> S3.Env -> User.User -> Snap.Snap ()
-handleSaveProblem conn s3env user = do
+handleSaveProblem :: SQL.Connection -> User.User -> Snap.Snap ()
+handleSaveProblem conn user = do
   figures <- handleFileUploads
   let getTextParam :: Problem.RequestParam -> Snap.Snap Text = \param -> do
         Snap.rqPostParam (cs . show $ param)
@@ -239,7 +235,6 @@ handleSaveProblem conn s3env user = do
                 IO.liftIO (Queries.createProblem conn newProblem) >>= \case
                   Nothing -> writeJSON $ Error.mk "Something went wrong"
                   Just createdProblem -> do
-                    let pid = Problem.id createdProblem
                     writeJSON createdProblem
             -- Updating an existing problem
             | otherwise -> do
@@ -254,7 +249,6 @@ handleSaveProblem conn s3env user = do
                 IO.liftIO (Queries.updateProblem conn updateProblem) >>= \case
                   Nothing -> writeJSON $ Error.mk "Something went wrong"
                   Just updatedProblem -> do
-                    let pid = Problem.id updatedProblem
                     writeJSON updatedProblem
 
 requestIcemakerCompileProblem

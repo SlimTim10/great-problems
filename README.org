@@ -45,12 +45,6 @@ $ ob repl
 #+END_SRC
 This will create the empty tables (dropping if they exist) and insert the seeds.
 
-*** Setting up S3 for files
-
-- Create an [[https://www.linode.com/docs/products/storage/object-storage/get-started/][Object Storage bucket with Linode]]
-- [[https://www.linode.com/docs/products/storage/object-storage/guides/s3cmd/][Install and configure s3cmd]]
-- Edit the environment variables in ~config/backend/s3.env~
-
 ** API Routes
 
 *** Problems

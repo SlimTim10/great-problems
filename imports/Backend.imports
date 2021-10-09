@@ -65,7 +65,6 @@ import qualified Database.Queries as Queries
       verifyEmail,
       newEmailVerification,
       getFigureById )
-import qualified S3 ( Env, setup )
 import qualified Common.Api.User as User ( User(role, id) )
 import qualified Common.Api.Register as Register
     ( Register(password, email, fullName) )
@@ -86,7 +85,7 @@ import qualified Common.Api.Problem as Problem
                    ParamSummary, ParamProblemId),
       BareProblem(BareProblem, bpFigures, bpAuthorId, bpTopicId,
                   bpContents, bpSummary, bpProblemId),
-      Problem(contents, figures, id) )
+      Problem(contents, figures) )
 import qualified Common.Api.Figure as Figure
     ( BareFigure(..), Figure(contents, name) )
 import qualified Auth
