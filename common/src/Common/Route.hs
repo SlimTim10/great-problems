@@ -34,6 +34,7 @@ data BackendRoute :: * -> * where
 
 data Api :: * -> * where
   Api_Problems :: Api (Maybe Integer, Query)
+  Api_Figures :: Api Integer
   Api_Topics :: Api Query
   Api_TopicHierarchy :: Api (Maybe Integer)
   Api_Users :: Api (Maybe Integer)
@@ -84,6 +85,7 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
           bimap (Ob.maybeEncoder (Ob.unitEncoder mempty) Ob.unsafeTshowEncoder) Ob.queryOnlyEncoder
         -- Api_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.pathSegmentEncoder .
         --   bimap (Ob.maybeEncoder (Ob.unitEncoder mempty) Ob.unsafeTshowEncoder) Ob.queryOnlyEncoder
+        Api_Figures -> Ob.PathSegment "figures" $ idPathSegmentEncoder
         Api_Topics -> Ob.PathSegment "topics" Ob.queryOnlyEncoder
         Api_Users -> Ob.PathSegment "users" $
           Ob.maybeEncoder (Ob.unitEncoder mempty) $ idPathSegmentEncoder

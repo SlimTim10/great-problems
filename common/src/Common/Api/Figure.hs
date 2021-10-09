@@ -5,6 +5,7 @@ module Common.Api.Figure
   , BareFigure(..)
   ) where
 
+import Prelude hiding (id)
 import qualified Data.Aeson as JSON
 import qualified Data.Map as Map
 import qualified Data.ByteString as B
@@ -27,7 +28,10 @@ instance Show Figure where
   show = show . name
 
 instance Eq Figure where
-  (==) a b = name a == name b
+  (==) a b = (id a == id b)
+    && (name a == name b)
+    && (createdAt a == createdAt b)
+    && (updatedAt a == updatedAt b)
 
 instance JSON.FromJSON Figure where
   parseJSON = JSON.withObject "figure" $ \o -> do

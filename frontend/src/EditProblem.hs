@@ -3,6 +3,7 @@ module EditProblem
   ( widget
   ) where
 
+import qualified Data.CaseInsensitive as CI
 import qualified Data.Map as Map
 import qualified Language.Javascript.JSaddle as JS
 import qualified "jsaddle-dom" GHCJS.DOM.Document as DOM
@@ -17,6 +18,7 @@ import qualified Common.FormFile as FormFile
 import qualified Common.Api.Compile as Compile
 import qualified Common.Api.Error as Error
 import qualified Common.Api.Problem as Problem
+import qualified Common.Api.Figure as Figure
 import qualified Common.Api.Topic as Topic
 import qualified Common.Api.User as User
 import qualified Problem.SelectTopic as SelectTopic
@@ -63,15 +65,6 @@ widget problemId = mdo
           $ Route.apiHref $ Route.Api_Problems :/ (Just pid, mempty)
     R.holdDyn Nothing response
 
-  preloadedFigures :: R.Dynamic t [FormFile.FormFile] <- do
-    response :: R.Event t [FormFile.FormFile] <- case problemId of
-      Nothing -> return R.never
-      -- Just pid -> do
-      --   Util.getOnload
-      --     $ Route.apiHref $ Route.Api_Problems :/ (Just pid, mempty)
-      Just pid -> return R.never
-    R.holdDyn [] response
-  
   ( figures
     , randomizeVariablesAction
     , resetVariablesAction
@@ -136,7 +129,7 @@ widget problemId = mdo
           , outputOption
           ) <- outputOptionsPane editorContents figures
         figures :: R.Dynamic t [FormFile.FormFile] <- R.elClass "div" "py-3 border-b border-brand-light-gray"
-          $ Figures.widget
+          $ Figures.widget =<< fetchFigures preloadedProblem
         publish :: R.Event t () <- R.elClass "div" "py-3" $ do
           Button.primaryClass' "Save & Publish" "w-full active:bg-blue-400"
         let isEditing = isJust problemId
@@ -309,3 +302,40 @@ widget problemId = mdo
         errorsToggle :: R.Dynamic t Bool <- R.elClass "div" "flex-1 flex justify-center ml-auto" $ do
           R.elClass "span" "ml-auto" $ ErrorsToggle.widget latestResponse (R.updated anyLoading)
         return (uploadPrb, compileButtonAction, errorsToggle)
+
+responseToFile :: R.XhrResponse -> Maybe FormFile.FormFile
+responseToFile response = do
+  body <- response ^. R.xhrResponse_response
+  case body of
+    R.XhrResponseBody_Blob blob -> do
+      let v = JSDOM.Types.unBlob blob
+      let file :: JSDOM.Types.File = JSDOM.Types.pFromJSVal v
+      let headers = response ^. R.xhrResponse_headers
+      name <- Map.lookup (CI.mk "Filename") headers
+      return $ FormFile.FormFile file name
+    _ -> Nothing
+
+fetchFigures
+  :: forall t m.
+     ( R.PerformEvent t m
+     , JS.MonadJSM (R.Performable m)
+     , R.HasJSContext (R.Performable m)
+     , R.TriggerEvent t m
+     , R.MonadHold t m
+     )
+  => R.Dynamic t (Maybe Problem.Problem)
+  -> m (R.Dynamic t [FormFile.FormFile])
+fetchFigures problem = do
+  let urls :: R.Event t [Text] = R.ffor (R.updated problem) $ \case
+        Nothing -> []
+        Just p -> R.ffor (Problem.figures p) $ \x -> Route.apiHref $ Route.Api_Figures :/ (Figure.id x)
+  let requests :: R.Event t [R.XhrRequest ()] = (fmap . map)
+        (\x -> R.XhrRequest "GET" x $ R.def
+          & R.xhrRequestConfig_responseType .~ Just R.XhrResponseType_Blob
+          & R.xhrRequestConfig_responseHeaders .~ R.AllHeaders
+        )
+        urls
+  responses :: R.Event t [R.XhrResponse] <- R.performRequestsAsync requests
+  files :: R.Event t [FormFile.FormFile] <- R.performEvent $ R.ffor responses $ \ress -> do
+    return $ catMaybes . map responseToFile $ ress
+  R.holdDyn [] files

@@ -20,6 +20,7 @@ import qualified Snap.Core as Snap
       getRequest,
       modifyResponse,
       readRequestBody,
+      writeBS,
       writeLBS,
       addResponseCookie,
       rqPostParam,
@@ -40,9 +41,9 @@ import qualified Obelisk.Backend as Ob ( Backend(..) )
 import Obelisk.Route ( pattern (:/) )
 import qualified Common.Route as Route
     ( FrontendRoute,
-      Api(Api_Compile, Api_SignOut, Api_SignIn, Api_VerifyEmail,
-          Api_Register, Api_TopicHierarchy, Api_Users, Api_Topics,
-          Api_Problems),
+      Api(Api_Figures, Api_Compile, Api_SignOut, Api_SignIn,
+          Api_VerifyEmail, Api_Register, Api_TopicHierarchy, Api_Users,
+          Api_Topics, Api_Problems),
       BackendRoute(..),
       fullRouteEncoder )
 import qualified Common.Api.Error as Error ( mk )
@@ -62,7 +63,8 @@ import qualified Database.Queries as Queries
       getUserByEmail,
       registerUser,
       verifyEmail,
-      newEmailVerification )
+      newEmailVerification,
+      getFigureById )
 import qualified S3 ( Env, setup )
 import qualified Common.Api.User as User ( User(role, id) )
 import qualified Common.Api.Register as Register

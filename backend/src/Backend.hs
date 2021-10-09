@@ -139,6 +139,17 @@ backend = Ob.Backend
             Route.Api_Compile :/ Just problemId -> Snap.rqMethod <$> Snap.getRequest >>= \case
               Snap.POST -> handleCompileProblemById conn problemId
               _ -> return ()
+            Route.Api_Figures :/ figureId -> do
+              IO.liftIO (Queries.getFigureById conn figureId) >>= \case
+                Nothing -> writeJSON $ Error.mk "Figure does not exist"
+                Just figure -> do
+                  Snap.modifyResponse $ Snap.setHeader "Content-Type" "application/octet-stream"
+                  -- For browsers
+                  Snap.modifyResponse $ Snap.setHeader "Content-Disposition" $
+                    "attachment; filename=\"" <> cs (Figure.name figure) <> "\""
+                  -- For frontend easier parsing
+                  Snap.modifyResponse $ Snap.setHeader "Filename" $ cs (Figure.name figure)
+                  Snap.writeBS $ Figure.contents figure
   , Ob._backend_routeEncoder = Route.fullRouteEncoder
   }
 
@@ -229,9 +240,6 @@ handleSaveProblem conn s3env user = do
                   Nothing -> writeJSON $ Error.mk "Something went wrong"
                   Just createdProblem -> do
                     let pid = Problem.id createdProblem
-                    -- TODO: save figures to database?
-                    -- forM_ fileUploads $ \fu -> do
-                    --   IO.liftIO $ S3.putFigure s3env (filePath fu) pid (cs $ fileName fu)
                     writeJSON createdProblem
             -- Updating an existing problem
             | otherwise -> do
@@ -247,9 +255,6 @@ handleSaveProblem conn s3env user = do
                   Nothing -> writeJSON $ Error.mk "Something went wrong"
                   Just updatedProblem -> do
                     let pid = Problem.id updatedProblem
-                    -- TODO: save figures to database?
-                    -- forM_ fileUploads $ \fu -> do
-                    --   IO.liftIO $ S3.putFigure s3env (filePath fu) pid (cs $ fileName fu)
                     writeJSON updatedProblem
 
 requestIcemakerCompileProblem

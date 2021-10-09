@@ -1,5 +1,5 @@
 import qualified Data.Map as Map
-    ( insert, delete, elems, empty, maxViewWithKey, singleton )
+    ( insert, delete, elems, maxViewWithKey, singleton )
 import qualified Control.Monad.Fix as Fix ( MonadFix )
 import qualified JSDOM.File ( getName )
 import qualified JSDOM.Types ( File )

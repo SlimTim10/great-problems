@@ -19,6 +19,7 @@ module Database.Queries
   , removeSessionsByUserId
   , removeSessionById
   , getUserFromSession
+  , getFigureById
   ) where
 
 import qualified Database.PostgreSQL.Simple as SQL
@@ -449,3 +450,17 @@ getFiguresByProblemId conn problemId = do
     , Figure.createdAt = DbFigure.created_at dbFigure
     , Figure.updatedAt = DbFigure.updated_at dbFigure
     }
+
+getFigureById :: SQL.Connection -> Integer -> IO (Maybe Figure.Figure)
+getFigureById conn figureId = do
+  mDbFigure <- Util.headMay
+    <$> SQL.query conn "SELECT * FROM figures WHERE id = ?" (SQL.Only figureId)
+  case mDbFigure of
+    Nothing -> return Nothing
+    Just dbFigure -> return . Just $ Figure.Figure
+      { Figure.id = DbFigure.id dbFigure
+      , Figure.name = DbFigure.name dbFigure
+      , Figure.contents = DbFigure.contents dbFigure
+      , Figure.createdAt = DbFigure.created_at dbFigure
+      , Figure.updatedAt = DbFigure.updated_at dbFigure
+      }

@@ -21,8 +21,9 @@ widget
      , R.PerformEvent t m
      , JS.MonadJSM (R.Performable m)
      )
-  => m (R.Dynamic t [FormFile.FormFile])
-widget = R.el "div" $ do
+  => R.Dynamic t [FormFile.FormFile]
+  -> m (R.Dynamic t [FormFile.FormFile])
+widget initialFiles = R.el "div" $ do
   fi <- R.elClass "div" "flex gap-3" $ do
     R.elClass "p" "font-medium mb-2 py-1" $ R.text "Figures"
     R.elClass "div" "w-min h-min" $ do
@@ -37,7 +38,7 @@ widget = R.el "div" $ do
           <> "multiple" =: ""
           <> "class" =: "hidden"
           )
-  figuresWidget $ R._inputElement_files fi
+  figuresWidget initialFiles (R._inputElement_files fi)
 
 figuresWidget
   :: forall t m.
@@ -48,11 +49,13 @@ figuresWidget
      , R.PerformEvent t m
      , JS.MonadJSM (R.Performable m)
      )
-  => R.Dynamic t [JSDOM.Types.File]
+  => R.Dynamic t [FormFile.FormFile]
+  -> R.Dynamic t [JSDOM.Types.File]
   -> m (R.Dynamic t [FormFile.FormFile])
-figuresWidget figures = do
+figuresWidget initialFiles inputFiles = do
   rec
-    filesWithNames :: R.Event t [FormFile.FormFile] <- R.performEvent $ R.ffor (R.updated figures) $ \fs -> do
+    inputFormFiles :: R.Event t [FormFile.FormFile] <- R.performEvent
+      $ R.ffor (R.updated inputFiles) $ \fs -> do
       names :: [Text] <- mapM JSDOM.File.getName fs
       return $ map (uncurry FormFile.FormFile) $ zip fs names
     deleteMap :: R.Dynamic t (Map Int (R.Event t Int)) <- R.elClass "ul" "ml-4 flex flex-col gap-2" $ do
@@ -71,9 +74,9 @@ figuresWidget figures = do
     -- Note that "R.leftmost" can replace "R.mergeWith (.)",
     -- but this would not handle the two events happening at the same time
     -- (even though this may never occur in practice).
-    fileMap :: R.Dynamic t FormFile.FormFileMap <-
-      R.foldDyn ($) Map.empty
-      $ R.mergeWith (.) [R.switch . R.current $ deletions, collectFiles <$> filesWithNames]
+    fileMap :: R.Dynamic t FormFile.FormFileMap <- do
+      R.foldDyn ($) mempty
+      $ R.mergeWith (.) [R.switch . R.current $ deletions, collectFiles <$> inputFormFiles, collectFiles <$> R.updated initialFiles]
   return $ Map.elems <$> fileMap
   where
     collectFiles :: [FormFile.FormFile] -> FormFile.FormFileMap -> FormFile.FormFileMap

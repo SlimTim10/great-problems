@@ -1,9 +1,11 @@
-import qualified Data.Map as Map ( mapKeys )
+import qualified Data.CaseInsensitive as CI ( mk )
+import qualified Data.Map as Map ( lookup, mapKeys )
 import qualified Language.Javascript.JSaddle as JS
     ( MonadJSM, JSVal(JSVal) )
 import qualified "jsaddle-dom" GHCJS.DOM.Document as DOM
     ( IsDocument )
-import qualified JSDOM.Types ( File )
+import qualified JSDOM.Types
+    ( PFromJSVal(pFromJSVal), File, Blob(unBlob) )
 import qualified Obelisk.Route.Frontend as Ob
     ( R, routeLink, RouteToUrl, SetRoute(setRoute) )
 import qualified Reflex.Dom.Core as R
@@ -23,9 +25,14 @@ import qualified Reflex.Dom.Core as R
       elClass,
       text,
       decodeText,
+      performRequestsAsync,
+      xhrRequestConfig_responseHeaders,
+      xhrRequestConfig_responseType,
+      xhrResponse_headers,
+      xhrResponse_response,
       MonadHold(holdDyn),
       MonadSample,
-      Reflex(never, updated, Dynamic, Event),
+      Reflex(never, updated, Event, Dynamic),
       PerformEvent(performEvent, Performable),
       PostBuild,
       TickInfo,
@@ -35,22 +42,28 @@ import qualified Reflex.Dom.Core as R
       DomSpace(RawDocument),
       HasDocument,
       Prerender,
-      HasValue(value) )
+      HasValue(value),
+      XhrRequest(XhrRequest),
+      XhrResponse,
+      XhrResponseHeaders(AllHeaders),
+      XhrResponseBody(XhrResponseBody_Blob),
+      XhrResponseType(XhrResponseType_Blob) )
 import qualified MyReflex.Dom.Xhr.FormData as R'
     ( FormValue(FormValue_List, FormValue_Text) )
 import qualified Common.Route as Route
     ( ProblemsRoute(ProblemsRoute_Edit, ProblemsRoute_View),
       FrontendRoute(FrontendRoute_Problems),
-      Api(Api_Problems),
+      Api(Api_Figures, Api_Problems),
       apiHref )
-import qualified Common.FormFile as FormFile ( FormFile )
+import qualified Common.FormFile as FormFile ( FormFile(FormFile) )
 import qualified Common.Api.Compile as Compile
     ( Response, Request(Request), OutputOption(..) )
 import qualified Common.Api.Error as Error ( Error(message) )
 import qualified Common.Api.Problem as Problem
     ( RequestParam(..),
       RequestSave(..),
-      Problem(contents, id, summary, topic) )
+      Problem(figures, contents, id, summary, topic) )
+import qualified Common.Api.Figure as Figure ( Figure(id) )
 import qualified Common.Api.Topic as Topic ( Topic(id) )
 import qualified Common.Api.User as User ( User(id) )
 import qualified Problem.SelectTopic as SelectTopic ( widget )
@@ -76,9 +89,11 @@ import Global
       Map,
       fromMaybe,
       fromJust,
+      catMaybes,
       isJust,
       (<&>),
       (&),
+      (^.),
       (.~),
       cs,
       (:/),
