@@ -85,7 +85,7 @@ import qualified Common.Api.Problem as Problem
                    ParamSummary, ParamProblemId),
       BareProblem(BareProblem, bpFigures, bpAuthorId, bpTopicId,
                   bpContents, bpSummary, bpProblemId),
-      Problem(contents, figures) )
+      Problem(contents, figures, author) )
 import qualified Common.Api.Figure as Figure
     ( BareFigure(..), Figure(contents, name) )
 import qualified Auth

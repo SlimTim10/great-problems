@@ -203,9 +203,16 @@ handleSaveProblem conn user = do
   contents <- getTextParam Problem.ParamContents
   topicId <- getTextParam Problem.ParamTopicId
   authorId <- getTextParam Problem.ParamAuthorId
+  authorIdFromDb :: Maybe Integer <- IO.liftIO
+    (Queries.getProblemById conn (read . cs $ problemId) mempty) >>= \case
+    Nothing -> return Nothing
+    Just p -> return . Just $ either id User.id (Problem.author p)
   if
-    | (read . cs $ authorId) /= User.id user
-      || not (User.role user == Role.Contributor || User.role user == Role.Moderator)
+    | any not
+      [ (read . cs $ authorId) == User.id user
+      , authorIdFromDb == Just (User.id user)
+      , User.role user == Role.Contributor || User.role user == Role.Moderator
+      ]
       -> writeJSON $ Error.mk "No access"
     | T.null contents
       -> writeJSON $ Error.mk "Problem contents cannot be empty"
