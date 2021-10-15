@@ -203,14 +203,17 @@ handleSaveProblem conn user = do
   contents <- getTextParam Problem.ParamContents
   topicId <- getTextParam Problem.ParamTopicId
   authorId <- getTextParam Problem.ParamAuthorId
-  authorIdFromDb :: Maybe Integer <- IO.liftIO
-    (Queries.getProblemById conn (read . cs $ problemId) mempty) >>= \case
-    Nothing -> return Nothing
-    Just p -> return . Just $ either id User.id (Problem.author p)
+  authorIdFromDb :: Maybe Integer <- IO.liftIO $ do
+    if T.null problemId
+      then return Nothing
+      else do
+      (Queries.getProblemById conn (read . cs $ problemId) mempty) >>= \case
+        Nothing -> return Nothing
+        Just p -> return . Just $ either id User.id (Problem.author p)
   if
     | any not
-      [ (read . cs $ authorId) == User.id user
-      , authorIdFromDb == Just (User.id user)
+      [ T.null problemId || (read . cs $ authorId) == User.id user
+      , T.null problemId || authorIdFromDb == Just (User.id user)
       , User.role user == Role.Contributor || User.role user == Role.Moderator
       ]
       -> writeJSON $ Error.mk "No access"
