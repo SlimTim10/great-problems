@@ -271,3 +271,77 @@ SYMATTR InstName X1
 TEXT 152 216 Left 2 ;\\val={I_D}
 LINE Normal 112 272 112 192 1
 |]
+
+summaryCalculusDemo :: Text
+summaryCalculusDemo = "Find the base, growth rate, and value of an exponential function."
+
+prbCalculusDemo :: Text
+prbCalculusDemo = [QQ.r|
+\runParam{paramFormat = decimal}
+\runParam{paramSigDigits = 5}
+
+% \runParam{t1 = 17;20;1}
+% \runParam{ft1 = 80;90;0.1}
+% \runParam{t2 = 21;24;1}
+% \runParam{ft2 = 80;90;0.1}
+\runParam{t1 = 20}
+\runParam{ft1 = 88.2}
+\runParam{t2 = 23}
+\runParam{ft2 = 91.4}
+\runParam{t3 = 25}
+
+\question Suppose that $Q = f(t)$ is an exponential function of $t$. If $f(\val{t1}) = \val{ft1}$ and $f(\val{t2}) = \val{ft2}$:
+
+(a) Find the base.
+
+(b) Find the growth rate.
+
+(c) Evaluate $f(\val{t3})$.
+\\
+\\
+\begin{solutions}
+    \textbf{Solution}\\
+    \begin{tabbing}
+    (a) \=Let $Q = Q_0a^t$.\\
+    \>Substituting $t = \val{t1}$, $Q = \val{ft1}$ and $t = \val{t2}$, $Q = \val{ft2}$ gives two equations for $Q_0$ and $a$:\\
+    \\
+    \>$\val{ft1} = Q_0a^{\val{t1}}$ and $\val{ft2} = Q_0a^{\val{t2}}$.\\
+    \\
+    \>Dividing the two equations enables us to eliminate $Q_0$:\\
+    \\
+    \runSilent{aexp = t2 - t1}
+    \>$\dfrac{\val{ft2}}{\val{ft1}} = \dfrac{Q_0a^{\val{t2}}}{Q_0a^{\val{t1}}} = a^{\val{aexp}}$.\\
+    \\
+    \>Solving for the base, $a$, gives\\
+    \\
+    \runSilent{a_ans = (ft2 / ft1)^(1 / aexp)}
+    \>$a = \left( \dfrac{\val{ft2}}{\val{ft1}} \right)^{1/{\val{aexp}}} = \val{a_ans}$.
+    \end{tabbing}
+    \begin{tabbing}
+    \runSilent{gr = a_ans - 1}
+    \runSilent{gr_per = gr * 100}
+    (b) \=Since $a = \val{a_ans}$, the growth rate is $\val{a_ans} - 1 = \val{gr} = \val{gr_per}$\%.
+    \end{tabbing}
+    \begin{tabbing}
+    \runSilent{gr = a_ans - 1}
+    \runSilent{gr_per = gr * 100}
+    (c) \=We want to evaluate $f(\val{t3}) = Q_0a^{\val{t3}} = Q_0(\val{a_ans})^{\val{t3}}$. First we need to find $Q_0$ from the equation\\
+    \\
+    \>$\val{ft1} = Q_0(\val{a_ans})^{\val{t1}}$\\
+    \\
+    \runSilent{q0 = ft1 * (1 / (a_ans^t1))}
+    \>Solving gives $Q_0 = \val{q0}$. Thus,\\
+    \\
+    \runSilent{evaluate_ans = q0 * (a_ans^t3)}
+    \>$f(\val{t3}) = \val{q0}(\val{a_ans})^{\val{t3}} = \val{evaluate_ans}$.
+    \end{tabbing}
+\end{solutions}
+\begin{answers}
+    \textbf{Answer}\\
+    (a) $\val{a_ans}$
+    
+    (b) $\val{gr_per}$\%
+    
+    (c) $\val{evaluate_ans}$
+\end{answers}
+|]
