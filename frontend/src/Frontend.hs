@@ -36,10 +36,6 @@ frontend = Ob.Frontend
   , Ob._frontend_body = R.prerender_ R.blank $ Ob.subRoute_ $ \case
       Route.FrontendRoute_Home -> do
         Header.widget
-        R.el "p" $ R.text "(placeholder for marketing page)"
-        R.el "p" $ R.text "Main page"
-        Ob.routeLink (Route.FrontendRoute_NewProblem :/ ()) $ do
-          R.elClass "p" "border-2 border-green-500 w-max" $ R.text "New problem"
         Home.widget
       Route.FrontendRoute_Explore -> do
         Header.widget

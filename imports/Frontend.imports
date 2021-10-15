@@ -1,6 +1,6 @@
 import qualified Obelisk.Frontend as Ob ( Frontend(..) )
 import qualified Obelisk.Route.Frontend as Ob
-    ( R, routeLink, subRoute_, Routed(askRoute) )
+    ( R, subRoute_, Routed(askRoute) )
 import qualified Obelisk.Generated.Static as Ob ( static )
 import qualified Reflex.Dom.Core as R
     ( prerender_,
