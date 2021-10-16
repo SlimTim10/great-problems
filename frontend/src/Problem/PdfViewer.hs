@@ -34,7 +34,7 @@ switchView pdfData loading compileResponse errorsToggle
   | errorsToggle = errorsWidget compileResponse
   | Text.null pdfData = R.text "Press compile to view PDF"
   | otherwise = R.elAttr "iframe" attrs $ do
-      R.text "This browser does not support PDFs. Please download the PDF to view it:"
+      R.el "p" $ R.text "This browser does not support PDFs. Please download the PDF to view it:"
       R.elAttr "a"
         ( "href" =: pdfObjectSrc
           <> "download" =: "Calculus Demo Problem"
