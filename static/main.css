@@ -92,26 +92,18 @@ input {
   width: 335px;
 }
 
-.h-70vh {
-  height: 70vh;
+.home-pdf-viewer {
+  height: 120vw;
+  max-height: 90vh;
+  width: 900px;
+  background-color: #FFFFFF;
 }
 
-.screenshot {
-  /* max-width: 960px; */
-  /* margin: 0 auto; */
-  /* height: 600px; */
-}
-
-/* .screenshot-img { */
-/*   max-width: 960px; */
-/*   background-image: url(/static/problem_editor_screenshot.png); */
-/*   background-size: 100%; */
-/*   background-repeat: no-repeat; */
-/*   margin: auto; */
-/*   height: 672px; */
-/*   filter: drop-shadow(0 0 50px rgba(0, 0, 0, .67)); */
-/* } */
-
-.screenshot-img {
+.home-screenshot-img {
   box-shadow: 0 0 50px rgba(0, 0, 0, .67);
+}
+
+.home-example-problem-container {
+  max-width: 900px;
+  margin: 0 auto;
 }

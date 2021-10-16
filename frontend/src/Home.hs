@@ -63,27 +63,30 @@ widget = do
 
     R.elClass "div" "mt-20 flex flex-col items-center gap-8" $ do
       R.elClass "p" "text-brand-lg font-bold" $ R.text "For students"
-      let card = \title body -> do
-            R.elClass "div" "w-brand-card bg-brand-light-gray box-shadow-brand-card flex flex-col items-center p-4" $ do
-              R.elClass "p" "font-medium" $ R.text title
-              R.elClass "p" "mt-2 text-center text-brand-sm font-light" $ R.text body
-      card "Perfect for practice" "Only see the solution when you want to. You can even repeat the same problem with randomized variables!"
-      card "Trusted content" "Every problem was contributed by a real teacher, so you can be confident in the material and solution."
-      card "Problem sets" "Find, create, and share problem sets for any topic. Practice with a great problem set to ace your next test!"
+      R.elClass "div" "flex gap-8 flex-col xl:flex-row" $ do
+        let card = \title body -> do
+              R.elClass "div" "w-brand-card bg-brand-light-gray box-shadow-brand-card flex flex-col items-center p-4" $ do
+                R.elClass "p" "font-medium" $ R.text title
+                R.elClass "p" "mt-2 text-center text-brand-sm font-light" $ R.text body
+        card "Perfect for practice" "Only see the solution when you want to. You can even repeat the same problem with randomized variables!"
+        card "Trusted content" "Every problem was contributed by a real teacher, so you can be confident in the material and solution."
+        card "Problem sets" "Find, create, and share problem sets for any topic. Practice with a great problem set to ace your next test!"
 
     R.elClass "div" "mt-20 w-full bg-brand-light-gray pb-20" $ do
       R.elClass "p" "m-1 text-brand-light-gray" $ R.text "EXAMPLE PROBLEM"
-      exampleProblem
+      R.elClass "div" "home-example-problem-container" $ do
+        exampleProblem
 
     R.elClass "div" "mt-20 flex flex-col items-center gap-8" $ do
       R.elClass "p" "text-brand-lg font-bold" $ R.text "For teachers"
-      let card = \title body -> do
-            R.elClass "div" "w-brand-card bg-brand-light-gray box-shadow-brand-card flex flex-col items-center p-4" $ do
-              R.elClass "p" "font-medium" $ R.text title
-              R.elClass "p" "mt-2 text-center text-brand-sm font-light" $ R.text body
-      card "Rich problem editor" "Use our featureful editor to quickly and easily create textbook-quality problems. Features: LaTeX, figures, live preview, variables, automatic solution generation, and more!"
-      card "Find new problems" "Having trouble coming up with your own problems? Discover innovative problems created by other teachers in any topic."
-      card "Quick problem sets" "No need to spend your valuable time creating new problem sets for each semester. With our collaborative platform, you can find and share problem sets with other teachers."
+      R.elClass "div" "flex gap-8 flex-col xl:flex-row" $ do
+        let card = \title body -> do
+              R.elClass "div" "w-brand-card bg-brand-light-gray box-shadow-brand-card flex flex-col items-center p-4" $ do
+                R.elClass "p" "font-medium" $ R.text title
+                R.elClass "p" "mt-2 text-center text-brand-sm font-light" $ R.text body
+        card "Rich problem editor" "Use our featureful editor to quickly and easily create textbook-quality problems. Features: LaTeX, figures, live preview, variables, automatic solution generation, and more!"
+        card "Find new problems" "Having trouble coming up with your own problems? Discover innovative problems created by other teachers in any topic."
+        card "Quick problem sets" "No need to spend your valuable time creating new problem sets for each semester. With our collaborative platform, you can find and share problem sets with other teachers."
 
     R.elClass "div" "mt-20 w-full bg-brand-light-gray pb-20" $ do
       R.elClass "p" "m-1 text-brand-light-gray" $ R.text "PROBLEM EDITOR"
@@ -91,7 +94,7 @@ widget = do
         R'.elAttrClass
           "img"
           ("src" =: "/static/problem_editor_screenshot.png")
-          "screenshot-img mx-auto"
+          "home-screenshot-img mx-auto"
           $ R.blank
 
     R.elClass "div" "my-10 flex flex-col items-center gap-2 w-full" $ do
@@ -106,7 +109,7 @@ widget = do
       Ob.routeLink (Route.FrontendRoute_Register :/ ()) $ do
         Button.primary "Create an account"
 
-    R.elClass "div" "py-6 w-full flex justify-center border-t border-brand-light-gray" $ do
+    R.elClass "div" "p-6 w-full flex border-t border-brand-light-gray" $ do
       R.elClass "p" "" $ R.text "© 2021 Great Problems"
 
   where
@@ -211,15 +214,16 @@ widget = do
                          (True, True) -> Compile.WithSolutionAndAnswer
                     ) <$> showAnswer <*> showSolution
               return (showAnswerAction', showSolutionAction', outputOption')
-                
-        R.elClass "div" "h-70vh" $ do
-          let showPdf = PdfViewer.widget latestResponse anyLoading (R.constDyn False)
-          Util.dynFor latestResponse $ \case
-            Nothing -> showPdf
-            Just res -> do
-              if any (not . T.null) [Compile.resErrorIcemaker res, Compile.resErrorLatex res]
-                then R.text "Something went wrong. Try again later or notify the administrator."
-                else showPdf
+
+        R.elClass "div" "flex justify-center w-full" $ do
+          R.elClass "div" "home-pdf-viewer" $ do
+            let showPdf = PdfViewer.widget latestResponse anyLoading (R.constDyn False)
+            Util.dynFor latestResponse $ \case
+              Nothing -> showPdf
+              Just res -> do
+                if any (not . T.null) [Compile.resErrorIcemaker res, Compile.resErrorLatex res]
+                  then R.text "Something went wrong. Try again later or notify the administrator."
+                  else showPdf
 
         return (randomizeVariablesAction, resetVariablesAction, showAnswerAction, showSolutionAction)
 
