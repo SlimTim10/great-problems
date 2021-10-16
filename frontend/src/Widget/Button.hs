@@ -25,7 +25,7 @@ primary
 primary t = R'.elAttrClass
   "button"
   ("type" =: "button")
-  "bg-brand-primary rounded text-white font-medium px-3 py-2"
+  "bg-brand-primary rounded text-white font-normal px-3 py-2"
   $ R.text t
 
 secondary
@@ -50,7 +50,7 @@ primary' t = do
   (e, _) <- R'.elAttrClass'
     "button"
     ("type" =: "button")
-    "bg-brand-primary rounded text-white font-medium px-3 py-2"
+    "bg-brand-primary rounded text-white font-normal px-3 py-2"
     $ R.text t
   return $ R.domEvent R.Click e
 
@@ -79,7 +79,7 @@ primaryClass' t c = do
   (e, _) <- R'.elAttrClass'
     "button"
     ("type" =: "button")
-    (cs $ "bg-brand-primary rounded text-white font-medium px-3 py-2 " ++ cs c)
+    (cs $ "bg-brand-primary rounded text-white font-normal px-3 py-2 " ++ cs c)
     $ R.text t
   return $ R.domEvent R.Click e
 
