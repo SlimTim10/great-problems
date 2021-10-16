@@ -34,7 +34,7 @@ import qualified Common.Route as Route
     ( ProblemsRoute(ProblemsRoute_Edit),
       TopicsRoute(TopicsRoute_Problems),
       FrontendRoute(FrontendRoute_Problems, FrontendRoute_Topics),
-      Api(Api_Problems, Api_Compile),
+      Api(Api_Compile, Api_Problems),
       apiHref )
 import qualified Common.Api.Compile as Compile
     ( Response(resErrorLatex, resErrorIcemaker),

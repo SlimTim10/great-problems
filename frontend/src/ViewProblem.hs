@@ -1,6 +1,7 @@
 {-# LANGUAGE PackageImports #-}
 module ViewProblem
   ( widget
+  , performCompileRequest
   ) where
 
 import qualified Data.Text as T
@@ -68,7 +69,7 @@ widget problemId = mdo
 
   onload :: R.Event t () <- R.getPostBuild
   onloadAction :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-    performRequest onload $ Compile.Request
+    performCompileRequest onload problemId $ Compile.Request
       <$> R.constDyn ""
       <*> R.constDyn False
       <*> R.constDyn Compile.QuestionOnly
@@ -138,7 +139,7 @@ widget problemId = mdo
                   "Randomize variables"
                   "active:bg-blue-400"
                 randomizeVariablesAction :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-                  performRequest randomizeVariables $ Compile.Request
+                  performCompileRequest randomizeVariables problemId $ Compile.Request
                     <$> R.constDyn ""
                     <*> R.constDyn True
                     <*> outputOption
@@ -147,7 +148,7 @@ widget problemId = mdo
                   "Reset variables"
                   "active:bg-blue-400"
                 resetVariablesAction :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-                  performRequest resetVariables $ Compile.Request
+                  performCompileRequest resetVariables problemId $ Compile.Request
                     <$> R.constDyn ""
                     <*> R.constDyn False
                     <*> outputOption
@@ -163,7 +164,7 @@ widget problemId = mdo
                     "font-medium text-brand-primary cursor-pointer"
                     "Answer"
                   showAnswerAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-                    performRequest (R.updated $ const () <$> showAnswer) $ Compile.Request
+                    performCompileRequest (R.updated $ const () <$> showAnswer) problemId $ Compile.Request
                       <$> R.constDyn ""
                       <*> R.constDyn False
                       <*> outputOption
@@ -173,7 +174,7 @@ widget problemId = mdo
                     "font-medium text-brand-primary cursor-pointer"
                     "Solution"
                   showSolutionAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-                    performRequest (R.updated $ const () <$> showSolution) $ Compile.Request
+                    performCompileRequest (R.updated $ const () <$> showSolution) problemId $ Compile.Request
                       <$> R.constDyn ""
                       <*> R.constDyn False
                       <*> outputOption
@@ -223,28 +224,36 @@ widget problemId = mdo
           )
 
   return ()
-  where
-    performRequest
-      :: R.Event t () -- ^ Event to trigger request
-      -> R.Dynamic t Compile.Request
-      -> m (R.Dynamic t (Loading.WithLoading (Maybe Compile.Response))) -- ^ Response
-    performRequest e compileRequest = do
-      formData :: R.Event t (Map Text (R'.FormValue JSDOM.Types.File)) <- R.performEvent
-        $ R.ffor (R.tagPromptlyDyn compileRequest e) $ \req -> do
-        let
-          formDataParams :: Map Compile.RequestParam (R'.FormValue JSDOM.Types.File) = (
-            Compile.ParamRandomizeVariables =: R'.FormValue_Text
-              (Util.formBool . Compile.randomizeVariables $ req)
-            <> Compile.ParamOutputOption =: R'.FormValue_Text
-              (cs . show . Compile.outputOption $ req)
-            )
-          formDataText = Map.mapKeys (cs . show) formDataParams
-        return formDataText
+
+performCompileRequest
+  :: ( R.MonadHold t m
+     , R.PerformEvent t m
+     , R.HasJSContext (R.Performable m)
+     , JS.MonadJSM (R.Performable m)
+     , R.TriggerEvent t m
+     , MonadFix m
+     )
+  => R.Event t () -- ^ Event to trigger request
+  -> Integer -- ^ Problem ID
+  -> R.Dynamic t Compile.Request
+  -> m (R.Dynamic t (Loading.WithLoading (Maybe Compile.Response))) -- ^ Response
+performCompileRequest e problemId compileRequest = do
+  formData :: R.Event t (Map Text (R'.FormValue JSDOM.Types.File)) <- R.performEvent
+    $ R.ffor (R.tagPromptlyDyn compileRequest e) $ \req -> do
+    let
+      formDataParams :: Map Compile.RequestParam (R'.FormValue JSDOM.Types.File) = (
+        Compile.ParamRandomizeVariables =: R'.FormValue_Text
+          (Util.formBool . Compile.randomizeVariables $ req)
+        <> Compile.ParamOutputOption =: R'.FormValue_Text
+          (cs . show . Compile.outputOption $ req)
+        )
+      formDataText = Map.mapKeys (cs . show) formDataParams
+    return formDataText
     
-      rawCompileResponse :: R.Event t Text <- Util.postForm
-        (Route.apiHref $ Route.Api_Compile :/ Just problemId)
-        formData
-      compileResponse :: R.Dynamic t (Maybe Compile.Response) <- R.holdDyn Nothing
-        $ R.decodeText <$> rawCompileResponse
-      loading :: R.Dynamic t Bool <- compileResponse `Util.notUpdatedSince` e
-      return $ Loading.WithLoading <$> compileResponse <*> loading
+  rawCompileResponse :: R.Event t Text <- Util.postForm
+    (Route.apiHref $ Route.Api_Compile :/ Just problemId)
+    formData
+  compileResponse :: R.Dynamic t (Maybe Compile.Response) <- R.holdDyn Nothing
+    $ R.decodeText <$> rawCompileResponse
+  loading :: R.Dynamic t Bool <- compileResponse `Util.notUpdatedSince` e
+  return $ Loading.WithLoading <$> compileResponse <*> loading

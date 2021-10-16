@@ -1,21 +1,43 @@
+import qualified Data.Text as T ( null )
 import qualified Control.Monad.Fix as Fix ( MonadFix )
 import qualified Language.Javascript.JSaddle as JS ( MonadJSM )
 import qualified Obelisk.Route.Frontend as Ob
     ( R, routeLink, RouteToUrl, SetRoute )
 import qualified MyReflex.Dom.Widget.Basic as R' ( elAttrClass )
 import qualified Reflex.Dom.Core as R
-    ( blank,
+    ( constDyn,
+      blank,
+      dyn_,
       elClass,
       text,
-      MonadHold,
+      MonadHold(holdDyn),
+      MonadSample,
+      Reflex(updated, Event, Dynamic),
       PerformEvent(Performable),
-      PostBuild,
+      PostBuild(..),
       TriggerEvent,
       HasJSContext,
       DomBuilder,
       Prerender )
 import qualified Common.Route as Route
-    ( FrontendRoute(FrontendRoute_Explore) )
-import qualified Common.Api.Problem as Problem ()
-import qualified Widget.Button as Button ( primary )
+    ( FrontendRoute(FrontendRoute_Register, FrontendRoute_Explore),
+      Api(Api_Problems),
+      apiHref )
+import qualified Common.Api.Problem as Problem
+    ( GetParamInclude(TopicPath),
+      GetParams(GetParams, gpTopic, gpInclude, gpExpand),
+      Problem(summary),
+      getParamsToRouteQuery )
+import qualified Common.Api.Compile as Compile
+    ( Response(resErrorLatex, resErrorIcemaker),
+      Request(Request),
+      OutputOption(..) )
+import qualified Widget.Button as Button
+    ( primary, primarySmallClass' )
+import qualified Widget.Input as Input ( checkboxClass )
+import qualified Problem.Loading as Loading
+    ( WithLoading, anyLoading, latestAction )
+import qualified Problem.PdfViewer as PdfViewer ( widget )
+import qualified ViewProblem ( performCompileRequest )
+import qualified Util ( getOnload, dynFor )
 import Global ( (:/), (=:) )
