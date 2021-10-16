@@ -82,8 +82,17 @@ load conn = do
     ]
 
   let
-    problemCalculusCompoundRate =
+    problemCalculusDemo =
       ( 1
+      , summaryCalculusDemo
+      , prbCalculusDemo
+      , topicCalculus^._1
+      , userAlice^._1
+      , "now"
+      , "now"
+      )
+    problemCalculusCompoundRate =
+      ( 2
       , "Find the present value of a continuous annuity at an annual rate of 2% compounded continuously for 4 years if the payment at time t is at the rate of $400 per year."
       , prbCalculusCompoundRate
       , topicRates^._1
@@ -92,7 +101,7 @@ load conn = do
       , "now"
       )
     problemCurrMirror01 =
-      ( 2
+      ( 3
       , "Consider the wide-swing current mirror shown below where the desired output current is 30 uA. Given that M1 and M2 are identical in size and the minimum output voltage is 0.5V, find the length of the transistors such that the current mirror output resistance is 60 MOhm."
       , prbCurrMirror01
       , topicAnalogCircuits^._1
@@ -114,7 +123,8 @@ load conn = do
     VALUES
       (?,?,?,?,?,?,?)
   |]
-    [ problemCalculusCompoundRate
+    [ problemCalculusDemo
+    , problemCalculusCompoundRate
     , problemCurrMirror01
     ]
 
