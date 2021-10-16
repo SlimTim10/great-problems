@@ -33,17 +33,24 @@ switchView pdfData loading compileResponse errorsToggle
   | loading = loadingWidget
   | errorsToggle = errorsWidget compileResponse
   | Text.null pdfData = R.text "Press compile to view PDF"
-  | otherwise = R.elAttr "iframe" attrs $ R.blank
+  | otherwise = R.elAttr "iframe" attrs $ do
+      R.text "This browser does not support PDFs. Please download the PDF to view it:"
+      R.elAttr "a"
+        ( "href" =: pdfObjectSrc
+          <> "download" =: "Calculus Demo Problem"
+          <> "title" =: "Download PDF document"
+        )
+        $ R.text "Download PDF"
   where
     attrs :: Map Text Text
     attrs = (
-      "src" =: (pdfObjectSrc <> pdfData)
+      "src" =: pdfObjectSrc
       <> "height" =: "100%"
       <> "width" =: "100%"
       <> "type" =: "application/pdf"
       <> "title" =: "pdf"
       )
-    pdfObjectSrc = "data:application/pdf;base64,"
+    pdfObjectSrc = "data:application/pdf;base64," <> pdfData
 
 errorsWidget
   :: R.DomBuilder t m
