@@ -6,11 +6,11 @@ module Common.Api.Auth
   ( Auth(..)
   ) where
 
+import Common.Lib.Prelude
+
 import qualified Data.Aeson as JSON
 import qualified Data.CaseInsensitive as CI
 import GHC.Generics (Generic)
-
-import Global
 
 data Auth = Auth
   { email :: CI Text

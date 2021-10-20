@@ -2,14 +2,14 @@ module Problem.UploadPrb
   ( widget
   ) where
 
-import qualified JSDOM.Types
-import qualified JSDOM.FileReader as FileReader
-import qualified JSDOM.EventM as EventM
+import Frontend.Lib.Prelude
+import qualified Frontend.Lib.Util as Util
+
+import qualified GHCJS.DOM.Types
+import qualified GHCJS.DOM.FileReader as FileReader
+import qualified GHCJS.DOM.EventM as EventM
 import qualified Language.Javascript.JSaddle as JS
 import qualified Reflex.Dom.Core as R
-
-import qualified Util
-import Global
 
 widget
   :: forall t m.
@@ -46,7 +46,7 @@ readFileContents
      , R.PerformEvent t m
      , JS.MonadJSM (R.Performable m)
      )
-  => R.Event t JSDOM.Types.File
+  => R.Event t GHCJS.DOM.Types.File
   -> m (R.Event t Text)
 readFileContents file = do
   fr <- JS.liftJSM FileReader.newFileReader

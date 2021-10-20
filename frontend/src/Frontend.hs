@@ -1,5 +1,8 @@
 module Frontend where
 
+import Frontend.Lib.Prelude
+import qualified Frontend.Lib.Util as Util
+
 import qualified Obelisk.Frontend as Ob
 import qualified Obelisk.Route.Frontend as Ob
 import qualified Obelisk.Generated.Static as Ob
@@ -19,8 +22,6 @@ import qualified VerifyEmail
 import qualified SignIn
 import qualified SignOut
 import qualified Profile
-import qualified Util
-import Global
 
 frontend :: Ob.Frontend (Ob.R Route.FrontendRoute)
 frontend = Ob.Frontend

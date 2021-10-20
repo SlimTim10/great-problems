@@ -4,11 +4,11 @@ module Database.Types.EmailVerification
   ( EmailVerification(..)
   ) where
 
+import Backend.Lib.Prelude
+
 import qualified Database.PostgreSQL.Simple as SQL
 import qualified Data.Time.Clock as Time
 import GHC.Generics (Generic)
-
-import Global
 
 data EmailVerification = EmailVerification
   { id :: Integer

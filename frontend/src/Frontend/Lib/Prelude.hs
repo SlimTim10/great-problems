@@ -1,22 +1,17 @@
 {-# LANGUAGE PatternSynonyms #-}
 
 -- | A local Prelude, meant to be imported unqualified.
-module Global
-  ( Text
-  , Map
+module Frontend.Lib.Prelude
+  ( module Data.Text
+  , module Data.Map
   , module Data.Maybe
-  , module Data.Bool
-  , module Data.Traversable
+  , module Data.String.Conversions
   , module Data.Functor
-  , module Data.List
-  , module Data.Either
   , module Data.Word
+  , module Data.Either
+  , module Control.Monad.Fix
   , module Control.Monad
   , module Control.Lens
-  , MonadFix
-  , module Data.String.Conversions
-  , CI
-  , module Text.Read
   , module Obelisk.Route
   , module Reflex.Dom.Core
   ) where
@@ -24,18 +19,13 @@ module Global
 import Data.Text (Text)
 import Data.Map (Map)
 import Data.Maybe (fromMaybe, isNothing, isJust, catMaybes, fromJust)
-import Data.Bool (bool)
-import Data.Traversable (for)
-import Data.Functor ((<&>))
-import Data.List (intercalate, intersperse)
-import Data.Either (fromLeft)
-import Data.Word (Word64)
-import Control.Monad (void, (<=<), forM_, when, unless, (>=>), mfilter)
-import Control.Lens ((^.), iforM_, _1)
-import Control.Monad.Fix (MonadFix)
 import Data.String.Conversions (cs)
-import Data.CaseInsensitive (CI)
-import Text.Read (readMaybe)
+import Data.Functor ((<&>))
+import Data.Word (Word64)
+import Data.Either (fromLeft)
+import Control.Monad (void, (<=<), forM_, when, unless, (>=>), mfilter)
+import Control.Monad.Fix (MonadFix)
+import Control.Lens ((^.), iforM_, _1)
 
 import Obelisk.Route ( pattern (:/) )
 import Reflex.Dom.Core ((&), (.~), (=:))

@@ -1,17 +1,16 @@
-module Common.FormFile
+module Problem.FormFile
   ( FormFileMap
   , FormFile(..)
   ) where
 
 import qualified Data.Map as Map
-import qualified JSDOM.Types
-
-import Global
+import qualified GHCJS.DOM.Types
+import Data.Text (Text)
 
 type FormFileMap = Map.Map Int FormFile
 
 data FormFile = FormFile
-  { file :: JSDOM.Types.File
+  { file :: GHCJS.DOM.Types.File
   , name :: Text
   }
 

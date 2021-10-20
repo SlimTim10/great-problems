@@ -2,6 +2,9 @@ module ProblemCards
   ( widget
   ) where
 
+import Frontend.Lib.Prelude
+import qualified Frontend.Lib.Util as Util
+
 import qualified Data.CaseInsensitive as CI
 import qualified Control.Monad.Fix as Fix
 import qualified Language.Javascript.JSaddle as JS
@@ -12,8 +15,6 @@ import qualified Common.Api.Topic as Topic
 import qualified Common.Api.Problem as Problem
 import qualified Common.Api.User as User
 import qualified Common.Route as Route
-import qualified Util
-import Global
 
 widget
   :: forall t m js.

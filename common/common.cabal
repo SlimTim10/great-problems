@@ -9,7 +9,27 @@ library
                , obelisk-route
                , mtl
                , text
+               , containers
+               , case-insensitive
+               , string-conversions
+               , categories
+               , aeson
+               , time
+               , bytestring
   exposed-modules:
-    Common.Api
     Common.Route
-  ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits -ddump-minimal-imports -dumpdir imports
+    Common.Api.Auth
+    Common.Api.Compile
+    Common.Api.Error
+    Common.Api.Figure
+    Common.Api.OkResponse
+    Common.Api.Problem
+    Common.Api.ProblemSet
+    Common.Api.ProblemSetCard
+    Common.Api.Register
+    Common.Api.Role
+    Common.Api.Topic
+    Common.Api.User
+  ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits
+  other-modules:
+    Common.Lib.Prelude

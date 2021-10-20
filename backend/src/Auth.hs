@@ -8,12 +8,13 @@ module Auth
   , AuthResult(..)
   ) where
 
+import Backend.Lib.Prelude
+
 import qualified Database.PostgreSQL.Simple as SQL
 
 import qualified Common.Api.User as User
 import qualified Common.Api.Auth as Auth
 import qualified Database.Queries as Queries
-import Global
 
 type Session = Text
 

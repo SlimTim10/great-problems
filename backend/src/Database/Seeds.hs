@@ -2,13 +2,13 @@
 
 module Database.Seeds where
 
+import Backend.Lib.Prelude
+import qualified Backend.Lib.Util as Util
+
 import qualified Data.ByteString as B
 import qualified Database.PostgreSQL.Simple as SQL
 import qualified Database.PostgreSQL.Simple.SqlQQ as SqlQQ
 import qualified Text.RawString.QQ as QQ
-
-import qualified Util
-import Global
 
 load :: SQL.Connection -> IO ()
 load conn = do

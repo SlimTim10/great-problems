@@ -2,6 +2,9 @@ module Home
   ( widget
   ) where
 
+import Frontend.Lib.Prelude
+import qualified Frontend.Lib.Util as Util
+
 import qualified Data.Text as T
 import qualified Control.Monad.Fix as Fix
 import qualified Language.Javascript.JSaddle as JS
@@ -15,10 +18,9 @@ import qualified Common.Api.Compile as Compile
 import qualified Widget.Button as Button
 import qualified Widget.Input as Input
 import qualified Problem.Loading as Loading
+import qualified Problem.Compile
 import qualified Problem.PdfViewer as PdfViewer
 import qualified ViewProblem
-import qualified Util
-import Global
 
 widget
   :: forall t m js.
@@ -130,7 +132,7 @@ widget = do
       
       onload :: R.Event t () <- R.getPostBuild
       onloadAction :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-        ViewProblem.performCompileRequest onload problemId $ Compile.Request
+        ViewProblem.performCompileRequest onload problemId $ Problem.Compile.Request
           <$> R.constDyn ""
           <*> R.constDyn False
           <*> R.constDyn Compile.QuestionOnly
@@ -165,7 +167,7 @@ widget = do
               "Randomize variables"
               "active:bg-blue-400"
             randomizeVariablesAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-              ViewProblem.performCompileRequest randomizeVariables problemId $ Compile.Request
+              ViewProblem.performCompileRequest randomizeVariables problemId $ Problem.Compile.Request
                 <$> R.constDyn ""
                 <*> R.constDyn True
                 <*> outputOption
@@ -174,7 +176,7 @@ widget = do
               "Reset variables"
               "active:bg-blue-400"
             resetVariablesAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-              ViewProblem.performCompileRequest resetVariables problemId $ Compile.Request
+              ViewProblem.performCompileRequest resetVariables problemId $ Problem.Compile.Request
                 <$> R.constDyn ""
                 <*> R.constDyn False
                 <*> outputOption
@@ -190,7 +192,7 @@ widget = do
                 "font-medium text-brand-primary cursor-pointer"
                 "Answer"
               showAnswerAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-                ViewProblem.performCompileRequest (R.updated $ const () <$> showAnswer) problemId $ Compile.Request
+                ViewProblem.performCompileRequest (R.updated $ const () <$> showAnswer) problemId $ Problem.Compile.Request
                   <$> R.constDyn ""
                   <*> R.constDyn False
                   <*> outputOption
@@ -200,7 +202,7 @@ widget = do
                 "font-medium text-brand-primary cursor-pointer"
                 "Solution"
               showSolutionAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-                ViewProblem.performCompileRequest (R.updated $ const () <$> showSolution) problemId $ Compile.Request
+                ViewProblem.performCompileRequest (R.updated $ const () <$> showSolution) problemId $ Problem.Compile.Request
                   <$> R.constDyn ""
                   <*> R.constDyn False
                   <*> outputOption

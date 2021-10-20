@@ -2,19 +2,17 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Common.Api.Compile
-  ( Request(..)
-  , RequestParam(..)
+  ( RequestParam(..)
   , Response(..)
   , OutputOption(..)
   , IcemakerResponse(..)
   ) where
 
+import Common.Lib.Prelude
+
 import qualified Data.Aeson as JSON
 import GHC.Generics (Generic)
 import Data.Aeson ((.:))
-
-import qualified Common.FormFile as FormFile
-import Global
 
 data OutputOption = WithSolution | WithAnswer | WithSolutionAndAnswer | QuestionOnly
   deriving (Eq, Generic, JSON.FromJSON)
@@ -23,13 +21,6 @@ instance Show OutputOption where
   show WithAnswer = "flagAnswers"
   show WithSolutionAndAnswer = "flagSolAns"
   show QuestionOnly = "flagQuestions"
-
-data Request = Request
-  { contents :: Text
-  , randomizeVariables :: Bool
-  , outputOption :: OutputOption
-  , figures :: [FormFile.FormFile]
-  }
 
 data RequestParam = ParamContents | ParamRandomizeVariables | ParamOutputOption | ParamFigures
   deriving (Eq, Ord)

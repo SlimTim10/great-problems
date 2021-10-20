@@ -1,5 +1,7 @@
 {-# LANGUAGE PackageImports #-}
-module Util where
+module Frontend.Lib.Util where
+
+import Frontend.Lib.Prelude
 
 import qualified Language.Javascript.JSaddle as JS
 import qualified Data.Text as T
@@ -13,15 +15,14 @@ import qualified System.Environment as Env
 import qualified System.Random as Random
 import qualified Data.ByteString.Base64.URL as B64URL
 import qualified Data.Text.Encoding as TE
-import qualified "jsaddle-dom" GHCJS.DOM.Document as DOM
-import qualified JSDOM.Types
+import qualified "ghcjs-dom" GHCJS.DOM.Document as DOM
+import qualified GHCJS.DOM.Types
 import qualified Reflex.Dom.Core as R
 -- Import patch
 import qualified MyReflex.Dom.Xhr.FormData as R'
 
 import qualified Common.Api.User as User
-import qualified Common.FormFile as FormFile
-import Global
+import qualified Problem.FormFile as FormFile
 
 showText :: Show s => s -> Text
 showText = T.pack . show
@@ -98,7 +99,7 @@ lookupSetting env def = do
     Nothing -> pure def
     Just str -> maybe (pure . read . show $ str) pure (Text.Read.readMaybe str)
 
-formFile :: FormFile.FormFile -> R'.FormValue JSDOM.Types.File
+formFile :: FormFile.FormFile -> R'.FormValue GHCJS.DOM.Types.File
 formFile f = R'.FormValue_File (FormFile.file f) (Just (FormFile.name f))
 
 formBool :: Bool -> Text
@@ -115,10 +116,10 @@ postForm
      , R.TriggerEvent t m
      )
   => Text
-  -> R.Event t (Map Text (R'.FormValue JSDOM.Types.File))
+  -> R.Event t (Map Text (R'.FormValue GHCJS.DOM.Types.File))
   -> m (R.Event t Text)
 postForm url formData = do
-  formDatas :: R.Event t [Map Text (R'.FormValue JSDOM.Types.File)] <- R.performEvent
+  formDatas :: R.Event t [Map Text (R'.FormValue GHCJS.DOM.Types.File)] <- R.performEvent
     $ R.ffor formData $ \fd -> return [fd]
   responses <- R'.postForms url formDatas
   let results :: R.Event t [Maybe Text] = map (Lens.view R.xhrResponse_responseText) <$> responses

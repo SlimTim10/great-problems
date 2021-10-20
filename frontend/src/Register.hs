@@ -2,6 +2,8 @@ module Register
   ( widget
   ) where
 
+import Frontend.Lib.Prelude
+
 import qualified Language.Javascript.JSaddle as JS
 import qualified Data.Aeson as JSON
 import qualified Data.CaseInsensitive as CI
@@ -12,8 +14,6 @@ import qualified Widget.Input as Input
 import qualified Widget.Button as Button
 import qualified Common.Api.Error as Error
 import qualified Common.Api.Register as Register
-
-import Global
 
 widget
   :: forall t m.

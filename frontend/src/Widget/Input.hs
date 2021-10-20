@@ -9,9 +9,9 @@ module Widget.Input
   , checkboxClass
   ) where
 
-import qualified Reflex.Dom.Core as R
+import Frontend.Lib.Prelude
 
-import Global
+import qualified Reflex.Dom.Core as R
 
 textClass
   :: forall t m.

@@ -7,10 +7,10 @@ module Common.Api.Error
   , mk
   ) where
 
+import Common.Lib.Prelude
+
 import qualified Data.Aeson as JSON
 import GHC.Generics (Generic)
-
-import Global
 
 data Error = Error
   { error :: Bool

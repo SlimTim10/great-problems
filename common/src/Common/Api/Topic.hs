@@ -4,10 +4,10 @@ module Common.Api.Topic
   ( Topic(..)
   ) where
 
+import Common.Lib.Prelude
+
 import qualified Data.Aeson as JSON
 import GHC.Generics (Generic)
-
-import Global
 
 data Topic = Topic
   { id :: Integer

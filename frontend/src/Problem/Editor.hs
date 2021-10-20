@@ -2,11 +2,11 @@ module Problem.Editor
   ( widget
   ) where
 
+import Frontend.Lib.Prelude
+
 import qualified Language.Javascript.JSaddle.Types as JS
 import qualified Reflex.Dom.Ace as Ace
 import qualified Reflex.Dom.Core as R
-
-import Global
 
 widget
   :: forall t m.

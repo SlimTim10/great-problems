@@ -3,9 +3,9 @@ module MyReflex.Dom.Widget.Basic
   , elAttrClass'
   ) where
 
-import qualified Reflex.Dom.Core as R
+import Frontend.Lib.Prelude
 
-import Global
+import qualified Reflex.Dom.Core as R
 
 elAttrClass
   :: forall t m a.

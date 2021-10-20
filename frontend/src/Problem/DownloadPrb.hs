@@ -2,17 +2,17 @@ module Problem.DownloadPrb
   ( widget
   ) where
 
-import qualified Data.Text.Encoding as T
+import Frontend.Lib.Prelude
 
-import qualified JSDOM.Types
-import qualified JSDOM.URL as URL
-import qualified JSDOM.Blob as Blob
+import qualified Data.Text.Encoding as T
+import qualified GHCJS.DOM.Types
+import qualified GHCJS.DOM.URL as URL
+import qualified GHCJS.DOM.Blob as Blob
 import qualified Language.Javascript.JSaddle as JS
 import qualified Foreign.JavaScript.Utils as Utils
 import qualified Reflex.Dom.Core as R
 
 import qualified Widget.Button as Button
-import Global
 
 createObjectURL
   :: ( R.DomBuilder t m
@@ -25,7 +25,7 @@ createObjectURL contents = do
   R.performEvent $ R.ffor (R.updated contents) $ \c -> JS.liftJSM $ do
     t <- Utils.bsToArrayBuffer $ T.encodeUtf8 c
     o <- JS.obj ^. JS.jss ("type" :: Text) ("text/plain" :: Text)
-    options <- JSDOM.Types.BlobPropertyBag <$> JS.toJSVal o
+    options <- GHCJS.DOM.Types.BlobPropertyBag <$> JS.toJSVal o
     blob <- Blob.newBlob [t] (Just options)
     URL.createObjectURL blob
 

@@ -1,14 +1,14 @@
 module Database where
 
 import Prelude hiding (drop)
+import Backend.Lib.Prelude
+import qualified Backend.Lib.Util as Util
 
 import qualified Database.PostgreSQL.Simple as SQL
 import qualified Configuration.Dotenv as Dotenv
 
 import qualified Database.Schema
 import qualified Database.Seeds
-import qualified Util
-import Global
 
 -- | Connect to the database using the variables in db.env, or default values.
 connect :: IO SQL.Connection

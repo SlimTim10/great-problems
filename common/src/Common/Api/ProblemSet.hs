@@ -4,11 +4,11 @@ module Common.Api.ProblemSet
   ( ProblemSet(..)
   ) where
 
+import Common.Lib.Prelude
+
 import qualified Data.Aeson as JSON
 import qualified Data.Time.Clock as Time
 import GHC.Generics (Generic)
-
-import Global
 
 data ProblemSet = ProblemSet
   { id :: Integer

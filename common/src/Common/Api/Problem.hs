@@ -4,6 +4,9 @@
 {-# LANGUAGE LambdaCase #-}
 module Common.Api.Problem where
 
+import Common.Lib.Prelude
+
+import qualified Data.Map as Map
 import qualified Data.Aeson as JSON
 import qualified Data.Time.Clock as Time
 import qualified Data.Text as Text
@@ -13,8 +16,6 @@ import qualified Common.Api.Topic as Topic
 import qualified Common.Api.User as User
 import qualified Common.Api.Figure as Figure
 import qualified Common.Route as Route
-import qualified Common.FormFile as FormFile
-import Global
 
 data Problem = Problem
   { id :: Integer
@@ -43,11 +44,11 @@ data GetParams = GetParams
 data GetParamInclude = TopicPath
 
 getParamsToRouteQuery :: GetParams -> Route.Query
-getParamsToRouteQuery gps =
-  ( "topic" =: (gpTopic gps >>= \t -> Just (cs $ show t))
-    <> "expand" =: (gpExpand gps >>= \xs -> Just (Text.intercalate "," xs))
-    <> "include" =: (gpInclude gps >>= \case TopicPath -> Just "topic_path")
-  )
+getParamsToRouteQuery gps = Map.fromList
+  [ ("topic", gpTopic gps >>= \t -> Just (cs $ show t))
+  , ("expand", gpExpand gps >>= \xs -> Just (Text.intercalate "," xs))
+  , ("include", gpInclude gps >>= \case TopicPath -> Just "topic_path")
+  ]
 
 data BareProblem = BareProblem
   { bpProblemId :: Maybe Integer
@@ -56,16 +57,6 @@ data BareProblem = BareProblem
   , bpTopicId :: Integer
   , bpAuthorId :: Integer
   , bpFigures :: [Figure.BareFigure]
-  }
-
--- Update or publish new problem
-data RequestSave = RequestSave
-  { rsProblemId :: Maybe Integer
-  , rsSummary :: Text
-  , rsContents :: Text
-  , rsTopicId :: Integer
-  , rsAuthorId :: Integer
-  , rsFigures :: [FormFile.FormFile]
   }
 
 data RequestParam

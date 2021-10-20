@@ -3,18 +3,20 @@ module EditProblem
   ( widget
   ) where
 
+import Frontend.Lib.Prelude
+import qualified Frontend.Lib.Util as Util
+
 import qualified Data.CaseInsensitive as CI
 import qualified Data.Map as Map
 import qualified Language.Javascript.JSaddle as JS
-import qualified "jsaddle-dom" GHCJS.DOM.Document as DOM
-import qualified JSDOM.Types
+import qualified "ghcjs-dom" GHCJS.DOM.Document as DOM
+import qualified GHCJS.DOM.Types
 import qualified Obelisk.Route.Frontend as Ob
 import qualified Reflex.Dom.Core as R
 -- Import patch
 import qualified MyReflex.Dom.Xhr.FormData as R'
 
 import qualified Common.Route as Route
-import qualified Common.FormFile as FormFile
 import qualified Common.Api.Compile as Compile
 import qualified Common.Api.Error as Error
 import qualified Common.Api.Problem as Problem
@@ -31,10 +33,19 @@ import qualified Problem.Compile
 import qualified Problem.UploadPrb as UploadPrb
 import qualified Problem.DownloadPrb as DownloadPrb
 import qualified Problem.Loading as Loading
+import qualified Problem.FormFile as FormFile
 import qualified Widget.Button as Button
 import qualified Widget.Input as Input
-import qualified Util
-import Global
+
+-- Update or publish new problem
+data RequestSave = RequestSave
+  { rsProblemId :: Maybe Integer
+  , rsSummary :: Text
+  , rsContents :: Text
+  , rsTopicId :: Integer
+  , rsAuthorId :: Integer
+  , rsFigures :: [FormFile.FormFile]
+  }
 
 widget
   :: forall t m js.
@@ -160,15 +171,15 @@ widget problemId = mdo
           . fmap User.id
           =<< Util.getCurrentUser
 
-        let saveProblemRequest :: R.Dynamic t Problem.RequestSave = case problemId of
-              Nothing -> Problem.RequestSave
+        let saveProblemRequest :: R.Dynamic t RequestSave = case problemId of
+              Nothing -> RequestSave
                 <$> R.constDyn Nothing
                 <*> summary
                 <*> editorContents
                 <*> selectedTopicId
                 <*> userId
                 <*> figures
-              Just pid -> Problem.RequestSave
+              Just pid -> RequestSave
                 <$> R.constDyn (Just pid)
                 <*> summary
                 <*> editorContents
@@ -176,23 +187,23 @@ widget problemId = mdo
                 <*> userId
                 <*> figures
 
-        formData :: R.Event t (Map Text (R'.FormValue JSDOM.Types.File)) <- R.performEvent
+        formData :: R.Event t (Map Text (R'.FormValue GHCJS.DOM.Types.File)) <- R.performEvent
           $ R.ffor (R.tagPromptlyDyn saveProblemRequest publish) $ \req -> do
           let
-            formDataParams :: Map Problem.RequestParam (R'.FormValue JSDOM.Types.File) =
-              ( Problem.ParamSummary =: R'.FormValue_Text (Problem.rsSummary req)
-                <> Problem.ParamContents =: R'.FormValue_Text (Problem.rsContents req)
+            formDataParams :: Map Problem.RequestParam (R'.FormValue GHCJS.DOM.Types.File) =
+              ( Problem.ParamSummary =: R'.FormValue_Text (rsSummary req)
+                <> Problem.ParamContents =: R'.FormValue_Text (rsContents req)
                 <> Problem.ParamTopicId =: R'.FormValue_Text
-                (cs . show . Problem.rsTopicId $ req)
+                (cs . show . rsTopicId $ req)
                 <> Problem.ParamAuthorId =: R'.FormValue_Text
-                (cs . show . Problem.rsAuthorId $ req)
+                (cs . show . rsAuthorId $ req)
                 <> Problem.ParamFigures =: R'.FormValue_List
-                (map Util.formFile . Problem.rsFigures $ req)
+                (map Util.formFile . rsFigures $ req)
               )
               <> (maybe
                    mempty
                    (\id' -> Problem.ParamProblemId =: R'.FormValue_Text (cs . show $ id'))
-                   (Problem.rsProblemId req)
+                   (rsProblemId req)
                  )
             formDataText = Map.mapKeys (cs . show) formDataParams
           return formDataText
@@ -218,14 +229,14 @@ widget problemId = mdo
         (randomizeVariablesAction, resetVariablesAction) <- R.elClass "div" "flex gap-2 mb-2" $ do
           randomizeVariables :: R.Event t () <- Button.primarySmallClass' "Randomize variables" "active:bg-blue-400"
           randomizeVariablesAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-            Problem.Compile.performRequest randomizeVariables $ Compile.Request
+            Problem.Compile.performRequest randomizeVariables $ Problem.Compile.Request
               <$> editorContents
               <*> R.constDyn True
               <*> outputOption
               <*> figures
           resetVariables :: R.Event t () <- Button.primarySmallClass' "Reset variables" "active:bg-blue-400"
           resetVariablesAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-            Problem.Compile.performRequest resetVariables $ Compile.Request
+            Problem.Compile.performRequest resetVariables $ Problem.Compile.Request
               <$> editorContents
               <*> R.constDyn False
               <*> outputOption
@@ -240,7 +251,7 @@ widget problemId = mdo
               "font-medium text-brand-primary cursor-pointer"
               "Answer"
             showAnswerAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-              Problem.Compile.performRequest (R.updated $ const () <$> showAnswer) $ Compile.Request
+              Problem.Compile.performRequest (R.updated $ const () <$> showAnswer) $ Problem.Compile.Request
                 <$> editorContents
                 <*> R.constDyn False
                 <*> outputOption
@@ -250,7 +261,7 @@ widget problemId = mdo
               "font-medium text-brand-primary cursor-pointer"
               "Solution"
             showSolutionAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-              Problem.Compile.performRequest (R.updated $ const () <$> showSolution) $ Compile.Request
+              Problem.Compile.performRequest (R.updated $ const () <$> showSolution) $ Problem.Compile.Request
                 <$> editorContents
                 <*> R.constDyn False
                 <*> outputOption
@@ -294,7 +305,7 @@ widget problemId = mdo
               return uploadPrb
         compileButtonAction :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
           R.elClass "div" "flex-1 flex justify-center" $ do
-            Problem.Compile.widget $ Compile.Request
+            Problem.Compile.widget $ Problem.Compile.Request
               <$> editorContents
               <*> R.constDyn False
               <*> outputOption
@@ -308,8 +319,8 @@ responseToFile response = do
   body <- response ^. R.xhrResponse_response
   case body of
     R.XhrResponseBody_Blob blob -> do
-      let v = JSDOM.Types.unBlob blob
-      let file :: JSDOM.Types.File = JSDOM.Types.pFromJSVal v
+      let v = GHCJS.DOM.Types.unBlob blob
+      let file :: GHCJS.DOM.Types.File = GHCJS.DOM.Types.pFromJSVal v
       let headers = response ^. R.xhrResponse_headers
       name <- Map.lookup (CI.mk "Filename") headers
       return $ FormFile.FormFile file name

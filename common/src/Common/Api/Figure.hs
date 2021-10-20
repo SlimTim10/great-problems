@@ -6,13 +6,13 @@ module Common.Api.Figure
   ) where
 
 import Prelude hiding (id)
+import Common.Lib.Prelude
+
 import qualified Data.Aeson as JSON
 import qualified Data.Map as Map
 import qualified Data.ByteString as B
 import qualified Data.Time.Clock as Time
 import Data.Aeson ((.:), (.=))
-
-import Global
 
 type FileMap = Map.Map Int Figure
 

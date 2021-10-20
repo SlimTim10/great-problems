@@ -3,11 +3,12 @@ module Tabs
   , Tab(..)
   ) where
 
+import Frontend.Lib.Prelude
+
 import qualified Obelisk.Route.Frontend as Ob
 import qualified Reflex.Dom.Core as R
 
 import qualified Common.Route as Route
-import Global
 
 data Tab = Problems | ProblemSets
 

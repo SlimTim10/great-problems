@@ -22,6 +22,9 @@ module Database.Queries
   , getFigureById
   ) where
 
+import Backend.Lib.Prelude
+import qualified Backend.Lib.Util as Util
+
 import qualified Database.PostgreSQL.Simple as SQL
 import qualified Database.PostgreSQL.Simple.ToField as SQL
 import qualified Data.Text as Text
@@ -42,8 +45,6 @@ import qualified Database.Types.Role as DbRole
 import qualified Database.Types.EmailVerification as DbEmailVerification
 import qualified Database.Types.Session as DbSession
 import qualified Database.Types.Figure as DbFigure
-import qualified Util
-import Global
 
 exprFromRouteParam
   :: (SQL.ToField q, Read a)

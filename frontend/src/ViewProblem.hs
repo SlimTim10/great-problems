@@ -4,11 +4,14 @@ module ViewProblem
   , performCompileRequest
   ) where
 
+import Frontend.Lib.Prelude
+import qualified Frontend.Lib.Util as Util
+
 import qualified Data.Text as T
 import qualified Data.Map as Map
 import qualified Language.Javascript.JSaddle as JS
-import qualified "jsaddle-dom" GHCJS.DOM.Document as DOM
-import qualified JSDOM.Types
+import qualified "ghcjs-dom" GHCJS.DOM.Document as DOM
+import qualified GHCJS.DOM.Types
 import qualified Data.CaseInsensitive as CI
 import qualified Obelisk.Route.Frontend as Ob
 import qualified Reflex.Dom.Core as R
@@ -24,8 +27,7 @@ import qualified Problem.PdfViewer as PdfViewer
 import qualified Widget.Button as Button
 import qualified Widget.Input as Input
 import qualified Problem.Loading as Loading
-import qualified Util
-import Global
+import qualified Problem.Compile
 
 widget
   :: forall t m js.
@@ -69,7 +71,7 @@ widget problemId = mdo
 
   onload :: R.Event t () <- R.getPostBuild
   onloadAction :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-    performCompileRequest onload problemId $ Compile.Request
+    performCompileRequest onload problemId $ Problem.Compile.Request
       <$> R.constDyn ""
       <*> R.constDyn False
       <*> R.constDyn Compile.QuestionOnly
@@ -139,7 +141,7 @@ widget problemId = mdo
                   "Randomize variables"
                   "active:bg-blue-400"
                 randomizeVariablesAction :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-                  performCompileRequest randomizeVariables problemId $ Compile.Request
+                  performCompileRequest randomizeVariables problemId $ Problem.Compile.Request
                     <$> R.constDyn ""
                     <*> R.constDyn True
                     <*> outputOption
@@ -148,7 +150,7 @@ widget problemId = mdo
                   "Reset variables"
                   "active:bg-blue-400"
                 resetVariablesAction :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-                  performCompileRequest resetVariables problemId $ Compile.Request
+                  performCompileRequest resetVariables problemId $ Problem.Compile.Request
                     <$> R.constDyn ""
                     <*> R.constDyn False
                     <*> outputOption
@@ -164,7 +166,7 @@ widget problemId = mdo
                     "font-medium text-brand-primary cursor-pointer"
                     "Answer"
                   showAnswerAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-                    performCompileRequest (R.updated $ const () <$> showAnswer) problemId $ Compile.Request
+                    performCompileRequest (R.updated $ const () <$> showAnswer) problemId $ Problem.Compile.Request
                       <$> R.constDyn ""
                       <*> R.constDyn False
                       <*> outputOption
@@ -174,7 +176,7 @@ widget problemId = mdo
                     "font-medium text-brand-primary cursor-pointer"
                     "Solution"
                   showSolutionAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-                    performCompileRequest (R.updated $ const () <$> showSolution) problemId $ Compile.Request
+                    performCompileRequest (R.updated $ const () <$> showSolution) problemId $ Problem.Compile.Request
                       <$> R.constDyn ""
                       <*> R.constDyn False
                       <*> outputOption
@@ -235,17 +237,17 @@ performCompileRequest
      )
   => R.Event t () -- ^ Event to trigger request
   -> Integer -- ^ Problem ID
-  -> R.Dynamic t Compile.Request
+  -> R.Dynamic t Problem.Compile.Request
   -> m (R.Dynamic t (Loading.WithLoading (Maybe Compile.Response))) -- ^ Response
 performCompileRequest e problemId compileRequest = do
-  formData :: R.Event t (Map Text (R'.FormValue JSDOM.Types.File)) <- R.performEvent
+  formData :: R.Event t (Map Text (R'.FormValue GHCJS.DOM.Types.File)) <- R.performEvent
     $ R.ffor (R.tagPromptlyDyn compileRequest e) $ \req -> do
     let
-      formDataParams :: Map Compile.RequestParam (R'.FormValue JSDOM.Types.File) = (
+      formDataParams :: Map Compile.RequestParam (R'.FormValue GHCJS.DOM.Types.File) = (
         Compile.ParamRandomizeVariables =: R'.FormValue_Text
-          (Util.formBool . Compile.randomizeVariables $ req)
+          (Util.formBool . Problem.Compile.randomizeVariables $ req)
         <> Compile.ParamOutputOption =: R'.FormValue_Text
-          (cs . show . Compile.outputOption $ req)
+          (cs . show . Problem.Compile.outputOption $ req)
         )
       formDataText = Map.mapKeys (cs . show) formDataParams
     return formDataText

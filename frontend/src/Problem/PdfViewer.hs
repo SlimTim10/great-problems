@@ -2,12 +2,12 @@ module Problem.PdfViewer
   ( widget
   ) where
 
-import qualified Data.Text as Text
+import Frontend.Lib.Prelude
 
+import qualified Data.Text as Text
 import qualified Reflex.Dom.Core as R
 
 import qualified Common.Api.Compile as Compile
-import Global
 
 widget
   :: forall t m.

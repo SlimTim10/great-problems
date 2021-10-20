@@ -2,12 +2,13 @@ module Profile
   ( widget
   ) where
 
+import Frontend.Lib.Prelude
+
 import qualified Reflex.Dom.Core as R
 import qualified Obelisk.Route.Frontend as Ob
 
 import qualified Common.Route as Route
 import qualified Widget.Button as Button
-import Global
 
 widget
   :: forall t m js.

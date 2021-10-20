@@ -2,12 +2,13 @@ module Problem.ErrorsToggle
   ( widget
   ) where
 
+import Frontend.Lib.Prelude
+import qualified Frontend.Lib.Util as Util
+
 import qualified Data.Text as T
 import qualified Reflex.Dom.Core as R
 
 import qualified Common.Api.Compile as Compile
-import qualified Util
-import Global
 
 widget
   :: forall t m a.

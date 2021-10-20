@@ -6,11 +6,11 @@ module Common.Api.Register
   ( Register(..)
   ) where
 
+import Common.Lib.Prelude
+
 import qualified Data.Aeson as JSON
 import qualified Data.CaseInsensitive as CI
 import GHC.Generics (Generic)
-
-import Global
 
 data Register = Register
   { fullName :: CI Text

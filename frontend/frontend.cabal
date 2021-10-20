@@ -15,9 +15,21 @@ library
                , obelisk-generated-static
                , text
                , reflex-dom-ace
+               , containers
+               , string-conversions
+               , lens
+               , data-default
+               , reflex
+               , base64-bytestring
+               , ghcjs-dom
+               , random
+               , cookie
+               , pwstore-fast
+               , aeson
+               , case-insensitive
   exposed-modules:
     Frontend
-  ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits -ddump-minimal-imports -dumpdir imports
+  ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits
   default-extensions:
              DataKinds
              OverloadedStrings

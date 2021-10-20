@@ -2,10 +2,11 @@ module Problem.Summary
   ( widget
   ) where
 
+import Frontend.Lib.Prelude
+
 import qualified Reflex.Dom.Core as R
 
 import qualified Widget.Input as Input
-import Global
 
 widget
   :: ( R.DomBuilder t m

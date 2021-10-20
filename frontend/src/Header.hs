@@ -3,10 +3,13 @@ module Header
   ( widget
   ) where
 
+import Frontend.Lib.Prelude
+import qualified Frontend.Lib.Util as Util
+
 import qualified Obelisk.Route.Frontend as Ob
 import qualified Reflex.Dom.Core as R
 import qualified MyReflex.Dom.Widget.Basic as R'
-import qualified "jsaddle-dom" GHCJS.DOM.Document as DOM
+import qualified "ghcjs-dom" GHCJS.DOM.Document as DOM
 import qualified Language.Javascript.JSaddle as JS
 import qualified Data.CaseInsensitive as CI
 
@@ -14,8 +17,6 @@ import qualified Common.Route as Route
 import qualified Widget.Button as Button
 import qualified Common.Api.User as User
 import qualified Common.Api.Role as Role
-import qualified Util
-import Global
 
 widget
   :: forall t m js.

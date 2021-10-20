@@ -11,10 +11,10 @@ module Widget.Button
   , primarySmallClass'
   ) where
 
+import Frontend.Lib.Prelude
+
 import qualified Reflex.Dom.Core as R
 import qualified MyReflex.Dom.Widget.Basic as R'
-
-import Global
 
 primary
   :: forall t m.

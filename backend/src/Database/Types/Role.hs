@@ -4,10 +4,10 @@ module Database.Types.Role
   ( Role(..)
   ) where
 
+import Backend.Lib.Prelude
+
 import qualified Database.PostgreSQL.Simple as SQL
 import GHC.Generics (Generic)
-
-import Global
 
 data Role = Role
   { id :: Integer

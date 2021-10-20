@@ -6,12 +6,13 @@ module Common.Api.User
   ( User(..)
   ) where
 
+import Common.Lib.Prelude
+
 import qualified Data.Aeson as JSON
 import qualified Data.CaseInsensitive as CI
 import GHC.Generics (Generic)
 
 import qualified Common.Api.Role as Role
-import Global
 
 data User = User
   { id :: Integer

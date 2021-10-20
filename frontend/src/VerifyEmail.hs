@@ -2,13 +2,14 @@ module VerifyEmail
   ( widget
   ) where
 
+import Frontend.Lib.Prelude
+
 import qualified Control.Monad.IO.Class as IO
 import qualified Language.Javascript.JSaddle as JS
 import qualified Reflex.Dom.Core as R
 
 import qualified Common.Route as Route
 import qualified Common.Api.Error as Error
-import Global
 
 widget
   :: forall t m.

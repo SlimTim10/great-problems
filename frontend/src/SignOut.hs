@@ -2,13 +2,14 @@ module SignOut
   ( widget
   ) where
 
+import Frontend.Lib.Prelude
+
 import qualified Language.Javascript.JSaddle as JS
 import qualified Reflex.Dom.Core as R
 import qualified Obelisk.Route.Frontend as Ob
 
 import qualified Common.Route as Route
 import qualified Common.Api.Error as Error
-import Global
 
 widget
   :: forall t m.

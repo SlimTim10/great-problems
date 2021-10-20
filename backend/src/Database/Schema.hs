@@ -2,9 +2,10 @@
 
 module Database.Schema where
 
+import Backend.Lib.Prelude
+
 import qualified Database.PostgreSQL.Simple as SQL
 import qualified Database.PostgreSQL.Simple.SqlQQ as SqlQQ
-import Global
 
 load :: SQL.Connection -> IO ()
 load conn = void $ SQL.execute_ conn [SqlQQ.sql|

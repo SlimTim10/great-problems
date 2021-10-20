@@ -2,6 +2,9 @@ module Email
   ( sendEmailVerification
   ) where
 
+import Backend.Lib.Prelude
+import qualified Backend.Lib.Util as Util
+
 import qualified Configuration.Dotenv as Dotenv
 import qualified Network.Wreq as Wreq
 import qualified Data.ByteString.Base64 as B64
@@ -10,8 +13,6 @@ import qualified Control.Monad.IO.Class as IO
 import qualified Snap.Core as Snap
 
 import qualified Common.Api.User as User
-import qualified Util
-import Global
 
 sendEmailVerification
   :: User.User -- Receiving user

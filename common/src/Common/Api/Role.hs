@@ -6,7 +6,6 @@ module Common.Api.Role
 
 import qualified Data.Aeson as JSON
 import GHC.Generics (Generic)
-import qualified Servant.Auth.Server as SAS
 
 data Role = User | Contributor | Moderator
   deriving
@@ -15,6 +14,4 @@ data Role = User | Contributor | Moderator
   , Generic
   , JSON.FromJSON
   , JSON.ToJSON
-  , SAS.FromJWT
-  , SAS.ToJWT
   )

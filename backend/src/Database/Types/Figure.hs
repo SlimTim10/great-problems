@@ -5,12 +5,12 @@ module Database.Types.Figure
   ( Figure(..)
   ) where
 
+import Backend.Lib.Prelude
+
 import qualified Data.ByteString as B
 import qualified Database.PostgreSQL.Simple as SQL
 import qualified Data.Time.Clock as Time
 import GHC.Generics (Generic)
-
-import Global
 
 data Figure = Figure
   { id :: Integer

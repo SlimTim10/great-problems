@@ -2,6 +2,9 @@ module Problem.SelectTopic
   ( widget
   ) where
 
+import Frontend.Lib.Prelude
+import qualified Frontend.Lib.Util as Util
+
 import qualified Data.Map as Map
 import qualified Language.Javascript.JSaddle as JS
 import qualified Reflex.Dom.Core as R
@@ -9,8 +12,6 @@ import qualified Reflex.Dom.Core as R
 import qualified Common.Api.Topic as Topic
 import qualified Common.Route as Route
 import qualified Widget.Input as Input
-import qualified Util
-import Global
 
 widget
   :: forall t m.

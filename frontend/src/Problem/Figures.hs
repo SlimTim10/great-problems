@@ -2,16 +2,17 @@ module Problem.Figures
   ( widget
   ) where
 
+import Frontend.Lib.Prelude
+
 import qualified Data.Map as Map
 import qualified Control.Monad.Fix as Fix
-import qualified JSDOM.File
-import qualified JSDOM.Types
+import qualified GHCJS.DOM.File
+import qualified GHCJS.DOM.Types
 import qualified Language.Javascript.JSaddle as JS
 import qualified Reflex.Dom.Core as R
 
-import qualified Common.FormFile as FormFile
+import qualified Problem.FormFile as FormFile
 import qualified Widget.Button as Button
-import Global
 
 widget
   :: ( R.DomBuilder t m
@@ -50,13 +51,13 @@ figuresWidget
      , JS.MonadJSM (R.Performable m)
      )
   => R.Dynamic t [FormFile.FormFile]
-  -> R.Dynamic t [JSDOM.Types.File]
+  -> R.Dynamic t [GHCJS.DOM.Types.File]
   -> m (R.Dynamic t [FormFile.FormFile])
 figuresWidget initialFiles inputFiles = do
   rec
     inputFormFiles :: R.Event t [FormFile.FormFile] <- R.performEvent
       $ R.ffor (R.updated inputFiles) $ \fs -> do
-      names :: [Text] <- mapM JSDOM.File.getName fs
+      names :: [Text] <- mapM GHCJS.DOM.File.getName fs
       return $ map (uncurry FormFile.FormFile) $ zip fs names
     deleteMap :: R.Dynamic t (Map Int (R.Event t Int)) <- R.elClass "ul" "ml-4 flex flex-col gap-2" $ do
       R.listWithKey fileMap $ \k f -> do

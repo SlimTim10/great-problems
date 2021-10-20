@@ -2,6 +2,9 @@ module Topics
   ( widget
   ) where
 
+import Frontend.Lib.Prelude
+import qualified Frontend.Lib.Util as Util
+
 import qualified Control.Monad.Fix as Fix
 import qualified Language.Javascript.JSaddle as JS
 import qualified Obelisk.Route.Frontend as Ob
@@ -10,8 +13,6 @@ import qualified Reflex.Dom.Core as R
 import qualified Common.Api.Topic as Topic
 import qualified Common.Route as Route
 import qualified Widget.Button as Button
-import qualified Util
-import Global
 
 widget
   :: forall t m js.

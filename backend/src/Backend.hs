@@ -3,6 +3,8 @@
 {-# LANGUAGE PatternSynonyms #-}
 module Backend where
 
+import Backend.Lib.Prelude
+
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Text as T
@@ -34,7 +36,6 @@ import qualified Common.Api.Problem as Problem
 import qualified Common.Api.Figure as Figure
 import qualified Auth
 import qualified Email
-import Global
 
 maxRequestBodySize :: Word.Word64
 maxRequestBodySize = 2048
