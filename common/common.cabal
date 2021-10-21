@@ -30,6 +30,6 @@ library
     Common.Api.Role
     Common.Api.Topic
     Common.Api.User
-  ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits
   other-modules:
     Common.Lib.Prelude
+  ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits

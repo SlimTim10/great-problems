@@ -29,6 +29,38 @@ library
                , case-insensitive
   exposed-modules:
     Frontend
+  other-modules:
+    Frontend.Lib.Prelude
+    Frontend.Lib.Util
+    EditProblem
+    Header
+    Home
+    ProblemCards
+    ProblemSetCards
+    Profile
+    Register
+    SignIn
+    SignOut
+    Tabs
+    Topics
+    VerifyEmail
+    ViewProblem
+    Problem.Compile
+    Problem.DownloadPrb
+    Problem.Editor
+    Problem.ErrorsToggle
+    Problem.Figures
+    Problem.FormFile
+    Problem.Loading
+    Problem.Options
+    Problem.PdfViewer
+    Problem.SelectTopic
+    Problem.Summary
+    Problem.UploadPrb
+    Widget.Button
+    Widget.Input
+    MyReflex.Dom.Widget.Basic
+    MyReflex.Dom.Xhr.FormData
   ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits
   default-extensions:
              DataKinds

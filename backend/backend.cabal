@@ -18,10 +18,40 @@ library
                , dotenv
                , string-conversions
                , raw-strings-qq
-               , servant-auth-server
                , wreq
+               , time
+               , lens
+               , containers
+               , text
+               , case-insensitive
+               , bytestring
+               , base64-bytestring
+               , random
+               , pwstore-fast
+               , snap-core
+               , aeson
+               , http-client
+               , directory
   exposed-modules:
     Backend
+  other-modules:
+    Auth
+    Database
+    Email
+    Backend.Lib.Prelude
+    Backend.Lib.Util
+    Database.Queries
+    Database.Schema
+    Database.Seeds
+    Database.Types.EmailVerification
+    Database.Types.Figure
+    Database.Types.Problem
+    Database.Types.ProblemSet
+    Database.Types.ProblemSetProblem
+    Database.Types.Role
+    Database.Types.Session
+    Database.Types.Topic
+    Database.Types.User
   ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits
   default-extensions:
              OverloadedStrings

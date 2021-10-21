@@ -15,42 +15,25 @@
   }
 }:
 with obelisk;
-project ./. ({ pkgs, ... }: {
-  android.applicationId = "systems.obsidian.obelisk.examples.minimal";
-  android.displayName = "Obelisk Minimal Example";
-  ios.bundleIdentifier = "systems.obsidian.obelisk.examples.minimal";
-  ios.bundleName = "Obelisk Minimal Example";
-  overrides = self: super: rec
-  {
-    reflex-dom-ace = self.callHackageDirect {
-      pkg = "reflex-dom-ace";
-      ver = "0.3.0.3";
-      sha256 = "01kff9cn08hyw1k5bnwvc8x406bclpxmkcb61yss3xxrd0ffnpzm";
-    } {};
-
-    dotenv = pkgs.haskell.lib.dontCheck (self.callHackageDirect {
-      pkg = "dotenv";
-      ver = "0.8.0.7";
-      sha256 = "0rhawjglimx3xg4s78h99n2gg3ydjbinbx30gyan1vfzvhi1akyl";
-    } {});
-
-    servant-auth = pkgs.haskell.lib.dontCheck (self.callHackageDirect {
-      pkg = "servant-auth";
-      ver = "0.4.0.0";
-      sha256 = "1m86y699xynsc9i7n9fflm6yg4iys3mccbpy3nyjjw071n67bij1";
-    } {});
-
-    servant-auth-server = pkgs.haskell.lib.dontCheck (self.callHackageDirect {
-      pkg = "servant-auth-server";
-      ver = "0.4.6.0";
-      sha256 = "1x5zi6l6ihc4xyqi4vl5pzna83bgpn1kz3zmp6jnk7x7yxh370y4";
-    } {});
-
-    wreq = pkgs.haskell.lib.dontCheck (self.callHackageDirect {
-      pkg = "wreq";
-      ver = "0.5.3.3";
-      sha256 = "1s13nb89w3k2x6i6y90s91v4dlpksnzxlyas4w7cvclflh1k6zg8";
-    } {});
-
+project ./. ({ pkgs, hackGet, ... }: {
+  overrides = with pkgs.haskell.lib; (self: super: {
+#    dotenv = dontCheck (self.callCabal2nix "dotenv"
+#      (pkgs.fetchFromGitHub {
+#        owner = "stackbuilders";
+#        repo = "dotenv-hs";
+#        rev = "b4cc2ac18d71a1e500f1ea8c180f723022b50651";
+#        sha256 = "0vgj5wn4p9wrs56aah49b57p6v95xz5j57mabadnrarg5ybq6wcc";
+#      }){});
+    wreq = dontCheck (self.callCabal2nix "wreq"
+      (pkgs.fetchFromGitHub {
+        owner = "haskell";
+        repo = "wreq";
+        rev = "2da0070625a680d5af59e36c3ca253ef6a80aea9";
+        sha256 = "1zdxpcs9hrjl5s9czd7y4hkqm2mn8gwcaha61r0crcgs8qj3sqfs";
+      }){});
+    dotenv = dontCheck (self.callCabal2nix "dotenv" (hackGet ./dep/dotenv-hs) {});
+  });
+  packages = {
+    reflex-dom-ace = hackGet ./dep/reflex-dom-ace;
   };
 })

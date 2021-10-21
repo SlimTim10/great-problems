@@ -7,8 +7,6 @@ module Database.Types.ProblemSetProblem
 import qualified Database.PostgreSQL.Simple as SQL
 import GHC.Generics (Generic)
 
-import Global
-
 data ProblemSetProblem = ProblemSetProblem
   { problem_id :: Integer
   , problem_set_id :: Integer

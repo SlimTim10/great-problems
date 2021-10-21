@@ -3,12 +3,12 @@ module Problem.Options
   , Options(..)
   ) where
 
+import Frontend.Lib.Prelude
+
 import qualified Control.Monad.Fix as Fix
 import qualified Data.Map as Map
 
 import qualified Reflex.Dom.Core as R
-
-import Global
 
 data Options = Options
   { random :: Bool
