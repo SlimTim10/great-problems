@@ -226,9 +226,12 @@ handleSaveProblem conn user = do
           Nothing
           Nothing
           figures
-        case JSON.decode response :: Maybe Compile.Problem2texResponse of
-          Nothing -> writeJSON $ Error.mk "Something went wrong"
-          Just r -> if
+        case JSON.eitherDecode response :: Either String Compile.Problem2texResponse of
+          Left e -> do
+            IO.liftIO $ putStrLn "Error response:"
+            IO.liftIO $ print e
+            writeJSON $ Error.mk "Something went wrong"
+          Right r -> if
             | (not . T.null $ Compile.p2tErrorProblem2tex r) || (not . T.null $ Compile.p2tErrorLatex r)
               -> writeJSON $ Error.mk "Invalid problem. Please check that your problem compiles with no errors before saving."
             -- Creating a new problem
@@ -303,9 +306,12 @@ handleCompileProblem = do
           (Just randomizeVariables)
           (Just outputOption)
           figures
-        case JSON.decode response :: Maybe Compile.Problem2texResponse of
-          Nothing -> writeJSON $ Error.mk "Something went wrong"
-          Just r -> writeJSON Compile.Response
+        case JSON.eitherDecode response :: Either String Compile.Problem2texResponse of
+          Left e -> do
+            IO.liftIO $ putStrLn "Error response:"
+            IO.liftIO $ print e
+            writeJSON $ Error.mk "Something went wrong"
+          Right r -> writeJSON Compile.Response
             { Compile.resErrorProblem2tex = Compile.p2tErrorProblem2tex r
             , Compile.resErrorLatex = Compile.p2tErrorLatex r
             , Compile.resPdfContents = Compile.p2tPdfContents r
@@ -339,9 +345,12 @@ handleCompileProblemById conn problemId = do
         randomizeVariables
         outputOption
         figures
-      case JSON.decode response :: Maybe Compile.Problem2texResponse of
-        Nothing -> writeJSON $ Error.mk "Something went wrong"
-        Just r -> writeJSON Compile.Response
+      case JSON.eitherDecode response :: Either String Compile.Problem2texResponse of
+        Left e -> do
+          IO.liftIO $ putStrLn "Error response:"
+          IO.liftIO $ print e
+          writeJSON $ Error.mk "Something went wrong"
+        Right r -> writeJSON Compile.Response
           { Compile.resErrorProblem2tex = Compile.p2tErrorProblem2tex r
           , Compile.resErrorLatex = Compile.p2tErrorLatex r
           , Compile.resPdfContents = Compile.p2tPdfContents r

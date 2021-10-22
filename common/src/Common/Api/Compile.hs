@@ -56,7 +56,7 @@ data Problem2texResponse = Problem2texResponse
 
 instance JSON.FromJSON Problem2texResponse where
   parseJSON = JSON.withObject "icemakerResponse" $ \o -> do
-    errorProblem2tex <- o .: "ErrorProblem2tex"
+    errorProblem2tex <- o .: "ErrorIcemaker"
     errorLatex <- o .: "ErrorLatex"
     pdfContents <- o .: "PdfContent"
     pdfName <- o .: "PdfName"
