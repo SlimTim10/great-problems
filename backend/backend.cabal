@@ -16,11 +16,9 @@ library
                , postgresql-libpq
                , time-compat
                , dotenv
-               , string-conversions
                , raw-strings-qq
                , wreq
                , time
-               , lens
                , containers
                , text
                , case-insensitive

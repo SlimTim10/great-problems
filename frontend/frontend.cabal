@@ -16,7 +16,6 @@ library
                , text
                , reflex-dom-ace
                , containers
-               , string-conversions
                , lens
                , data-default
                , reflex
