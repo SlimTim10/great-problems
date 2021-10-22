@@ -20,11 +20,8 @@ library
                , lens
                , data-default
                , reflex
-               , base64-bytestring
                , ghcjs-dom
-               , random
                , cookie
-               , pwstore-fast
                , aeson
                , case-insensitive
   exposed-modules:

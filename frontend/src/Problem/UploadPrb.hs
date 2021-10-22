@@ -3,7 +3,6 @@ module Problem.UploadPrb
   ) where
 
 import Common.Lib.Prelude
-import qualified Frontend.Lib.Util as Util
 
 import qualified GHCJS.DOM.Types
 import qualified GHCJS.DOM.FileReader as FileReader
@@ -36,7 +35,7 @@ widget = do
   readFileContents
     . R.fmapMaybe id
     . R.updated
-    $ Util.headMay <$> R._inputElement_files fi
+    $ headMay <$> R._inputElement_files fi
 
 readFileContents
   :: forall t m.

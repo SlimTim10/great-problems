@@ -128,12 +128,12 @@ getProblems conn problemId routeQuery = do
       return $ problem { Problem.figures = figures }
 
 getProblemById :: SQL.Connection -> Integer -> Route.Query -> IO (Maybe Problem.Problem)
-getProblemById conn problemId routeQuery = Util.headMay
+getProblemById conn problemId routeQuery = headMay
   <$> getProblems conn (Just problemId) routeQuery
 
 createProblem :: SQL.Connection -> Problem.BareProblem -> IO (Maybe Problem.Problem)
 createProblem conn newProblem = do
-  mProblemId :: Maybe (SQL.Only Integer) <- Util.headMay
+  mProblemId :: Maybe (SQL.Only Integer) <- headMay
     <$> SQL.query conn
     "INSERT INTO problems(summary, contents, topic_id, author_id) VALUES (?,?,?,?) returning id"
     ( Problem.bpSummary newProblem
@@ -152,7 +152,7 @@ createProblem conn newProblem = do
 
 updateProblem :: SQL.Connection -> Problem.BareProblem -> IO (Maybe Problem.Problem)
 updateProblem conn problem = do
-  mProblemId :: Maybe (SQL.Only Integer) <- Util.headMay
+  mProblemId :: Maybe (SQL.Only Integer) <- headMay
     <$> SQL.query conn
     "UPDATE problems SET (summary, contents, topic_id, updated_at) = (?, ?, ?, DEFAULT) WHERE id = ? returning id"
     ( Problem.bpSummary problem
@@ -182,7 +182,7 @@ getTopics conn = do
 
 getTopicById :: SQL.Connection -> Integer -> IO (Maybe Topic.Topic)
 getTopicById conn topicId = do
-  mDbTopic <- Util.headMay
+  mDbTopic <- headMay
     <$> SQL.query conn "SELECT * FROM topics WHERE id = ?" (SQL.Only topicId)
   case mDbTopic of
     Nothing -> return Nothing
@@ -195,7 +195,7 @@ getParentTopic :: SQL.Connection -> Topic.Topic -> IO (Maybe Topic.Topic)
 getParentTopic conn topic = case Topic.parentId topic of
   Nothing -> return Nothing
   Just parentId -> do
-    mDbTopic <- Util.headMay <$> SQL.query conn
+    mDbTopic <- headMay <$> SQL.query conn
       "SELECT * FROM topics WHERE id = ?"
       (SQL.Only parentId)
     case mDbTopic of
@@ -292,7 +292,7 @@ getTopicHierarchy conn topic = do
 
 getRoleById :: SQL.Connection -> Integer -> IO (Maybe Role.Role)
 getRoleById conn roleId = do
-  mDbRole :: Maybe DbRole.Role <- Util.headMay
+  mDbRole :: Maybe DbRole.Role <- headMay
     <$> SQL.query conn "SELECT * FROM roles WHERE id = ?" (SQL.Only roleId)
   return $ flip fmap mDbRole $ \case
     DbRole.Role 1 "User" -> Role.User
@@ -322,7 +322,7 @@ getUsers conn = do
 
 getUserById :: SQL.Connection -> Integer -> IO (Maybe User.User)
 getUserById conn userId = do
-  Util.headMay
+  headMay
     <$> SQL.query conn "SELECT * FROM users WHERE id = ?" (SQL.Only userId)
     >>= \case
     Nothing -> return Nothing
@@ -330,7 +330,7 @@ getUserById conn userId = do
 
 getUserByEmail :: SQL.Connection -> CI Text -> IO (Maybe User.User)
 getUserByEmail conn email = do
-  Util.headMay
+  headMay
     <$> SQL.query conn "SELECT * FROM users WHERE email = ?" (SQL.Only $ CI.original email)
     >>= \case
     Nothing -> return Nothing
@@ -340,7 +340,7 @@ registerUser :: SQL.Connection -> Register.Register -> IO (Maybe User.User)
 registerUser conn user = do
   password <- Util.hashPassword $ Register.password user
   role :: DbRole.Role <- head <$> SQL.query_ conn "SELECT * FROM roles WHERE name = 'User'"
-  mUserId :: Maybe (SQL.Only Integer) <- Util.headMay
+  mUserId :: Maybe (SQL.Only Integer) <- headMay
     <$> SQL.query conn
     "INSERT INTO users(full_name, email, password, role_id) VALUES (?,?,?,?) returning id"
     ( Register.fullName user
@@ -365,7 +365,7 @@ withRole dbUser mRole = do
 
 authenticate :: SQL.Connection -> Auth.Auth -> IO (Maybe User.User)
 authenticate conn auth = do
-  Util.headMay
+  headMay
     <$> SQL.query conn "SELECT * FROM users WHERE email = ?" (SQL.Only (Auth.email auth))
     >>= \case
     Nothing -> return Nothing
@@ -378,7 +378,7 @@ getEmailVerificationBySecret
   :: SQL.Connection
   -> Text
   -> IO (Maybe DbEmailVerification.EmailVerification)
-getEmailVerificationBySecret conn secret = Util.headMay
+getEmailVerificationBySecret conn secret = headMay
   <$> SQL.query conn "SELECT * FROM email_verifications WHERE secret = ?" (SQL.Only secret)
 
 verifyEmail :: SQL.Connection -> Text -> IO Bool
@@ -410,7 +410,7 @@ newEmailVerification conn userId = do
   return secret
 
 getSessionById :: SQL.Connection -> Text -> IO (Maybe DbSession.Session)
-getSessionById conn sessionId = Util.headMay
+getSessionById conn sessionId = headMay
   <$> SQL.query conn "SELECT * FROM sessions WHERE id = ?" (SQL.Only sessionId)
 
 removeSessionsByUserId :: SQL.Connection -> Integer -> IO ()
@@ -454,7 +454,7 @@ getFiguresByProblemId conn problemId = do
 
 getFigureById :: SQL.Connection -> Integer -> IO (Maybe Figure.Figure)
 getFigureById conn figureId = do
-  mDbFigure <- Util.headMay
+  mDbFigure <- headMay
     <$> SQL.query conn "SELECT * FROM figures WHERE id = ?" (SQL.Only figureId)
   case mDbFigure of
     Nothing -> return Nothing

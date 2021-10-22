@@ -9,10 +9,6 @@ import qualified Data.ByteString.Base64.URL as B64URL
 import qualified Data.Text.Encoding as TE
 import qualified System.Environment as Env
 
-headMay :: [a] -> Maybe a
-headMay [] = Nothing
-headMay (x:_) = Just x
-
 whenM :: Monad m => Bool -> (a -> m a) -> a -> m a
 whenM b f m = (if b then f else return) m
 

@@ -16,6 +16,8 @@ module Common.Lib.Prelude
   , module Text.Read
   , module Obelisk.Route
   , module Reflex.Dom.Core
+  , headMay
+  , showText
   ) where
 
 import Data.Text (Text)
@@ -33,3 +35,12 @@ import Control.Lens ((^.), _1, (&), (.~), iforM_)
 import Text.Read (readMaybe)
 import Obelisk.Route ( pattern (:/) )
 import Reflex.Dom.Core ((&), (.~), (=:))
+
+import qualified Data.Text as T
+
+headMay :: [a] -> Maybe a
+headMay [] = Nothing
+headMay (x:_) = Just x
+
+showText :: Show s => s -> Text
+showText = T.pack . show
