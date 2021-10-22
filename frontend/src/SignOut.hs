@@ -2,7 +2,7 @@ module SignOut
   ( widget
   ) where
 
-import Frontend.Lib.Prelude
+import Common.Lib.Prelude
 
 import qualified Language.Javascript.JSaddle as JS
 import qualified Reflex.Dom.Core as R

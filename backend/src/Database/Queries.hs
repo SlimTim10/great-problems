@@ -22,7 +22,7 @@ module Database.Queries
   , getFigureById
   ) where
 
-import Backend.Lib.Prelude
+import Common.Lib.Prelude
 import qualified Backend.Lib.Util as Util
 
 import qualified Database.PostgreSQL.Simple as SQL

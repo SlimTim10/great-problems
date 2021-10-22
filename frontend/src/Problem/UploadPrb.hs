@@ -2,7 +2,7 @@ module Problem.UploadPrb
   ( widget
   ) where
 
-import Frontend.Lib.Prelude
+import Common.Lib.Prelude
 import qualified Frontend.Lib.Util as Util
 
 import qualified GHCJS.DOM.Types

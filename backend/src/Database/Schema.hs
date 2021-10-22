@@ -2,7 +2,7 @@
 
 module Database.Schema where
 
-import Backend.Lib.Prelude
+import Common.Lib.Prelude
 
 import qualified Database.PostgreSQL.Simple as SQL
 import qualified Database.PostgreSQL.Simple.SqlQQ as SqlQQ

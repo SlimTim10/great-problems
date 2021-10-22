@@ -9,23 +9,17 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE PatternSynonyms #-}
 module Common.Route where
 
 import Prelude hiding (id, (.))
+import Common.Lib.Prelude
 
 import Control.Category ((>>>), (.), id)
 import Control.Categorical.Bifunctor (bimap)
-import Data.Text (Text)
 import Data.Functor.Identity (Identity)
-import Obelisk.Route ( pattern (:/) )
 import qualified Obelisk.Route as Ob
 import qualified Obelisk.Route.TH as Ob
 import qualified Data.Map as Map
-import Data.Map (Map)
-import Data.Maybe (fromMaybe)
-import Data.String.Conversions (cs)
-import Text.Read (readMaybe)
 
 type Query = Map Text (Maybe Text)
 

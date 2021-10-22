@@ -4,7 +4,7 @@ module ViewProblem
   , performCompileRequest
   ) where
 
-import Frontend.Lib.Prelude
+import Common.Lib.Prelude
 import qualified Frontend.Lib.Util as Util
 
 import qualified Data.Text as T

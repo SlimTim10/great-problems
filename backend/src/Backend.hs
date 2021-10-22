@@ -1,9 +1,8 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE PatternSynonyms #-}
 module Backend where
 
-import Backend.Lib.Prelude
+import Common.Lib.Prelude
 
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
@@ -21,7 +20,6 @@ import qualified Snap.Core as Snap
 import qualified Snap.Util.FileUploads as Snap
 import qualified System.Directory as Sys
 import qualified Obelisk.Backend as Ob
-import Obelisk.Route ( pattern (:/) )
 
 import qualified Common.Route as Route
 import qualified Common.Api.Error as Error

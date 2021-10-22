@@ -2,7 +2,7 @@ module Email
   ( sendEmailVerification
   ) where
 
-import Backend.Lib.Prelude
+import Common.Lib.Prelude
 import qualified Backend.Lib.Util as Util
 
 import qualified Configuration.Dotenv as Dotenv

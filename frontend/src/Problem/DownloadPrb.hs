@@ -2,7 +2,7 @@ module Problem.DownloadPrb
   ( widget
   ) where
 
-import Frontend.Lib.Prelude
+import Common.Lib.Prelude
 
 import qualified Data.Text.Encoding as T
 import qualified GHCJS.DOM.Types

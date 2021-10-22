@@ -2,7 +2,7 @@ module Problem.Editor
   ( widget
   ) where
 
-import Frontend.Lib.Prelude
+import Common.Lib.Prelude
 
 import qualified Language.Javascript.JSaddle.Types as JS
 import qualified Reflex.Dom.Ace as Ace

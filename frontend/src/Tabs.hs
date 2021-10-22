@@ -3,7 +3,7 @@ module Tabs
   , Tab(..)
   ) where
 
-import Frontend.Lib.Prelude
+import Common.Lib.Prelude
 
 import qualified Obelisk.Route.Frontend as Ob
 import qualified Reflex.Dom.Core as R

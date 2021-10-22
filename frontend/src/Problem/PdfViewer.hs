@@ -2,7 +2,7 @@ module Problem.PdfViewer
   ( widget
   ) where
 
-import Frontend.Lib.Prelude
+import Common.Lib.Prelude
 
 import qualified Data.Text as Text
 import qualified Reflex.Dom.Core as R

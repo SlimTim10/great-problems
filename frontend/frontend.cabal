@@ -30,7 +30,6 @@ library
   exposed-modules:
     Frontend
   other-modules:
-    Frontend.Lib.Prelude
     Frontend.Lib.Util
     EditProblem
     Header

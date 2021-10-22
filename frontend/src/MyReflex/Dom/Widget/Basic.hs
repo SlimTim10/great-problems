@@ -3,7 +3,7 @@ module MyReflex.Dom.Widget.Basic
   , elAttrClass'
   ) where
 
-import Frontend.Lib.Prelude
+import Common.Lib.Prelude
 
 import qualified Reflex.Dom.Core as R
 

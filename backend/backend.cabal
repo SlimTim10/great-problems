@@ -38,7 +38,6 @@ library
     Auth
     Database
     Email
-    Backend.Lib.Prelude
     Backend.Lib.Util
     Database.Queries
     Database.Schema

@@ -5,7 +5,7 @@ module Database.Types.Figure
   ( Figure(..)
   ) where
 
-import Backend.Lib.Prelude
+import Common.Lib.Prelude
 
 import qualified Data.ByteString as B
 import qualified Database.PostgreSQL.Simple as SQL

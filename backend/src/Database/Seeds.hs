@@ -2,7 +2,7 @@
 
 module Database.Seeds where
 
-import Backend.Lib.Prelude
+import Common.Lib.Prelude
 import qualified Backend.Lib.Util as Util
 
 import qualified Data.ByteString as B

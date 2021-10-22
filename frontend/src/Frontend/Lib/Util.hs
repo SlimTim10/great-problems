@@ -1,7 +1,7 @@
 {-# LANGUAGE PackageImports #-}
 module Frontend.Lib.Util where
 
-import Frontend.Lib.Prelude
+import Common.Lib.Prelude
 
 import qualified Language.Javascript.JSaddle as JS
 import qualified Data.Text as T

@@ -8,7 +8,7 @@ module Auth
   , AuthResult(..)
   ) where
 
-import Backend.Lib.Prelude
+import Common.Lib.Prelude
 
 import qualified Database.PostgreSQL.Simple as SQL
 

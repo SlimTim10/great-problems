@@ -2,7 +2,7 @@ module VerifyEmail
   ( widget
   ) where
 
-import Frontend.Lib.Prelude
+import Common.Lib.Prelude
 
 import qualified Control.Monad.IO.Class as IO
 import qualified Language.Javascript.JSaddle as JS

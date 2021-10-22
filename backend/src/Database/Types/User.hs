@@ -4,7 +4,7 @@ module Database.Types.User
   ( User(..)
   ) where
 
-import Backend.Lib.Prelude
+import Common.Lib.Prelude
 
 import qualified Database.PostgreSQL.Simple as SQL
 import GHC.Generics (Generic)

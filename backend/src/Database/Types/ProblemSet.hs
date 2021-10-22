@@ -7,7 +7,7 @@ module Database.Types.ProblemSet
   ( ProblemSet(..)
   ) where
 
-import Backend.Lib.Prelude
+import Common.Lib.Prelude
 
 import qualified Database.PostgreSQL.Simple as SQL
 import qualified Data.Time.Clock as Time

@@ -16,8 +16,12 @@ library
                , aeson
                , time
                , bytestring
+               , reflex
+               , lens
+               , reflex-dom-core
   exposed-modules:
     Common.Route
+    Common.Lib.Prelude
     Common.Api.Auth
     Common.Api.Compile
     Common.Api.Error
@@ -30,6 +34,4 @@ library
     Common.Api.Role
     Common.Api.Topic
     Common.Api.User
-  other-modules:
-    Common.Lib.Prelude
   ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits

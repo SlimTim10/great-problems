@@ -2,7 +2,7 @@ module Problem.Figures
   ( widget
   ) where
 
-import Frontend.Lib.Prelude
+import Common.Lib.Prelude
 
 import qualified Data.Map as Map
 import qualified Control.Monad.Fix as Fix

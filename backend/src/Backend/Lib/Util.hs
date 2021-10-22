@@ -1,6 +1,6 @@
 module Backend.Lib.Util where
 
-import Backend.Lib.Prelude
+import Common.Lib.Prelude
 
 import qualified Text.Read
 import qualified Crypto.PasswordStore
