@@ -214,7 +214,7 @@ widget problemId = mdo
           Util.dynFor latestResponse $ \case
             Nothing -> showPdf
             Just res -> do
-              if any (not . T.null) [Compile.resErrorIcemaker res, Compile.resErrorLatex res]
+              if any (not . T.null) [Compile.resErrorProblem2tex res, Compile.resErrorLatex res]
                 then R.text "Something went wrong. Try again later or notify the administrator."
                 else showPdf
 

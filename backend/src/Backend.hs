@@ -221,15 +221,15 @@ handleSaveProblem conn user = do
     | T.null summary
       -> writeJSON $ Error.mk "Summary cannot be empty"
     | otherwise -> do
-        response :: LBS.ByteString <- requestIcemakerCompileProblem
+        response :: LBS.ByteString <- requestProblem2texCompileProblem
           contents
           Nothing
           Nothing
           figures
-        case JSON.decode response :: Maybe Compile.IcemakerResponse of
+        case JSON.decode response :: Maybe Compile.Problem2texResponse of
           Nothing -> writeJSON $ Error.mk "Something went wrong"
           Just r -> if
-            | (not . T.null $ Compile.iceErrorIcemaker r) || (not . T.null $ Compile.iceErrorLatex r)
+            | (not . T.null $ Compile.p2tErrorProblem2tex r) || (not . T.null $ Compile.p2tErrorLatex r)
               -> writeJSON $ Error.mk "Invalid problem. Please check that your problem compiles with no errors before saving."
             -- Creating a new problem
             | T.null problemId -> do
@@ -260,14 +260,14 @@ handleSaveProblem conn user = do
                   Just updatedProblem -> do
                     writeJSON updatedProblem
 
-requestIcemakerCompileProblem
+requestProblem2texCompileProblem
   :: IO.MonadIO m
   => Text -- ^ Problem contents
   -> Maybe Text -- Randomize variables
   -> Maybe Text -- Output option
   -> [Figure.BareFigure] -- Files
   -> m LBS.ByteString
-requestIcemakerCompileProblem contents mRandomizeVariables mOutputOption figures = do
+requestProblem2texCompileProblem contents mRandomizeVariables mOutputOption figures = do
   let randomizeVariables = fromMaybe "false" mRandomizeVariables
   let outputOption = fromMaybe (cs . show $ Compile.QuestionOnly) mOutputOption
   let figureToPart = \figure -> HTTP.partFileRequestBody
@@ -298,18 +298,18 @@ handleCompileProblem = do
     | T.null contents
       -> writeJSON $ Error.mk "Problem contents cannot be empty"
     | otherwise -> do
-        response :: LBS.ByteString <- requestIcemakerCompileProblem
+        response :: LBS.ByteString <- requestProblem2texCompileProblem
           contents
           (Just randomizeVariables)
           (Just outputOption)
           figures
-        case JSON.decode response :: Maybe Compile.IcemakerResponse of
+        case JSON.decode response :: Maybe Compile.Problem2texResponse of
           Nothing -> writeJSON $ Error.mk "Something went wrong"
           Just r -> writeJSON Compile.Response
-            { Compile.resErrorIcemaker = Compile.iceErrorIcemaker r
-            , Compile.resErrorLatex = Compile.iceErrorLatex r
-            , Compile.resPdfContents = Compile.icePdfContents r
-            , Compile.resTerminalOutput = Compile.iceTerminalOutput r
+            { Compile.resErrorProblem2tex = Compile.p2tErrorProblem2tex r
+            , Compile.resErrorLatex = Compile.p2tErrorLatex r
+            , Compile.resPdfContents = Compile.p2tPdfContents r
+            , Compile.resTerminalOutput = Compile.p2tTerminalOutput r
             }
 
 handleCompileProblemById :: SQL.Connection -> Integer -> Snap.Snap ()
@@ -334,18 +334,18 @@ handleCompileProblemById conn problemId = do
             { Figure.bfName = Figure.name figure
             , Figure.bfContents = Figure.contents figure
             }
-      response :: LBS.ByteString <- requestIcemakerCompileProblem
+      response :: LBS.ByteString <- requestProblem2texCompileProblem
         (Problem.contents problem)
         randomizeVariables
         outputOption
         figures
-      case JSON.decode response :: Maybe Compile.IcemakerResponse of
+      case JSON.decode response :: Maybe Compile.Problem2texResponse of
         Nothing -> writeJSON $ Error.mk "Something went wrong"
         Just r -> writeJSON Compile.Response
-          { Compile.resErrorIcemaker = Compile.iceErrorIcemaker r
-          , Compile.resErrorLatex = Compile.iceErrorLatex r
-          , Compile.resPdfContents = Compile.icePdfContents r
-          , Compile.resTerminalOutput = Compile.iceTerminalOutput r
+          { Compile.resErrorProblem2tex = Compile.p2tErrorProblem2tex r
+          , Compile.resErrorLatex = Compile.p2tErrorLatex r
+          , Compile.resPdfContents = Compile.p2tPdfContents r
+          , Compile.resTerminalOutput = Compile.p2tTerminalOutput r
           }
 
 -- | Get the files from the POST request and store them in memory.

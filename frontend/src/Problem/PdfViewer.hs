@@ -59,7 +59,7 @@ errorsWidget
 errorsWidget Nothing = R.text ""
 errorsWidget (Just res) = R.elClass "div" "flex flex-col w-full h-full" $ do
   R.elClass "p" "flex-1 overflow-y-auto border-b-2" $
-    R.text $ Compile.resErrorIcemaker res
+    R.text $ Compile.resErrorProblem2tex res
   R.elClass "p" "flex-1 overflow-y-auto" $
     R.text $ Compile.resErrorLatex res
 

@@ -5,7 +5,7 @@ module Common.Api.Compile
   ( RequestParam(..)
   , Response(..)
   , OutputOption(..)
-  , IcemakerResponse(..)
+  , Problem2texResponse(..)
   ) where
 
 import Common.Lib.Prelude
@@ -31,7 +31,7 @@ instance Show RequestParam where
   show ParamFigures = "figures"
 
 data Response = Response
-  { resErrorIcemaker :: Text
+  { resErrorProblem2tex :: Text
   , resErrorLatex :: Text
   , resPdfContents :: Text
   , resTerminalOutput :: Text
@@ -43,23 +43,23 @@ data Response = Response
   , JSON.ToJSON
   )
 
-data IcemakerResponse = IcemakerResponse
-  { iceErrorIcemaker :: Text
-  , iceErrorLatex :: Text
-  , icePdfContents :: Text
-  , icePdfName :: Text
-  , iceTerminalOutput :: Text
+data Problem2texResponse = Problem2texResponse
+  { p2tErrorProblem2tex :: Text
+  , p2tErrorLatex :: Text
+  , p2tPdfContents :: Text
+  , p2tPdfName :: Text
+  , p2tTerminalOutput :: Text
   } deriving
   ( Eq
   , Show
   )
 
-instance JSON.FromJSON IcemakerResponse where
+instance JSON.FromJSON Problem2texResponse where
   parseJSON = JSON.withObject "icemakerResponse" $ \o -> do
-    errorIcemaker <- o .: "ErrorIcemaker"
+    errorProblem2tex <- o .: "ErrorProblem2tex"
     errorLatex <- o .: "ErrorLatex"
     pdfContents <- o .: "PdfContent"
     pdfName <- o .: "PdfName"
     terminalOutput <- o .: "TerminalOutput"
-    return $ IcemakerResponse errorIcemaker errorLatex pdfContents pdfName terminalOutput
+    return $ Problem2texResponse errorProblem2tex errorLatex pdfContents pdfName terminalOutput
 

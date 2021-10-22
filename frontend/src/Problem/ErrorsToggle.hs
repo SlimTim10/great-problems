@@ -29,7 +29,7 @@ widget compileResponse reset = do
     hasErrors :: R.Dynamic t Bool = f <$> compileResponse
     f :: Maybe Compile.Response -> Bool
     f Nothing = False
-    f (Just res) = not . T.null $ Compile.resErrorIcemaker res
+    f (Just res) = not . T.null $ Compile.resErrorProblem2tex res
     style
       :: Bool -- ^ Active toggled
       -> Maybe Compile.Response -- ^ Response from compile request
