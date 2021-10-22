@@ -15,4 +15,3 @@ tags
 TAGS
 config/backend/db.env
 config/backend/email.env
-test-app
