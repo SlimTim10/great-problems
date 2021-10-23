@@ -165,13 +165,14 @@ mkCookie
   -> Text -- ^ value
   -> Snap.Cookie
 mkCookie name value = Snap.Cookie
-  (cs name :: BS.ByteString)
-  (cs value :: BS.ByteString)
-  Nothing
-  Nothing
-  (Just "/")
-  False
-  False
+  { Snap.cookieName = cs name :: BS.ByteString
+  , Snap.cookieValue = cs value :: BS.ByteString
+  , Snap.cookieExpires = Nothing
+  , Snap.cookieDomain = Nothing
+  , Snap.cookiePath = Just "/"
+  , Snap.cookieSecure = True
+  , Snap.cookieHttpOnly = False
+  }
 
 addCookie
   :: Snap.MonadSnap m
