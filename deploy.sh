@@ -15,4 +15,4 @@ cp -r config dist
 echo "App built in dist/"
 
 echo "Starting server..."
-. startserver.sh
+. startserver.sh &>> /var/log/great-problems/output.log
