@@ -13,5 +13,4 @@ ADDRESS=$(hostname -I | awk '{print $1}')
 			 --ssl-key=/etc/letsencrypt/live/greatproblems.ca/privkey.pem \
 			 --access-log=/var/log/great-problems/access.log \
 			 --error-log=/var/log/great-problems/error.log
-			 2>&1 | tee /var/log/great-problems/output.log
 )
