@@ -1,6 +1,5 @@
 #!/bin/sh
 ADDRESS=$(hostname -I | awk '{print $1}')
-mkdir -p /var/log/great-problems
 (
 	cd dist &&
 		sudo ./backend \
