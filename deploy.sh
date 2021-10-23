@@ -2,6 +2,10 @@
 echo "Stopping server..."
 . stopserver.sh
 
+echo "Pulling repository..."
+git checkout master
+git pull origin master
+
 echo "Building app..."
 nix-build -A exe --no-out-link
 rm -rf dist
