@@ -315,7 +315,7 @@ getRoleById conn roleId = do
 
 getUsers :: SQL.Connection -> IO [User.User]
 getUsers conn = do
-  dbUsers :: [DbUser.User] <- SQL.query_ conn "SELECT * FROM users"
+  dbUsers :: [DbUser.User] <- SQL.query_ conn "SELECT * FROM users ORDER BY id ASC"
   flip mapM dbUsers $ \dbUser -> do
     getRoleById conn (DbUser.role_id dbUser) >>= \case
       Nothing -> return $ User.User

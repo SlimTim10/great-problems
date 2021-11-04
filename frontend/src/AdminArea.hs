@@ -63,10 +63,13 @@ widget = do
           updateRoleError :: R.Event t (Either Text ()) <- R.performEvent $ R.ffor response
             $ return . maybeToEither Error.message
 
-          updateRoleEl :: R.Dynamic t (m ()) <- R.holdDyn R.blank . R.ffor updateRoleError $ \case
+          spinner <- R.holdDyn R.blank $ R.ffor (R.updated selectedRole) . const
+            $ R.elAttr "img" ("src" =: "/static/small_spinner.svg" <> "alt" =: "loading") $ R.blank
+          responseEl <- R.holdDyn R.blank . R.ffor updateRoleError $ \case
             Left e -> R.elClass "p" "text-red-500" $ R.text e
             Right _ -> R.elClass "p" "text-green-500" $ R.text "Success"
-          R.dyn_ updateRoleEl
+          status <- R.holdDyn R.blank . R.leftmost . map R.updated $ [spinner, responseEl]
+          R.dyn_ status
 
           R.blank
 

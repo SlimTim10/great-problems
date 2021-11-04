@@ -67,4 +67,4 @@ loadingWidget
   :: R.DomBuilder t m
   => m ()
 loadingWidget = R.elClass "div" "flex w-full h-full items-center justify-center" $ do
-  R.elAttr "img" ("src" =: "/static/spinner.svg" <> "alt" =: "loading") $ R.blank
+  R.elAttr "img" ("src" =: "/static/pdf_spinner.svg" <> "alt" =: "loading") $ R.blank
