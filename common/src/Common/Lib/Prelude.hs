@@ -18,6 +18,7 @@ module Common.Lib.Prelude
   , module Reflex.Dom.Core
   , headMay
   , showText
+  , maybeToEither
   ) where
 
 import Data.Text (Text)
@@ -28,7 +29,7 @@ import Data.String.Conversions (cs)
 import Data.CaseInsensitive (CI)
 import Data.Functor ((<&>))
 import Data.Word (Word64)
-import Data.Either (fromLeft)
+import Data.Either (fromLeft, fromRight)
 import Control.Monad (void, (<=<), forM_, when, unless, (>=>), mfilter)
 import Control.Monad.Fix (MonadFix)
 import Control.Lens ((^.), _1, (&), (.~), iforM_)
@@ -44,3 +45,6 @@ headMay (x:_) = Just x
 
 showText :: Show s => s -> Text
 showText = T.pack . show
+
+maybeToEither :: (a -> b) -> Maybe a -> Either b ()
+maybeToEither f = maybe (pure ()) (Left . f)

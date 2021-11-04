@@ -42,9 +42,8 @@ widget = do
       signIn :: R.Event t () <- Button.primary' "Sign in"
       
       response <- signInAttempt email password signIn
-      signInError :: R.Event t (Either Text ()) <- R.performEvent $ R.ffor response $ \case
-        Just e -> return $ Left (Error.message e)
-        Nothing -> return $ Right ()
+      signInError :: R.Event t (Either Text ()) <- R.performEvent $ R.ffor response
+        $ return . maybeToEither Error.message
         
       signInErrorText :: R.Dynamic t Text <- R.holdDyn "" $ fromLeft "" <$> signInError
       R.elClass "p" "text-red-500" $ R.dynText signInErrorText
@@ -58,9 +57,8 @@ widget = do
     signInAttempt :: R.Dynamic t Text -> R.Dynamic t Text -> R.Event t () -> m (R.Event t (Maybe Error.Error))
     signInAttempt email password signIn = do
       let ev :: R.Event t (Text, Text) = R.tagPromptlyDyn (R.zipDyn email password) signIn
-      r <- R.performRequestAsync
-        $ (\(email', password') -> signInRequest $ Auth.Auth (CI.mk email') password')
-        <$> ev
+      r <- R.performRequestAsync $ R.ffor ev
+        $ \(email', password') -> signInRequest $ Auth.Auth (CI.mk email') password'
       return $ R.decodeXhrResponse <$> r
 
     signInRequest :: JSON.ToJSON a => a -> R.XhrRequest Text

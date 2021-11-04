@@ -4,6 +4,7 @@ module Database.Seeds where
 
 import Common.Lib.Prelude
 import qualified Backend.Lib.Util as Util
+import qualified Common.Api.Role as Role
 
 import qualified Data.ByteString as B
 import qualified Database.PostgreSQL.Simple as SQL
@@ -14,21 +15,18 @@ load :: SQL.Connection -> IO ()
 load conn = do
   password <- Util.hashPassword "123"
 
-  let
-    roleUser = (1, "User")
-    roleContributor = (2, "Contributor")
-    roleModerator = (3, "Moderator")
-      :: (Integer, Text)
+  let roles :: [Role.Role] = [minBound ..]
+  let rolesWithId :: [(Integer, Text)] = zip [1..] . map (cs . show) $ roles
   void $ SQL.executeMany conn [SqlQQ.sql|
     INSERT INTO
       roles(id, name)
     VALUES
       (?,?)
   |]
-    [roleUser, roleContributor, roleModerator]
+    rolesWithId
 
   let
-    userAlice = (1, "Alice", "alice@email.com", password, 3, True)
+    userAlice = (1, "Alice", "alice@email.com", password, 4, True)
     userBob = (2, "Bob", "bob@email.com", password, 2, True)
     userCarol = (3, "Carol", "carol@email.com", password, 1, True)
       :: (Integer, Text, Text, Text, Integer, Bool)

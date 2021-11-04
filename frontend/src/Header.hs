@@ -44,7 +44,11 @@ widget = R.elClass "header" "h-14 py-2 px-3 flex items-center justify-between bo
     Util.getCurrentUser >>= \case
       Just user -> do
         R.elClass "div" "flex items-center" $ do
-          when (User.role user `elem` [Role.Contributor, Role.Moderator]) $ do
+          when (User.role user == Role.Administrator) $ do
+            R.elClass "span" "pr-2" $ do
+              Ob.routeLink (Route.FrontendRoute_Admin :/ ()) $ do
+                Button.primary "Admin"
+          when (User.role user `elem` [Role.Contributor, Role.Moderator, Role.Administrator]) $ do
             R.elClass "span" "pr-2" $ do
               Ob.routeLink (Route.FrontendRoute_NewProblem :/ ()) $ do
                 Button.primary "Create"

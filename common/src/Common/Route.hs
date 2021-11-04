@@ -39,6 +39,7 @@ data Api :: * -> * where
   Api_SignIn :: Api ()
   Api_SignOut :: Api ()
   Api_Compile :: Api (Maybe Integer)
+  Api_Roles :: Api ()
 
 data FrontendRoute :: * -> * where
   FrontendRoute_Home :: FrontendRoute ()
@@ -53,6 +54,7 @@ data FrontendRoute :: * -> * where
   FrontendRoute_ViewProblemSet :: FrontendRoute Integer
   FrontendRoute_ViewUser :: FrontendRoute Integer
   FrontendRoute_Topics :: FrontendRoute (Integer, Ob.R TopicsRoute)
+  FrontendRoute_Admin :: FrontendRoute ()
 
 data ExploreRoute :: * -> * where
   ExploreRoute_Problems :: ExploreRoute ()
@@ -93,6 +95,7 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
         Api_SignOut -> Ob.PathSegment "sign-out" $ Ob.unitEncoder mempty
         Api_Compile -> Ob.PathSegment "compile" $
           Ob.maybeEncoder (Ob.unitEncoder mempty) $ idPathSegmentEncoder
+        Api_Roles -> Ob.PathSegment "roles" $ Ob.unitEncoder mempty
   )
   (\case
       FrontendRoute_Home -> Ob.PathEnd $ Ob.unitEncoder mempty
@@ -116,6 +119,7 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
         bimap Ob.unsafeTshowEncoder (Ob.pathComponentEncoder $ \case
           TopicsRoute_Problems -> Ob.PathSegment "problems" $ Ob.unitEncoder mempty
           TopicsRoute_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.unitEncoder mempty)
+      FrontendRoute_Admin -> Ob.PathSegment "admin" $ Ob.unitEncoder mempty
   )
 
 apiHref

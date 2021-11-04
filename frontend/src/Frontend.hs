@@ -22,6 +22,7 @@ import qualified VerifyEmail
 import qualified SignIn
 import qualified SignOut
 import qualified Profile
+import qualified AdminArea
 
 frontend :: Ob.Frontend (Ob.R Route.FrontendRoute)
 frontend = Ob.Frontend
@@ -87,8 +88,6 @@ frontend = Ob.Frontend
               R.elClass "div" "h-screen flex flex-col" $ do
                 R.elClass "div" "flex-none"
                   Header.widget
-                -- R.elClass "div" "bg-brand-light-gray flex justify-center py-4" $ do
-                --   R.elClass "p" "text-brand-lg font-light" $ R.text "Sign in"
                 ViewProblem.widget problemId
             Route.ProblemsRoute_Edit :/ () -> do
               R.elClass "div" "h-screen flex flex-col gap-3" $ do
@@ -120,4 +119,7 @@ frontend = Ob.Frontend
         userId :: R.Dynamic t Integer <- Ob.askRoute
         R.el "p" $ R.text "Single user"
         R.el "p" $ R.display userId
+      Route.FrontendRoute_Admin -> do
+        Header.widget
+        AdminArea.widget
   }

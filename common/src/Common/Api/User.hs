@@ -4,6 +4,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Common.Api.User
   ( User(..)
+  , UpdateRequest(..)
   ) where
 
 import Common.Lib.Prelude
@@ -35,3 +36,10 @@ instance (JSON.FromJSON (CI Text)) where
 instance (JSON.ToJSON (CI Text)) where
   toJSON a = JSON.String (CI.original a)
 
+data UpdateRequest = UpdateRequest
+  { urRole :: Role.Role
+  } deriving
+  ( Generic
+  , JSON.ToJSON
+  , JSON.FromJSON
+  )

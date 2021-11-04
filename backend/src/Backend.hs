@@ -63,8 +63,10 @@ backend = Ob.Backend
                   Nothing -> writeJSON $ Error.mk "No access"
                   Just user -> handleSaveProblem conn user
                 _ -> return () -- TODO: implement put, delete
+                
             Route.Api_Problems :/ (Just problemId, query) -> do
               writeJSON =<< IO.liftIO (Queries.getProblemById conn problemId query)
+              
             Route.Api_Topics :/ query -> do
               topics <- case fromMaybe Nothing (Map.lookup "parent" query) of
                 Just "null" -> IO.liftIO $ Queries.getRootTopics conn
@@ -73,16 +75,40 @@ backend = Ob.Backend
                   Nothing -> IO.liftIO $ Queries.getTopics conn
                 Nothing -> IO.liftIO $ Queries.getTopics conn
               writeJSON topics
+              
             Route.Api_Users :/ Nothing -> do
-              writeJSON =<< IO.liftIO (Queries.getUsers conn)
+              Snap.rqMethod <$> Snap.getRequest >>= \case
+                Snap.GET -> case mUser of
+                  Nothing -> writeJSON $ Error.mk "No access"
+                  Just user -> case User.role user of
+                    Role.Administrator -> writeJSON =<< IO.liftIO (Queries.getUsers conn)
+                    _ -> writeJSON $ Error.mk "No access"
+                _ -> return ()
+                
             Route.Api_Users :/ (Just userId) -> do
-              writeJSON =<< IO.liftIO (Queries.getUserById conn userId)
+              Snap.rqMethod <$> Snap.getRequest >>= \case
+                Snap.GET -> writeJSON =<< IO.liftIO (Queries.getUserById conn userId)
+                Snap.POST -> case mUser of
+                  Nothing -> writeJSON $ Error.mk "No access"
+                  Just user -> case User.role user of
+                    Role.Administrator -> updateUser conn userId
+                    _ -> writeJSON $ Error.mk "No access"
+                _ -> return ()
+                
+            Route.Api_Roles :/ () -> case mUser of
+              Nothing -> writeJSON $ Error.mk "No access"
+              Just user -> case User.role user of
+                Role.Administrator -> writeJSON =<< IO.liftIO (Queries.getRoles conn)
+                _ -> writeJSON $ Error.mk "No access"
+                
             Route.Api_TopicHierarchy :/ Nothing -> do
               writeJSON $ Error.mk "Not yet implemented"
+              
             Route.Api_TopicHierarchy :/ Just topicId -> do
               IO.liftIO (Queries.getTopicById conn topicId) >>= \case
                 Nothing -> writeJSON $ Error.mk "Topic not found"
                 Just topic -> writeJSON =<< IO.liftIO (Queries.getTopicHierarchy conn topic)
+                
             Route.Api_Register :/ () -> do
               rawBody <- Snap.readRequestBody maxRequestBodySize
               case JSON.decode rawBody :: Maybe Register.Register of
@@ -104,36 +130,42 @@ backend = Ob.Backend
                             secret <- IO.liftIO $ Queries.newEmailVerification conn (User.id user)
                             Email.sendEmailVerification user secret
                             writeJSON OkResponse.OkResponse
+                            
             Route.Api_VerifyEmail :/ secret -> do
               verify <- IO.liftIO $ Queries.verifyEmail conn (cs secret)
               if verify
                 then writeJSON OkResponse.OkResponse
                 else writeJSON $ Error.mk "Invalid email verification code"
+                
             Route.Api_SignIn :/ () -> do
-              rawBody <- Snap.readRequestBody maxRequestBodySize
-              case JSON.decode rawBody :: Maybe Auth.Auth of
-                Nothing -> writeJSON $ Error.mk "Something went wrong"
-                Just auth -> do
-                  IO.liftIO (Auth.authCheck conn auth) >>= \case
-                    Auth.Indefinite -> writeJSON $ Error.mk "Incorrect email or password. Please try again."
-                    Auth.Unverified _ -> writeJSON $ Error.mk "Account not verified. Please check your email to complete the verification process."
-                    Auth.Authenticated user -> do
-                      session <- IO.liftIO $ Auth.newSession conn user
-                      addCookie "sessionId" session
-                      addCookie "user" (cs $ JSON.encode user)
-                      writeJSON OkResponse.OkResponse
+             rawBody <- Snap.readRequestBody maxRequestBodySize
+             case JSON.decode rawBody :: Maybe Auth.Auth of
+               Nothing -> writeJSON $ Error.mk "Something went wrong"
+               Just auth -> do
+                 IO.liftIO (Auth.authCheck conn auth) >>= \case
+                   Auth.Indefinite -> writeJSON $ Error.mk "Incorrect email or password. Please try again."
+                   Auth.Unverified _ -> writeJSON $ Error.mk "Account not verified. Please check your email to complete the verification process."
+                   Auth.Authenticated user -> do
+                     session <- IO.liftIO $ Auth.newSession conn user
+                     addCookie "sessionId" session
+                     addCookie "user" (cs $ JSON.encode user)
+                     writeJSON OkResponse.OkResponse
+                     
             Route.Api_SignOut :/ () -> do
               IO.liftIO $ mapM_ (Auth.removeSession conn) mSession
               removeCookie "sessionId"
               removeCookie "user"
+              
             Route.Api_Compile :/ Nothing -> Snap.rqMethod <$> Snap.getRequest >>= \case
               Snap.POST -> case mUser of
                 Nothing -> writeJSON $ Error.mk "No access"
                 Just _ -> handleCompileProblem
               _ -> return ()
+              
             Route.Api_Compile :/ Just problemId -> Snap.rqMethod <$> Snap.getRequest >>= \case
               Snap.POST -> handleCompileProblemById conn problemId
               _ -> return ()
+              
             Route.Api_Figures :/ figureId -> do
               IO.liftIO (Queries.getFigureById conn figureId) >>= \case
                 Nothing -> writeJSON $ Error.mk "Figure does not exist"
@@ -145,8 +177,18 @@ backend = Ob.Backend
                   -- For frontend easier parsing
                   Snap.modifyResponse $ Snap.setHeader "Filename" $ cs (Figure.name figure)
                   Snap.writeBS $ Figure.contents figure
+                  
   , Ob._backend_routeEncoder = Route.fullRouteEncoder
   }
+  where
+    updateUser conn userId = do
+      rawBody <- Snap.readRequestBody maxRequestBodySize
+      case JSON.decode rawBody :: Maybe (User.UpdateRequest) of
+        Nothing -> writeJSON $ Error.mk "Something went wrong"
+        Just req -> do
+          IO.liftIO (Queries.updateUserRole conn userId (User.urRole req)) >>= \case
+            Nothing -> writeJSON $ Error.mk "Something went wrong"
+            Just _ -> writeJSON OkResponse.OkResponse
 
 -- | Set MIME to 'application/json' and write given object into
 -- 'Response' body.
@@ -214,7 +256,7 @@ handleSaveProblem conn user = do
     | any not
       [ T.null problemId || (read . cs $ authorId) == User.id user
       , T.null problemId || authorIdFromDb == Just (User.id user)
-      , User.role user == Role.Contributor || User.role user == Role.Moderator
+      , User.role user `elem` [Role.Contributor, Role.Moderator, Role.Administrator]
       ]
       -> writeJSON $ Error.mk "No access"
     | T.null contents

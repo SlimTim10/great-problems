@@ -20,6 +20,8 @@ module Database.Queries
   , removeSessionById
   , getUserFromSession
   , getFigureById
+  , getRoles
+  , updateUserRole
   ) where
 
 import Common.Lib.Prelude
@@ -290,14 +292,25 @@ getTopicHierarchy conn topic = do
       xs <- getTopicsByParentId conn (Topic.id t)
       return $ map Left xs
 
+getRoles :: SQL.Connection -> IO [Role.Role]
+getRoles conn = do
+  dbRoles <- SQL.query_ conn "SELECT * FROM roles"
+  return $ dbRoles <&> \case
+    DbRole.Role _ "User" -> Role.User
+    DbRole.Role _ "Contributor" -> Role.Contributor
+    DbRole.Role _ "Moderator" -> Role.Moderator
+    DbRole.Role _ "Administrator" -> Role.Administrator
+    _ -> Role.User
+
 getRoleById :: SQL.Connection -> Integer -> IO (Maybe Role.Role)
 getRoleById conn roleId = do
   mDbRole :: Maybe DbRole.Role <- headMay
     <$> SQL.query conn "SELECT * FROM roles WHERE id = ?" (SQL.Only roleId)
   return $ flip fmap mDbRole $ \case
-    DbRole.Role 1 "User" -> Role.User
-    DbRole.Role 2 "Contributor" -> Role.Contributor
-    DbRole.Role 3 "Moderator" -> Role.Moderator
+    DbRole.Role _ "User" -> Role.User
+    DbRole.Role _ "Contributor" -> Role.Contributor
+    DbRole.Role _ "Moderator" -> Role.Moderator
+    DbRole.Role _ "Administrator" -> Role.Administrator
     _ -> Role.User
 
 getUsers :: SQL.Connection -> IO [User.User]
@@ -465,3 +478,17 @@ getFigureById conn figureId = do
       , Figure.createdAt = DbFigure.created_at dbFigure
       , Figure.updatedAt = DbFigure.updated_at dbFigure
       }
+
+updateUserRole :: SQL.Connection -> Integer -> Role.Role -> IO (Maybe User.User)
+updateUserRole conn userId newRole = do
+  mDbRole :: Maybe DbRole.Role <- headMay
+    <$> SQL.query conn "SELECT * FROM roles WHERE name = ?" (SQL.Only $ show newRole)
+  case mDbRole of
+    Nothing -> return Nothing
+    Just dbRole -> do
+      void $ SQL.execute conn
+        "UPDATE users SET role_id = ? WHERE id = ?"
+        ( DbRole.id dbRole
+        , userId
+        )
+      getUserById conn userId
