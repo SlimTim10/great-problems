@@ -352,7 +352,7 @@ getUserByEmail conn email = do
 registerUser :: SQL.Connection -> Register.Register -> IO (Maybe User.User)
 registerUser conn user = do
   password <- Util.hashPassword $ Register.password user
-  role :: DbRole.Role <- head <$> SQL.query_ conn "SELECT * FROM roles WHERE name = 'User'"
+  role :: DbRole.Role <- head <$> SQL.query conn "SELECT * FROM roles WHERE name = ?" (SQL.Only $ show Role.Basic)
   mUserId :: Maybe (SQL.Only Integer) <- headMay
     <$> SQL.query conn
     "INSERT INTO users(full_name, email, password, role_id) VALUES (?,?,?,?) returning id"
