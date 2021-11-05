@@ -296,22 +296,22 @@ getRoles :: SQL.Connection -> IO [Role.Role]
 getRoles conn = do
   dbRoles <- SQL.query_ conn "SELECT * FROM roles"
   return $ dbRoles <&> \case
-    DbRole.Role _ "User" -> Role.User
+    DbRole.Role _ "Basic" -> Role.Basic
     DbRole.Role _ "Contributor" -> Role.Contributor
     DbRole.Role _ "Moderator" -> Role.Moderator
     DbRole.Role _ "Administrator" -> Role.Administrator
-    _ -> Role.User
+    _ -> Role.Basic
 
 getRoleById :: SQL.Connection -> Integer -> IO (Maybe Role.Role)
 getRoleById conn roleId = do
   mDbRole :: Maybe DbRole.Role <- headMay
     <$> SQL.query conn "SELECT * FROM roles WHERE id = ?" (SQL.Only roleId)
   return $ flip fmap mDbRole $ \case
-    DbRole.Role _ "User" -> Role.User
+    DbRole.Role _ "Basic" -> Role.Basic
     DbRole.Role _ "Contributor" -> Role.Contributor
     DbRole.Role _ "Moderator" -> Role.Moderator
     DbRole.Role _ "Administrator" -> Role.Administrator
-    _ -> Role.User
+    _ -> Role.Basic
 
 getUsers :: SQL.Connection -> IO [User.User]
 getUsers conn = do
@@ -322,7 +322,7 @@ getUsers conn = do
         { User.id = DbUser.id dbUser
         , User.fullName = DbUser.full_name dbUser
         , User.email = DbUser.email dbUser
-        , User.role = Role.User
+        , User.role = Role.Basic
         , User.verified = DbUser.verified dbUser
         }
       Just role -> return $ User.User

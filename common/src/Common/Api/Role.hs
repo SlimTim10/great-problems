@@ -8,7 +8,7 @@ module Common.Api.Role
 import qualified Data.Aeson as JSON
 import GHC.Generics (Generic)
 
-data Role = User | Contributor | Moderator | Administrator
+data Role = Basic | Contributor | Moderator | Administrator
   deriving
   ( Eq
   , Show
