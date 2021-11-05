@@ -61,7 +61,7 @@ This will add a verified user to the database and print the result.
 $ cp config/backend/email.env.example config/backend/email.env
 #+END_SRC
 
-Edit the environment variables in ~config/backend/db.env~ with the database connection settings.
+Edit the environment variables in ~config/backend/email.env~ with the Mailgun settings.
 
 ** API Routes
 
