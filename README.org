@@ -47,6 +47,14 @@ $ ob repl
 #+END_SRC
 This will create the empty tables (dropping if they exist) and insert the seeds.
 
+To manually add a user, use the repl:
+#+BEGIN_SRC
+$ ob repl
+*Backend Obelisk.Run Frontend Backend> Database.addUser "Gertrude Powell" "gertrude.powell@email.com" "mypassword123" "Basic"
+#+END_SRC
+This will add a verified user to the database and print the result.
+
+
 *** Mailgun config
 
 #+BEGIN_SRC
