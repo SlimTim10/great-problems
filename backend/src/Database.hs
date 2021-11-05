@@ -9,6 +9,8 @@ import qualified Configuration.Dotenv as Dotenv
 
 import qualified Database.Schema
 import qualified Database.Seeds
+import qualified Database.Types.Role as DbRole
+import qualified Database.Types.User as DbUser
 
 -- | Connect to the database using the variables in db.env, or default values.
 connect :: IO SQL.Connection
@@ -57,3 +59,28 @@ setup = do
   Database.Seeds.load conn
   putStrLn "Complete!"
   return conn
+
+-- | Add a user (verified) to the database. Intended for repl use only.
+addUser
+  :: String -- ^ Full name
+  -> String -- ^ Email
+  -> String -- ^ Password
+  -> String -- ^ Role name (e.g., "Contributor")
+  -> IO ()
+addUser name email password roleName = do
+  conn <- connect
+  hPassword <- Util.hashPassword (cs password)
+  role :: DbRole.Role <- head <$> SQL.query conn "SELECT * FROM roles WHERE name = ?" (SQL.Only roleName)
+  mUser :: Maybe DbUser.User <- headMay
+    <$> SQL.query conn
+    "INSERT INTO users(full_name, email, password, role_id, verified) VALUES (?,?,?,?,TRUE) returning *"
+    ( name
+    , email
+    , hPassword
+    , DbRole.id role
+    )
+  case mUser of
+    Nothing -> putStrLn "Failed"
+    Just user -> do
+      putStrLn "Added user:"
+      print user
