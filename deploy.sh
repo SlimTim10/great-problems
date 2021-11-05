@@ -1,4 +1,8 @@
 #!/bin/bash
+
+# Go to script's directory
+cd "${0%/*}"
+
 echo "Stopping server..."
 . stopserver.sh
 
