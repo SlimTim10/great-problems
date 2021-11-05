@@ -5,6 +5,6 @@ import Obelisk.Route.Frontend
 import Reflex.Dom
 
 main :: IO ()
-main = do
-  let Right validFullEncoder = checkEncoder fullRouteEncoder
-  run $ runFrontend validFullEncoder frontend
+main = case checkEncoder fullRouteEncoder of
+  Right validFullEncoder -> run $ runFrontend validFullEncoder frontend
+  Left _ -> error "Invalid frontend encoder"
