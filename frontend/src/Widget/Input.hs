@@ -1,5 +1,6 @@
 module Widget.Input
   ( textClass
+  , rawTextClass
   , emailClass
   , rawEmailClass
   , passwordClass
@@ -22,6 +23,18 @@ textClass
   => Text -- ^ Style
   -> m (R.Dynamic t Text)
 textClass c = fmap R.value $ R.inputElement $
+  R.def & R.inputElementConfig_elementConfig . R.elementConfig_initialAttributes .~
+  ( "type" =: "text"
+    <> "class" =: c
+  )
+
+rawTextClass
+  :: forall t m.
+     ( R.DomBuilder t m
+     )
+  => Text -- ^ Style
+  -> m (R.InputElement R.EventResult (R.DomBuilderSpace m) t)
+rawTextClass c = R.inputElement $
   R.def & R.inputElementConfig_elementConfig . R.elementConfig_initialAttributes .~
   ( "type" =: "text"
     <> "class" =: c

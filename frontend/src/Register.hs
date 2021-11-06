@@ -6,6 +6,7 @@ import Common.Lib.Prelude
 
 import qualified Language.Javascript.JSaddle as JS
 import qualified Data.Aeson as JSON
+import qualified Web.KeyCode as Key
 import qualified Data.CaseInsensitive as CI
 import qualified Reflex.Dom.Core as R
 
@@ -30,16 +31,30 @@ widget
 widget = do
   R.elClass "div" "mt-10 flex justify-center" $ do
     R.elClass "div" "flex flex-col gap-4 w-80" $ do
-      fullName :: R.Dynamic t Text <- R.elClass "div" "flex justify-between" $ do
+      
+      fullNameInput <- R.elClass "div" "flex justify-between" $ do
         R.elClass "p" "font-normal text-brand-lg" $ R.text "Full name"
-        Input.textClass "border px-1"
-      email :: R.Dynamic t Text <- R.elClass "div" "flex justify-between" $ do
+        Input.rawTextClass "border px-1"
+      let fullName :: R.Dynamic t Text = R.value fullNameInput
+        
+      emailInput <- R.elClass "div" "flex justify-between" $ do
         R.elClass "p" "font-normal text-brand-lg" $ R.text "Email"
-        Input.emailClass "border px-1"
-      password :: R.Dynamic t Text <- R.elClass "div" "flex justify-between" $ do
+        Input.rawEmailClass "border px-1"
+      let email :: R.Dynamic t Text = R.value emailInput
+        
+      passwordInput <- R.elClass "div" "flex justify-between" $ do
         R.elClass "p" "font-normal text-brand-lg" $ R.text "Password"
-        Input.passwordClass "border px-1"
-      register :: R.Event t () <- Button.primary' "Create my account"
+        Input.rawPasswordClass "border px-1"
+      let password :: R.Dynamic t Text = R.value passwordInput
+        
+      registerButton :: R.Event t () <- Button.primary' "Create my account"
+
+      let register = R.leftmost
+            [ registerButton
+            , R.keydown Key.Enter fullNameInput
+            , R.keydown Key.Enter emailInput
+            , R.keydown Key.Enter passwordInput
+            ]
 
       response <- registerAttempt fullName email password register
       
