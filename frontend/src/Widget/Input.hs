@@ -1,7 +1,9 @@
 module Widget.Input
   ( textClass
   , emailClass
+  , rawEmailClass
   , passwordClass
+  , rawPasswordClass
   , textAreaClass
   , textAreaClass'
   , dropdownClass
@@ -37,6 +39,18 @@ emailClass c = fmap R.value $ R.inputElement $
     <> "class" =: c
   )
 
+rawEmailClass
+  :: forall t m.
+     ( R.DomBuilder t m
+     )
+  => Text -- ^ Style
+  -> m (R.InputElement R.EventResult (R.DomBuilderSpace m) t)
+rawEmailClass c = R.inputElement $
+  R.def & R.inputElementConfig_elementConfig . R.elementConfig_initialAttributes .~
+  ( "type" =: "email"
+    <> "class" =: c
+  )
+
 passwordClass
   :: forall t m.
      ( R.DomBuilder t m
@@ -44,6 +58,18 @@ passwordClass
   => Text -- ^ Style
   -> m (R.Dynamic t Text)
 passwordClass c = fmap R.value $ R.inputElement $
+  R.def & R.inputElementConfig_elementConfig . R.elementConfig_initialAttributes .~
+  ( "type" =: "password"
+    <> "class" =: c
+  )
+
+rawPasswordClass
+  :: forall t m.
+     ( R.DomBuilder t m
+     )
+  => Text -- ^ Style
+  -> m (R.InputElement R.EventResult (R.DomBuilderSpace m) t)
+rawPasswordClass c = R.inputElement $
   R.def & R.inputElementConfig_elementConfig . R.elementConfig_initialAttributes .~
   ( "type" =: "password"
     <> "class" =: c

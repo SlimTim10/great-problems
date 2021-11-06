@@ -7,6 +7,7 @@ import Common.Lib.Prelude
 import qualified Language.Javascript.JSaddle as JS
 import qualified Data.Aeson as JSON
 import qualified Data.CaseInsensitive as CI
+import qualified Web.KeyCode as Key
 import qualified Reflex.Dom.Core as R
 import qualified Obelisk.Route.Frontend as Ob
 
@@ -31,17 +32,28 @@ widget
   => m ()
 widget = do
   R.elClass "div" "mt-10 flex justify-center" $ do
-    -- TODO: event should also be handled on pressing Enter
     R.elClass "div" "flex flex-col gap-4 w-80" $ do
-      email :: R.Dynamic t Text <- R.elClass "div" "flex justify-between" $ do
-        R.elClass "p" "font-normal text-brand-lg" $ R.text "Email"
-        Input.emailClass "border px-1"
-      password :: R.Dynamic t Text <- R.elClass "div" "flex justify-between" $ do
-        R.elClass "p" "font-normal text-brand-lg" $ R.text "Password"
-        Input.passwordClass "border px-1"
-      signIn :: R.Event t () <- Button.primary' "Sign in"
       
+      emailInput <- R.elClass "div" "flex justify-between" $ do
+        R.elClass "p" "font-normal text-brand-lg" $ R.text "Email"
+        Input.rawEmailClass "border px-1"
+      let email :: R.Dynamic t Text = R.value emailInput
+      
+      passwordInput <- R.elClass "div" "flex justify-between" $ do
+        R.elClass "p" "font-normal text-brand-lg" $ R.text "Password"
+        Input.rawPasswordClass "border px-1"
+      let password :: R.Dynamic t Text = R.value passwordInput
+      
+      signInButton :: R.Event t () <- Button.primary' "Sign in"
+      
+      let signIn = R.leftmost
+            [ signInButton
+            , R.keydown Key.Enter emailInput
+            , R.keydown Key.Enter passwordInput
+            ]
+
       response <- signInAttempt email password signIn
+      
       signInError :: R.Event t (Either Text ()) <- R.performEvent $ R.ffor response
         $ return . maybeToEither Error.message
         
