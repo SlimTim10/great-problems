@@ -23,6 +23,7 @@ library
                , cookie
                , aeson
                , case-insensitive
+               , keycode
   exposed-modules:
     Frontend
   other-modules:
