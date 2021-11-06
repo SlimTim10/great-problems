@@ -60,7 +60,7 @@ library
 executable backend
   main-is: main.hs
   hs-source-dirs: src-bin
-  ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -threaded -fno-show-valid-hole-fits
+  ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -threaded -fno-show-valid-hole-fits -fwarn-tabs -funbox-strict-fields -fno-warn-unused-do-bind -rtsopts
   if impl(ghcjs)
     buildable: False
   build-depends: base
