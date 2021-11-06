@@ -11,6 +11,7 @@ import qualified Reflex.Dom.Core as R
 import qualified Common.Route as Route
 
 data Tab = Problems | ProblemSets
+  deriving (Eq)
 
 widget
   :: forall t m js.
@@ -24,22 +25,12 @@ widget
 widget activeTab = do
   R.elClass "div" "my-6 flex justify-center" $ do
     R.elClass "div" "flex justify-around w-brand-screen-lg" $ do
-      -- Toggle highlighted tab
-      case activeTab of
-        Problems -> do
-          tabWidget True
-            (Ob.routeLink (Route.FrontendRoute_Explore :/ (Just (Route.ExploreRoute_Problems :/ ()))))
-            "Problems"
-          tabWidget False
-            (Ob.routeLink (Route.FrontendRoute_Explore :/ (Just (Route.ExploreRoute_ProblemSets :/ ()))))
-            "Problem sets"
-        _ -> do
-          tabWidget False
-            (Ob.routeLink (Route.FrontendRoute_Explore :/ (Just (Route.ExploreRoute_Problems :/ ()))))
-            "Problems"
-          tabWidget True
-            (Ob.routeLink (Route.FrontendRoute_Explore :/ (Just (Route.ExploreRoute_ProblemSets :/ ()))))
-            "Problem sets"
+      tabWidget (activeTab == Problems)
+        (Ob.routeLink (Route.FrontendRoute_Explore :/ (Just (Route.ExploreRoute_Problems :/ ()))))
+        "Problems"
+      tabWidget (activeTab == ProblemSets)
+        (Ob.routeLink (Route.FrontendRoute_Explore :/ (Just (Route.ExploreRoute_ProblemSets :/ ()))))
+        "Problem sets"
   where
     tabWidget active routeLink txt = case active of
       True -> do
