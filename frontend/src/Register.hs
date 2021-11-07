@@ -30,7 +30,7 @@ widget
   => m ()
 widget = do
   R.elClass "div" "mt-10 flex justify-center" $ do
-    R.elClass "div" "flex flex-col gap-4 w-80" $ do
+    R.elClass "div" "flex flex-col gap-4 w-80" $ mdo
       
       fullNameInput <- R.elClass "div" "flex justify-between" $ do
         R.elClass "p" "font-normal text-brand-lg" $ R.text "Full name"
@@ -49,6 +49,8 @@ widget = do
         
       registerButton :: R.Event t () <- Button.primary' "Create my account"
 
+      R.dyn_ =<< R.holdDyn R.blank responseMessage
+
       let register = R.leftmost
             [ registerButton
             , R.keydown Key.Enter fullNameInput
@@ -57,19 +59,13 @@ widget = do
             ]
 
       response <- registerAttempt fullName email password register
-      
-      registerError :: R.Event t (Either Text ()) <- R.performEvent $ R.ffor response $ \case
-        Just e -> return $ Left (Error.message e)
-        Nothing -> return $ Right ()
-      registerErrorText :: R.Dynamic t Text <- R.holdDyn "" $ fromLeft "" <$> registerError
-      R.elClass "p" "text-red-500" $ R.dynText registerErrorText
+      responseMessage :: R.Event t (m ()) <- R.performEvent $ R.ffor response . fmap return $ \case
+        Just e -> R.elClass "p" "text-red-500" $ R.text
+          (Error.message e)
+        Nothing -> R.elClass "p" "text-green-600" $ R.text
+          "Almost done... We'll send you an email in 5 minutes. Open it up to activate your account."
 
-      registerSuccess :: R.Event t (Either (R.Dynamic t Text) (R.Dynamic t ())) <- fmap R.updated
-        $ R.eitherDyn =<< R.holdDyn (Left mempty) registerError
-      registerSuccessText :: R.Dynamic t Text <- R.holdDyn ""
-        $ "Almost done... We'll send you an email in 5 minutes. Open it up to activate your account."
-        <$ registerSuccess
-      R.elClass "p" "text-green-600" $ R.dynText registerSuccessText
+      return ()
   where
     registerAttempt
       :: R.Dynamic t Text
