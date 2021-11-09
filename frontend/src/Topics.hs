@@ -72,4 +72,3 @@ widget topicId = do
             Button.primary (Topic.name t)
     safeInit xs = if length xs == 0 then [] else init xs
     safeLast xs = if length xs == 0 then [] else last xs
-    singleton x = [x]

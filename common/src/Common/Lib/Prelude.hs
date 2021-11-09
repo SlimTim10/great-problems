@@ -19,6 +19,7 @@ module Common.Lib.Prelude
   , headMay
   , showText
   , maybeToEither
+  , singleton
   ) where
 
 import Data.Text (Text)
@@ -48,3 +49,6 @@ showText = T.pack . show
 
 maybeToEither :: (a -> b) -> Maybe a -> Either b ()
 maybeToEither f = maybe (pure ()) (Left . f)
+
+singleton :: a -> [a]
+singleton a = [a]

@@ -89,9 +89,7 @@ postForm
   -> R.Event t (Map Text (R'.FormValue GHCJS.DOM.Types.File))
   -> m (R.Event t Text)
 postForm url formData = do
-  formDatas :: R.Event t [Map Text (R'.FormValue GHCJS.DOM.Types.File)] <- R.performEvent
-    $ R.ffor formData $ \fd -> return [fd]
-  responses <- R'.postForms url formDatas
+  responses <- R'.postForms url (singleton <$> formData)
   let results :: R.Event t [Maybe Text] = map (Lens.view R.xhrResponse_responseText) <$> responses
   return $ T.concat . map (maybe "" id) <$> results
 
