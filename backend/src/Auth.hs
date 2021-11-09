@@ -3,7 +3,7 @@ module Auth
   , newSession
   , removeSession
   , getUser
-  , Auth.Auth
+  , Auth.Auth(..)
   , Session
   , AuthResult(..)
   ) where

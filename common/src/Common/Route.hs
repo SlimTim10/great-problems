@@ -36,6 +36,7 @@ data Api :: * -> * where
   Api_Users :: Api (Maybe Integer)
   Api_Register :: Api ()
   Api_VerifyEmail :: Api Text
+  Api_ChangePassword :: Api ()
   Api_SignIn :: Api ()
   Api_SignOut :: Api ()
   Api_Compile :: Api (Maybe Integer)
@@ -91,6 +92,7 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
           Ob.maybeEncoder (Ob.unitEncoder mempty) $ idPathSegmentEncoder
         Api_Register -> Ob.PathSegment "register" $ Ob.unitEncoder mempty
         Api_VerifyEmail -> Ob.PathSegment "verify-email" Ob.singlePathSegmentEncoder
+        Api_ChangePassword -> Ob.PathSegment "change-password" $ Ob.unitEncoder mempty
         Api_SignIn -> Ob.PathSegment "sign-in" $ Ob.unitEncoder mempty
         Api_SignOut -> Ob.PathSegment "sign-out" $ Ob.unitEncoder mempty
         Api_Compile -> Ob.PathSegment "compile" $

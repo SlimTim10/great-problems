@@ -22,6 +22,7 @@ module Database.Queries
   , getFigureById
   , getRoles
   , updateUserRole
+  , updateUserPassword
   ) where
 
 import Common.Lib.Prelude
@@ -40,6 +41,7 @@ import qualified Common.Api.User as User
 import qualified Common.Api.Role as Role
 import qualified Common.Api.Auth as Auth
 import qualified Common.Api.Figure as Figure
+import qualified Common.Api.ChangePassword as ChangePassword
 import qualified Database.Types.Problem as DbProblem
 import qualified Database.Types.Topic as DbTopic
 import qualified Database.Types.User as DbUser
@@ -488,7 +490,13 @@ updateUserRole conn userId newRole = do
     Just dbRole -> do
       void $ SQL.execute conn
         "UPDATE users SET role_id = ? WHERE id = ?"
-        ( DbRole.id dbRole
-        , userId
-        )
+        (DbRole.id dbRole, userId)
       getUserById conn userId
+
+updateUserPassword :: SQL.Connection -> Integer -> ChangePassword.ChangePassword -> IO (Maybe User.User)
+updateUserPassword conn userId changePassword = do
+  newPassword <- Util.hashPassword (ChangePassword.newPassword changePassword)
+  void $ SQL.execute conn
+    "UPDATE users SET password = ? WHERE id = ?"
+    (newPassword, userId)
+  getUserById conn userId

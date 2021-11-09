@@ -66,7 +66,11 @@ widget = do
       
       R.blank
   where
-    signInAttempt :: R.Dynamic t Text -> R.Dynamic t Text -> R.Event t () -> m (R.Event t (Maybe Error.Error))
+    signInAttempt
+      :: R.Dynamic t Text -- ^ Email
+      -> R.Dynamic t Text -- ^ Password
+      -> R.Event t () -- ^ Event to trigger request
+      -> m (R.Event t (Maybe Error.Error))
     signInAttempt email password signIn = do
       let ev :: R.Event t (Text, Text) = R.tagPromptlyDyn (R.zipDyn email password) signIn
       r <- R.performRequestAsync $ R.ffor ev

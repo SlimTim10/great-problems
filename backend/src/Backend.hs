@@ -32,6 +32,7 @@ import qualified Common.Api.OkResponse as OkResponse
 import qualified Common.Api.Compile as Compile
 import qualified Common.Api.Problem as Problem
 import qualified Common.Api.Figure as Figure
+import qualified Common.Api.ChangePassword as ChangePassword
 import qualified Auth
 import qualified Email
 
@@ -136,6 +137,26 @@ backend = Ob.Backend
               if verify
                 then writeJSON OkResponse.OkResponse
                 else writeJSON $ Error.mk "Invalid email verification code"
+                
+            Route.Api_ChangePassword :/ () -> Snap.rqMethod <$> Snap.getRequest >>= \case
+              Snap.POST -> case mUser of
+                Nothing -> writeJSON $ Error.mk "No access"
+                Just user -> do
+                  rawBody <- Snap.readRequestBody maxRequestBodySize
+                  case JSON.decode rawBody :: Maybe ChangePassword.ChangePassword of
+                    Nothing -> writeJSON $ Error.mk "Something went wrong"
+                    Just cp -> do
+                      let auth = Auth.Auth (User.email user) (ChangePassword.oldPassword cp)
+                      IO.liftIO (Auth.authCheck conn auth) >>= \case
+                        Auth.Authenticated _ -> do
+                          if T.null (ChangePassword.newPassword cp)
+                            then writeJSON $ Error.mk "Password cannot be empty"
+                            else do
+                            IO.liftIO (Queries.updateUserPassword conn (User.id user) cp) >>= \case
+                              Nothing -> writeJSON $ Error.mk "Something went wrong"
+                              Just _ -> writeJSON OkResponse.OkResponse
+                        _ -> writeJSON $ Error.mk "Incorrect password"
+              _ -> return ()
                 
             Route.Api_SignIn :/ () -> do
              rawBody <- Snap.readRequestBody maxRequestBodySize
