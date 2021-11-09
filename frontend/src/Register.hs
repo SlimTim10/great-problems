@@ -49,7 +49,7 @@ widget = do
         
       registerButton :: R.Event t () <- Button.primary' "Create my account"
 
-      R.dyn_ =<< R.holdDyn R.blank responseMessage
+      R.dyn_ responseMessage
 
       let register = R.leftmost
             [ registerButton
@@ -59,7 +59,7 @@ widget = do
             ]
 
       response <- registerAttempt fullName email password register
-      responseMessage :: R.Event t (m ()) <- R.performEvent $ R.ffor response . fmap return $ \case
+      responseMessage <- R.holdDyn R.blank $ R.ffor response $ \case
         Just e -> R.elClass "p" "text-red-500" $ R.text
           (Error.message e)
         Nothing -> R.elClass "p" "text-green-600" $ R.text
