@@ -60,8 +60,7 @@ widget = do
             $ selectRoleWidget (User.role u)
             
           response <- updateRoleAttempt u selectedRole
-          updateRoleError :: R.Event t (Either Text ()) <- R.performEvent $ R.ffor response
-            $ return . maybeToEither Error.message
+          let updateRoleError :: R.Event t (Either Text ()) = maybeToEither Error.message <$> response
 
           spinner <- R.holdDyn R.blank $ R.ffor (R.updated selectedRole) . const
             $ R.elAttr "img" ("src" =: "/static/small_spinner.svg" <> "alt" =: "loading") $ R.blank

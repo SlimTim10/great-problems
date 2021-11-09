@@ -54,8 +54,7 @@ widget = do
 
       response <- signInAttempt email password signIn
       
-      signInError :: R.Event t (Either Text ()) <- R.performEvent $ R.ffor response
-        $ return . maybeToEither Error.message
+      let signInError :: R.Event t (Either Text ()) = maybeToEither Error.message <$> response
         
       signInErrorText :: R.Dynamic t Text <- R.holdDyn "" $ fromLeft "" <$> signInError
       R.elClass "p" "text-red-500" $ R.dynText signInErrorText

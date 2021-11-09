@@ -158,8 +158,8 @@ widget problemId = mdo
               Ob.setRoute $ do
                 (Route.FrontendRoute_Problems :/
                  (Problem.id savedProblem, Route.ProblemsRoute_Edit :/ ())) <$ timer
-        savingMessage <- R.performEvent $ R.ffor publish $ \_ -> do
-          return $ R.el "p" $ R.text "Saving..."
+        let savingMessage = R.ffor publish $ \_ -> do
+              R.el "p" $ R.text "Saving..."
         message <- R.holdDyn R.blank $ R.leftmost [savingMessage, R.updated finishMessage]
         R.dyn_ message
 
@@ -186,26 +186,24 @@ widget problemId = mdo
                 <*> userId
                 <*> figures
 
-        formData :: R.Event t (Map Text (R'.FormValue GHCJS.DOM.Types.File)) <- R.performEvent
-          $ R.ffor (R.tagPromptlyDyn saveProblemRequest publish) $ \req -> do
-          let
-            formDataParams :: Map Problem.RequestParam (R'.FormValue GHCJS.DOM.Types.File) =
-              ( Problem.ParamSummary =: R'.FormValue_Text (rsSummary req)
-                <> Problem.ParamContents =: R'.FormValue_Text (rsContents req)
-                <> Problem.ParamTopicId =: R'.FormValue_Text
-                (cs . show . rsTopicId $ req)
-                <> Problem.ParamAuthorId =: R'.FormValue_Text
-                (cs . show . rsAuthorId $ req)
-                <> Problem.ParamFigures =: R'.FormValue_List
-                (map Util.formFile . rsFigures $ req)
-              )
-              <> (maybe
-                   mempty
-                   (\id' -> Problem.ParamProblemId =: R'.FormValue_Text (cs . show $ id'))
-                   (rsProblemId req)
-                 )
-            formDataText = Map.mapKeys (cs . show) formDataParams
-          return formDataText
+        let formData :: R.Event t (Map Text (R'.FormValue GHCJS.DOM.Types.File)) = R.ffor (R.tagPromptlyDyn saveProblemRequest publish) $ \req -> do
+              let formDataParams :: Map Problem.RequestParam (R'.FormValue GHCJS.DOM.Types.File) =
+                    ( Problem.ParamSummary =: R'.FormValue_Text (rsSummary req)
+                      <> Problem.ParamContents =: R'.FormValue_Text (rsContents req)
+                      <> Problem.ParamTopicId =: R'.FormValue_Text
+                      (cs . show . rsTopicId $ req)
+                      <> Problem.ParamAuthorId =: R'.FormValue_Text
+                      (cs . show . rsAuthorId $ req)
+                      <> Problem.ParamFigures =: R'.FormValue_List
+                      (map Util.formFile . rsFigures $ req)
+                    )
+                    <>
+                    ( maybe
+                      mempty
+                      (\id' -> Problem.ParamProblemId =: R'.FormValue_Text (cs . show $ id'))
+                      (rsProblemId req)
+                    )
+              Map.mapKeys (cs . show) formDataParams
         response :: R.Event t Text <- Util.postForm
           (Route.apiHref $ Route.Api_Problems :/ (Nothing, mempty))
           formData
@@ -346,6 +344,5 @@ fetchFigures problem = do
         )
         urls
   responses :: R.Event t [R.XhrResponse] <- R.performRequestsAsync requests
-  files :: R.Event t [FormFile.FormFile] <- R.performEvent $ R.ffor responses $ \ress -> do
-    return $ catMaybes . map responseToFile $ ress
+  let files :: R.Event t [FormFile.FormFile] = catMaybes . map responseToFile <$> responses
   R.holdDyn [] files

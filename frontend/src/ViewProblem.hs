@@ -227,7 +227,8 @@ widget problemId = mdo
   return ()
 
 performCompileRequest
-  :: ( R.MonadHold t m
+  :: forall t m.
+     ( R.MonadHold t m
      , R.PerformEvent t m
      , R.HasJSContext (R.Performable m)
      , JS.MonadJSM (R.Performable m)
@@ -239,17 +240,14 @@ performCompileRequest
   -> R.Dynamic t Problem.Compile.Request
   -> m (R.Dynamic t (Loading.WithLoading (Maybe Compile.Response))) -- ^ Response
 performCompileRequest e problemId compileRequest = do
-  formData :: R.Event t (Map Text (R'.FormValue GHCJS.DOM.Types.File)) <- R.performEvent
-    $ R.ffor (R.tagPromptlyDyn compileRequest e) $ \req -> do
-    let
-      formDataParams :: Map Compile.RequestParam (R'.FormValue GHCJS.DOM.Types.File) = (
-        Compile.ParamRandomizeVariables =: R'.FormValue_Text
-          (Util.formBool . Problem.Compile.randomizeVariables $ req)
-        <> Compile.ParamOutputOption =: R'.FormValue_Text
-          (cs . show . Problem.Compile.outputOption $ req)
-        )
-      formDataText = Map.mapKeys (cs . show) formDataParams
-    return formDataText
+  let formData :: R.Event t (Map Text (R'.FormValue GHCJS.DOM.Types.File)) = R.ffor (R.tagPromptlyDyn compileRequest e) $ \req -> do
+        let formDataParams :: Map Compile.RequestParam (R'.FormValue GHCJS.DOM.Types.File) = (
+              Compile.ParamRandomizeVariables =: R'.FormValue_Text
+              (Util.formBool . Problem.Compile.randomizeVariables $ req)
+              <> Compile.ParamOutputOption =: R'.FormValue_Text
+              (cs . show . Problem.Compile.outputOption $ req)
+              )
+        Map.mapKeys (cs . show) formDataParams
     
   rawCompileResponse :: R.Event t Text <- Util.postForm
     (Route.apiHref $ Route.Api_Compile :/ Just problemId)
