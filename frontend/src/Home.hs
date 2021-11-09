@@ -36,7 +36,6 @@ widget
      , Ob.RouteToUrl (Ob.R Route.FrontendRoute) m
      , Ob.SetRoute t (Ob.R Route.FrontendRoute) m
      , R.Prerender js t m
-     , R.MonadSample t (R.Performable m)
      )
   => m ()
 widget = do

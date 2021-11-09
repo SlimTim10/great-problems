@@ -58,7 +58,6 @@ widget
      , R.HasJSContext (R.Performable m)
      , R.PerformEvent t m
      , R.TriggerEvent t m
-     , R.MonadSample t (R.Performable m)
      , DOM.IsDocument (R.RawDocument (R.DomBuilderSpace m))
      , R.HasDocument m
      , Ob.RouteToUrl (Ob.R Route.FrontendRoute) m

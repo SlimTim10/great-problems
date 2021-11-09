@@ -40,7 +40,6 @@ widget
      , R.HasJSContext (R.Performable m)
      , R.PerformEvent t m
      , R.TriggerEvent t m
-     , R.MonadSample t (R.Performable m)
      , Ob.SetRoute t (Ob.R Route.FrontendRoute) m
      , Ob.RouteToUrl (Ob.R Route.FrontendRoute) m
      , R.Prerender js t m
