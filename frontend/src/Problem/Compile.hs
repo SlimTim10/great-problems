@@ -57,17 +57,15 @@ performRequest
   -> R.Dynamic t Request
   -> m (R.Dynamic t (Loading.WithLoading (Maybe Compile.Response))) -- ^ Response
 performRequest e compileRequest = do
-  formData :: R.Event t (Map Text (R'.FormValue GHCJS.DOM.Types.File)) <- R.performEvent
-    $ R.ffor (R.tagPromptlyDyn compileRequest e) $ \req -> do
-    let
-      formDataParams :: Map Compile.RequestParam (R'.FormValue GHCJS.DOM.Types.File) = (
-        Compile.ParamContents =: R'.FormValue_Text (contents req)
-        <> Compile.ParamRandomizeVariables =: R'.FormValue_Text (Util.formBool . randomizeVariables $ req)
-        <> Compile.ParamOutputOption =: R'.FormValue_Text (cs . show . outputOption $ req)
-        <> Compile.ParamFigures =: R'.FormValue_List (map Util.formFile . figures $ req)
-        )
-      formDataText = Map.mapKeys (cs . show) formDataParams
-    return formDataText
+  let formData :: R.Event t (Map Text (R'.FormValue GHCJS.DOM.Types.File)) = R.ffor (R.tagPromptlyDyn compileRequest e)
+        $ \req -> do
+        let formDataParams :: Map Compile.RequestParam (R'.FormValue GHCJS.DOM.Types.File) = (
+              Compile.ParamContents =: R'.FormValue_Text (contents req)
+              <> Compile.ParamRandomizeVariables =: R'.FormValue_Text (Util.formBool . randomizeVariables $ req)
+              <> Compile.ParamOutputOption =: R'.FormValue_Text (cs . show . outputOption $ req)
+              <> Compile.ParamFigures =: R'.FormValue_List (map Util.formFile . figures $ req)
+              )
+        Map.mapKeys (cs . show) formDataParams
 
   response :: R.Event t Text <- Util.postForm
     (Route.apiHref $ Route.Api_Compile :/ Nothing)
