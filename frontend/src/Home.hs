@@ -20,7 +20,6 @@ import qualified Widget.Input as Input
 import qualified Problem.Loading as Loading
 import qualified Problem.Compile
 import qualified Problem.PdfViewer as PdfViewer
-import qualified ViewProblem
 
 widget
   :: forall t m js.
@@ -131,9 +130,9 @@ widget = do
       
       onload :: R.Event t () <- R.getPostBuild
       onloadAction :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-        ViewProblem.performCompileRequest onload problemId $ Problem.Compile.Request
+        Problem.Compile.performRequestWithId onload problemId $ Problem.Compile.Request
           <$> R.constDyn ""
-          <*> R.constDyn False
+          <*> R.constDyn Problem.Compile.NoChange
           <*> R.constDyn Compile.QuestionOnly
           <*> R.constDyn []
           
@@ -162,22 +161,22 @@ widget = do
         R.elClass "hr" "w-full border-gray-400" R.blank
         (randomizeVariablesAction, resetVariablesAction) <- do
           R.elClass "div" "flex gap-2" $ do
-            randomizeVariables :: R.Event t () <- Button.primarySmallClass'
+            randomizeVariablesTrigger :: R.Event t () <- Button.primarySmallClass'
               "Randomize variables"
               "active:bg-blue-400"
             randomizeVariablesAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-              ViewProblem.performCompileRequest randomizeVariables problemId $ Problem.Compile.Request
+              Problem.Compile.performRequestWithId randomizeVariablesTrigger problemId $ Problem.Compile.Request
                 <$> R.constDyn ""
-                <*> R.constDyn True
+                <*> R.constDyn Problem.Compile.Randomize
                 <*> outputOption
                 <*> R.constDyn []
             resetVariables :: R.Event t () <- Button.primarySmallClass'
               "Reset variables"
               "active:bg-blue-400"
             resetVariablesAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-              ViewProblem.performCompileRequest resetVariables problemId $ Problem.Compile.Request
+              Problem.Compile.performRequestWithId resetVariables problemId $ Problem.Compile.Request
                 <$> R.constDyn ""
-                <*> R.constDyn False
+                <*> R.constDyn Problem.Compile.Reset
                 <*> outputOption
                 <*> R.constDyn []
             return (randomizeVariablesAction', resetVariablesAction')
@@ -191,9 +190,9 @@ widget = do
                 "font-medium text-brand-primary cursor-pointer"
                 "Answer"
               showAnswerAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-                ViewProblem.performCompileRequest (R.updated $ const () <$> showAnswer) problemId $ Problem.Compile.Request
+                Problem.Compile.performRequestWithId (R.updated $ const () <$> showAnswer) problemId $ Problem.Compile.Request
                   <$> R.constDyn ""
-                  <*> R.constDyn False
+                  <*> R.constDyn Problem.Compile.NoChange
                   <*> outputOption
                   <*> R.constDyn []
               showSolution :: R.Dynamic t Bool <- Input.checkboxClass
@@ -201,9 +200,9 @@ widget = do
                 "font-medium text-brand-primary cursor-pointer"
                 "Solution"
               showSolutionAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-                ViewProblem.performCompileRequest (R.updated $ const () <$> showSolution) problemId $ Problem.Compile.Request
+                Problem.Compile.performRequestWithId (R.updated $ const () <$> showSolution) problemId $ Problem.Compile.Request
                   <$> R.constDyn ""
-                  <*> R.constDyn False
+                  <*> R.constDyn Problem.Compile.NoChange
                   <*> outputOption
                   <*> R.constDyn []
               let outputOption' :: R.Dynamic t Compile.OutputOption =

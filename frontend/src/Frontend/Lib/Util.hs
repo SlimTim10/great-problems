@@ -3,12 +3,12 @@ module Frontend.Lib.Util where
 
 import Common.Lib.Prelude
 
-import qualified Language.Javascript.JSaddle as JS
 import qualified Data.Text as T
 import qualified Control.Lens as Lens
 import qualified Data.Aeson as JSON
 import qualified Control.Monad.IO.Class as IO
 import qualified Web.Cookie as Cookie
+import qualified Language.Javascript.JSaddle as JS
 import qualified "ghcjs-dom" GHCJS.DOM.Document as DOM
 import qualified GHCJS.DOM.Types
 import qualified Reflex.Dom.Core as R
@@ -22,6 +22,12 @@ consoleLog :: (JS.MonadJSM m, JS.ToJSVal v) => v -> m ()
 consoleLog x = void $ JS.liftJSM $ do
   w <- JS.jsg ("console" :: Text)
   w ^. JS.js1 ("log" :: Text) x
+
+-- | Generate a random 32-bit integer in JavaScript
+random32 :: JS.MonadJSM m => m Integer
+random32 = JS.liftJSM $ do
+  x :: JS.JSVal <- JS.eval ("Math.floor(Math.random() * (2**32 - 1))" :: Text)
+  floor <$> JS.valToNumber x
 
 buttonDynClass
   :: ( R.DomBuilder t m

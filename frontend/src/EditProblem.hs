@@ -228,14 +228,14 @@ widget problemId = mdo
           randomizeVariablesAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
             Problem.Compile.performRequest randomizeVariables $ Problem.Compile.Request
               <$> editorContents
-              <*> R.constDyn True
+              <*> R.constDyn Problem.Compile.Randomize
               <*> outputOption
               <*> figures
           resetVariables :: R.Event t () <- Button.primarySmallClass' "Reset variables" "active:bg-blue-400"
           resetVariablesAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
             Problem.Compile.performRequest resetVariables $ Problem.Compile.Request
               <$> editorContents
-              <*> R.constDyn False
+              <*> R.constDyn Problem.Compile.Reset
               <*> outputOption
               <*> figures
           return (randomizeVariablesAction', resetVariablesAction')
@@ -250,7 +250,7 @@ widget problemId = mdo
             showAnswerAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
               Problem.Compile.performRequest (R.updated $ const () <$> showAnswer) $ Problem.Compile.Request
                 <$> editorContents
-                <*> R.constDyn False
+                <*> R.constDyn Problem.Compile.NoChange
                 <*> outputOption
                 <*> figures
             showSolution :: R.Dynamic t Bool <- Input.checkboxClass
@@ -260,7 +260,7 @@ widget problemId = mdo
             showSolutionAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
               Problem.Compile.performRequest (R.updated $ const () <$> showSolution) $ Problem.Compile.Request
                 <$> editorContents
-                <*> R.constDyn False
+                <*> R.constDyn Problem.Compile.NoChange
                 <*> outputOption
                 <*> figures
             let outputOption' :: R.Dynamic t Compile.OutputOption =
@@ -304,7 +304,7 @@ widget problemId = mdo
           R.elClass "div" "flex-1 flex justify-center" $ do
             Problem.Compile.widget $ Problem.Compile.Request
               <$> editorContents
-              <*> R.constDyn False
+              <*> R.constDyn Problem.Compile.NoChange
               <*> outputOption
               <*> figures
         errorsToggle :: R.Dynamic t Bool <- R.elClass "div" "flex-1 flex justify-center ml-auto" $ do

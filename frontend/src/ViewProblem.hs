@@ -1,22 +1,17 @@
 {-# LANGUAGE PackageImports #-}
 module ViewProblem
   ( widget
-  , performCompileRequest
   ) where
 
 import Common.Lib.Prelude
 import qualified Frontend.Lib.Util as Util
 
 import qualified Data.Text as T
-import qualified Data.Map as Map
 import qualified Language.Javascript.JSaddle as JS
 import qualified "ghcjs-dom" GHCJS.DOM.Document as DOM
-import qualified GHCJS.DOM.Types
 import qualified Data.CaseInsensitive as CI
 import qualified Obelisk.Route.Frontend as Ob
 import qualified Reflex.Dom.Core as R
--- Import patch
-import qualified MyReflex.Dom.Xhr.FormData as R'
 
 import qualified Common.Route as Route
 import qualified Common.Api.Compile as Compile
@@ -70,9 +65,9 @@ widget problemId = mdo
 
   onload :: R.Event t () <- R.getPostBuild
   onloadAction :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-    performCompileRequest onload problemId $ Problem.Compile.Request
+    Problem.Compile.performRequestWithId onload problemId $ Problem.Compile.Request
       <$> R.constDyn ""
-      <*> R.constDyn False
+      <*> R.constDyn Problem.Compile.NoChange
       <*> R.constDyn Compile.QuestionOnly
       <*> R.constDyn []
 
@@ -140,18 +135,18 @@ widget problemId = mdo
                   "Randomize variables"
                   "active:bg-blue-400"
                 randomizeVariablesAction :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-                  performCompileRequest randomizeVariables problemId $ Problem.Compile.Request
+                  Problem.Compile.performRequestWithId randomizeVariables problemId $ Problem.Compile.Request
                     <$> R.constDyn ""
-                    <*> R.constDyn True
+                    <*> R.constDyn Problem.Compile.Randomize
                     <*> outputOption
                     <*> R.constDyn []
                 resetVariables :: R.Event t () <- Button.primarySmallClass'
                   "Reset variables"
                   "active:bg-blue-400"
                 resetVariablesAction :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-                  performCompileRequest resetVariables problemId $ Problem.Compile.Request
+                  Problem.Compile.performRequestWithId resetVariables problemId $ Problem.Compile.Request
                     <$> R.constDyn ""
-                    <*> R.constDyn False
+                    <*> R.constDyn Problem.Compile.Reset
                     <*> outputOption
                     <*> R.constDyn []
                 return (randomizeVariablesAction, resetVariablesAction)
@@ -165,9 +160,9 @@ widget problemId = mdo
                     "font-medium text-brand-primary cursor-pointer"
                     "Answer"
                   showAnswerAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-                    performCompileRequest (R.updated $ const () <$> showAnswer) problemId $ Problem.Compile.Request
+                    Problem.Compile.performRequestWithId (R.updated $ const () <$> showAnswer) problemId $ Problem.Compile.Request
                       <$> R.constDyn ""
-                      <*> R.constDyn False
+                      <*> R.constDyn Problem.Compile.NoChange
                       <*> outputOption
                       <*> R.constDyn []
                   showSolution :: R.Dynamic t Bool <- Input.checkboxClass
@@ -175,9 +170,9 @@ widget problemId = mdo
                     "font-medium text-brand-primary cursor-pointer"
                     "Solution"
                   showSolutionAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-                    performCompileRequest (R.updated $ const () <$> showSolution) problemId $ Problem.Compile.Request
+                    Problem.Compile.performRequestWithId (R.updated $ const () <$> showSolution) problemId $ Problem.Compile.Request
                       <$> R.constDyn ""
-                      <*> R.constDyn False
+                      <*> R.constDyn Problem.Compile.NoChange
                       <*> outputOption
                       <*> R.constDyn []
                   let outputOption' :: R.Dynamic t Compile.OutputOption =
@@ -225,34 +220,3 @@ widget problemId = mdo
           )
 
   return ()
-
-performCompileRequest
-  :: forall t m.
-     ( R.MonadHold t m
-     , R.PerformEvent t m
-     , R.HasJSContext (R.Performable m)
-     , JS.MonadJSM (R.Performable m)
-     , R.TriggerEvent t m
-     , MonadFix m
-     )
-  => R.Event t () -- ^ Event to trigger request
-  -> Integer -- ^ Problem ID
-  -> R.Dynamic t Problem.Compile.Request
-  -> m (R.Dynamic t (Loading.WithLoading (Maybe Compile.Response))) -- ^ Response
-performCompileRequest e problemId compileRequest = do
-  let formData :: R.Event t (Map Text (R'.FormValue GHCJS.DOM.Types.File)) = R.ffor (R.tagPromptlyDyn compileRequest e) $ \req -> do
-        let formDataParams :: Map Compile.RequestParam (R'.FormValue GHCJS.DOM.Types.File) = (
-              Compile.ParamRandomizeVariables =: R'.FormValue_Text
-              (Util.formBool . Problem.Compile.randomizeVariables $ req)
-              <> Compile.ParamOutputOption =: R'.FormValue_Text
-              (cs . show . Problem.Compile.outputOption $ req)
-              )
-        Map.mapKeys (cs . show) formDataParams
-    
-  rawCompileResponse :: R.Event t Text <- Util.postForm
-    (Route.apiHref $ Route.Api_Compile :/ Just problemId)
-    formData
-  compileResponse :: R.Dynamic t (Maybe Compile.Response) <- R.holdDyn Nothing
-    $ R.decodeText <$> rawCompileResponse
-  loading :: R.Dynamic t Bool <- compileResponse `Util.notUpdatedSince` e
-  return $ Loading.WithLoading <$> compileResponse <*> loading
