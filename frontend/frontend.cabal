@@ -28,6 +28,7 @@ library
     Frontend
   other-modules:
     Frontend.Lib.Util
+    Frontend.Lib.SessionStorage
     EditProblem
     Header
     Home
