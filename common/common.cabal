@@ -34,4 +34,5 @@ library
     Common.Api.Role
     Common.Api.Topic
     Common.Api.User
+    Common.Api.ChangePassword
   ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits
