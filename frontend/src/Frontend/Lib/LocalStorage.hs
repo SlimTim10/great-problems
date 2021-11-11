@@ -1,4 +1,4 @@
-module Frontend.Lib.SessionStorage where
+module Frontend.Lib.LocalStorage where
 
 import Common.Lib.Prelude
 
@@ -33,4 +33,4 @@ clear = Storage.clear =<< getStorage
 getStorage
   :: JS.MonadJSM m
   => m Storage.Storage
-getStorage = Storage.getStorage Storage.SessionStorage
+getStorage = Storage.getStorage Storage.LocalStorage
