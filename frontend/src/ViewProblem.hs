@@ -6,7 +6,6 @@ module ViewProblem
 import Common.Lib.Prelude
 import qualified Frontend.Lib.Util as Util
 
-import qualified Data.Text as T
 import qualified Language.Javascript.JSaddle as JS
 import qualified "ghcjs-dom" GHCJS.DOM.Document as DOM
 import qualified Data.CaseInsensitive as CI
@@ -203,14 +202,8 @@ widget problemId = mdo
               )
 
         R.elClass "div" "pl-2 flex-1 h-full flex flex-col" $ do
-          let showPdf = R.elClass "div" "flex-1" $
-                PdfViewer.widget latestResponse anyLoading (R.constDyn False)
-          Util.dynFor latestResponse $ \case
-            Nothing -> showPdf
-            Just res -> do
-              if any (not . T.null) [Compile.resErrorProblem2tex res, Compile.resErrorLatex res]
-                then R.text "Something went wrong. Try again later or notify the administrator."
-                else showPdf
+          R.elClass "div" "flex-1" $ do
+            PdfViewer.widget latestResponse anyLoading (R.constDyn False)
 
         return
           ( randomizeVariablesAction

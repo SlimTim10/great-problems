@@ -24,10 +24,14 @@ library
                , aeson
                , case-insensitive
                , keycode
+               , bytestring
+               , base64-bytestring
   exposed-modules:
     Frontend
   other-modules:
     Frontend.Lib.Util
+    Frontend.Lib.Storage
+    Frontend.Lib.LocalStorage
     Frontend.Lib.SessionStorage
     EditProblem
     Header

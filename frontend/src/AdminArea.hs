@@ -9,6 +9,7 @@ import qualified Data.Map as Map
 import qualified Data.CaseInsensitive as CI
 import qualified Language.Javascript.JSaddle as JS
 import qualified Obelisk.Route.Frontend as Ob
+import qualified Obelisk.Generated.Static as Ob
 import qualified Reflex.Dom.Core as R
 
 import qualified Common.Route as Route
@@ -63,7 +64,7 @@ widget = do
           let updateRoleError :: R.Event t (Either Text ()) = maybeToEither Error.message <$> response
 
           spinner <- R.holdDyn R.blank $ R.ffor (R.updated selectedRole) . const
-            $ R.elAttr "img" ("src" =: "/static/small_spinner.svg" <> "alt" =: "loading") $ R.blank
+            $ R.elAttr "img" ("src" =: Ob.static @"small_spinner.svg" <> "alt" =: "loading") $ R.blank
           responseEl <- R.holdDyn R.blank . R.ffor updateRoleError $ \case
             Left e -> R.elClass "p" "text-red-500" $ R.text e
             Right _ -> R.elClass "p" "text-green-500" $ R.text "Success"

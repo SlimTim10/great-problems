@@ -3,8 +3,11 @@ module Problem.PdfViewer
   ) where
 
 import Common.Lib.Prelude
+import qualified Frontend.Lib.Util as Util
 
-import qualified Data.Text as Text
+import qualified Data.ByteString.Base64 as B64
+import qualified Language.Javascript.JSaddle as JS
+import qualified Obelisk.Generated.Static as Ob
 import qualified Reflex.Dom.Core as R
 
 import qualified Common.Api.Compile as Compile
@@ -13,30 +16,41 @@ widget
   :: forall t m.
      ( R.DomBuilder t m
      , R.PostBuild t m
+     , R.PerformEvent t m
+     , JS.MonadJSM (R.Performable m)
+     , R.MonadHold t m
      )
   => R.Dynamic t (Maybe Compile.Response)
   -> R.Dynamic t Bool
   -> R.Dynamic t Bool
   -> m ()
 widget compileResponse loading errorsToggle = do
-  let pdfData :: R.Dynamic t Text = maybe "" Compile.resPdfContents <$> compileResponse
-  R.dyn_ $ switchView <$> pdfData <*> loading <*> compileResponse <*> errorsToggle
+  let pdfData :: R.Dynamic t (Maybe Text) = fmap Compile.resPdfContents <$> compileResponse
+  pdfUrl :: R.Event t (Maybe Text) <- R.performEvent $ R.ffor (R.updated pdfData) $ \case
+    Nothing -> return Nothing
+    Just pdfData' -> case (B64.decode . cs) pdfData' of
+      Left _ -> return Nothing
+      Right bs -> do
+        blobUrl <- Util.createObjectURL bs
+        return . Just $ Ob.static @"pdf.js/web/viewer.html" <> "?file=" <> blobUrl
+  pdfUrl' :: R.Dynamic t (Maybe Text) <- R.holdDyn Nothing pdfUrl
+  R.dyn_ $ switchView <$> pdfUrl' <*> loading <*> compileResponse <*> errorsToggle
 
 switchView
   :: R.DomBuilder t m
-  => Text
+  => Maybe Text
   -> Bool
   -> Maybe Compile.Response
   -> Bool
   -> m ()
-switchView pdfData loading compileResponse errorsToggle
+switchView pdfUrl loading compileResponse errorsToggle
   | loading = loadingWidget
   | errorsToggle = errorsWidget compileResponse
-  | Text.null pdfData = R.text "Press compile to view PDF"
+  | isNothing pdfUrl = R.text "Press compile to view PDF"
   | otherwise = R.elAttr "iframe" attrs $ do
       R.el "p" $ R.text "This browser does not support PDFs. Please download the PDF to view it:"
       R.elAttr "a"
-        ( "href" =: pdfObjectSrc
+        ( "href" =: fromJust pdfUrl
           <> "download" =: "Calculus Demo Problem"
           <> "title" =: "Download PDF document"
         )
@@ -44,13 +58,12 @@ switchView pdfData loading compileResponse errorsToggle
   where
     attrs :: Map Text Text
     attrs = (
-      "src" =: pdfObjectSrc
+      "src" =: fromJust pdfUrl
       <> "height" =: "100%"
       <> "width" =: "100%"
       <> "type" =: "application/pdf"
       <> "title" =: "pdf"
       )
-    pdfObjectSrc = "data:application/pdf;base64," <> pdfData
 
 errorsWidget
   :: R.DomBuilder t m
@@ -67,4 +80,4 @@ loadingWidget
   :: R.DomBuilder t m
   => m ()
 loadingWidget = R.elClass "div" "flex w-full h-full items-center justify-center" $ do
-  R.elAttr "img" ("src" =: "/static/pdf_spinner.svg" <> "alt" =: "loading") $ R.blank
+  R.elAttr "img" ("src" =: Ob.static @"pdf_spinner.svg" <> "alt" =: "loading") $ R.blank

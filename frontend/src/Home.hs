@@ -5,10 +5,10 @@ module Home
 import Common.Lib.Prelude
 import qualified Frontend.Lib.Util as Util
 
-import qualified Data.Text as T
 import qualified Control.Monad.Fix as Fix
 import qualified Language.Javascript.JSaddle as JS
 import qualified Obelisk.Route.Frontend as Ob
+import qualified Obelisk.Generated.Static as Ob
 import qualified MyReflex.Dom.Widget.Basic as R'
 import qualified Reflex.Dom.Core as R
 
@@ -93,7 +93,7 @@ widget = do
       R.elClass "div" "mt-20 px-10" $ do
         R'.elAttrClass
           "img"
-          ("src" =: "/static/problem_editor_screenshot.png")
+          ("src" =: Ob.static @"problem_editor_screenshot.png")
           "home-screenshot-img mx-auto"
           $ R.blank
 
@@ -217,13 +217,7 @@ widget = do
 
         R.elClass "div" "flex justify-center w-full" $ do
           R.elClass "div" "home-pdf-viewer" $ do
-            let showPdf = PdfViewer.widget latestResponse anyLoading (R.constDyn False)
-            Util.dynFor latestResponse $ \case
-              Nothing -> showPdf
-              Just res -> do
-                if any (not . T.null) [Compile.resErrorProblem2tex res, Compile.resErrorLatex res]
-                  then R.text "Something went wrong. Try again later or notify the administrator."
-                  else showPdf
+            PdfViewer.widget latestResponse anyLoading (R.constDyn False)
 
         return (randomizeVariablesAction, resetVariablesAction, showAnswerAction, showSolutionAction)
 

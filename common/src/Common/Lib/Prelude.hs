@@ -9,6 +9,7 @@ module Common.Lib.Prelude
   , module Data.CaseInsensitive
   , module Data.Functor
   , module Data.Word
+  , module Data.Char
   , module Data.Either
   , module Control.Monad
   , module Control.Monad.Fix
@@ -30,8 +31,9 @@ import Data.String.Conversions (cs)
 import Data.CaseInsensitive (CI)
 import Data.Functor ((<&>))
 import Data.Word (Word64)
+import Data.Char (ord)
 import Data.Either (fromLeft, fromRight)
-import Control.Monad (void, (<=<), forM_, when, unless, (>=>), mfilter)
+import Control.Monad (void, (<=<), forM, forM_, when, unless, (>=>), mfilter)
 import Control.Monad.Fix (MonadFix)
 import Control.Lens ((^.), _1, (&), (.~), iforM_)
 import Text.Read (readMaybe)

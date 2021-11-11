@@ -6,6 +6,7 @@ import Common.Lib.Prelude
 
 import qualified Language.Javascript.JSaddle.Types as JS
 import qualified Reflex.Dom.Ace as Ace
+import qualified Obelisk.Generated.Static as Ob
 import qualified Reflex.Dom.Core as R
 
 widget
@@ -27,7 +28,7 @@ widget forcedValue = mdo
     <> "class" =: "h-full w-full border"
     ) R.blank
   (script, _) <- R.elAttr' "script" (
-    "src" =: "/static/ace/ace.js"
+    "src" =: Ob.static @"ace/ace.js"
     <> "type" =: "text/javascript"
     <> "charset" =: "utf-8"
     ) R.blank
