@@ -64,14 +64,12 @@ widget = do
           let updateRoleError :: R.Event t (Either Text ()) = maybeToEither Error.message <$> response
 
           spinner <- R.holdDyn R.blank $ R.ffor (R.updated selectedRole) . const
-            $ R.elAttr "img" ("src" =: Ob.static @"small_spinner.svg" <> "alt" =: "loading") $ R.blank
+            $ R.elAttr "img" ("src" =: Ob.static @"small_spinner.svg" <> "width" =: "30" <> "alt" =: "loading") $ R.blank
           responseEl <- R.holdDyn R.blank . R.ffor updateRoleError $ \case
             Left e -> R.elClass "p" "text-red-500" $ R.text e
             Right _ -> R.elClass "p" "text-green-500" $ R.text "Success"
           status <- R.holdDyn R.blank . R.leftmost . map R.updated $ [spinner, responseEl]
           R.dyn_ status
-
-          R.blank
 
     selectRoleWidget
       :: Role.Role -- ^ Initial value

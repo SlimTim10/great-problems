@@ -15,6 +15,8 @@ module Database.Queries
   , authenticate
   , verifyEmail
   , newEmailVerification
+  , newResetPassword
+  , useResetPassword
   , newSession
   , removeSessionsByUserId
   , removeSessionById
@@ -47,6 +49,7 @@ import qualified Database.Types.Topic as DbTopic
 import qualified Database.Types.User as DbUser
 import qualified Database.Types.Role as DbRole
 import qualified Database.Types.EmailVerification as DbEmailVerification
+import qualified Database.Types.ResetPassword as DbResetPassword
 import qualified Database.Types.Session as DbSession
 import qualified Database.Types.Figure as DbFigure
 
@@ -411,8 +414,10 @@ setUserVerified :: SQL.Connection -> Integer -> IO ()
 setUserVerified conn userId = void
   $ SQL.execute conn "UPDATE users SET verified = TRUE WHERE id = ?" (SQL.Only userId)
 
--- | Returns secret
-newEmailVerification :: SQL.Connection -> Integer -> IO Text
+newEmailVerification
+  :: SQL.Connection
+  -> Integer -- ^ User ID
+  -> IO Text -- ^ Secret
 newEmailVerification conn userId = do
   let generateSecret = do
         secret <- Util.generateRandomText
@@ -423,6 +428,59 @@ newEmailVerification conn userId = do
   void $ SQL.execute conn
     "INSERT INTO email_verifications(secret, user_id) VALUES (?,?)" (secret, userId)
   return secret
+
+newResetPassword
+  :: SQL.Connection
+  -> Integer -- ^ User ID
+  -> IO Text -- ^ Secret
+newResetPassword conn userId = do
+  let generateSecret = do
+        secret <- Util.generateRandomText
+        getEmailVerificationBySecret conn secret >>= \case
+          Nothing -> return secret
+          Just _ -> generateSecret
+  secret <- generateSecret
+  void $ SQL.execute conn
+    "INSERT INTO reset_password(secret, user_id) VALUES (?,?)" (secret, userId)
+  return secret
+
+getResetPasswordBySecret
+  :: SQL.Connection
+  -> Text
+  -> IO (Maybe DbResetPassword.ResetPassword)
+getResetPasswordBySecret conn secret = headMay
+  <$> SQL.query conn "SELECT * FROM reset_password WHERE secret = ?" (SQL.Only secret)
+
+checkResetPasswordExpired
+  :: SQL.Connection
+  -> Integer -- ^ ID
+  -> IO Bool
+checkResetPasswordExpired conn resetPasswordId = headMay
+  <$> SQL.query conn
+  "SELECT * FROM reset_password WHERE id = ? AND (created_at > NOW() - interval '30 minutes')"
+  (SQL.Only resetPasswordId)
+  >>= \case
+  Nothing -> return True
+  Just (_ :: DbResetPassword.ResetPassword) -> return False
+
+useResetPassword
+  :: SQL.Connection
+  -> Text
+  -> IO (Maybe User.User)
+useResetPassword conn secret = do
+  getResetPasswordBySecret conn secret >>= \case
+    Nothing -> return Nothing
+    Just rp -> checkResetPasswordExpired conn (DbResetPassword.id rp) >>= \case
+      True -> do
+        void $ SQL.execute conn "DELETE FROM reset_password WHERE id = ?"
+          (SQL.Only $ DbResetPassword.id rp)
+        return Nothing
+      False -> do
+        void $ SQL.execute conn "DELETE FROM reset_password WHERE id = ?"
+          (SQL.Only $ DbResetPassword.id rp)
+        getUserById conn (DbResetPassword.user_id rp) >>= \case
+          Nothing -> return Nothing
+          Just user -> return $ Just user
 
 getSessionById :: SQL.Connection -> Text -> IO (Maybe DbSession.Session)
 getSessionById conn sessionId = headMay

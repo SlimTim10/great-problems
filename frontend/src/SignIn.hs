@@ -18,7 +18,7 @@ import qualified Common.Api.Auth as Auth
 import qualified Common.Api.Error as Error
 
 widget
-  :: forall t m.
+  :: forall t m js.
      ( R.DomBuilder t m
      , R.PerformEvent t m
      , JS.MonadJSM (R.Performable m)
@@ -28,6 +28,8 @@ widget
      , R.MonadHold t m
      , MonadFix m
      , R.PostBuild t m
+     , Ob.RouteToUrl (Ob.R Route.FrontendRoute) m
+     , R.Prerender js t m
      )
   => m ()
 widget = do
@@ -45,6 +47,9 @@ widget = do
       let password :: R.Dynamic t Text = R.value passwordInput
       
       signInButton :: R.Event t () <- Button.primary' "Sign in"
+
+      Ob.routeLink (Route.FrontendRoute_ForgotPassword :/ ()) $ do
+        R.elClass "p" "text-blue-500" $ R.text "Forgot password?"
       
       let signIn = R.leftmost
             [ signInButton
@@ -72,8 +77,8 @@ widget = do
       -> m (R.Event t (Maybe Error.Error))
     signInAttempt email password signIn = do
       let ev :: R.Event t (Text, Text) = R.tagPromptlyDyn (R.zipDyn email password) signIn
-      r <- R.performRequestAsync $ R.ffor ev
-        $ \(email', password') -> signInRequest $ Auth.Auth (CI.mk email') password'
+      r <- R.performRequestAsync $ R.ffor ev $ \(email', password') -> do
+        signInRequest $ Auth.Auth (CI.mk email') password'
       return $ R.decodeXhrResponse <$> r
 
     signInRequest :: JSON.ToJSON a => a -> R.XhrRequest Text

@@ -5,6 +5,7 @@
 module Common.Api.User
   ( User(..)
   , UpdateRequest(..)
+  , ResetPasswordRequest(..)
   ) where
 
 import Common.Lib.Prelude
@@ -38,6 +39,14 @@ instance (JSON.ToJSON (CI Text)) where
 
 data UpdateRequest = UpdateRequest
   { urRole :: Role.Role
+  } deriving
+  ( Generic
+  , JSON.ToJSON
+  , JSON.FromJSON
+  )
+
+data ResetPasswordRequest = ResetPasswordRequest
+  { rprEmail :: CI Text
   } deriving
   ( Generic
   , JSON.ToJSON

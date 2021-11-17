@@ -47,6 +47,8 @@ library
     VerifyEmail
     ViewProblem
     AdminArea
+    ForgotPassword
+    ResetPassword
     Problem.Compile
     Problem.DownloadPrb
     Problem.Editor

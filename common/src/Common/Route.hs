@@ -37,6 +37,7 @@ data Api :: * -> * where
   Api_Register :: Api ()
   Api_VerifyEmail :: Api Text
   Api_ChangePassword :: Api ()
+  Api_ResetPassword :: Api ()
   Api_SignIn :: Api ()
   Api_SignOut :: Api ()
   Api_Compile :: Api (Maybe Integer)
@@ -49,6 +50,8 @@ data FrontendRoute :: * -> * where
   FrontendRoute_VerifyEmail :: FrontendRoute Text
   FrontendRoute_SignIn :: FrontendRoute ()
   FrontendRoute_SignOut :: FrontendRoute ()
+  FrontendRoute_ForgotPassword :: FrontendRoute ()
+  FrontendRoute_ResetPassword :: FrontendRoute Text
   FrontendRoute_Profile :: FrontendRoute ()
   FrontendRoute_Problems :: FrontendRoute (Integer, Ob.R ProblemsRoute)
   FrontendRoute_NewProblem :: FrontendRoute ()
@@ -93,6 +96,7 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
         Api_Register -> Ob.PathSegment "register" $ Ob.unitEncoder mempty
         Api_VerifyEmail -> Ob.PathSegment "verify-email" Ob.singlePathSegmentEncoder
         Api_ChangePassword -> Ob.PathSegment "change-password" $ Ob.unitEncoder mempty
+        Api_ResetPassword -> Ob.PathSegment "reset-password" $ Ob.unitEncoder mempty
         Api_SignIn -> Ob.PathSegment "sign-in" $ Ob.unitEncoder mempty
         Api_SignOut -> Ob.PathSegment "sign-out" $ Ob.unitEncoder mempty
         Api_Compile -> Ob.PathSegment "compile" $
@@ -107,8 +111,10 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
         ExploreRoute_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.unitEncoder mempty
       FrontendRoute_Register -> Ob.PathSegment "register" $ Ob.unitEncoder mempty
       FrontendRoute_VerifyEmail -> Ob.PathSegment "verify-email" Ob.singlePathSegmentEncoder
+      FrontendRoute_ResetPassword -> Ob.PathSegment "reset-password" Ob.singlePathSegmentEncoder
       FrontendRoute_SignIn -> Ob.PathSegment "sign-in" $ Ob.unitEncoder mempty
       FrontendRoute_SignOut -> Ob.PathSegment "sign-out" $ Ob.unitEncoder mempty
+      FrontendRoute_ForgotPassword -> Ob.PathSegment "forgot-password" $ Ob.unitEncoder mempty
       FrontendRoute_Profile -> Ob.PathSegment "profile" $ Ob.unitEncoder mempty
       FrontendRoute_NewProblem -> Ob.PathSegment "new-problem" $ Ob.unitEncoder mempty
       FrontendRoute_Problems -> Ob.PathSegment "problems" $ Ob.pathSegmentEncoder .
@@ -122,6 +128,7 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
           TopicsRoute_Problems -> Ob.PathSegment "problems" $ Ob.unitEncoder mempty
           TopicsRoute_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.unitEncoder mempty)
       FrontendRoute_Admin -> Ob.PathSegment "admin" $ Ob.unitEncoder mempty
+
   )
 
 apiHref

@@ -136,26 +136,34 @@ backend = Ob.Backend
               verify <- IO.liftIO $ Queries.verifyEmail conn (cs secret)
               if verify
                 then writeJSON OkResponse.OkResponse
-                else writeJSON $ Error.mk "Invalid email verification code"
+                else writeJSON $ Error.mk "Invalid email verification link"
                 
             Route.Api_ChangePassword :/ () -> Snap.rqMethod <$> Snap.getRequest >>= \case
-              Snap.POST -> case mUser of
-                Nothing -> writeJSON $ Error.mk "No access"
-                Just user -> do
-                  rawBody <- Snap.readRequestBody maxRequestBodySize
-                  case JSON.decode rawBody :: Maybe ChangePassword.ChangePassword of
-                    Nothing -> writeJSON $ Error.mk "Something went wrong"
-                    Just cp -> do
-                      let auth = Auth.Auth (User.email user) (ChangePassword.oldPassword cp)
-                      IO.liftIO (Auth.authCheck conn auth) >>= \case
-                        Auth.Authenticated _ -> do
-                          if T.null (ChangePassword.newPassword cp)
+              Snap.POST -> do
+                rawBody <- Snap.readRequestBody maxRequestBodySize
+                case JSON.decode rawBody :: Maybe ChangePassword.ChangePassword of
+                  Nothing -> writeJSON $ Error.mk "Something went wrong"
+                  Just cp -> do
+                    let changePassword = \user newPassword -> do
+                          if T.null newPassword
                             then writeJSON $ Error.mk "Password cannot be empty"
                             else do
                             IO.liftIO (Queries.updateUserPassword conn (User.id user) cp) >>= \case
                               Nothing -> writeJSON $ Error.mk "Something went wrong"
                               Just _ -> writeJSON OkResponse.OkResponse
-                        _ -> writeJSON $ Error.mk "Incorrect password"
+                    case ChangePassword.identification cp of
+                      ChangePassword.OldPassword oldPassword -> do
+                        case mUser of
+                          Nothing -> writeJSON $ Error.mk "No access"
+                          Just user -> do
+                            let auth = Auth.Auth (User.email user) oldPassword
+                            IO.liftIO (Auth.authCheck conn auth) >>= \case
+                              Auth.Authenticated _ -> changePassword  user (ChangePassword.newPassword cp)
+                              _ -> writeJSON $ Error.mk "Incorrect password"
+                      ChangePassword.ResetSecret secret -> do
+                        IO.liftIO (Queries.useResetPassword conn secret) >>= \case
+                          Nothing -> writeJSON $ Error.mk "Expired or invalid link"
+                          Just user -> changePassword user (ChangePassword.newPassword cp)
               _ -> return ()
                 
             Route.Api_SignIn :/ () -> do
@@ -176,6 +184,22 @@ backend = Ob.Backend
               IO.liftIO $ mapM_ (Auth.removeSession conn) mSession
               removeCookie "sessionId"
               removeCookie "user"
+
+            Route.Api_ResetPassword :/ () -> Snap.rqMethod <$> Snap.getRequest >>= \case
+              Snap.POST -> do
+                rawBody <- Snap.readRequestBody maxRequestBodySize
+                case JSON.decode rawBody :: Maybe User.ResetPasswordRequest of
+                  Nothing -> writeJSON $ Error.mk "Something went wrong"
+                  Just req -> do
+                    let email = User.rprEmail req
+                    IO.liftIO (Queries.getUserByEmail conn email) >>= \case
+                      -- Don't reveal that the email was not found (for security)
+                      Nothing -> writeJSON OkResponse.OkResponse
+                      Just user -> do
+                        secret <- IO.liftIO $ Queries.newResetPassword conn (User.id user)
+                        Email.sendResetPasswordEmail user secret
+                        writeJSON OkResponse.OkResponse
+              _ -> return ()
               
             Route.Api_Compile :/ Nothing -> Snap.rqMethod <$> Snap.getRequest >>= \case
               Snap.POST -> case mUser of

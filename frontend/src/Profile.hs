@@ -90,6 +90,6 @@ widget = do
       let ev :: R.Event t (Text, Text) = R.tagPromptlyDyn (R.zipDyn oldPassword newPassword) trigger
       r <- R.performRequestAsync $ R.ffor ev $ \(oldPassword', newPassword') -> do
         let url = Route.apiHref $ Route.Api_ChangePassword :/ ()
-        let body = ChangePassword.ChangePassword oldPassword' newPassword'
+        let body = ChangePassword.ChangePassword (ChangePassword.OldPassword oldPassword') newPassword'
         R.postJson url body
       return $ R.decodeXhrResponse <$> r

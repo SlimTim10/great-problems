@@ -21,6 +21,8 @@ import qualified Register
 import qualified VerifyEmail
 import qualified SignIn
 import qualified SignOut
+import qualified ForgotPassword
+import qualified ResetPassword
 import qualified Profile
 import qualified AdminArea
 
@@ -69,6 +71,13 @@ frontend = Ob.Frontend
         SignIn.widget
       Route.FrontendRoute_SignOut -> do
         SignOut.widget
+      Route.FrontendRoute_ForgotPassword -> do
+        Header.widget
+        ForgotPassword.widget
+      Route.FrontendRoute_ResetPassword -> do
+        Header.widget
+        secret :: R.Dynamic t Text <- Ob.askRoute
+        ResetPassword.widget secret
       Route.FrontendRoute_Profile -> do
         Header.widget
         R.elClass "div" "bg-brand-light-gray flex justify-center py-4" $ do
