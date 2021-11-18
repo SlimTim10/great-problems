@@ -168,6 +168,8 @@ load conn = do
   _ <- SQL.query_ conn [SqlQQ.sql|
     SELECT setval(pg_get_serial_sequence('roles', 'id'), COALESCE((SELECT MAX(id)+1 FROM roles), 1), false);
     SELECT setval(pg_get_serial_sequence('users', 'id'), COALESCE((SELECT MAX(id)+1 FROM users), 1), false);
+    SELECT setval(pg_get_serial_sequence('email_verifications', 'id'), COALESCE((SELECT MAX(id)+1 FROM email_verifications), 1), false);
+    SELECT setval(pg_get_serial_sequence('reset_password', 'id'), COALESCE((SELECT MAX(id)+1 FROM reset_password), 1), false);
     SELECT setval(pg_get_serial_sequence('topics', 'id'), COALESCE((SELECT MAX(id)+1 FROM topics), 1), false);
     SELECT setval(pg_get_serial_sequence('problems', 'id'), COALESCE((SELECT MAX(id)+1 FROM problems), 1), false);
     SELECT setval(pg_get_serial_sequence('figures', 'id'), COALESCE((SELECT MAX(id)+1 FROM figures), 1), false);
