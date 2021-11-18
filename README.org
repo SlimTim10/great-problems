@@ -643,6 +643,10 @@ Extra import information is outputted to ~imports/~ (ghc-options: ~-ddump-minima
 
 Reflex has three main data types: Event, Behavior, and Dynamic. Instead of giving variables of these types special prefixes (e.g., ~evProblemText~) or suffixes (e.g., ~problemTextE~), their type should be clear from context or explicit type signatures (e.g., ~problemText :: Event t Text~).
 
+*** Module management
+
+Remember to add any new modules (*.hs files) to their respective *.cabal file in the ~other-modules~ section. Explicit modules are needed for compilation (but not when running in development, i.e., with ~ob run~).
+
 *** Adding dependencies
 
 Add the dependency to the appropriate .cabal file (frontend.cabal or backend.cabal) in ~build-depends~. If the dependency is not in Obelisk's curated list, proceed to the following instructions.
