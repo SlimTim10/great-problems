@@ -26,6 +26,7 @@ library
                , keycode
                , bytestring
                , base64-bytestring
+               , filepath
   exposed-modules:
     Frontend
   other-modules:

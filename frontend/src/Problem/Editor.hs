@@ -4,6 +4,7 @@ module Problem.Editor
 
 import Common.Lib.Prelude
 
+import qualified System.FilePath as FilePath
 import qualified Language.Javascript.JSaddle.Types as JS
 import qualified Reflex.Dom.Ace as Ace
 import qualified Obelisk.Generated.Static as Ob
@@ -47,6 +48,7 @@ widget forcedValue = mdo
         let
           cfg = R.def
             { Ace._aceConfigMode = Just "latex"
+            , Ace._aceConfigBasePath = Just $ cs . FilePath.takeDirectory . cs $ Ob.static @"ace/ace.js"
             }
         Ace.aceWidget
           cfg
