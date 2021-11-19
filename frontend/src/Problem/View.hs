@@ -43,25 +43,14 @@ widget
   => Integer
   -> m ()
 widget problemId = mdo
-  userId :: R.Dynamic t Integer <-
-    pure
-    . R.constDyn
-    . fromMaybe 0
-    . fmap User.id
-    =<< Util.getCurrentUser
+  topicPath
+  
+  ( randomizeVariablesAction
+    , resetVariablesAction
+    , showAnswerAction
+    , showSolutionAction
+    ) <- fullView latestResponse anyLoading
     
-  problem :: R.Dynamic t (Maybe Problem.Problem) <- do
-    r :: R.Event t (Maybe Problem.Problem) <- Util.getOnload
-      $ Route.apiHref $ Route.Api_Problems :/
-      ( Just problemId, Problem.getParamsToRouteQuery
-        $ Problem.GetParams
-        { Problem.gpExpand = Just ["author", "topic"]
-        , Problem.gpInclude = Just Problem.TopicPath
-        , Problem.gpTopic = Nothing
-        }
-      )
-    R.holdDyn Nothing r
-
   onload :: R.Event t () <- R.getPostBuild
   onloadAction :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
     Problem.Compile.performRequestWithId onload problemId $ Problem.Compile.Request
@@ -83,133 +72,154 @@ widget problemId = mdo
 
   anyLoading :: R.Dynamic t Bool <- Loading.anyLoading actions
 
-  R.elClass "div" "bg-brand-light-gray flex py-2 pl-2" $ do
-    Util.dynFor problem $ \case
-      Nothing -> R.blank
-      Just p -> do
-        R.elClass "div" "flex" $ do
-          let topics = fromMaybe [] $ Problem.topicPath p
-          forM_ (zip [0..] topics) $ \(n :: Integer, Topic.Topic tid name _) -> do
-            unless (n == 0) $ do
-              R.elClass "p" "text-brand-gray mx-1" $ R.text ">"
-            Ob.routeLink
-              (Route.FrontendRoute_Topics :/ (tid, Route.TopicsRoute_Problems :/ ())) $ do
-              R.elClass "p" "hover:underline text-brand-primary" $ R.text name
-
-  ( randomizeVariablesAction
-    , resetVariablesAction
-    , showAnswerAction
-    , showSolutionAction
-    ) <- do
-    R.elClass "div" "flex-1 mx-2 flex justify-center" $ do
-      R.elClass "div" "w-brand-screen-lg flex" $ mdo
-        ( randomizeVariablesAction
-          , resetVariablesAction
-          , showAnswerAction
-          , showSolutionAction
-          ) <- do
-          R.elClass "div" "w-96 flex-none flex flex-col gap-2" $ mdo
-            R.elClass "div" "pt-1 pb-3 border-b border-brand-light-gray flex flex-col gap-1" $ do
-              let problemDetails = \p -> do
-                    R.elClass "p" "text-brand-sm text-brand-gray" $ do
-                      R.text $ "#" <> (cs . show . Problem.id $ p)
-                    R.elClass "p" "font-medium" $ do
-                      R.text $ Problem.summary p
-                    R.elClass "p" "text-brand-sm text-brand-gray" $ do
-                      R.text $ "Last updated at " <> (cs . show $ Problem.updatedAt p)
-                    R.elClass "div" "flex gap-1" $ do
-                      R.elClass "p" "text-brand-sm text-brand-gray" $ do
-                        R.text $ "by"
-                      R.elClass "p" "text-brand-sm text-brand-gray font-bold" $ do
-                        R.text $ either (const "") (CI.original . User.fullName) (Problem.author p)
-              R.dyn_ $ maybe R.blank problemDetails <$> problem
-            R.elClass "div" "pt-1 pb-3 border-b border-brand-light-gray flex gap-6" $ do
-              R.elClass "p" "text-brand-sm text-brand-primary font-medium" $ do
-                R.text "SHARE"
-              R.elClass "p" "text-brand-sm text-brand-primary font-medium" $ do
-                R.text "SAVE"
-            (randomizeVariablesAction, resetVariablesAction) <- do
-              R.elClass "div" "py-3 flex gap-2" $ mdo
-                randomizeVariables :: R.Event t () <- Button.primarySmallClass'
-                  "Randomize variables"
-                  "active:bg-blue-400"
-                randomizeVariablesAction :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-                  Problem.Compile.performRequestWithId randomizeVariables problemId $ Problem.Compile.Request
-                    <$> R.constDyn ""
-                    <*> R.constDyn Problem.Compile.Randomize
-                    <*> outputOption
-                    <*> R.constDyn []
-                resetVariables :: R.Event t () <- Button.primarySmallClass'
-                  "Reset variables"
-                  "active:bg-blue-400"
-                resetVariablesAction :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-                  Problem.Compile.performRequestWithId resetVariables problemId $ Problem.Compile.Request
-                    <$> R.constDyn ""
-                    <*> R.constDyn Problem.Compile.Reset
-                    <*> outputOption
-                    <*> R.constDyn []
-                return (randomizeVariablesAction, resetVariablesAction)
-            (showAnswerAction, showSolutionAction, outputOption) <- do
-              R.elClass "div" "flex gap-4" $ do
-                R.elClass "p" "font-medium text-brand-primary"
-                  $ R.text "Show problem with:"
-                R.elClass "div" "flex flex-col" $ do
-                  showAnswer :: R.Dynamic t Bool <- Input.checkboxClass
-                    "cursor-pointer mr-2 checkbox-brand-primary"
-                    "font-medium text-brand-primary cursor-pointer"
-                    "Answer"
-                  showAnswerAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-                    Problem.Compile.performRequestWithId (R.updated $ const () <$> showAnswer) problemId $ Problem.Compile.Request
-                      <$> R.constDyn ""
-                      <*> R.constDyn Problem.Compile.NoChange
-                      <*> outputOption
-                      <*> R.constDyn []
-                  showSolution :: R.Dynamic t Bool <- Input.checkboxClass
-                    "cursor-pointer mr-2 checkbox-brand-primary"
-                    "font-medium text-brand-primary cursor-pointer"
-                    "Solution"
-                  showSolutionAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-                    Problem.Compile.performRequestWithId (R.updated $ const () <$> showSolution) problemId $ Problem.Compile.Request
-                      <$> R.constDyn ""
-                      <*> R.constDyn Problem.Compile.NoChange
-                      <*> outputOption
-                      <*> R.constDyn []
-                  let outputOption' :: R.Dynamic t Compile.OutputOption =
-                        (\showAnswer' showSolution' ->
-                           case (showAnswer', showSolution') of
-                             (False, False) -> Compile.QuestionOnly
-                             (False, True) -> Compile.WithSolution
-                             (True, False) -> Compile.WithAnswer
-                             (True, True) -> Compile.WithSolutionAndAnswer
-                        ) <$> showAnswer <*> showSolution
-                  return (showAnswerAction', showSolutionAction', outputOption')
-            let showEditLink uid = \case
-                  Nothing -> R.blank
-                  Just p -> do
-                    let authorId = either id User.id (Problem.author p)
-                    when (authorId == uid) $ do
-                      R.elClass "div" "pt-3 border-t border-brand-light-gray" $ do
-                        Ob.routeLink
-                          (Route.FrontendRoute_Problems :/
-                            (problemId, Route.ProblemsRoute_Edit :/ ())) $ do
-                          Button.secondarySmall "Edit this problem"
-            R.dyn_ $ showEditLink <$> userId <*> problem
-            return
-              ( randomizeVariablesAction
-              , resetVariablesAction
-              , showAnswerAction
-              , showSolutionAction
-              )
-
-        R.elClass "div" "pl-2 flex-1 h-full flex flex-col" $ do
-          R.elClass "div" "flex-1" $ do
-            PdfViewer.widget latestResponse anyLoading (R.constDyn False)
-
-        return
-          ( randomizeVariablesAction
-          , resetVariablesAction
-          , showAnswerAction
-          , showSolutionAction
-          )
-
   return ()
+  where
+    getUserId :: m (R.Dynamic t Integer)
+    getUserId = pure . R.constDyn . fromMaybe 0 . fmap User.id =<< Util.getCurrentUser
+
+    getProblem :: m (R.Dynamic t (Maybe Problem.Problem))
+    getProblem = do
+      r :: R.Event t (Maybe Problem.Problem) <- Util.getOnload
+        $ Route.apiHref $ Route.Api_Problems :/
+        ( Just problemId, Problem.getParamsToRouteQuery
+          $ Problem.GetParams
+          { Problem.gpExpand = Just ["author", "topic"]
+          , Problem.gpInclude = Just Problem.TopicPath
+          , Problem.gpTopic = Nothing
+          }
+        )
+      R.holdDyn Nothing r
+
+    topicPath = do
+      R.elClass "div" "bg-brand-light-gray flex py-2 pl-2" $ do
+        problem <- getProblem
+        Util.dynFor problem $ \case
+          Nothing -> R.blank
+          Just p -> do
+            R.elClass "div" "flex" $ do
+              let topics = fromMaybe [] $ Problem.topicPath p
+              forM_ (zip [0..] topics) $ \(n :: Integer, Topic.Topic tid name _) -> do
+                unless (n == 0) $ do
+                  R.elClass "p" "text-brand-gray mx-1" $ R.text ">"
+                Ob.routeLink
+                  (Route.FrontendRoute_Topics :/ (tid, Route.TopicsRoute_Problems :/ ())) $ do
+                  R.elClass "p" "hover:underline text-brand-primary" $ R.text name
+
+    fullView latestResponse anyLoading = do
+      R.elClass "div" "flex-1 mx-2 flex justify-center" $ do
+        R.elClass "div" "w-brand-screen-lg flex" $ do
+          ctx <- leftPane
+          R.elClass "div" "pl-2 flex-1 h-full flex flex-col" $ do
+            R.elClass "div" "flex-1" $ do
+              PdfViewer.widget latestResponse anyLoading (R.constDyn False)
+          return ctx
+
+    leftPane = do
+      R.elClass "div" "w-96 flex-none flex flex-col gap-2" $ mdo
+        section problemDetails
+        section $ do
+          R.elClass "div" "flex gap-6" $ do
+            R.elClass "p" "text-brand-sm text-brand-primary font-medium" $ do
+              R.text "SHARE"
+            R.elClass "p" "text-brand-sm text-brand-primary font-medium" $ do
+              R.text "SAVE"
+        ctx <- problemOptions
+        return ctx
+      where
+        section body = R.elClass "div" "pt-1 pb-3 border-b border-brand-light-gray" $ body
+
+    problemOptions = mdo
+      (randomizeVariablesAction, resetVariablesAction) <- do
+        R.elClass "div" "py-3 flex gap-2" $ mdo
+          randomizeVariables :: R.Event t () <- Button.primarySmallClass'
+            "Randomize variables"
+            "active:bg-blue-400"
+          randomizeVariablesAction :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
+            Problem.Compile.performRequestWithId randomizeVariables problemId $ Problem.Compile.Request
+              <$> R.constDyn ""
+              <*> R.constDyn Problem.Compile.Randomize
+              <*> outputOption
+              <*> R.constDyn []
+          resetVariables :: R.Event t () <- Button.primarySmallClass'
+            "Reset variables"
+            "active:bg-blue-400"
+          resetVariablesAction :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
+            Problem.Compile.performRequestWithId resetVariables problemId $ Problem.Compile.Request
+              <$> R.constDyn ""
+              <*> R.constDyn Problem.Compile.Reset
+              <*> outputOption
+              <*> R.constDyn []
+          return (randomizeVariablesAction, resetVariablesAction)
+      (showAnswerAction, showSolutionAction, outputOption) <- do
+        R.elClass "div" "flex gap-4" $ do
+          R.elClass "p" "font-medium text-brand-primary"
+            $ R.text "Show problem with:"
+          R.elClass "div" "flex flex-col" $ do
+            showAnswer :: R.Dynamic t Bool <- Input.checkboxClass
+              "cursor-pointer mr-2 checkbox-brand-primary"
+              "font-medium text-brand-primary cursor-pointer"
+              "Answer"
+            showAnswerAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
+              Problem.Compile.performRequestWithId (R.updated $ const () <$> showAnswer) problemId $ Problem.Compile.Request
+                <$> R.constDyn ""
+                <*> R.constDyn Problem.Compile.NoChange
+                <*> outputOption
+                <*> R.constDyn []
+            showSolution :: R.Dynamic t Bool <- Input.checkboxClass
+              "cursor-pointer mr-2 checkbox-brand-primary"
+              "font-medium text-brand-primary cursor-pointer"
+              "Solution"
+            showSolutionAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
+              Problem.Compile.performRequestWithId (R.updated $ const () <$> showSolution) problemId $ Problem.Compile.Request
+                <$> R.constDyn ""
+                <*> R.constDyn Problem.Compile.NoChange
+                <*> outputOption
+                <*> R.constDyn []
+            let outputOption' :: R.Dynamic t Compile.OutputOption =
+                  (\showAnswer' showSolution' ->
+                     case (showAnswer', showSolution') of
+                       (False, False) -> Compile.QuestionOnly
+                       (False, True) -> Compile.WithSolution
+                       (True, False) -> Compile.WithAnswer
+                       (True, True) -> Compile.WithSolutionAndAnswer
+                  ) <$> showAnswer <*> showSolution
+            return (showAnswerAction', showSolutionAction', outputOption')
+      return
+        ( randomizeVariablesAction
+        , resetVariablesAction
+        , showAnswerAction
+        , showSolutionAction
+        )
+
+    problemDetails = do
+      R.elClass "div" "flex flex-col gap-1" $ do
+        let problemDetails' = \p -> do
+              R.elClass "p" "text-brand-sm text-brand-gray" $ do
+                R.text $ "#" <> (cs . show . Problem.id $ p)
+              R.elClass "p" "font-medium" $ do
+                R.text $ Problem.summary p
+              R.elClass "p" "text-brand-sm text-brand-gray" $ do
+                R.text $ "Last updated at " <> (cs . show $ Problem.updatedAt p)
+              R.elClass "div" "flex gap-1" $ do
+                R.elClass "p" "text-brand-sm text-brand-gray" $ do
+                  R.text $ "by"
+                R.elClass "p" "text-brand-sm text-brand-gray font-bold" $ do
+                  R.text $ either (const "") (CI.original . User.fullName) (Problem.author p)
+        problem <- getProblem
+        R.dyn_ $ maybe R.blank problemDetails' <$> problem
+        editProblem
+
+
+    editProblem = do
+      let showEditLink uid = \case
+            Nothing -> R.blank
+            Just p -> do
+              let authorId = either id User.id (Problem.author p)
+              when (authorId == uid) $ do
+                Ob.routeLink
+                  (Route.FrontendRoute_Problems :/
+                   (problemId, Route.ProblemsRoute_Edit :/ ())) $ do
+                  R.elClass "div" "my-1" $ Button.secondarySmall "Edit this problem"
+      userId <- getUserId
+      problem <- getProblem
+      R.dyn_ $ showEditLink <$> userId <*> problem
