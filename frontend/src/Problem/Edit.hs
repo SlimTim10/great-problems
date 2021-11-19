@@ -11,6 +11,7 @@ import qualified Data.Map as Map
 import qualified Language.Javascript.JSaddle as JS
 import qualified "ghcjs-dom" GHCJS.DOM.Document as DOM
 import qualified GHCJS.DOM.Types
+import qualified Obelisk.Generated.Static as Ob
 import qualified Obelisk.Route.Frontend as Ob
 import qualified Reflex.Dom.Core as R
 -- Import patch
@@ -148,19 +149,13 @@ widget problemId = mdo
           Just savedProblem -> case isEditing of
             True -> R.elClass "p" "text-green-600" $ R.text "Saved!"
             False -> do
-              R.el "p" $ R.text "Published!"
-              Ob.routeLink
-                (Route.FrontendRoute_Problems :/
-                  (Problem.id savedProblem, Route.ProblemsRoute_View :/ ())) $ do
-                R.elClass "p" "text-brand-primary font-medium hover:underline" $ do
-                  R.text "Click here to view your published problem"
               timer :: R.Event t R.TickInfo <- R.tickLossyFromPostBuildTime 0.01
               Ob.setRoute $ do
                 (Route.FrontendRoute_Problems :/
-                 (Problem.id savedProblem, Route.ProblemsRoute_Edit :/ ())) <$ timer
-        let savingMessage = R.ffor publish $ \_ -> do
-              R.el "p" $ R.text "Saving..."
-        message <- R.holdDyn R.blank $ R.leftmost [savingMessage, R.updated finishMessage]
+                 (Problem.id savedProblem, Route.ProblemsRoute_View :/ ())) <$ timer
+        let spinner = R.ffor publish $ \_ -> do
+              R.elAttr "img" ("src" =: Ob.static @"small_spinner.svg" <> "width" =: "30" <> "alt" =: "loading") $ R.blank
+        message <- R.holdDyn R.blank $ R.leftmost [spinner, R.updated finishMessage]
         R.dyn_ message
 
         userId :: R.Dynamic t Integer <-
