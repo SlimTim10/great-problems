@@ -44,7 +44,6 @@ widget
   -> m ()
 widget problemId = mdo
   topicPath
-  
   ( randomizeVariablesAction
     , resetVariablesAction
     , showAnswerAction
@@ -73,6 +72,7 @@ widget problemId = mdo
   anyLoading :: R.Dynamic t Bool <- Loading.anyLoading actions
 
   return ()
+  
   where
     getUserId :: m (R.Dynamic t Integer)
     getUserId = pure . R.constDyn . fromMaybe 0 . fmap User.id =<< Util.getCurrentUser

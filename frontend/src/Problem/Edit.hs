@@ -68,30 +68,16 @@ widget
   => Maybe Integer
   -> m ()
 widget problemId = mdo
-  preloadedProblem :: R.Dynamic t (Maybe Problem.Problem) <- do
-    response :: R.Event t (Maybe Problem.Problem) <- case problemId of
-      Nothing -> return R.never
-      Just pid -> do
-        Util.getOnload
-          $ Route.apiHref $ Route.Api_Problems :/ (Just pid, mempty)
-    R.holdDyn Nothing response
-
   ( figures
     , randomizeVariablesAction
     , resetVariablesAction
     , showAnswerAction
     , showSolutionAction
     , outputOption
-    ) <- leftPane preloadedProblem editorContents
-    
+    ) <- leftPane editorContents
   ( editorContents
     , compileButtonAction
-    ) <- mainPane
-    preloadedProblem
-    figures
-    latestResponse
-    anyLoading
-    outputOption
+    ) <- mainPane figures latestResponse anyLoading outputOption
 
   let actions =
         [ compileButtonAction
@@ -111,7 +97,33 @@ widget problemId = mdo
   return ()
 
   where
-    leftPane preloadedProblem editorContents = do
+    getPreloadedProblem :: m (R.Dynamic t (Maybe Problem.Problem))
+    getPreloadedProblem = do
+      response :: R.Event t (Maybe Problem.Problem) <- case problemId of
+        Nothing -> return R.never
+        Just pid -> do
+          Util.getOnload
+            $ Route.apiHref $ Route.Api_Problems :/ (Just pid, mempty)
+      R.holdDyn Nothing response
+
+    fetchFigures
+      ::  R.Dynamic t (Maybe Problem.Problem)
+      -> m (R.Dynamic t [FormFile.FormFile])
+    fetchFigures problem = do
+      let urls :: R.Event t [Text] = R.ffor (R.updated problem) $ \case
+            Nothing -> []
+            Just p -> R.ffor (Problem.figures p) $ \x -> Route.apiHref $ Route.Api_Figures :/ (Figure.id x)
+      let requests :: R.Event t [R.XhrRequest ()] = (fmap . map)
+            (\x -> R.XhrRequest "GET" x $ R.def
+              & R.xhrRequestConfig_responseType .~ Just R.XhrResponseType_Blob
+              & R.xhrRequestConfig_responseHeaders .~ R.AllHeaders
+            )
+            urls
+      responses :: R.Event t [R.XhrResponse] <- R.performRequestsAsync requests
+      let files :: R.Event t [FormFile.FormFile] = catMaybes . map responseToFile <$> responses
+      R.holdDyn [] files
+
+    leftPane editorContents = do
       R.elClass "div" "w-96 flex-none flex flex-col pr-2 border-r border-brand-light-gray" $ mdo
         when (isJust problemId) $ do
           R.elClass "div" "pb-3 border-b border-brand-light-gray" $ do
@@ -122,6 +134,7 @@ widget problemId = mdo
               R.elClass "p" "text-brand-primary font-medium hover:underline" $ do
                 Button.secondarySmall "Public view of this problem"
           R.elClass "div" "pb-3" R.blank
+        preloadedProblem <- getPreloadedProblem
         let setTopicId :: R.Event t Integer =
               fromMaybe 0
               . fmap (either id Topic.id . Problem.topic)
@@ -269,10 +282,11 @@ widget problemId = mdo
             return (showAnswerAction', showSolutionAction', outputOption')
         return (randomizeVariablesAction, resetVariablesAction, showAnswerAction, showSolutionAction, outputOption)
 
-    mainPane preloadedProblem figures latestResponse anyLoading outputOption = do
+    mainPane figures latestResponse anyLoading outputOption = do
       R.elClass "div" "pl-2 flex-1 h-full flex flex-col" $ mdo
         (uploadPrb, compileButtonAction, errorsToggle) <-
           upperPane editorContents figures outputOption latestResponse anyLoading
+        preloadedProblem <- getPreloadedProblem
         let contentsFromPreloadedProblem :: R.Event t Text = fromMaybe "" . fmap Problem.contents
               <$> R.updated preloadedProblem
         let setContentsValue = R.leftmost [contentsFromPreloadedProblem, uploadPrb]
@@ -317,27 +331,3 @@ responseToFile response = do
       name <- Map.lookup (CI.mk "Filename") headers
       return $ FormFile.FormFile file name
     _ -> Nothing
-
-fetchFigures
-  :: forall t m.
-     ( R.PerformEvent t m
-     , JS.MonadJSM (R.Performable m)
-     , R.HasJSContext (R.Performable m)
-     , R.TriggerEvent t m
-     , R.MonadHold t m
-     )
-  => R.Dynamic t (Maybe Problem.Problem)
-  -> m (R.Dynamic t [FormFile.FormFile])
-fetchFigures problem = do
-  let urls :: R.Event t [Text] = R.ffor (R.updated problem) $ \case
-        Nothing -> []
-        Just p -> R.ffor (Problem.figures p) $ \x -> Route.apiHref $ Route.Api_Figures :/ (Figure.id x)
-  let requests :: R.Event t [R.XhrRequest ()] = (fmap . map)
-        (\x -> R.XhrRequest "GET" x $ R.def
-          & R.xhrRequestConfig_responseType .~ Just R.XhrResponseType_Blob
-          & R.xhrRequestConfig_responseHeaders .~ R.AllHeaders
-        )
-        urls
-  responses :: R.Event t [R.XhrResponse] <- R.performRequestsAsync requests
-  let files :: R.Event t [FormFile.FormFile] = catMaybes . map responseToFile <$> responses
-  R.holdDyn [] files
