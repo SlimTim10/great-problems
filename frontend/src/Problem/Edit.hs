@@ -1,5 +1,5 @@
 {-# LANGUAGE PackageImports #-}
-module EditProblem
+module Problem.Edit
   ( widget
   ) where
 

@@ -1,5 +1,5 @@
 {-# LANGUAGE PackageImports #-}
-module ViewProblem
+module Problem.View
   ( widget
   ) where
 

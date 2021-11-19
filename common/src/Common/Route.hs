@@ -118,15 +118,19 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
       FrontendRoute_Profile -> Ob.PathSegment "profile" $ Ob.unitEncoder mempty
       FrontendRoute_NewProblem -> Ob.PathSegment "new-problem" $ Ob.unitEncoder mempty
       FrontendRoute_Problems -> Ob.PathSegment "problems" $ Ob.pathSegmentEncoder .
-        bimap Ob.unsafeTshowEncoder (Ob.pathComponentEncoder $ \case
-          ProblemsRoute_View -> Ob.PathEnd $ Ob.unitEncoder mempty
-          ProblemsRoute_Edit -> Ob.PathSegment "edit" $ Ob.unitEncoder mempty)
+        bimap Ob.unsafeTshowEncoder
+        (Ob.pathComponentEncoder $ \case
+            ProblemsRoute_View -> Ob.PathEnd $ Ob.unitEncoder mempty
+            ProblemsRoute_Edit -> Ob.PathSegment "edit" $ Ob.unitEncoder mempty
+        )
       FrontendRoute_ViewProblemSet -> Ob.PathSegment "problem-sets" idPathSegmentEncoder
       FrontendRoute_ViewUser -> Ob.PathSegment "users" idPathSegmentEncoder
       FrontendRoute_Topics -> Ob.PathSegment "topics" $ Ob.pathSegmentEncoder .
-        bimap Ob.unsafeTshowEncoder (Ob.pathComponentEncoder $ \case
-          TopicsRoute_Problems -> Ob.PathSegment "problems" $ Ob.unitEncoder mempty
-          TopicsRoute_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.unitEncoder mempty)
+        bimap Ob.unsafeTshowEncoder
+        (Ob.pathComponentEncoder $ \case
+            TopicsRoute_Problems -> Ob.PathSegment "problems" $ Ob.unitEncoder mempty
+            TopicsRoute_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.unitEncoder mempty
+        )
       FrontendRoute_Admin -> Ob.PathSegment "admin" $ Ob.unitEncoder mempty
 
   )

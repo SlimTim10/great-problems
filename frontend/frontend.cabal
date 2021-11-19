@@ -34,7 +34,6 @@ library
     Frontend.Lib.Storage
     Frontend.Lib.LocalStorage
     Frontend.Lib.SessionStorage
-    EditProblem
     Header
     Home
     ProblemCards
@@ -46,10 +45,11 @@ library
     Tabs
     Topics
     VerifyEmail
-    ViewProblem
     AdminArea
     ForgotPassword
     ResetPassword
+    Problem.View
+    Problem.Edit
     Problem.Compile
     Problem.DownloadPrb
     Problem.Editor
