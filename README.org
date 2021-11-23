@@ -81,36 +81,36 @@ Remember to add any new modules (*.hs files) to their respective *.cabal file in
 
 *** Adding dependencies
 
-Add the dependency to the appropriate .cabal file (frontend.cabal or backend.cabal) in ~build-depends~. If the dependency is not in Obelisk's curated list, proceed to the following instructions.
+Add the dependency to the appropriate .cabal file (frontend.cabal or backend.cabal) in ~build-depends~. Only proceed to the following instructions if the dependency is not in Obelisk's curated list, that is, an error is produced upon ~ob run~ or building.
 
-Add dependencies from Hackage or GitHub by updating default.nix, as per the [[https://github.com/obsidiansystems/obelisk/blob/master/FAQ.md#how-do-i-add-or-override-haskell-dependencies-in-the-package-set][Obelisk guide]]:
+Add dependency thunk (replace "package-name" with the actual package name):
 
-#+BEGIN_SRC nix
-# ...
-project ./. ({ pkgs, ... }: {
-# ...
-  overrides = self: super: let
-    aesonSrc = pkgs.fetchFromGitHub {
-      owner = "obsidiansystems";
-      repo = "aeson-gadt-th";
-      rev = "ed573c2cccf54d72aa6279026752a3fecf9c1383";
-      sha256 = "08q6rnz7w9pn76jkrafig6f50yd0f77z48rk2z5iyyl2jbhcbhx3";
-    };
-  in
-  {
-    aeson = self.callCabal2nix "aeson" aesonSrc {};
-    waargonaut = self.callHackageDirect {
-      pkg = "waargonaut";
-      ver = "0.8.0.1";
-      sha256 = "1zv28np3k3hg378vqm89v802xr0g8cwk7gy3mr77xrzy5jbgpa39";
-    } {};
+#+begin_src sh
+$ mkdir dep
+$ git clone <repo> dep/package-name
+$ ob thunk pack dep/package-name
+#+end_src
+
+Add package to ~default.nix~:
+
+#+begin_src sh
+...
+project ./. ({ pkgs, hackGet, ... }: {
+  ...
+  packages = {
+    ...
+    package-name = hackGet ./dep/package-name;
   };
-# ...
-#+END_SRC
+})
+...
+#+end_src
 
-Let ~ob run~ fail with the expected ~sha256~ and update the value accordingly.
+To disable running the package tests, put it in the "overrides" section instead, using the existing packages as a guide.
 
-NOTE: It may be necessary to run ~nix-collect-garbage~ to clear the cache before ~ob run~.
+For more information:
+
+- https://www.srid.ca/obelisk-tutorial
+- https://github.com/obsidiansystems/obelisk-oauth#add-dependency-thunk
 
 ** Deployment
 
@@ -127,9 +127,9 @@ If the server is picky about line endings in the shell scripts, use dos2unix.
 *** Logging manually
 
 #+begin_src sh
-sudo mkdir -p /var/log/great-problems
-sudo chown -R <username> /var/log/great-problems/
-./startserver.sh &>> /var/log/great-problems/output.log
+$ sudo mkdir -p /var/log/great-problems
+$ sudo chown -R <username> /var/log/great-problems/
+$ ./startserver.sh &>> /var/log/great-problems/output.log
 #+end_src
 
 Obelisk's backend exe parameters ~--access-log~ and ~--error-log~ don't seem to work, but we can still capture all the output as above.
@@ -139,18 +139,18 @@ Obelisk's backend exe parameters ~--access-log~ and ~--error-log~ don't seem to 
 Build the app:
 
 #+begin_src sh
-nix-build -A exe --no-out-link
+$ nix-build -A exe --no-out-link
 #+end_src
 
 Copy the result and run:
 
 #+begin_src sh
-  rm -rf dist
-  mkdir dist
-  ln -s $(nix-build -A exe --no-out-link)/* dist/
-  cp -r config dist
-  cd dist
-  sudo ./backend <parameters>
+$ rm -rf dist
+$ mkdir dist
+$ ln -s $(nix-build -A exe --no-out-link)/* dist/
+$ cp -r config dist
+$ cd dist
+$ sudo ./backend <parameters>
 #+end_src
 
 *** Enabling SSL
@@ -162,15 +162,15 @@ Copy the result and run:
 - No need to install NGINX. Use [[https://eff-certbot.readthedocs.io/en/stable/using.html#standalone][Certbot's standalone plugin]].
 - Include the linode domain when registering domains. Full list should look something like: greatproblems.ca, www.greatproblems.ca, li1961-136.members.linode.com
 
-3. Use hooks for restarting the server upon SSL certificate renewal.
+3. Use hooks for restarting the server upon SSL certificate renewal:
 
 #+begin_src sh
-sudo ln -s ~/websites/great-problems/stopserver.sh /etc/letsencrypt/renewal-hooks/pre/stopserver.sh
-sudo ln -s ~/websites/great-problems/startserver.sh /etc/letsencrypt/renewal-hooks/post/startserver.sh
+$ sudo ln -s ~/websites/great-problems/stopserver.sh /etc/letsencrypt/renewal-hooks/pre/stopserver.sh
+$ sudo ln -s ~/websites/great-problems/startserver.sh /etc/letsencrypt/renewal-hooks/post/startserver.sh
 #+end_src
 
-4. Test automatic renewal.
+4. Test automatic renewal:
 
 #+begin_src sh
-sudo certbot renew --dry-run
+$ sudo certbot renew --dry-run
 #+end_src
