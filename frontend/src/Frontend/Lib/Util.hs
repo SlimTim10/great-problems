@@ -86,7 +86,7 @@ formBool :: Bool -> Text
 formBool True = "true"
 formBool False = "false"
 
--- | Make posting forms less awkward. Send a single map of params return the response as text.
+-- | Make posting forms less awkward. Send a single map of params and return the response as text.
 postForm
   :: forall t m.
      ( R.MonadHold t m
@@ -101,7 +101,7 @@ postForm
 postForm url formData = do
   responses <- R'.postForms url (singleton <$> formData)
   let results :: R.Event t [Maybe Text] = map (Lens.view R.xhrResponse_responseText) <$> responses
-  return $ T.concat . map (maybe "" id) <$> results
+  return $ T.concat . map (fromMaybe "") <$> results
 
 -- | Create a new Dynamic that is true if the first supplied Dynamic has occurred since the supplied Event has occurred, otherwise false.
 updatedSince
