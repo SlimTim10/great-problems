@@ -4,10 +4,14 @@ module Problem.Compile
   , performRequestWithId
   , Randomize(..)
   , Request(..)
+  , Response(..)
+  , mkRequest
   ) where
 
 import Common.Lib.Prelude
 
+import qualified Control.Monad.IO.Class as IO
+import qualified Data.Time.Clock as Time
 import qualified Data.Map as Map
 import qualified GHCJS.DOM.Types
 import qualified Language.Javascript.JSaddle as JS
@@ -24,29 +28,28 @@ import qualified Problem.Loading as Loading
 import qualified Problem.FormFile as FormFile
 
 data Randomize = Randomize | Reset | NoChange
+  deriving (Show, Eq)
 
 data Request = Request
   { contents :: Text
   , randomizeVariables :: Randomize
   , outputOption :: Compile.OutputOption
   , figures :: [FormFile.FormFile]
-  }
+  , time :: Time.UTCTime
+  } deriving (Show, Eq)
+
+-- | Keep request time together with response
+-- so we can prioritize responses based on request time
+data Response = Response
+  { reqTime :: Time.UTCTime
+  , response :: Maybe Compile.Response
+  } deriving (Show, Eq)
 
 widget
-  :: forall t m.
-     ( R.DomBuilder t m
-     , R.MonadHold t m
-     , JS.MonadJSM (R.Performable m)
-     , R.HasJSContext (R.Performable m)
-     , R.PerformEvent t m
-     , R.TriggerEvent t m
-     , MonadFix m
+  :: ( R.DomBuilder t m
      )
-  => R.Dynamic t Request
-  -> m (R.Dynamic t (Loading.WithLoading (Maybe Compile.Response))) -- ^ Response
-widget compileRequest = do
-  compile :: R.Event t () <- Button.primarySmallClass' "Compile" "active:bg-blue-400"
-  performRequest compile compileRequest
+  => m (R.Event t ())
+widget = Button.primarySmallClass' "Compile" "active:bg-blue-400"
 
 performRequest
   :: forall t m.
@@ -57,13 +60,13 @@ performRequest
      , R.PerformEvent t m
      , R.TriggerEvent t m
      , MonadFix m
+     , JS.MonadJSM m
      )
-  => R.Event t () -- ^ Event to trigger request
-  -> R.Dynamic t Request
-  -> m (R.Dynamic t (Loading.WithLoading (Maybe Compile.Response))) -- ^ Response
-performRequest e compileRequest = do
+  => R.Event t Request
+  -> m (R.Dynamic t (Loading.WithLoading Response)) -- ^ Response
+performRequest compileRequest = do
   formData :: R.Event t (Map Text (R'.FormValue GHCJS.DOM.Types.File)) <- R.performEvent
-    $ R.ffor (R.tagPromptlyDyn compileRequest e) $ \req -> do
+    $ R.ffor compileRequest $ \req -> do
     randomizeVariablesParam <- parseRandomize $ randomizeVariables req
     let formDataParams :: Map Compile.RequestParam (R'.FormValue GHCJS.DOM.Types.File) = (
           Compile.ParamContents =: R'.FormValue_Text (contents req)
@@ -73,13 +76,15 @@ performRequest e compileRequest = do
           )
     return $ Map.mapKeys (cs . show) formDataParams
 
-  response :: R.Event t Text <- Util.postForm
+  rawCompileResponse :: R.Event t Text <- Util.postForm
     (Route.apiHref $ Route.Api_Compile :/ Nothing)
     formData
   compileResponse :: R.Dynamic t (Maybe Compile.Response) <- R.holdDyn Nothing
-    $ R.decodeText <$> response
-  loading <- compileResponse `Util.notUpdatedSince` e
-  return $ Loading.WithLoading <$> compileResponse <*> loading
+    $ R.decodeText <$> rawCompileResponse
+  loading :: R.Dynamic t Bool <- compileResponse `Util.notUpdatedSince` compileRequest
+  ct <- IO.liftIO Time.getCurrentTime
+  t <- R.holdDyn ct (time <$> compileRequest)
+  return $ Loading.WithLoading <$> R.zipDynWith Response t compileResponse <*> loading
 
 performRequestWithId
   :: forall t m.
@@ -89,18 +94,18 @@ performRequestWithId
      , JS.MonadJSM (R.Performable m)
      , R.TriggerEvent t m
      , MonadFix m
+     , JS.MonadJSM m
      )
-  => R.Event t () -- ^ Event to trigger request
-  -> Integer -- ^ Problem ID
-  -> R.Dynamic t Problem.Compile.Request
-  -> m (R.Dynamic t (Loading.WithLoading (Maybe Compile.Response))) -- ^ Response
-performRequestWithId e problemId compileRequest = do
+  => Integer -- ^ Problem ID
+  -> R.Event t Request
+  -> m (R.Dynamic t (Loading.WithLoading Response)) -- ^ Response
+performRequestWithId problemId compileRequest = do
   formData :: R.Event t (Map Text (R'.FormValue GHCJS.DOM.Types.File)) <- R.performEvent
-    $ R.ffor (R.tagPromptlyDyn compileRequest e) $ \req -> do
+    $ R.ffor compileRequest $ \req -> do
     randomizeVariablesParam <- parseRandomize $ randomizeVariables req
     let formDataParams :: Map Compile.RequestParam (R'.FormValue GHCJS.DOM.Types.File) = (
           Compile.ParamRandomizeVariables =: R'.FormValue_Text randomizeVariablesParam
-            <> Compile.ParamOutputOption =: R'.FormValue_Text (cs . show . Problem.Compile.outputOption $ req)
+            <> Compile.ParamOutputOption =: R'.FormValue_Text (cs . show . outputOption $ req)
           )
     return $ Map.mapKeys (cs . show) formDataParams
     
@@ -109,8 +114,10 @@ performRequestWithId e problemId compileRequest = do
     formData
   compileResponse :: R.Dynamic t (Maybe Compile.Response) <- R.holdDyn Nothing
     $ R.decodeText <$> rawCompileResponse
-  loading :: R.Dynamic t Bool <- compileResponse `Util.notUpdatedSince` e
-  return $ Loading.WithLoading <$> compileResponse <*> loading
+  loading :: R.Dynamic t Bool <- compileResponse `Util.notUpdatedSince` compileRequest
+  ct <- IO.liftIO Time.getCurrentTime
+  t <- R.holdDyn ct (time <$> compileRequest)
+  return $ Loading.WithLoading <$> R.zipDynWith Response t compileResponse <*> loading
 
 parseRandomize
   :: JS.MonadJSM m
@@ -128,3 +135,22 @@ parseRandomize = \case
   NoChange -> SessionStorage.getItem "randomSeed" >>= \case
     Nothing -> return . cs . show $ (0 :: Integer)
     Just x -> return x
+
+mkRequest
+  :: ( JS.MonadJSM (R.Performable m)
+     , R.PerformEvent t m
+     , R.MonadSample t (R.Performable m)
+     )
+  => R.Event t () -- ^ Event to trigger request
+  -> R.Dynamic t Text -- ^ Problem contents
+  -> R.Dynamic t Problem.Compile.Randomize -- ^ Randomize problem variables
+  -> R.Dynamic t Compile.OutputOption -- ^ Show problem solution/answer
+  -> R.Dynamic t [FormFile.FormFile] -- ^ Problem figures
+  -> m (R.Event t Problem.Compile.Request)
+mkRequest e c rv oo figs = R.performEvent $ R.ffor e $ \_ -> do
+  c' <- R.sample . R.current $ c
+  rv' <- R.sample . R.current $ rv
+  oo' <- R.sample . R.current $ oo
+  figs' <- R.sample . R.current $ figs
+  t <- IO.liftIO Time.getCurrentTime
+  return $ Problem.Compile.Request c' rv' oo' figs' t

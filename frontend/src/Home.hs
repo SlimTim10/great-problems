@@ -5,7 +5,8 @@ module Home
 import Common.Lib.Prelude
 import qualified Frontend.Lib.Util as Util
 
-import qualified Control.Monad.Fix as Fix
+import qualified Control.Monad.IO.Class as IO
+import qualified Data.Time.Clock as Time
 import qualified Language.Javascript.JSaddle as JS
 import qualified Obelisk.Route.Frontend as Ob
 import qualified Obelisk.Generated.Static as Ob
@@ -26,7 +27,7 @@ widget
      ( R.DomBuilder t m
      , R.PostBuild t m
      , R.MonadHold t m
-     , Fix.MonadFix m
+     , MonadFix m
      , JS.MonadJSM m
      , JS.MonadJSM (R.Performable m)
      , R.HasJSContext (R.Performable m)
@@ -35,6 +36,7 @@ widget
      , Ob.RouteToUrl (Ob.R Route.FrontendRoute) m
      , Ob.SetRoute t (Ob.R Route.FrontendRoute) m
      , R.Prerender js t m
+     , R.MonadSample t (R.Performable m)
      )
   => m ()
 widget = do
@@ -129,12 +131,13 @@ widget = do
         R.holdDyn Nothing r
       
       onload :: R.Event t () <- R.getPostBuild
-      onloadAction :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-        Problem.Compile.performRequestWithId onload problemId $ Problem.Compile.Request
-          <$> R.constDyn ""
-          <*> R.constDyn Problem.Compile.NoChange
-          <*> R.constDyn Compile.QuestionOnly
-          <*> R.constDyn []
+      onloadAction :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do
+        r <- Problem.Compile.mkRequest onload
+          (R.constDyn "")
+          (R.constDyn Problem.Compile.NoChange)
+          (R.constDyn Compile.QuestionOnly)
+          (R.constDyn [])
+        Problem.Compile.performRequestWithId problemId r
           
       let actions =
             [ onloadAction
@@ -142,12 +145,21 @@ widget = do
             , resetVariablesAction
             , showAnswerAction
             , showSolutionAction
-            ]
+            ] :: [R.Dynamic t (Loading.WithLoading Problem.Compile.Response)]
             
-      latestResponse :: R.Dynamic t (Maybe Compile.Response) <- R.holdDyn Nothing
-        $ Loading.latestAction actions
-
-      anyLoading :: R.Dynamic t Bool <- Loading.anyLoading actions
+      currentResponse :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do
+        -- The current response should have the latest request time
+        let switchToLatest = \new old -> do
+              let tNew = Problem.Compile.reqTime . Loading.action $ new
+              let tOld = Problem.Compile.reqTime . Loading.action $ old
+              if tNew >= tOld
+                then Just new
+                else Nothing
+        t <- IO.liftIO Time.getCurrentTime
+        R.foldDynMaybe
+          switchToLatest
+          (Loading.WithLoading (Problem.Compile.Response t Nothing) False)
+          (R.leftmost . map R.updated $ actions)
         
       ( randomizeVariablesAction
         , resetVariablesAction
@@ -160,51 +172,55 @@ widget = do
         R.dyn_ $ maybe R.blank problemSummary <$> problem
         R.elClass "hr" "w-full border-gray-400" R.blank
         (randomizeVariablesAction, resetVariablesAction) <- do
-          R.elClass "div" "flex gap-2" $ do
-            randomizeVariablesTrigger :: R.Event t () <- Button.primarySmallClass'
+          R.elClass "div" "flex gap-2" $ mdo
+            randomizeVariables :: R.Event t () <- Button.primarySmallClass'
               "Randomize variables"
               "active:bg-blue-400"
-            randomizeVariablesAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-              Problem.Compile.performRequestWithId randomizeVariablesTrigger problemId $ Problem.Compile.Request
-                <$> R.constDyn ""
-                <*> R.constDyn Problem.Compile.Randomize
-                <*> outputOption
-                <*> R.constDyn []
+            randomizeVariablesAction :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do
+              r <- Problem.Compile.mkRequest randomizeVariables
+                (R.constDyn "")
+                (R.constDyn Problem.Compile.Randomize)
+                outputOption
+                (R.constDyn [])
+              Problem.Compile.performRequestWithId problemId r
             resetVariables :: R.Event t () <- Button.primarySmallClass'
               "Reset variables"
               "active:bg-blue-400"
-            resetVariablesAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-              Problem.Compile.performRequestWithId resetVariables problemId $ Problem.Compile.Request
-                <$> R.constDyn ""
-                <*> R.constDyn Problem.Compile.Reset
-                <*> outputOption
-                <*> R.constDyn []
-            return (randomizeVariablesAction', resetVariablesAction')
+            resetVariablesAction :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do
+              r <- Problem.Compile.mkRequest resetVariables
+                (R.constDyn "")
+                (R.constDyn Problem.Compile.Reset)
+                outputOption
+                (R.constDyn [])
+              Problem.Compile.performRequestWithId problemId r
+            return (randomizeVariablesAction, resetVariablesAction)
         (showAnswerAction, showSolutionAction, outputOption) <- do
           R.elClass "div" "flex gap-4" $ do
             R.elClass "p" "font-medium text-brand-primary"
               $ R.text "Show problem with:"
-            R.elClass "div" "flex flex-col" $ do
+            R.elClass "div" "flex flex-col" $ mdo
               showAnswer :: R.Dynamic t Bool <- Input.checkboxClass
                 "cursor-pointer mr-2 checkbox-brand-primary"
                 "font-medium text-brand-primary cursor-pointer"
                 "Answer"
-              showAnswerAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-                Problem.Compile.performRequestWithId (R.updated $ const () <$> showAnswer) problemId $ Problem.Compile.Request
-                  <$> R.constDyn ""
-                  <*> R.constDyn Problem.Compile.NoChange
-                  <*> outputOption
-                  <*> R.constDyn []
+              showAnswerAction :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do
+                r <- Problem.Compile.mkRequest (R.updated $ const () <$> showAnswer)
+                  (R.constDyn "")
+                  (R.constDyn Problem.Compile.NoChange)
+                  outputOption
+                  (R.constDyn [])
+                Problem.Compile.performRequestWithId problemId r
               showSolution :: R.Dynamic t Bool <- Input.checkboxClass
                 "cursor-pointer mr-2 checkbox-brand-primary"
                 "font-medium text-brand-primary cursor-pointer"
                 "Solution"
-              showSolutionAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-                Problem.Compile.performRequestWithId (R.updated $ const () <$> showSolution) problemId $ Problem.Compile.Request
-                  <$> R.constDyn ""
-                  <*> R.constDyn Problem.Compile.NoChange
-                  <*> outputOption
-                  <*> R.constDyn []
+              showSolutionAction :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do
+                r <- Problem.Compile.mkRequest (R.updated $ const () <$> showSolution)
+                  (R.constDyn "")
+                  (R.constDyn Problem.Compile.NoChange)
+                  outputOption
+                  (R.constDyn [])
+                Problem.Compile.performRequestWithId problemId r
               let outputOption' :: R.Dynamic t Compile.OutputOption =
                     (\showAnswer' showSolution' ->
                        case (showAnswer', showSolution') of
@@ -213,11 +229,14 @@ widget = do
                          (True, False) -> Compile.WithAnswer
                          (True, True) -> Compile.WithSolutionAndAnswer
                     ) <$> showAnswer <*> showSolution
-              return (showAnswerAction', showSolutionAction', outputOption')
+              return (showAnswerAction, showSolutionAction, outputOption')
 
         R.elClass "div" "flex justify-center w-full" $ do
           R.elClass "div" "home-pdf-viewer" $ do
-            PdfViewer.widget latestResponse anyLoading (R.constDyn False)
+            PdfViewer.widget
+              ((Problem.Compile.response . Loading.action) <$> currentResponse)
+              (Loading.loading <$> currentResponse)
+              (R.constDyn False)
 
         return (randomizeVariablesAction, resetVariablesAction, showAnswerAction, showSolutionAction)
 

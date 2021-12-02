@@ -6,6 +6,8 @@ module Problem.Edit
 import Common.Lib.Prelude
 import qualified Frontend.Lib.Util as Util
 
+import qualified Control.Monad.IO.Class as IO
+import qualified Data.Time.Clock as Time
 import qualified Data.CaseInsensitive as CI
 import qualified Data.Map as Map
 import qualified Language.Javascript.JSaddle as JS
@@ -64,6 +66,7 @@ widget
      , Ob.RouteToUrl (Ob.R Route.FrontendRoute) m
      , Ob.SetRoute t (Ob.R Route.FrontendRoute) m
      , R.Prerender js t m
+     , R.MonadSample t (R.Performable m)
      )
   => Maybe Integer
   -> m ()
@@ -77,7 +80,10 @@ widget problemId = mdo
     ) <- leftPane editorContents
   ( editorContents
     , compileButtonAction
-    ) <- mainPane figures latestResponse anyLoading outputOption
+    ) <- mainPane figures
+         ((Problem.Compile.response . Loading.action) <$> currentResponse)
+         (Loading.loading <$> currentResponse)
+         outputOption
 
   let actions =
         [ compileButtonAction
@@ -85,14 +91,21 @@ widget problemId = mdo
         , resetVariablesAction
         , showAnswerAction
         , showSolutionAction
-        ]
+        ] :: [R.Dynamic t (Loading.WithLoading Problem.Compile.Response)]
 
-  -- Only the latest response matters and it is what we show
-  latestResponse :: R.Dynamic t (Maybe Compile.Response) <- R.holdDyn Nothing
-    $ Loading.latestAction actions
-
-  -- If any response is still loading, we want to show the loading spinner
-  anyLoading :: R.Dynamic t Bool <- Loading.anyLoading actions
+  currentResponse :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do
+    -- The current response should have the latest request time
+    let switchToLatest = \new old -> do
+          let tNew = Problem.Compile.reqTime . Loading.action $ new
+          let tOld = Problem.Compile.reqTime . Loading.action $ old
+          if tNew >= tOld
+            then Just new
+            else Nothing
+    t <- IO.liftIO Time.getCurrentTime
+    R.foldDynMaybe
+      switchToLatest
+      (Loading.WithLoading (Problem.Compile.Response t Nothing) False)
+      (R.leftmost . map R.updated $ actions)
 
   return ()
 
@@ -233,19 +246,21 @@ widget problemId = mdo
       R.elClass "div" "py-3 border-b border-brand-light-gray" $ mdo
         (randomizeVariablesAction, resetVariablesAction) <- R.elClass "div" "flex gap-2 mb-2" $ do
           randomizeVariables :: R.Event t () <- Button.primarySmallClass' "Randomize variables" "active:bg-blue-400"
-          randomizeVariablesAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-            Problem.Compile.performRequest randomizeVariables $ Problem.Compile.Request
-              <$> editorContents
-              <*> R.constDyn Problem.Compile.Randomize
-              <*> outputOption
-              <*> figures
+          randomizeVariablesAction' :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do
+            r <- Problem.Compile.mkRequest randomizeVariables
+              editorContents
+              (R.constDyn Problem.Compile.Randomize)
+              outputOption
+              figures
+            Problem.Compile.performRequest r
           resetVariables :: R.Event t () <- Button.primarySmallClass' "Reset variables" "active:bg-blue-400"
-          resetVariablesAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-            Problem.Compile.performRequest resetVariables $ Problem.Compile.Request
-              <$> editorContents
-              <*> R.constDyn Problem.Compile.Reset
-              <*> outputOption
-              <*> figures
+          resetVariablesAction' :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do
+            r <- Problem.Compile.mkRequest resetVariables
+              editorContents
+              (R.constDyn Problem.Compile.Reset)
+              outputOption
+              figures
+            Problem.Compile.performRequest r
           return (randomizeVariablesAction', resetVariablesAction')
         (showAnswerAction, showSolutionAction, outputOption) <- R.elClass "div" "flex gap-4" $ do
           R.elClass "p" "font-medium text-brand-primary"
@@ -255,22 +270,24 @@ widget problemId = mdo
               "cursor-pointer mr-2 checkbox-brand-primary"
               "font-medium text-brand-primary cursor-pointer"
               "Answer"
-            showAnswerAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-              Problem.Compile.performRequest (R.updated $ const () <$> showAnswer) $ Problem.Compile.Request
-                <$> editorContents
-                <*> R.constDyn Problem.Compile.NoChange
-                <*> outputOption
-                <*> figures
+            showAnswerAction' :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do
+              r <- Problem.Compile.mkRequest (R.updated $ const () <$> showAnswer)
+                editorContents
+                (R.constDyn Problem.Compile.NoChange)
+                outputOption
+                figures
+              Problem.Compile.performRequest r
             showSolution :: R.Dynamic t Bool <- Input.checkboxClass
               "cursor-pointer mr-2 checkbox-brand-primary"
               "font-medium text-brand-primary cursor-pointer"
               "Solution"
-            showSolutionAction' :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
-              Problem.Compile.performRequest (R.updated $ const () <$> showSolution) $ Problem.Compile.Request
-                <$> editorContents
-                <*> R.constDyn Problem.Compile.NoChange
-                <*> outputOption
-                <*> figures
+            showSolutionAction' :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do
+              r <- Problem.Compile.mkRequest (R.updated $ const () <$> showSolution)
+                editorContents
+                (R.constDyn Problem.Compile.NoChange)
+                outputOption
+                figures
+              Problem.Compile.performRequest r
             let outputOption' :: R.Dynamic t Compile.OutputOption =
                   (\showAnswer' showSolution' ->
                      case (showAnswer', showSolution') of
@@ -309,13 +326,15 @@ widget problemId = mdo
                 ("type" =: "text" <> "class" =: "pl-1")
                 & R.inputElementConfig_initialValue .~ "untitled"
               return uploadPrb
-        compileButtonAction :: R.Dynamic t (Loading.WithLoading (Maybe Compile.Response)) <- do
+        compileButtonAction :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do
           R.elClass "div" "flex-1 flex justify-center" $ do
-            Problem.Compile.widget $ Problem.Compile.Request
-              <$> editorContents
-              <*> R.constDyn Problem.Compile.NoChange
-              <*> outputOption
-              <*> figures
+            compileButton <- Problem.Compile.widget
+            r <- Problem.Compile.mkRequest compileButton
+              editorContents
+              (R.constDyn Problem.Compile.NoChange)
+              outputOption
+              figures
+            Problem.Compile.performRequest r
         errorsToggle :: R.Dynamic t Bool <- R.elClass "div" "flex-1 flex justify-center ml-auto" $ do
           R.elClass "span" "ml-auto" $ ErrorsToggle.widget latestResponse (R.updated anyLoading)
         return (uploadPrb, compileButtonAction, errorsToggle)

@@ -9,7 +9,7 @@ import qualified Reflex.Dom.Core as R
 data WithLoading a = WithLoading
   { action :: a
   , loading :: Bool
-  }
+  } deriving (Show, Eq)
 
 anyLoading
   :: forall t m a.
