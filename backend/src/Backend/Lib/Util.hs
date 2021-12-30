@@ -24,8 +24,6 @@ generateRandomText = (Random.randomIO :: IO Word64)
 
 -- | Look up an environment variable, given a default to fall back to.
 lookupSetting :: Read a => String -> a -> IO a
-lookupSetting env def = do
-  maybeEnv <- Env.lookupEnv env
-  case maybeEnv of
-    Nothing -> pure def
-    Just str -> maybe (pure . read . show $ str) pure (Text.Read.readMaybe str)
+lookupSetting env def = Env.lookupEnv env >>= \case
+  Nothing -> pure def
+  Just str -> maybe (pure . read . show $ str) pure (Text.Read.readMaybe str)
