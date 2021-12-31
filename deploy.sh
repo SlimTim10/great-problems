@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 # Go to script's directory
@@ -19,5 +20,4 @@ cp -r config dist
 echo "App built in dist/"
 
 echo "Starting server..."
-echo "Saving output log to /var/log/great-problems/output.log"
-. startserver.sh &>> /var/log/great-problems/output.log
+. startserver.sh &
