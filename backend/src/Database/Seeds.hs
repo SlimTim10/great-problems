@@ -5,6 +5,7 @@ module Database.Seeds where
 import Common.Lib.Prelude
 import qualified Backend.Lib.Util as Util
 import qualified Common.Api.Role as Role
+import qualified Common.Api.ProblemStatus as ProblemStatus
 
 import qualified Database.PostgreSQL.Simple as SQL
 import qualified Database.PostgreSQL.Simple.SqlQQ as SqlQQ
@@ -62,12 +63,27 @@ load conn = do
     , topicRates
     ]
 
+  let problemStatuses :: [ProblemStatus.Status] = [minBound ..]
+  let problemStatusesWithId :: [(Integer, Text)] = zip [1..] . map (cs . show) $ problemStatuses
+  let getProblemStatusId :: ProblemStatus.Status -> Integer = \status
+        -> fromMaybe 1
+           . fmap fst
+           $ find (\(_, status') -> status' == (cs . show $ status)) problemStatusesWithId
+  void $ SQL.executeMany conn [SqlQQ.sql|
+    INSERT INTO
+      problem_statuses(id, name)
+    VALUES
+      (?,?)
+  |]
+    problemStatusesWithId
+
   let problemCalculusDemo =
         ( 1
         , summaryCalculusDemo
         , prbCalculusDemo
         , topicCalculus^._1
         , userGreatProblems^._1
+        , fromIntegral $ getProblemStatusId ProblemStatus.Published
         , "now"
         , "now"
         )
@@ -76,14 +92,15 @@ load conn = do
            , Text
            , Integer
            , Integer
+           , Integer
            , String
            , String
            )
   void $ SQL.executeMany conn [SqlQQ.sql|
     INSERT INTO
-      problems(id, summary, contents, topic_id, author_id, created_at, updated_at)
+      problems(id, summary, contents, topic_id, author_id, status_id, created_at, updated_at)
     VALUES
-      (?,?,?,?,?,?,?)
+      (?,?,?,?,?,?,?,?)
   |]
     [ problemCalculusDemo
     ]
@@ -95,6 +112,7 @@ load conn = do
     SELECT setval(pg_get_serial_sequence('email_verifications', 'id'), COALESCE((SELECT MAX(id)+1 FROM email_verifications), 1), false);
     SELECT setval(pg_get_serial_sequence('reset_password', 'id'), COALESCE((SELECT MAX(id)+1 FROM reset_password), 1), false);
     SELECT setval(pg_get_serial_sequence('topics', 'id'), COALESCE((SELECT MAX(id)+1 FROM topics), 1), false);
+    SELECT setval(pg_get_serial_sequence('problem_statuses', 'id'), COALESCE((SELECT MAX(id)+1 FROM problem_statuses), 1), false);
     SELECT setval(pg_get_serial_sequence('problems', 'id'), COALESCE((SELECT MAX(id)+1 FROM problems), 1), false);
     SELECT setval(pg_get_serial_sequence('figures', 'id'), COALESCE((SELECT MAX(id)+1 FROM figures), 1), false);
     SELECT setval(pg_get_serial_sequence('problem_sets', 'id'), COALESCE((SELECT MAX(id)+1 FROM problem_sets), 1), false);

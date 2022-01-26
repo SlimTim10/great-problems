@@ -290,6 +290,7 @@ handleSaveProblem conn user = do
   contents <- getTextParam Problem.ParamContents
   topicId <- getTextParam Problem.ParamTopicId
   authorId <- getTextParam Problem.ParamAuthorId
+  statusId <- getTextParam Problem.ParamStatusId
   authorIdFromDb :: Maybe Integer <- IO.liftIO $ do
     if T.null problemId
       then return Nothing
@@ -330,6 +331,7 @@ handleSaveProblem conn user = do
                       , Problem.bpContents = contents
                       , Problem.bpTopicId = read . cs $ topicId
                       , Problem.bpAuthorId = read . cs $ authorId
+                      , Problem.bpStatusId = 1
                       , Problem.bpFigures = figures
                       }
                 IO.liftIO (Queries.createProblem conn newProblem) >>= \case
@@ -344,6 +346,7 @@ handleSaveProblem conn user = do
                       , Problem.bpContents = contents
                       , Problem.bpTopicId = read . cs $ topicId
                       , Problem.bpAuthorId = read . cs $ authorId
+                      , Problem.bpStatusId = read . cs $ statusId
                       , Problem.bpFigures = figures
                       }
                 IO.liftIO (Queries.updateProblem conn updateProblem) >>= \case

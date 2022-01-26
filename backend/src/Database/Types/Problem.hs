@@ -16,6 +16,7 @@ data Problem = Problem
   , contents :: Text
   , topic_id :: Integer
   , author_id :: Integer
+  , status_id :: Integer
   , created_at :: Time.UTCTime
   , updated_at :: Time.UTCTime
   } deriving

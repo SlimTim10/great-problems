@@ -13,6 +13,7 @@ import qualified Data.Text as Text
 import GHC.Generics (Generic)
 
 import qualified Common.Api.Topic as Topic
+import qualified Common.Api.ProblemStatus as ProblemStatus
 import qualified Common.Api.User as User
 import qualified Common.Api.Figure as Figure
 import qualified Common.Route as Route
@@ -25,6 +26,7 @@ data Problem = Problem
   , author :: Either Integer User.User
   , topicPath :: Maybe [Topic.Topic]
   , figures :: [Figure.Figure]
+  , status :: Either Integer ProblemStatus.Status
   , createdAt :: Time.UTCTime
   , updatedAt :: Time.UTCTime
   } deriving
@@ -56,6 +58,7 @@ data BareProblem = BareProblem
   , bpContents :: Text
   , bpTopicId :: Integer
   , bpAuthorId :: Integer
+  , bpStatusId :: Integer
   , bpFigures :: [Figure.BareFigure]
   }
 
@@ -65,6 +68,7 @@ data RequestParam
   | ParamContents
   | ParamTopicId
   | ParamAuthorId
+  | ParamStatusId
   | ParamFigures
   deriving (Eq, Ord)
 instance Show RequestParam where
@@ -73,4 +77,5 @@ instance Show RequestParam where
   show ParamContents = "contents"
   show ParamTopicId = "topicId"
   show ParamAuthorId = "authorId"
+  show ParamStatusId = "statusId"
   show ParamFigures = "figures"

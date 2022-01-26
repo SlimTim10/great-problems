@@ -90,6 +90,7 @@ getProblems conn problemId routeQuery = do
         , Problem.contents = DbProblem.contents dbProblem
         , Problem.topic = Left $ DbProblem.topic_id dbProblem
         , Problem.author = Left $ DbProblem.author_id dbProblem
+        , Problem.status = Left $ DbProblem.status_id dbProblem
         , Problem.topicPath = Nothing
         , Problem.figures = []
         , Problem.createdAt = DbProblem.created_at dbProblem
@@ -142,11 +143,12 @@ createProblem :: SQL.Connection -> Problem.BareProblem -> IO (Maybe Problem.Prob
 createProblem conn newProblem = do
   mProblemId :: Maybe (SQL.Only Integer) <- headMay
     <$> SQL.query conn
-    "INSERT INTO problems(summary, contents, topic_id, author_id) VALUES (?,?,?,?) returning id"
+    "INSERT INTO problems(summary, contents, topic_id, author_id, status_id) VALUES (?,?,?,?,?) returning id"
     ( Problem.bpSummary newProblem
     , Problem.bpContents newProblem
     , Problem.bpTopicId newProblem
     , Problem.bpAuthorId newProblem
+    , Problem.bpStatusId newProblem
     )
   case SQL.fromOnly <$> mProblemId of
     Nothing -> return Nothing
