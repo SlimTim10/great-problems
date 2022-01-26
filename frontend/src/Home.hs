@@ -123,9 +123,7 @@ widget = do
           $ Route.apiHref $ Route.Api_Problems :/
           ( Just problemId, Problem.getParamsToRouteQuery
             $ Problem.GetParams
-            { Problem.gpExpand = Just ["author", "topic"]
-            , Problem.gpInclude = Just Problem.TopicPath
-            , Problem.gpTopic = Nothing
+            { Problem.gpTopic = Nothing
             }
           )
         R.holdDyn Nothing r

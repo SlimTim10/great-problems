@@ -12,6 +12,7 @@ data Role = Basic | Contributor | Moderator | Administrator
   deriving
   ( Eq
   , Show
+  , Read
   , Ord
   , Enum
   , Bounded

@@ -98,9 +98,7 @@ widget problemId = mdo
         $ Route.apiHref $ Route.Api_Problems :/
         ( Just problemId, Problem.getParamsToRouteQuery
           $ Problem.GetParams
-          { Problem.gpExpand = Just ["author", "topic"]
-          , Problem.gpInclude = Just Problem.TopicPath
-          , Problem.gpTopic = Nothing
+          { Problem.gpTopic = Nothing
           }
         )
       R.holdDyn Nothing r
@@ -112,7 +110,7 @@ widget problemId = mdo
           Nothing -> R.blank
           Just p -> do
             R.elClass "div" "flex" $ do
-              let topics = fromMaybe [] $ Problem.topicPath p
+              let topics = Problem.topicPath p
               forM_ (zip [0..] topics) $ \(n :: Integer, Topic.Topic tid name _) -> do
                 unless (n == 0) $ do
                   R.elClass "p" "text-brand-gray mx-1" $ R.text ">"
@@ -223,7 +221,7 @@ widget problemId = mdo
                 R.elClass "p" "text-brand-sm text-brand-gray" $ do
                   R.text $ "by"
                 R.elClass "p" "text-brand-sm text-brand-gray font-bold" $ do
-                  R.text $ either (const "") (CI.original . User.fullName) (Problem.author p)
+                  R.text $ (CI.original . User.fullName) (Problem.author p)
         problem <- getProblem
         R.dyn_ $ maybe R.blank problemDetails' <$> problem
         editProblem
@@ -233,7 +231,7 @@ widget problemId = mdo
       let showEditLink uid = \case
             Nothing -> R.blank
             Just p -> do
-              let authorId = either id User.id (Problem.author p)
+              let authorId = User.id (Problem.author p)
               when (authorId == uid) $ do
                 Ob.routeLink
                   (Route.FrontendRoute_Problems :/

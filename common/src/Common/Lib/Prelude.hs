@@ -25,7 +25,7 @@ module Common.Lib.Prelude
 
 import Data.Text (Text)
 import Data.Map (Map)
-import Data.List (intercalate, intersperse, find)
+import Data.List (intercalate, intersperse, find, zip6)
 import Data.Maybe (fromMaybe, isNothing, isJust, catMaybes, fromJust)
 import Data.String.Conversions (cs)
 import Data.CaseInsensitive (CI)

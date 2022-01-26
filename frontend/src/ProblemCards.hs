@@ -42,9 +42,7 @@ widget topicId = do
           $ Route.Api_Problems :/
           ( Nothing, Problem.getParamsToRouteQuery
             $ Problem.GetParams
-            { Problem.gpExpand = Just ["author", "topic"]
-            , Problem.gpInclude = Just Problem.TopicPath
-            , Problem.gpTopic = Nothing
+            { Problem.gpTopic = Nothing
             }
           )
         Just tid -> Util.getOnload
@@ -52,9 +50,7 @@ widget topicId = do
           $ Route.Api_Problems :/
           ( Nothing, Problem.getParamsToRouteQuery
             $ Problem.GetParams
-            { Problem.gpExpand = Just ["author", "topic"]
-            , Problem.gpInclude = Just Problem.TopicPath
-            , Problem.gpTopic = Just tid
+            { Problem.gpTopic = Just tid
             }
           )
       problemCards :: R.Dynamic t [Problem.Problem] <- R.holdDyn [] $ fromMaybe [] <$> response
@@ -75,7 +71,7 @@ problemCardWidget problemCard = do
     R.elClass "div" "p-2 border border-brand-light-gray flex flex-col gap-1" $ do
       R.elClass "div" "flex justify-between" $ do
         R.elClass "div" "flex" $ do
-          let topics = fromMaybe [] $ Problem.topicPath problem
+          let topics = Problem.topicPath problem
           forM_ (zip [0..] topics) $ \(n :: Integer, Topic.Topic tid name _) -> do
             unless (n == 0) $ do
               R.elClass "p" "text-brand-sm text-brand-gray mx-1" $ R.text ">"
@@ -91,11 +87,7 @@ problemCardWidget problemCard = do
           R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "Updated " ++ updatedAt)
       R.elClass "div" "flex" $ do
         R.elClass "p" "text-brand-sm text-brand-gray mr-1" $ R.text "by"
-        case Problem.author problem of
-              Left authorId -> do
-                -- TODO: handle this better
-                R.el "p" $ R.text . cs $ "Author ID: " ++ show authorId
-              Right author -> do
-               Ob.routeLink (Route.FrontendRoute_ViewUser :/ User.id author) $ do
-                 R.elClass "div" "hover:underline text-brand-sm text-brand-gray font-bold" $ do
-                   R.text (CI.original $ User.fullName author)
+        let author = Problem.author problem
+        Ob.routeLink (Route.FrontendRoute_ViewUser :/ User.id author) $ do
+          R.elClass "div" "hover:underline text-brand-sm text-brand-gray font-bold" $ do
+            R.text (CI.original $ User.fullName author)

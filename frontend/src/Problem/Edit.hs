@@ -150,7 +150,7 @@ widget problemId = mdo
         preloadedProblem <- getPreloadedProblem
         let setTopicId :: R.Event t Integer =
               fromMaybe 0
-              . fmap (either id Topic.id . Problem.topic)
+              . fmap (Topic.id . Problem.topic)
               <$> R.updated preloadedProblem
         selectedTopicId :: R.Dynamic t Integer <- R.elClass "div" "pb-3 border-b border-brand-light-gray"
           $ SelectTopic.widget setTopicId

@@ -11,6 +11,7 @@ data Status = Draft | Published
   deriving
   ( Eq
   , Show
+  , Read
   , Ord
   , Enum
   , Bounded

@@ -32,7 +32,6 @@ import qualified Backend.Lib.Util as Util
 
 import qualified Database.PostgreSQL.Simple as SQL
 import qualified Database.PostgreSQL.Simple.ToField as SQL
-import qualified Data.Text as Text
 import qualified Data.CaseInsensitive as CI
 
 import qualified Common.Route as Route
@@ -43,11 +42,13 @@ import qualified Common.Api.User as User
 import qualified Common.Api.Role as Role
 import qualified Common.Api.Auth as Auth
 import qualified Common.Api.Figure as Figure
+import qualified Common.Api.ProblemStatus as ProblemStatus
 import qualified Common.Api.ChangePassword as ChangePassword
 import qualified Database.Types.Problem as DbProblem
 import qualified Database.Types.Topic as DbTopic
 import qualified Database.Types.User as DbUser
 import qualified Database.Types.Role as DbRole
+import qualified Database.Types.ProblemStatus as DbProblemStatus
 import qualified Database.Types.EmailVerification as DbEmailVerification
 import qualified Database.Types.ResetPassword as DbResetPassword
 import qualified Database.Types.Session as DbSession
@@ -81,59 +82,65 @@ getProblems conn problemId routeQuery = do
     exprs = [problemExpr, topicExpr, authorExpr]
     whereClause = mconcat . intersperse " AND " . map fst . catMaybes $ exprs
     whereParams = map snd . catMaybes $ exprs
-  dbProblems <- if not . all isNothing $ exprs
+  dbProblems :: [DbProblem.Problem] <-
+    if not . all isNothing $ exprs
     then SQL.query conn ("SELECT * FROM problems WHERE " <> whereClause) whereParams
     else SQL.query_ conn "SELECT * FROM problems"
-  let problems = dbProblems <&> \dbProblem -> Problem.Problem
+  problemAuthors :: [User.User] <- sequence (map fetchProblemAuthor dbProblems)
+  problemTopics :: [Topic.Topic] <- sequence (map fetchProblemTopic dbProblems)
+  problemTopicPaths :: [[Topic.Topic]] <- sequence (map fetchProblemTopicPath dbProblems)
+  problemStatuses :: [ProblemStatus.Status] <- sequence (map fetchProblemStatus dbProblems)
+  problemFiguress :: [[Figure.Figure]] <- sequence (map fetchProblemFigures dbProblems)
+  return
+    $ flip map
+    (zip6
+      dbProblems
+      problemAuthors
+      problemTopics
+      problemTopicPaths
+      problemStatuses
+      problemFiguress
+    )
+    $ \(dbProblem, problemAuthor, problemTopic, problemTopicPath, problemStatus, problemFigures) ->
+        Problem.Problem
         { Problem.id = DbProblem.id dbProblem
         , Problem.summary = DbProblem.summary dbProblem
         , Problem.contents = DbProblem.contents dbProblem
-        , Problem.topic = Left $ DbProblem.topic_id dbProblem
-        , Problem.author = Left $ DbProblem.author_id dbProblem
-        , Problem.status = Left $ DbProblem.status_id dbProblem
-        , Problem.topicPath = Nothing
-        , Problem.figures = []
+        , Problem.topic = problemTopic
+        , Problem.author = problemAuthor
+        , Problem.status = problemStatus
+        , Problem.topicPath = problemTopicPath
+        , Problem.figures = problemFigures
         , Problem.createdAt = DbProblem.created_at dbProblem
         , Problem.updatedAt = DbProblem.updated_at dbProblem
         }
-  let expands = maybe [] (Text.splitOn ",") $ Route.textParamFromQuery "expand" routeQuery
-  let includeTopicPath = Route.textParamFromQuery "include" routeQuery == Just "topic_path"
-  foldr (>=>) return
-    [ sequence . map withFigures
-    , Util.whenM ("author" `elem` expands) (sequence . map expandProblemAuthor)
-    , Util.whenM ("topic" `elem` expands) (sequence . map expandProblemTopic)
-    , Util.whenM includeTopicPath (sequence . map withTopicPath)
-    ]
-    problems
   where
-    expandProblemAuthor :: Problem.Problem -> IO Problem.Problem
-    expandProblemAuthor problem = case Problem.author problem of
-      Left authorId -> getUserById conn authorId >>= \case
-        Nothing -> do
-          error $ "expandProblemAuthor: User not found with ID: " ++ show authorId
-        Just author -> return $ problem { Problem.author = Right author }
-      Right _ -> return problem
-    expandProblemTopic :: Problem.Problem -> IO Problem.Problem
-    expandProblemTopic problem = case Problem.topic problem of
-      Left topicId -> getTopicById conn topicId >>= \case
-        Nothing -> do
-          error $ "expandProblemAuthor: Topic not found with ID: " ++ show topicId
-        Just topic -> return $ problem { Problem.topic = Right topic }
-      Right _ -> return problem
-    withTopicPath :: Problem.Problem -> IO Problem.Problem
-    withTopicPath problem = do
-      topic <- case Problem.topic problem of
-        Left topicId -> getTopicById conn topicId >>= \case
-          Nothing -> do
-            error $ "withTopicPath: Topic not found with ID: " ++ show topicId
-          Just x -> return x
-        Right x -> return x
-      topicPath <- getTopicPath conn topic
-      return $ problem { Problem.topicPath = Just topicPath}
-    withFigures :: Problem.Problem -> IO Problem.Problem
-    withFigures problem = do
-      figures <- getFiguresByProblemId conn (Problem.id problem)
-      return $ problem { Problem.figures = figures }
+    fetchProblemAuthor :: DbProblem.Problem -> IO User.User
+    fetchProblemAuthor (DbProblem.Problem {DbProblem.author_id=authorId}) =
+      getUserById conn authorId
+      >>= return . fromMaybe
+      (error $ "fetchProblemAuthor: User not found with ID: " ++ show authorId)
+
+    fetchProblemTopic :: DbProblem.Problem -> IO Topic.Topic
+    fetchProblemTopic (DbProblem.Problem {DbProblem.topic_id=topicId}) =
+      getTopicById conn topicId
+      >>= return . fromMaybe
+      (error $ "fetchProblemTopic: Topic not found with ID: " ++ show topicId)
+
+    fetchProblemTopicPath :: DbProblem.Problem -> IO [Topic.Topic]
+    fetchProblemTopicPath dbProblem = do
+      t <- fetchProblemTopic dbProblem
+      getTopicPath conn t
+    
+    fetchProblemStatus :: DbProblem.Problem -> IO ProblemStatus.Status
+    fetchProblemStatus (DbProblem.Problem {DbProblem.status_id=statusId}) =
+      getProblemStatusById conn statusId
+      >>= return . fromMaybe
+      (error $ "fetchProblemStatus: Status not found with ID: " ++ show statusId)
+
+    fetchProblemFigures :: DbProblem.Problem -> IO [Figure.Figure]
+    fetchProblemFigures (DbProblem.Problem {DbProblem.id=pid}) =
+      getFiguresByProblemId conn pid
 
 getProblemById :: SQL.Connection -> Integer -> Route.Query -> IO (Maybe Problem.Problem)
 getProblemById conn problemId routeQuery = headMay
@@ -302,23 +309,21 @@ getTopicHierarchy conn topic = do
 getRoles :: SQL.Connection -> IO [Role.Role]
 getRoles conn = do
   dbRoles <- SQL.query_ conn "SELECT * FROM roles"
-  return $ dbRoles <&> \case
-    DbRole.Role _ "Basic" -> Role.Basic
-    DbRole.Role _ "Contributor" -> Role.Contributor
-    DbRole.Role _ "Moderator" -> Role.Moderator
-    DbRole.Role _ "Administrator" -> Role.Administrator
-    _ -> Role.Basic
+  return $ dbRoles <&> (\(DbRole.Role {DbRole.name=roleName}) -> read . cs $ roleName)
 
 getRoleById :: SQL.Connection -> Integer -> IO (Maybe Role.Role)
 getRoleById conn roleId = do
   mDbRole :: Maybe DbRole.Role <- headMay
     <$> SQL.query conn "SELECT * FROM roles WHERE id = ?" (SQL.Only roleId)
-  return $ flip fmap mDbRole $ \case
-    DbRole.Role _ "Basic" -> Role.Basic
-    DbRole.Role _ "Contributor" -> Role.Contributor
-    DbRole.Role _ "Moderator" -> Role.Moderator
-    DbRole.Role _ "Administrator" -> Role.Administrator
-    _ -> Role.Basic
+  return $ flip fmap mDbRole $
+    \(DbRole.Role {DbRole.name=roleName}) -> read . cs $ roleName
+
+getProblemStatusById :: SQL.Connection -> Integer -> IO (Maybe ProblemStatus.Status)
+getProblemStatusById conn statusId = do
+  mDbStatus :: Maybe DbProblemStatus.Status <- headMay
+    <$> SQL.query conn "SELECT * FROM problem_statuses WHERE id = ?" (SQL.Only statusId)
+  return $ flip fmap mDbStatus $
+    \(DbProblemStatus.Status {DbProblemStatus.name=statusName}) -> read . cs $ statusName
 
 getUsers :: SQL.Connection -> IO [User.User]
 getUsers conn = do
