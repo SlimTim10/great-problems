@@ -168,7 +168,7 @@ widget problemId = mdo
         figures :: R.Dynamic t [FormFile.FormFile] <- R.elClass "div" "py-3 border-b border-brand-light-gray"
           $ Figures.widget =<< fetchFigures preloadedProblem
         publish :: R.Event t () <- R.elClass "div" "py-3" $ do
-          Button.primaryClass' "Save & Publish" "w-full active:bg-blue-400"
+          Button.primaryClass' "Publish" "w-full active:bg-blue-400"
         let isEditing = isJust problemId
         finishMessage <- R.holdDyn R.blank $ saveResponse <&> \case
           Nothing -> R.elClass "p" "text-red-500" $ R.dynText errorMessage
