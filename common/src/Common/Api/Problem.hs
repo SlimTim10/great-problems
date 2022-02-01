@@ -53,7 +53,7 @@ data BareProblem = BareProblem
   , bpContents :: Text
   , bpTopicId :: Integer
   , bpAuthorId :: Integer
-  , bpStatusId :: Integer
+  , bpStatus :: ProblemStatus.Status
   , bpFigures :: [Figure.BareFigure]
   }
 
@@ -63,7 +63,7 @@ data RequestParam
   | ParamContents
   | ParamTopicId
   | ParamAuthorId
-  | ParamStatusId
+  | ParamStatus
   | ParamFigures
   deriving (Eq, Ord)
 instance Show RequestParam where
@@ -72,5 +72,5 @@ instance Show RequestParam where
   show ParamContents = "contents"
   show ParamTopicId = "topicId"
   show ParamAuthorId = "authorId"
-  show ParamStatusId = "statusId"
+  show ParamStatus = "status"
   show ParamFigures = "figures"

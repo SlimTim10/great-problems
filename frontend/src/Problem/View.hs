@@ -96,11 +96,7 @@ widget problemId = mdo
     getProblem = do
       r :: R.Event t (Maybe Problem.Problem) <- Util.getOnload
         $ Route.apiHref $ Route.Api_Problems :/
-        ( Just problemId, Problem.getParamsToRouteQuery
-          $ Problem.GetParams
-          { Problem.gpTopic = Nothing
-          }
-        )
+        (Just problemId, mempty)
       R.holdDyn Nothing r
 
     topicPath = do

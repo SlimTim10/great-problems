@@ -31,6 +31,7 @@ import qualified Common.Api.Role as Role
 import qualified Common.Api.OkResponse as OkResponse
 import qualified Common.Api.Compile as Compile
 import qualified Common.Api.Problem as Problem
+import qualified Common.Api.ProblemStatus as ProblemStatus
 import qualified Common.Api.Figure as Figure
 import qualified Common.Api.ChangePassword as ChangePassword
 import qualified Auth
@@ -59,14 +60,14 @@ backend = Ob.Backend
           case apiRoute of
             Route.Api_Problems :/ (Nothing, query) -> do
               Snap.rqMethod <$> Snap.getRequest >>= \case
-                Snap.GET -> writeJSON =<< IO.liftIO (Queries.getProblems conn Nothing query)
+                Snap.GET -> writeJSON =<< IO.liftIO (Queries.getProblems conn query)
                 Snap.POST -> case mUser of
                   Nothing -> writeJSON $ Error.mk "No access"
                   Just user -> handleSaveProblem conn user
                 _ -> return () -- TODO: implement put, delete
                 
-            Route.Api_Problems :/ (Just problemId, query) -> do
-              writeJSON =<< IO.liftIO (Queries.getProblemById conn problemId query)
+            Route.Api_Problems :/ (Just problemId, _) -> do
+              writeJSON =<< IO.liftIO (Queries.getProblemById conn problemId)
               
             Route.Api_Topics :/ query -> do
               topics <- case fromMaybe Nothing (Map.lookup "parent" query) of
@@ -290,12 +291,12 @@ handleSaveProblem conn user = do
   contents <- getTextParam Problem.ParamContents
   topicId <- getTextParam Problem.ParamTopicId
   authorId <- getTextParam Problem.ParamAuthorId
-  statusId <- getTextParam Problem.ParamStatusId
+  status <- getTextParam Problem.ParamStatus
   existingAuthor :: Maybe User.User <- IO.liftIO $ do
     if T.null problemId
       then return Nothing
       else do
-      (Queries.getProblemById conn (read . cs $ problemId) mempty) >>= \case
+      (Queries.getProblemById conn (read . cs $ problemId)) >>= \case
         Nothing -> return Nothing
         Just p -> return . Just $ Problem.author p
   if
@@ -331,7 +332,7 @@ handleSaveProblem conn user = do
                       , Problem.bpContents = contents
                       , Problem.bpTopicId = read . cs $ topicId
                       , Problem.bpAuthorId = read . cs $ authorId
-                      , Problem.bpStatusId = 1
+                      , Problem.bpStatus = ProblemStatus.Draft -- TMP
                       , Problem.bpFigures = figures
                       }
                 IO.liftIO (Queries.createProblem conn newProblem) >>= \case
@@ -346,7 +347,7 @@ handleSaveProblem conn user = do
                       , Problem.bpContents = contents
                       , Problem.bpTopicId = read . cs $ topicId
                       , Problem.bpAuthorId = read . cs $ authorId
-                      , Problem.bpStatusId = read . cs $ statusId
+                      , Problem.bpStatus = read . cs $ status
                       , Problem.bpFigures = figures
                       }
                 IO.liftIO (Queries.updateProblem conn updateProblem) >>= \case
@@ -423,7 +424,7 @@ handleCompileProblemById conn problemId = do
     $ getTextParam Compile.ParamRandomizeVariables
   outputOption <- fmap (mfilter (not . T.null) . Just)
     $ getTextParam Compile.ParamOutputOption
-  IO.liftIO (Queries.getProblemById conn problemId mempty) >>= \case
+  IO.liftIO (Queries.getProblemById conn problemId) >>= \case
     Nothing -> writeJSON $ Error.mk "Problem does not exist"
     Just problem -> do
       let figures = Problem.figures problem <&> \figure ->

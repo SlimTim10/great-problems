@@ -14,7 +14,12 @@ import qualified Text.RawString.QQ as QQ
 load :: SQL.Connection -> IO ()
 load conn = do
   let roles :: [Role.Role] = [minBound ..]
-  let rolesWithId :: [(Integer, Text)] = zip [1..] . map (cs . show) $ roles
+  let rolesWithId :: [(Integer, Text)] =
+        map
+        (\x ->
+           (fromIntegral . fromEnum $ x, cs . show $ x)
+        )
+        $ roles
   void $ SQL.executeMany conn [SqlQQ.sql|
     INSERT INTO
       roles(id, name)
@@ -64,7 +69,12 @@ load conn = do
     ]
 
   let problemStatuses :: [ProblemStatus.Status] = [minBound ..]
-  let problemStatusesWithId :: [(Integer, Text)] = zip [1..] . map (cs . show) $ problemStatuses
+  let problemStatusesWithId :: [(Integer, Text)] =
+        map
+        (\x ->
+           (fromIntegral . fromEnum $ x, cs . show $ x)
+        )
+        $ problemStatuses
   let getProblemStatusId :: ProblemStatus.Status -> Integer = \status
         -> fromMaybe 1
            . fmap fst

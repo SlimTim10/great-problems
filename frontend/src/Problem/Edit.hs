@@ -23,6 +23,7 @@ import qualified Common.Route as Route
 import qualified Common.Api.Compile as Compile
 import qualified Common.Api.Error as Error
 import qualified Common.Api.Problem as Problem
+import qualified Common.Api.ProblemStatus as ProblemStatus
 import qualified Common.Api.Figure as Figure
 import qualified Common.Api.Topic as Topic
 import qualified Common.Api.User as User
@@ -47,6 +48,7 @@ data RequestSave = RequestSave
   , rsContents :: Text
   , rsTopicId :: Integer
   , rsAuthorId :: Integer
+  , rsStatus :: ProblemStatus.Status
   , rsFigures :: [FormFile.FormFile]
   }
 
@@ -170,7 +172,7 @@ widget problemId = mdo
         publish :: R.Event t () <- R.elClass "div" "py-3" $ do
           Button.primaryClass' "Publish" "w-full active:bg-blue-400"
         let isEditing = isJust problemId
-        finishMessage <- R.holdDyn R.blank $ saveResponse <&> \case
+        publishedMessage <- R.holdDyn R.blank $ saveResponse <&> \case
           Nothing -> R.elClass "p" "text-red-500" $ R.dynText errorMessage
           Just savedProblem -> case isEditing of
             True -> R.elClass "p" "text-green-600" $ R.text "Saved!"
@@ -181,7 +183,7 @@ widget problemId = mdo
                  (Problem.id savedProblem, Route.ProblemsRoute_View :/ ())) <$ timer
         let spinner = R.ffor publish $ \_ -> do
               R.elAttr "img" ("src" =: Ob.static @"small_spinner.svg" <> "width" =: "30" <> "alt" =: "loading") $ R.blank
-        message <- R.holdDyn R.blank $ R.leftmost [spinner, R.updated finishMessage]
+        message <- R.holdDyn R.blank $ R.leftmost [spinner, R.updated publishedMessage]
         R.dyn_ message
 
         userId :: R.Dynamic t Integer <-
@@ -191,6 +193,8 @@ widget problemId = mdo
           . fmap User.id
           =<< Util.getCurrentUser
 
+        let problemStatus :: R.Dynamic t ProblemStatus.Status = R.constDyn ProblemStatus.Draft -- TMP
+        
         let saveProblemRequest :: R.Dynamic t RequestSave = case problemId of
               Nothing -> RequestSave
                 <$> R.constDyn Nothing
@@ -198,6 +202,7 @@ widget problemId = mdo
                 <*> editorContents
                 <*> selectedTopicId
                 <*> userId
+                <*> problemStatus
                 <*> figures
               Just pid -> RequestSave
                 <$> R.constDyn (Just pid)
@@ -205,18 +210,17 @@ widget problemId = mdo
                 <*> editorContents
                 <*> selectedTopicId
                 <*> userId
+                <*> problemStatus
                 <*> figures
 
         let formData :: R.Event t (Map Text (R'.FormValue GHCJS.DOM.Types.File)) = R.ffor (R.tagPromptlyDyn saveProblemRequest publish) $ \req -> do
               let formDataParams :: Map Problem.RequestParam (R'.FormValue GHCJS.DOM.Types.File) =
                     ( Problem.ParamSummary =: R'.FormValue_Text (rsSummary req)
                       <> Problem.ParamContents =: R'.FormValue_Text (rsContents req)
-                      <> Problem.ParamTopicId =: R'.FormValue_Text
-                      (cs . show . rsTopicId $ req)
-                      <> Problem.ParamAuthorId =: R'.FormValue_Text
-                      (cs . show . rsAuthorId $ req)
-                      <> Problem.ParamFigures =: R'.FormValue_List
-                      (map Util.formFile . rsFigures $ req)
+                      <> Problem.ParamTopicId =: R'.FormValue_Text (cs . show . rsTopicId $ req)
+                      <> Problem.ParamAuthorId =: R'.FormValue_Text (cs . show . rsAuthorId $ req)
+                      <> Problem.ParamStatus =: R'.FormValue_Text (cs . show . rsStatus $ req)
+                      <> Problem.ParamFigures =: R'.FormValue_List (map Util.formFile . rsFigures $ req)
                     )
                     <>
                     ( maybe

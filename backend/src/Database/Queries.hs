@@ -65,9 +65,8 @@ exprFromRouteParam param expr cast routeQuery = do
   y <- Route.readParamFromQuery param routeQuery
   Just (expr, SQL.toField $ cast y)
 
-getProblems :: SQL.Connection -> Maybe Integer -> Route.Query -> IO [Problem.Problem]
-getProblems conn problemId routeQuery = do
-  let problemExpr = problemId >>= \pid -> Just ("id = ?", SQL.toField pid)
+getProblems :: SQL.Connection -> Route.Query -> IO [Problem.Problem]
+getProblems conn routeQuery = do
   topicExpr <- case Route.readParamFromQuery "topic" routeQuery of
     Nothing -> return Nothing
     Just topicId -> do
@@ -79,18 +78,18 @@ getProblems conn problemId routeQuery = do
       "author_id = ?"
       (id :: Integer -> Integer)
       routeQuery
-    exprs = [problemExpr, topicExpr, authorExpr]
+    exprs = [topicExpr, authorExpr]
     whereClause = mconcat . intersperse " AND " . map fst . catMaybes $ exprs
     whereParams = map snd . catMaybes $ exprs
   dbProblems :: [DbProblem.Problem] <-
     if not . all isNothing $ exprs
     then SQL.query conn ("SELECT * FROM problems WHERE " <> whereClause) whereParams
     else SQL.query_ conn "SELECT * FROM problems"
-  problemAuthors :: [User.User] <- sequence (map fetchProblemAuthor dbProblems)
-  problemTopics :: [Topic.Topic] <- sequence (map fetchProblemTopic dbProblems)
-  problemTopicPaths :: [[Topic.Topic]] <- sequence (map fetchProblemTopicPath dbProblems)
-  problemStatuses :: [ProblemStatus.Status] <- sequence (map fetchProblemStatus dbProblems)
-  problemFiguress :: [[Figure.Figure]] <- sequence (map fetchProblemFigures dbProblems)
+  problemAuthors :: [User.User] <- sequence (map (fetchProblemAuthor conn) dbProblems)
+  problemTopics :: [Topic.Topic] <- sequence (map (fetchProblemTopic conn) dbProblems)
+  problemTopicPaths :: [[Topic.Topic]] <- sequence (map (fetchProblemTopicPath conn) dbProblems)
+  problemStatuses :: [ProblemStatus.Status] <- sequence (map (fetchProblemStatus conn) dbProblems)
+  problemFiguress :: [[Figure.Figure]] <- sequence (map (fetchProblemFigures conn) dbProblems)
   return
     $ flip map
     (zip6
@@ -114,40 +113,63 @@ getProblems conn problemId routeQuery = do
         , Problem.createdAt = DbProblem.created_at dbProblem
         , Problem.updatedAt = DbProblem.updated_at dbProblem
         }
-  where
-    fetchProblemAuthor :: DbProblem.Problem -> IO User.User
-    fetchProblemAuthor (DbProblem.Problem {DbProblem.author_id=authorId}) =
-      getUserById conn authorId
-      >>= return . fromMaybe
-      (error $ "fetchProblemAuthor: User not found with ID: " ++ show authorId)
 
-    fetchProblemTopic :: DbProblem.Problem -> IO Topic.Topic
-    fetchProblemTopic (DbProblem.Problem {DbProblem.topic_id=topicId}) =
-      getTopicById conn topicId
-      >>= return . fromMaybe
-      (error $ "fetchProblemTopic: Topic not found with ID: " ++ show topicId)
+fetchProblemAuthor :: SQL.Connection -> DbProblem.Problem -> IO User.User
+fetchProblemAuthor conn (DbProblem.Problem {DbProblem.author_id=authorId}) =
+  getUserById conn authorId
+  >>= return . fromMaybe
+  (error $ "fetchProblemAuthor: User not found with ID: " ++ show authorId)
 
-    fetchProblemTopicPath :: DbProblem.Problem -> IO [Topic.Topic]
-    fetchProblemTopicPath dbProblem = do
-      t <- fetchProblemTopic dbProblem
-      getTopicPath conn t
+fetchProblemTopic :: SQL.Connection -> DbProblem.Problem -> IO Topic.Topic
+fetchProblemTopic conn (DbProblem.Problem {DbProblem.topic_id=topicId}) =
+  getTopicById conn topicId
+  >>= return . fromMaybe
+  (error $ "fetchProblemTopic: Topic not found with ID: " ++ show topicId)
+
+fetchProblemTopicPath :: SQL.Connection -> DbProblem.Problem -> IO [Topic.Topic]
+fetchProblemTopicPath conn dbProblem = do
+  t <- fetchProblemTopic conn dbProblem
+  getTopicPath conn t
     
-    fetchProblemStatus :: DbProblem.Problem -> IO ProblemStatus.Status
-    fetchProblemStatus (DbProblem.Problem {DbProblem.status_id=statusId}) =
-      getProblemStatusById conn statusId
-      >>= return . fromMaybe
-      (error $ "fetchProblemStatus: Status not found with ID: " ++ show statusId)
+fetchProblemStatus :: SQL.Connection -> DbProblem.Problem -> IO ProblemStatus.Status
+fetchProblemStatus conn (DbProblem.Problem {DbProblem.status_id=statusId}) =
+  getProblemStatusById conn statusId
+  >>= return . fromMaybe
+  (error $ "fetchProblemStatus: Status not found with ID: " ++ show statusId)
 
-    fetchProblemFigures :: DbProblem.Problem -> IO [Figure.Figure]
-    fetchProblemFigures (DbProblem.Problem {DbProblem.id=pid}) =
-      getFiguresByProblemId conn pid
+fetchProblemFigures :: SQL.Connection -> DbProblem.Problem -> IO [Figure.Figure]
+fetchProblemFigures conn (DbProblem.Problem {DbProblem.id=pid}) =
+  getFiguresByProblemId conn pid
 
-getProblemById :: SQL.Connection -> Integer -> Route.Query -> IO (Maybe Problem.Problem)
-getProblemById conn problemId routeQuery = headMay
-  <$> getProblems conn (Just problemId) routeQuery
+getProblemById :: SQL.Connection -> Integer -> IO (Maybe Problem.Problem)
+getProblemById conn problemId = do
+  mDbProblem <- headMay
+    <$> SQL.query conn "SELECT * FROM problems WHERE id = ?" (SQL.Only problemId)
+  case mDbProblem of
+    Nothing -> return Nothing
+    Just dbProblem -> do
+      problemAuthor <- fetchProblemAuthor conn dbProblem
+      problemTopic <- fetchProblemTopic conn dbProblem
+      problemTopicPath <- fetchProblemTopicPath conn dbProblem
+      problemStatus <- fetchProblemStatus conn dbProblem
+      problemFigures <- fetchProblemFigures conn dbProblem
+      return . Just $
+        Problem.Problem
+        { Problem.id = DbProblem.id dbProblem
+        , Problem.summary = DbProblem.summary dbProblem
+        , Problem.contents = DbProblem.contents dbProblem
+        , Problem.topic = problemTopic
+        , Problem.author = problemAuthor
+        , Problem.status = problemStatus
+        , Problem.topicPath = problemTopicPath
+        , Problem.figures = problemFigures
+        , Problem.createdAt = DbProblem.created_at dbProblem
+        , Problem.updatedAt = DbProblem.updated_at dbProblem
+        }
 
 createProblem :: SQL.Connection -> Problem.BareProblem -> IO (Maybe Problem.Problem)
 createProblem conn newProblem = do
+  let statusId = fromEnum $ Problem.bpStatus newProblem
   mProblemId :: Maybe (SQL.Only Integer) <- headMay
     <$> SQL.query conn
     "INSERT INTO problems(summary, contents, topic_id, author_id, status_id) VALUES (?,?,?,?,?) returning id"
@@ -155,7 +177,7 @@ createProblem conn newProblem = do
     , Problem.bpContents newProblem
     , Problem.bpTopicId newProblem
     , Problem.bpAuthorId newProblem
-    , Problem.bpStatusId newProblem
+    , statusId
     )
   case SQL.fromOnly <$> mProblemId of
     Nothing -> return Nothing
@@ -164,16 +186,18 @@ createProblem conn newProblem = do
         void $ SQL.execute conn
           "INSERT INTO figures(name, contents, problem_id) VALUES (?,?,?)"
           (Figure.bfName figure, Figure.bfContents figure, problemId)
-      getProblemById conn problemId mempty
+      getProblemById conn problemId
 
 updateProblem :: SQL.Connection -> Problem.BareProblem -> IO (Maybe Problem.Problem)
 updateProblem conn problem = do
+  let statusId = fromEnum $ Problem.bpStatus problem
   mProblemId :: Maybe (SQL.Only Integer) <- headMay
     <$> SQL.query conn
-    "UPDATE problems SET (summary, contents, topic_id, updated_at) = (?, ?, ?, DEFAULT) WHERE id = ? returning id"
+    "UPDATE problems SET (summary, contents, topic_id, status_id, updated_at) = (?, ?, ?, DEFAULT) WHERE id = ? returning id"
     ( Problem.bpSummary problem
     , Problem.bpContents problem
     , Problem.bpTopicId problem
+    , statusId
     , Problem.bpProblemId problem
     )
   case SQL.fromOnly <$> mProblemId of
@@ -186,7 +210,7 @@ updateProblem conn problem = do
         void $ SQL.execute conn
           "INSERT INTO figures(name, contents, problem_id) VALUES (?,?,?)"
           (Figure.bfName figure, Figure.bfContents figure, problemId)
-      getProblemById conn problemId mempty
+      getProblemById conn problemId
 
 getTopics :: SQL.Connection -> IO [Topic.Topic]
 getTopics conn = do
