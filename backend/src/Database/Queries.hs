@@ -193,7 +193,7 @@ updateProblem conn problem = do
   let statusId = fromEnum $ Problem.bpStatus problem
   mProblemId :: Maybe (SQL.Only Integer) <- headMay
     <$> SQL.query conn
-    "UPDATE problems SET (summary, contents, topic_id, status_id, updated_at) = (?, ?, ?, DEFAULT) WHERE id = ? returning id"
+    "UPDATE problems SET (summary, contents, topic_id, status_id, updated_at) = (?, ?, ?, ?, DEFAULT) WHERE id = ? returning id"
     ( Problem.bpSummary problem
     , Problem.bpContents problem
     , Problem.bpTopicId problem
