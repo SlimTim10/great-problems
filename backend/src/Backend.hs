@@ -322,7 +322,9 @@ handleSaveProblem conn user = do
             IO.liftIO $ print e
             writeJSON $ Error.mk "Something went wrong"
           Right r -> if
-            | (not . T.null $ Compile.p2tErrorProblem2tex r) || (not . T.null $ Compile.p2tErrorLatex r)
+            -- Published problems must compile without errors
+            | (read . cs $ status) == ProblemStatus.Published
+              && ((not . T.null $ Compile.p2tErrorProblem2tex r) || (not . T.null $ Compile.p2tErrorLatex r))
               -> writeJSON $ Error.mk "Invalid problem. Please check that your problem compiles with no errors before saving."
             -- Creating a new problem
             | T.null problemId -> do
@@ -332,7 +334,7 @@ handleSaveProblem conn user = do
                       , Problem.bpContents = contents
                       , Problem.bpTopicId = read . cs $ topicId
                       , Problem.bpAuthorId = read . cs $ authorId
-                      , Problem.bpStatus = ProblemStatus.Draft -- TMP
+                      , Problem.bpStatus = read . cs $ status
                       , Problem.bpFigures = figures
                       }
                 IO.liftIO (Queries.createProblem conn newProblem) >>= \case

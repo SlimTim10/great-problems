@@ -72,7 +72,7 @@ widget
      )
   => Maybe Integer
   -> m ()
-widget problemId = mdo
+widget preloadedProblemId = mdo
   ( figures
     , randomizeVariablesAction
     , resetVariablesAction
@@ -114,7 +114,7 @@ widget problemId = mdo
   where
     getPreloadedProblem :: m (R.Dynamic t (Maybe Problem.Problem))
     getPreloadedProblem = do
-      response :: R.Event t (Maybe Problem.Problem) <- case problemId of
+      response :: R.Event t (Maybe Problem.Problem) <- case preloadedProblemId of
         Nothing -> return R.never
         Just pid -> do
           Util.getOnload
@@ -140,16 +140,16 @@ widget problemId = mdo
 
     leftPane editorContents = do
       R.elClass "div" "w-96 flex-none flex flex-col pr-2 border-r border-brand-light-gray" $ mdo
-        when (isJust problemId) $ do
+        when (isJust preloadedProblemId) $ do
           R.elClass "div" "pb-3 border-b border-brand-light-gray" $ do
             R.elClass "p" "font-medium mb-2" $ R.text "View"
             Ob.routeLink
               (Route.FrontendRoute_Problems :/
-                (fromJust problemId, Route.ProblemsRoute_View :/ ())) $ do
+                (fromJust preloadedProblemId, Route.ProblemsRoute_View :/ ())) $ do
               R.elClass "p" "text-brand-primary font-medium hover:underline" $ do
                 Button.secondarySmall "Public view of this problem"
           R.elClass "div" "pb-3" R.blank
-        preloadedProblem <- getPreloadedProblem
+        preloadedProblem :: R.Dynamic t (Maybe Problem.Problem) <- getPreloadedProblem
         let setTopicId :: R.Event t Integer =
               fromMaybe 0
               . fmap (Topic.id . Problem.topic)
@@ -171,71 +171,41 @@ widget problemId = mdo
           $ Figures.widget =<< fetchFigures preloadedProblem
         publish :: R.Event t () <- R.elClass "div" "py-3" $ do
           Button.primaryClass' "Publish" "w-full active:bg-blue-400"
-        let isEditing = isJust problemId
-        publishedMessage <- R.holdDyn R.blank $ saveResponse <&> \case
-          Nothing -> R.elClass "p" "text-red-500" $ R.dynText errorMessage
-          Just savedProblem -> case isEditing of
-            True -> R.elClass "p" "text-green-600" $ R.text "Saved!"
-            False -> do
-              timer :: R.Event t R.TickInfo <- R.tickLossyFromPostBuildTime 0.01
-              Ob.setRoute $ do
-                (Route.FrontendRoute_Problems :/
-                 (Problem.id savedProblem, Route.ProblemsRoute_View :/ ())) <$ timer
+        let isEditing = isJust preloadedProblemId
+        let publishedMessage = publishResponse <&> \case
+              Left err -> R.elClass "p" "text-red-500" $ R.text (Error.message err)
+              Right savedProblem -> case isEditing of
+                True -> R.elClass "p" "text-green-600" $ R.text "Saved!"
+                False -> do
+                  timer :: R.Event t R.TickInfo <- R.tickLossyFromPostBuildTime 0.01
+                  Ob.setRoute $ do
+                    (Route.FrontendRoute_Problems :/
+                     (Problem.id savedProblem, Route.ProblemsRoute_View :/ ())) <$ timer
         let spinner = R.ffor publish $ \_ -> do
               R.elAttr "img" ("src" =: Ob.static @"small_spinner.svg" <> "width" =: "30" <> "alt" =: "loading") $ R.blank
         message <- R.holdDyn R.blank $ R.leftmost [spinner, R.updated publishedMessage]
         R.dyn_ message
 
-        userId :: R.Dynamic t Integer <-
-          pure
-          . R.constDyn
-          . fromMaybe 0
-          . fmap User.id
-          =<< Util.getCurrentUser
+        publishResponse <- saveProblem
+          publish
+          preloadedProblemId
+          ProblemStatus.Published
+          summary
+          editorContents
+          selectedTopicId
+          figures
 
-        let problemStatus :: R.Dynamic t ProblemStatus.Status = R.constDyn ProblemStatus.Draft -- TMP
-        
-        let saveProblemRequest :: R.Dynamic t RequestSave = case problemId of
-              Nothing -> RequestSave
-                <$> R.constDyn Nothing
-                <*> summary
-                <*> editorContents
-                <*> selectedTopicId
-                <*> userId
-                <*> problemStatus
-                <*> figures
-              Just pid -> RequestSave
-                <$> R.constDyn (Just pid)
-                <*> summary
-                <*> editorContents
-                <*> selectedTopicId
-                <*> userId
-                <*> problemStatus
-                <*> figures
-
-        let formData :: R.Event t (Map Text (R'.FormValue GHCJS.DOM.Types.File)) = R.ffor (R.tagPromptlyDyn saveProblemRequest publish) $ \req -> do
-              let formDataParams :: Map Problem.RequestParam (R'.FormValue GHCJS.DOM.Types.File) =
-                    ( Problem.ParamSummary =: R'.FormValue_Text (rsSummary req)
-                      <> Problem.ParamContents =: R'.FormValue_Text (rsContents req)
-                      <> Problem.ParamTopicId =: R'.FormValue_Text (cs . show . rsTopicId $ req)
-                      <> Problem.ParamAuthorId =: R'.FormValue_Text (cs . show . rsAuthorId $ req)
-                      <> Problem.ParamStatus =: R'.FormValue_Text (cs . show . rsStatus $ req)
-                      <> Problem.ParamFigures =: R'.FormValue_List (map Util.formFile . rsFigures $ req)
-                    )
-                    <>
-                    ( maybe
-                      mempty
-                      (\id' -> Problem.ParamProblemId =: R'.FormValue_Text (cs . show $ id'))
-                      (rsProblemId req)
-                    )
-              Map.mapKeys (cs . show) formDataParams
-        response :: R.Event t Text <- Util.postForm
-          (Route.apiHref $ Route.Api_Problems :/ (Nothing, mempty))
-          formData
-        let saveResponse :: R.Event t (Maybe Problem.Problem) = R.decodeText <$> response
-        let errorResponse :: R.Event t (Maybe Error.Error) = R.decodeText <$> response
-        errorMessage :: R.Dynamic t Text <- R.holdDyn ""
-          $ maybe "Something went wrong" Error.message <$> errorResponse
+        -- TEST: Save problem as draft five seconds after page load
+        onload :: R.Event t () <- R.getPostBuild
+        fiveSecAfterLoad :: R.Event t () <- R.delay 5 onload
+        _ <- saveProblem
+          fiveSecAfterLoad
+          Nothing
+          ProblemStatus.Draft
+          summary
+          editorContents
+          selectedTopicId
+          figures
 
         return
           ( figures
@@ -307,7 +277,7 @@ widget problemId = mdo
       R.elClass "div" "pl-2 flex-1 h-full flex flex-col" $ mdo
         (uploadPrb, compileButtonAction, errorsToggle) <-
           upperPane editorContents figures outputOption latestResponse anyLoading
-        preloadedProblem <- getPreloadedProblem
+        preloadedProblem :: R.Dynamic t (Maybe Problem.Problem) <- getPreloadedProblem
         let contentsFromPreloadedProblem :: R.Event t Text = fromMaybe "" . fmap Problem.contents
               <$> R.updated preloadedProblem
         let setContentsValue = R.leftmost [contentsFromPreloadedProblem, uploadPrb]
@@ -354,3 +324,114 @@ responseToFile response = do
       name <- Map.lookup (CI.mk "Filename") headers
       return $ FormFile.FormFile file name
     _ -> Nothing
+
+enableAutoSave
+  :: forall t m.
+     ( R.DomBuilder t m
+     , R.MonadHold t m
+     , JS.MonadJSM m
+     , JS.MonadJSM (R.Performable m)
+     , R.HasJSContext (R.Performable m)
+     , R.PerformEvent t m
+     , R.TriggerEvent t m
+     , DOM.IsDocument (R.RawDocument (R.DomBuilderSpace m))
+     , R.HasDocument m
+     )
+  => R.Event t () -- ^ Initial trigger event
+  -> Maybe Integer -- ^ Problem ID
+  -> R.Dynamic t Text -- ^ Problem summary
+  -> R.Dynamic t Text -- ^ Problem contents
+  -> R.Dynamic t Integer -- ^ Problem topic ID
+  -> R.Dynamic t [FormFile.FormFile] -- ^ Problem figures as form files
+  -> m () -- ^ Response
+  -- -> m (R.Event t (Maybe Error.Error)) -- ^ Response
+enableAutoSave trg problemId summary contents topicId figures = do
+  case problemId of
+    Nothing -> do
+      -- pid :: R.Event t Integer <- do
+      --   response <- saveProblem
+      --     trg
+      --     Nothing
+      --     (R.constDyn ProblemStatus.Draft)
+      --     summary
+      --     contents
+      --     topicId
+      --     figures
+        
+      return ()
+    Just pid -> do
+      return ()
+
+saveProblem
+  :: forall t m.
+     ( R.DomBuilder t m
+     , R.MonadHold t m
+     , JS.MonadJSM m
+     , JS.MonadJSM (R.Performable m)
+     , R.HasJSContext (R.Performable m)
+     , R.PerformEvent t m
+     , R.TriggerEvent t m
+     , DOM.IsDocument (R.RawDocument (R.DomBuilderSpace m))
+     , R.HasDocument m
+     )
+  => R.Event t () -- ^ Trigger event
+  -> Maybe Integer -- ^ Problem ID
+  -> ProblemStatus.Status -- ^ Problem status
+  -> R.Dynamic t Text -- ^ Problem summary
+  -> R.Dynamic t Text -- ^ Problem contents
+  -> R.Dynamic t Integer -- ^ Problem topic ID
+  -> R.Dynamic t [FormFile.FormFile] -- ^ Problem figures as form files
+  -> m (R.Dynamic t (Either Error.Error Problem.Problem)) -- ^ Response
+saveProblem trg problemId problemStatus summary contents topicId figures = do
+  userId :: R.Dynamic t Integer <-
+    pure
+    . R.constDyn
+    . fromMaybe 0
+    . fmap User.id
+    =<< Util.getCurrentUser
+
+  let saveProblemRequest :: R.Dynamic t RequestSave = case problemId of
+        Nothing -> RequestSave
+          <$> R.constDyn Nothing
+          <*> summary
+          <*> contents
+          <*> topicId
+          <*> userId
+          <*> (R.constDyn problemStatus)
+          <*> figures
+        Just pid -> RequestSave
+          <$> R.constDyn (Just pid)
+          <*> summary
+          <*> contents
+          <*> topicId
+          <*> userId
+          <*> (R.constDyn problemStatus)
+          <*> figures
+
+  let formData :: R.Event t (Map Text (R'.FormValue GHCJS.DOM.Types.File)) =
+        R.ffor (R.tagPromptlyDyn saveProblemRequest trg) $ \req -> do
+        let formDataParams :: Map Problem.RequestParam (R'.FormValue GHCJS.DOM.Types.File) =
+              ( Problem.ParamSummary =: R'.FormValue_Text (rsSummary req)
+                <> Problem.ParamContents =: R'.FormValue_Text (rsContents req)
+                <> Problem.ParamTopicId =: R'.FormValue_Text (cs . show . rsTopicId $ req)
+                <> Problem.ParamAuthorId =: R'.FormValue_Text (cs . show . rsAuthorId $ req)
+                <> Problem.ParamStatus =: R'.FormValue_Text (cs . show . rsStatus $ req)
+                <> Problem.ParamFigures =: R'.FormValue_List (map Util.formFile . rsFigures $ req)
+              )
+              <>
+              ( maybe
+                mempty
+                (\id' -> Problem.ParamProblemId =: R'.FormValue_Text (cs . show $ id'))
+                (rsProblemId req)
+              )
+        Map.mapKeys (cs . show) formDataParams
+  rawResponse :: R.Event t Text <- Util.postForm
+    (Route.apiHref $ Route.Api_Problems :/ (Nothing, mempty))
+    formData
+  publishResponse :: R.Dynamic t (Maybe Problem.Problem) <- R.holdDyn Nothing $ R.decodeText <$> rawResponse
+  errorResponse :: R.Dynamic t (Maybe Error.Error) <- R.holdDyn Nothing $ R.decodeText <$> rawResponse
+
+  return $ R.zipDyn publishResponse errorResponse <&> \case
+    (Nothing, Nothing) -> Left $ Error.mk "Something went wrong"
+    (Nothing, Just err) -> Left err
+    (Just pr, _) -> Right pr
