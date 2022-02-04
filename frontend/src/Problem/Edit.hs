@@ -52,6 +52,9 @@ data RequestSave = RequestSave
   , rsFigures :: [FormFile.FormFile]
   }
 
+autosaveInterval :: Time.NominalDiffTime
+autosaveInterval = 2
+
 widget
   :: forall t m js.
      ( R.DomBuilder t m
@@ -186,21 +189,27 @@ widget preloadedProblemId = mdo
         message <- R.holdDyn R.blank $ R.leftmost [spinner, R.updated publishedMessage]
         R.dyn_ message
 
+        let f = \preloadedProblemId' savedProblem' -> case (preloadedProblemId', savedProblem') of
+              (Just pid, _) -> Just pid
+              (Nothing, Left _) -> Nothing
+              (Nothing, Right p) -> Just $ Problem.id p
+        let problemId = f <$> R.constDyn preloadedProblemId <*> savedProblem
+
         publishResponse <- saveProblem
           publish
-          preloadedProblemId
+          problemId
           ProblemStatus.Published
           summary
           editorContents
           selectedTopicId
           figures
 
-        -- TEST: Save problem as draft five seconds after page load
-        onload :: R.Event t () <- R.getPostBuild
-        fiveSecAfterLoad :: R.Event t () <- R.delay 5 onload
-        _ <- saveProblem
-          fiveSecAfterLoad
-          Nothing
+        afterLoad <- R.tickLossyFromPostBuildTime autosaveInterval
+        savedProblem <- saveProblem
+          (R.gate
+            (maybe True ((== ProblemStatus.Draft) . Problem.status) <$> R.current preloadedProblem)
+            afterLoad)
+          problemId
           ProblemStatus.Draft
           summary
           editorContents
@@ -325,7 +334,7 @@ responseToFile response = do
       return $ FormFile.FormFile file name
     _ -> Nothing
 
-enableAutoSave
+enableAutosave
   :: forall t m.
      ( R.DomBuilder t m
      , R.MonadHold t m
@@ -345,7 +354,7 @@ enableAutoSave
   -> R.Dynamic t [FormFile.FormFile] -- ^ Problem figures as form files
   -> m () -- ^ Response
   -- -> m (R.Event t (Maybe Error.Error)) -- ^ Response
-enableAutoSave trg problemId summary contents topicId figures = do
+enableAutosave trg problemId summary contents topicId figures = do
   case problemId of
     Nothing -> do
       -- pid :: R.Event t Integer <- do
@@ -363,7 +372,7 @@ enableAutoSave trg problemId summary contents topicId figures = do
       return ()
 
 saveProblem
-  :: forall t m.
+  :: forall t m a.
      ( R.DomBuilder t m
      , R.MonadHold t m
      , JS.MonadJSM m
@@ -374,8 +383,8 @@ saveProblem
      , DOM.IsDocument (R.RawDocument (R.DomBuilderSpace m))
      , R.HasDocument m
      )
-  => R.Event t () -- ^ Trigger event
-  -> Maybe Integer -- ^ Problem ID
+  => R.Event t a -- ^ Trigger event
+  -> R.Dynamic t (Maybe Integer) -- ^ Problem ID
   -> ProblemStatus.Status -- ^ Problem status
   -> R.Dynamic t Text -- ^ Problem summary
   -> R.Dynamic t Text -- ^ Problem contents
@@ -390,23 +399,15 @@ saveProblem trg problemId problemStatus summary contents topicId figures = do
     . fmap User.id
     =<< Util.getCurrentUser
 
-  let saveProblemRequest :: R.Dynamic t RequestSave = case problemId of
-        Nothing -> RequestSave
-          <$> R.constDyn Nothing
-          <*> summary
-          <*> contents
-          <*> topicId
-          <*> userId
-          <*> (R.constDyn problemStatus)
-          <*> figures
-        Just pid -> RequestSave
-          <$> R.constDyn (Just pid)
-          <*> summary
-          <*> contents
-          <*> topicId
-          <*> userId
-          <*> (R.constDyn problemStatus)
-          <*> figures
+  let saveProblemRequest :: R.Dynamic t RequestSave =
+        RequestSave
+        <$> problemId
+        <*> summary
+        <*> contents
+        <*> topicId
+        <*> userId
+        <*> (R.constDyn problemStatus)
+        <*> figures
 
   let formData :: R.Event t (Map Text (R'.FormValue GHCJS.DOM.Types.File)) =
         R.ffor (R.tagPromptlyDyn saveProblemRequest trg) $ \req -> do
