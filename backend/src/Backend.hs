@@ -310,7 +310,9 @@ handleSaveProblem conn user = do
       -> writeJSON $ Error.mk "Problem contents cannot be empty"
     | T.null summary
       -> writeJSON $ Error.mk "Summary cannot be empty"
-    | otherwise -> do
+    | (read . cs $ status) == ProblemStatus.Published
+      -> do
+        -- Published problems must compile without errors
         response :: LBS.ByteString <- requestProblem2texCompileProblem
           contents
           Nothing
@@ -322,40 +324,65 @@ handleSaveProblem conn user = do
             IO.liftIO $ print e
             writeJSON $ Error.mk "Something went wrong"
           Right r -> if
-            -- Published problems must compile without errors
-            | (read . cs $ status) == ProblemStatus.Published
-              && ((not . T.null $ Compile.p2tErrorProblem2tex r) || (not . T.null $ Compile.p2tErrorLatex r))
+            | (not . T.null $ Compile.p2tErrorProblem2tex r) || (not . T.null $ Compile.p2tErrorLatex r)
               -> writeJSON $ Error.mk "Invalid problem. Please check that your problem compiles with no errors before saving."
-            -- Creating a new problem
             | T.null problemId -> do
-                let newProblem = Problem.BareProblem
-                      { Problem.bpProblemId = Nothing
-                      , Problem.bpSummary = summary
-                      , Problem.bpContents = contents
-                      , Problem.bpTopicId = read . cs $ topicId
-                      , Problem.bpAuthorId = read . cs $ authorId
-                      , Problem.bpStatus = read . cs $ status
-                      , Problem.bpFigures = figures
-                      }
-                IO.liftIO (Queries.createProblem conn newProblem) >>= \case
-                  Nothing -> writeJSON $ Error.mk "Something went wrong"
-                  Just createdProblem -> do
-                    writeJSON createdProblem
-            -- Updating an existing problem
+                createNewProblem
+                  Problem.BareProblem
+                  { Problem.bpProblemId = Nothing
+                  , Problem.bpSummary = summary
+                  , Problem.bpContents = contents
+                  , Problem.bpTopicId = read . cs $ topicId
+                  , Problem.bpAuthorId = read . cs $ authorId
+                  , Problem.bpStatus = read . cs $ status
+                  , Problem.bpFigures = figures
+                  }
             | otherwise -> do
-                let updateProblem = Problem.BareProblem
-                      { Problem.bpProblemId = Just $ (read . cs $ problemId :: Integer)
-                      , Problem.bpSummary = summary
-                      , Problem.bpContents = contents
-                      , Problem.bpTopicId = read . cs $ topicId
-                      , Problem.bpAuthorId = read . cs $ authorId
-                      , Problem.bpStatus = read . cs $ status
-                      , Problem.bpFigures = figures
-                      }
-                IO.liftIO (Queries.updateProblem conn updateProblem) >>= \case
-                  Nothing -> writeJSON $ Error.mk "Something went wrong"
-                  Just updatedProblem -> do
-                    writeJSON updatedProblem
+                updateExistingProblem
+                  Problem.BareProblem
+                  { Problem.bpProblemId = Just $ (read . cs $ problemId :: Integer)
+                  , Problem.bpSummary = summary
+                  , Problem.bpContents = contents
+                  , Problem.bpTopicId = read . cs $ topicId
+                  , Problem.bpAuthorId = read . cs $ authorId
+                  , Problem.bpStatus = read . cs $ status
+                  , Problem.bpFigures = figures
+                  }
+    | otherwise -> do
+        if
+          | T.null problemId -> do
+              createNewProblem
+                Problem.BareProblem
+                { Problem.bpProblemId = Nothing
+                , Problem.bpSummary = summary
+                , Problem.bpContents = contents
+                , Problem.bpTopicId = read . cs $ topicId
+                , Problem.bpAuthorId = read . cs $ authorId
+                , Problem.bpStatus = read . cs $ status
+                , Problem.bpFigures = figures
+                }
+          | otherwise -> do
+              updateExistingProblem
+                Problem.BareProblem
+                { Problem.bpProblemId = Just $ (read . cs $ problemId :: Integer)
+                , Problem.bpSummary = summary
+                , Problem.bpContents = contents
+                , Problem.bpTopicId = read . cs $ topicId
+                , Problem.bpAuthorId = read . cs $ authorId
+                , Problem.bpStatus = read . cs $ status
+                , Problem.bpFigures = figures
+                }
+  where
+    createNewProblem problem = do
+      IO.liftIO (Queries.createProblem conn problem) >>= \case
+        Nothing -> writeJSON $ Error.mk "Something went wrong"
+        Just createdProblem -> writeJSON createdProblem
+        
+    updateExistingProblem problem = do
+      IO.liftIO (Queries.updateProblem conn problem) >>= \case
+        Nothing -> writeJSON $ Error.mk "Something went wrong"
+        Just updatedProblem -> writeJSON updatedProblem
+
 
 requestProblem2texCompileProblem
   :: IO.MonadIO m
