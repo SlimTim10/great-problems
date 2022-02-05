@@ -15,7 +15,7 @@ import GHC.Generics (Generic)
 data Figure = Figure
   { id :: Integer
   , name :: Text
-  , contents :: B.ByteString
+  , contents :: SQL.Binary B.ByteString
   , problem_id :: Integer
   , created_at :: Time.UTCTime
   , updated_at :: Time.UTCTime

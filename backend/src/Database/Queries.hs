@@ -185,7 +185,7 @@ createProblem conn newProblem = do
       forM_ (Problem.bpFigures newProblem) $ \figure -> do
         void $ SQL.execute conn
           "INSERT INTO figures(name, contents, problem_id) VALUES (?,?,?)"
-          (Figure.bfName figure, Figure.bfContents figure, problemId)
+          (Figure.bfName figure, SQL.Binary (Figure.bfContents figure), problemId)
       getProblemById conn problemId
 
 updateProblem :: SQL.Connection -> Problem.BareProblem -> IO (Maybe Problem.Problem)
@@ -209,7 +209,7 @@ updateProblem conn problem = do
       forM_ (Problem.bpFigures problem) $ \figure -> do
         void $ SQL.execute conn
           "INSERT INTO figures(name, contents, problem_id) VALUES (?,?,?)"
-          (Figure.bfName figure, Figure.bfContents figure, problemId)
+          (Figure.bfName figure, SQL.Binary (Figure.bfContents figure), problemId)
       getProblemById conn problemId
 
 getTopics :: SQL.Connection -> IO [Topic.Topic]
@@ -551,7 +551,7 @@ getFiguresByProblemId conn problemId = do
   return $ dbFigures <&> \dbFigure -> Figure.Figure
     { Figure.id = DbFigure.id dbFigure
     , Figure.name = DbFigure.name dbFigure
-    , Figure.contents = DbFigure.contents dbFigure
+    , Figure.contents = SQL.fromBinary $ DbFigure.contents dbFigure
     , Figure.createdAt = DbFigure.created_at dbFigure
     , Figure.updatedAt = DbFigure.updated_at dbFigure
     }
@@ -565,7 +565,7 @@ getFigureById conn figureId = do
     Just dbFigure -> return . Just $ Figure.Figure
       { Figure.id = DbFigure.id dbFigure
       , Figure.name = DbFigure.name dbFigure
-      , Figure.contents = DbFigure.contents dbFigure
+      , Figure.contents = SQL.fromBinary $ DbFigure.contents dbFigure
       , Figure.createdAt = DbFigure.created_at dbFigure
       , Figure.updatedAt = DbFigure.updated_at dbFigure
       }
