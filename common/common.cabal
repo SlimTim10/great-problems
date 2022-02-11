@@ -19,6 +19,7 @@ library
                , reflex
                , lens
                , reflex-dom-core
+               , monad-loops
   exposed-modules:
     Common.Route
     Common.Lib.Prelude

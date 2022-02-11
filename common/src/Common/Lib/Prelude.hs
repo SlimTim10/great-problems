@@ -13,6 +13,7 @@ module Common.Lib.Prelude
   , module Data.Either
   , module Control.Monad
   , module Control.Monad.Fix
+  , module Control.Monad.Loops
   , module Control.Lens
   , module Text.Read
   , module Obelisk.Route
@@ -35,6 +36,7 @@ import Data.Char (ord)
 import Data.Either (fromLeft, fromRight)
 import Control.Monad (void, (<=<), forM, forM_, when, unless, (>=>), mfilter)
 import Control.Monad.Fix (MonadFix)
+import Control.Monad.Loops (andM)
 import Control.Lens ((^.), _1, (&), (.~), iforM_)
 import Text.Read (readMaybe)
 import Obelisk.Route ( pattern (:/) )

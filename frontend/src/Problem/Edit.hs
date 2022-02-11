@@ -10,6 +10,7 @@ import qualified Control.Monad.IO.Class as IO
 import qualified Data.Time.Clock as Time
 import qualified Data.CaseInsensitive as CI
 import qualified Data.Map as Map
+import qualified Data.Text as T
 import qualified Language.Javascript.JSaddle as JS
 import qualified "ghcjs-dom" GHCJS.DOM.Document as DOM
 import qualified GHCJS.DOM.Types
@@ -52,8 +53,11 @@ data RequestSave = RequestSave
   , rsFigures :: [FormFile.FormFile]
   }
 
+-- Draft saving state
+data SavingState a = BeforeSave | Saving | Saved | SaveError a
+
 autosaveInterval :: Time.NominalDiffTime
-autosaveInterval = 2
+autosaveInterval = 3
 
 widget
   :: forall t m js.
@@ -172,6 +176,18 @@ widget preloadedProblemId = mdo
           ) <- outputOptionsPane editorContents figures
         figures :: R.Dynamic t [FormFile.FormFile] <- R.elClass "div" "py-3 border-b border-brand-light-gray"
           $ Figures.widget =<< fetchFigures preloadedProblem
+        onload :: R.Event t () <- R.getPostBuild
+        savingState :: R.Dynamic t (SavingState Text) <- R.holdDyn BeforeSave $ R.leftmost
+          [ const Saving <$> autosaveTimer
+          , R.updated savedProblem <&> \case
+              Left e -> SaveError $ Error.message e
+              Right _ -> Saved
+          ]
+        Util.dynFor savingState $ \case
+          BeforeSave -> R.blank
+          Saving -> R.elClass "p" "mt-2 text-brand-gray" $ R.text "Saving..."
+          Saved -> R.elClass "p" "mt-2 text-brand-gray" $ R.text "Saved to drafts" -- TODO: link to drafts
+          SaveError e -> R.elClass "p" "mt-2 text-brand-gray" $ R.text e
         publish :: R.Event t () <- R.elClass "div" "py-3" $ do
           Button.primaryClass' "Publish" "w-full active:bg-blue-400"
         let isEditing = isJust preloadedProblemId
@@ -204,11 +220,14 @@ widget preloadedProblemId = mdo
           selectedTopicId
           figures
 
-        afterLoad <- R.tickLossyFromPostBuildTime autosaveInterval
+        autosaveTimerGreedy <- R.tickLossyFromPostBuildTime autosaveInterval
+        let autosaveTimer = flip R.gate autosaveTimerGreedy $ andM
+              [ maybe True ((== ProblemStatus.Draft) . Problem.status) <$> R.current preloadedProblem
+              , not . T.null <$> R.current editorContents
+              , not . T.null <$> R.current summary
+              ]
         savedProblem <- saveProblem
-          (R.gate
-            (maybe True ((== ProblemStatus.Draft) . Problem.status) <$> R.current preloadedProblem)
-            afterLoad)
+          autosaveTimer
           problemId
           ProblemStatus.Draft
           summary
