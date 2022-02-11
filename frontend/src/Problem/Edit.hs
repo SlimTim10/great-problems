@@ -55,6 +55,7 @@ data RequestSave = RequestSave
 
 -- Draft saving state
 data SavingState a = BeforeSave | Saving | Saved | SaveError a
+  deriving (Eq)
 
 autosaveInterval :: Time.NominalDiffTime
 autosaveInterval = 3
@@ -190,8 +191,9 @@ widget preloadedProblemId = mdo
           SaveError e -> R.elClass "p" "mt-2 text-brand-gray" $ R.text e
         publish :: R.Event t () <- R.elClass "div" "py-3" $ do
           Button.primaryClass' "Publish" "w-full active:bg-blue-400"
+        publishing :: R.Behavior t Bool <- R.current <$> R.holdDyn False (const True <$> publish)
         let isEditing = isJust preloadedProblemId
-        let publishedMessage = publishResponse <&> \case
+        let publishedTextMessage = publishResponse <&> \case
               Left err -> R.elClass "p" "text-red-500" $ R.text (Error.message err)
               Right savedProblem -> case isEditing of
                 True -> R.elClass "p" "text-green-600" $ R.text "Saved!"
@@ -202,8 +204,8 @@ widget preloadedProblemId = mdo
                      (Problem.id savedProblem, Route.ProblemsRoute_View :/ ())) <$ timer
         let spinner = R.ffor publish $ \_ -> do
               R.elAttr "img" ("src" =: Ob.static @"small_spinner.svg" <> "width" =: "30" <> "alt" =: "loading") $ R.blank
-        message <- R.holdDyn R.blank $ R.leftmost [spinner, R.updated publishedMessage]
-        R.dyn_ message
+        publishedMessage <- R.holdDyn R.blank $ R.leftmost [spinner, R.updated publishedTextMessage]
+        R.dyn_ publishedMessage
 
         let f = \preloadedProblemId' savedProblem' -> case (preloadedProblemId', savedProblem') of
               (Just pid, _) -> Just pid
@@ -225,6 +227,7 @@ widget preloadedProblemId = mdo
               [ maybe True ((== ProblemStatus.Draft) . Problem.status) <$> R.current preloadedProblem
               , not . T.null <$> R.current editorContents
               , not . T.null <$> R.current summary
+              , not <$> publishing
               ]
         savedProblem <- saveProblem
           autosaveTimer
