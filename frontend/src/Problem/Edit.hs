@@ -57,6 +57,14 @@ data RequestSave = RequestSave
 data SavingState a = BeforeSave | Saving | Saved | SaveError a
   deriving (Eq)
 
+data EditContext = EditContext
+  { ctxId :: Maybe Integer
+  , ctxSummary :: Text
+  , ctxContents :: Text
+  , ctxTopicId :: Integer
+  , ctxFigures :: [FormFile.FormFile]
+  }
+
 autosaveInterval :: Time.NominalDiffTime
 autosaveInterval = 3
 
@@ -204,25 +212,26 @@ widget preloadedProblemId = mdo
               (Just pid, _) -> Just pid
               (Nothing, Left _) -> Nothing
               (Nothing, Right p) -> Just $ Problem.id p
-        let problemId = f <$> R.constDyn preloadedProblemId <*> savedProblem
+        let problemId :: R.Dynamic t (Maybe Integer) = f <$> R.constDyn preloadedProblemId <*> savedProblem
+
+        let ctx :: R.Dynamic t EditContext = EditContext
+              <$> problemId
+              <*> summary
+              <*> editorContents
+              <*> selectedTopicId
+              <*> figures
 
         publishResponse <- saveProblem
           publish
-          problemId
           ProblemStatus.Published
-          summary
-          editorContents
-          selectedTopicId
-          figures
+          ctx
 
         (savedProblem, savingState) <- autosaveProblem
-          (not <$> publishing)
-          preloadedProblem
-          problemId
-          summary
-          editorContents
-          selectedTopicId
-          figures
+          (andM
+           [ not <$> publishing
+           , maybe True ((== ProblemStatus.Draft) . Problem.status) <$> R.current preloadedProblem
+           ])
+          ctx
 
         return
           ( figures
@@ -357,29 +366,19 @@ autosaveProblem
      , MonadFix m
      )
   => R.Behavior t Bool -- ^ Enable/disable
-  -> R.Dynamic t (Maybe Problem.Problem) -- ^ Pre-loaded problem
-  -> R.Dynamic t (Maybe Integer) -- ^ Problem ID
-  -> R.Dynamic t Text -- ^ Problem summary
-  -> R.Dynamic t Text -- ^ Problem contents
-  -> R.Dynamic t Integer -- ^ Problem topic ID
-  -> R.Dynamic t [FormFile.FormFile] -- ^ Problem figures as form files
+  -> R.Dynamic t EditContext
   -> m (R.Dynamic t (Either Error.Error Problem.Problem), R.Dynamic t (SavingState Text)) -- ^ (Problem, saving state)
-autosaveProblem enable preloadedProblem problemId summary editorContents topicId figures = do
+autosaveProblem enable ctx = do
   autosaveTimerGreedy <- R.tickLossyFromPostBuildTime autosaveInterval
   let autosaveTimer = flip R.gate autosaveTimerGreedy $ andM
-        [ maybe True ((== ProblemStatus.Draft) . Problem.status) <$> R.current preloadedProblem
-        , not . T.null <$> R.current editorContents
-        , not . T.null <$> R.current summary
-        , enable
+        [ enable
+        , not . T.null <$> R.current (ctxContents <$> ctx)
+        , not . T.null <$> R.current (ctxSummary <$> ctx)
         ]
   savedProblem <- saveProblem
     autosaveTimer
-    problemId
     ProblemStatus.Draft
-    summary
-    editorContents
-    topicId
-    figures
+    ctx
   savingState :: R.Dynamic t (SavingState Text) <- R.holdDyn BeforeSave $ R.leftmost
     [ const Saving <$> autosaveTimer
     , R.updated savedProblem <&> \case
@@ -401,14 +400,10 @@ saveProblem
      , R.HasDocument m
      )
   => R.Event t a -- ^ Trigger event
-  -> R.Dynamic t (Maybe Integer) -- ^ Problem ID
   -> ProblemStatus.Status -- ^ Problem status
-  -> R.Dynamic t Text -- ^ Problem summary
-  -> R.Dynamic t Text -- ^ Problem contents
-  -> R.Dynamic t Integer -- ^ Problem topic ID
-  -> R.Dynamic t [FormFile.FormFile] -- ^ Problem figures as form files
+  -> R.Dynamic t EditContext
   -> m (R.Dynamic t (Either Error.Error Problem.Problem)) -- ^ Response
-saveProblem trg problemId problemStatus summary contents topicId figures = do
+saveProblem trg problemStatus ctx = do
   userId :: R.Dynamic t Integer <-
     pure
     . R.constDyn
@@ -418,13 +413,13 @@ saveProblem trg problemId problemStatus summary contents topicId figures = do
 
   let saveProblemRequest :: R.Dynamic t RequestSave =
         RequestSave
-        <$> problemId
-        <*> summary
-        <*> contents
-        <*> topicId
+        <$> (ctxId <$> ctx)
+        <*> (ctxSummary <$> ctx)
+        <*> (ctxContents <$> ctx)
+        <*> (ctxTopicId <$> ctx)
         <*> userId
         <*> (R.constDyn problemStatus)
-        <*> figures
+        <*> (ctxFigures <$> ctx)
 
   let formData :: R.Event t (Map Text (R'.FormValue GHCJS.DOM.Types.File)) =
         R.ffor (R.tagPromptlyDyn saveProblemRequest trg) $ \req -> do
