@@ -44,13 +44,9 @@ import qualified Widget.Input as Input
 
 -- Update or publish new problem
 data RequestSave = RequestSave
-  { rsProblemId :: Maybe Integer
-  , rsSummary :: Text
-  , rsContents :: Text
-  , rsTopicId :: Integer
+  { rsStatus :: ProblemStatus.Status
   , rsAuthorId :: Integer
-  , rsStatus :: ProblemStatus.Status
-  , rsFigures :: [FormFile.FormFile]
+  , rsCtx :: EditContext
   }
 
 -- Draft saving state
@@ -58,7 +54,7 @@ data SavingState a = BeforeSave | Saving | Saved | SaveError a
   deriving (Eq)
 
 data EditContext = EditContext
-  { ctxId :: Maybe Integer
+  { ctxProblemId :: Maybe Integer
   , ctxSummary :: Text
   , ctxContents :: Text
   , ctxTopicId :: Integer
@@ -413,29 +409,25 @@ saveProblem trg problemStatus ctx = do
 
   let saveProblemRequest :: R.Dynamic t RequestSave =
         RequestSave
-        <$> (ctxId <$> ctx)
-        <*> (ctxSummary <$> ctx)
-        <*> (ctxContents <$> ctx)
-        <*> (ctxTopicId <$> ctx)
+        <$> (R.constDyn problemStatus)
         <*> userId
-        <*> (R.constDyn problemStatus)
-        <*> (ctxFigures <$> ctx)
+        <*> ctx
 
   let formData :: R.Event t (Map Text (R'.FormValue GHCJS.DOM.Types.File)) =
         R.ffor (R.tagPromptlyDyn saveProblemRequest trg) $ \req -> do
         let formDataParams :: Map Problem.RequestParam (R'.FormValue GHCJS.DOM.Types.File) =
-              ( Problem.ParamSummary =: R'.FormValue_Text (rsSummary req)
-                <> Problem.ParamContents =: R'.FormValue_Text (rsContents req)
-                <> Problem.ParamTopicId =: R'.FormValue_Text (cs . show . rsTopicId $ req)
+              ( Problem.ParamSummary =: R'.FormValue_Text (ctxSummary . rsCtx $ req)
+                <> Problem.ParamContents =: R'.FormValue_Text (ctxContents . rsCtx $ req)
+                <> Problem.ParamTopicId =: R'.FormValue_Text (cs . show . ctxTopicId . rsCtx $ req)
                 <> Problem.ParamAuthorId =: R'.FormValue_Text (cs . show . rsAuthorId $ req)
                 <> Problem.ParamStatus =: R'.FormValue_Text (cs . show . rsStatus $ req)
-                <> Problem.ParamFigures =: R'.FormValue_List (map Util.formFile . rsFigures $ req)
+                <> Problem.ParamFigures =: R'.FormValue_List (map Util.formFile . ctxFigures . rsCtx $ req)
               )
               <>
               ( maybe
                 mempty
                 (\id' -> Problem.ParamProblemId =: R'.FormValue_Text (cs . show $ id'))
-                (rsProblemId req)
+                (ctxProblemId . rsCtx $ req)
               )
         Map.mapKeys (cs . show) formDataParams
   rawResponse :: R.Event t Text <- Util.postForm
