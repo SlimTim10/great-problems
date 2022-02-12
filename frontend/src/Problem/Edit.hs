@@ -177,13 +177,6 @@ widget preloadedProblemId = mdo
           ) <- outputOptionsPane editorContents figures
         figures :: R.Dynamic t [FormFile.FormFile] <- R.elClass "div" "py-3 border-b border-brand-light-gray"
           $ Figures.widget =<< fetchFigures preloadedProblem
-        onload :: R.Event t () <- R.getPostBuild
-        savingState :: R.Dynamic t (SavingState Text) <- R.holdDyn BeforeSave $ R.leftmost
-          [ const Saving <$> autosaveTimer
-          , R.updated savedProblem <&> \case
-              Left e -> SaveError $ Error.message e
-              Right _ -> Saved
-          ]
         Util.dynFor savingState $ \case
           BeforeSave -> R.blank
           Saving -> R.elClass "p" "mt-2 text-brand-gray" $ R.text "Saving..."
@@ -195,13 +188,13 @@ widget preloadedProblemId = mdo
         let isEditing = isJust preloadedProblemId
         let publishedTextMessage = publishResponse <&> \case
               Left err -> R.elClass "p" "text-red-500" $ R.text (Error.message err)
-              Right savedProblem -> case isEditing of
+              Right publishedProblem -> case isEditing of
                 True -> R.elClass "p" "text-green-600" $ R.text "Saved!"
                 False -> do
                   timer :: R.Event t R.TickInfo <- R.tickLossyFromPostBuildTime 0.01
                   Ob.setRoute $ do
                     (Route.FrontendRoute_Problems :/
-                     (Problem.id savedProblem, Route.ProblemsRoute_View :/ ())) <$ timer
+                     (Problem.id publishedProblem, Route.ProblemsRoute_View :/ ())) <$ timer
         let spinner = R.ffor publish $ \_ -> do
               R.elAttr "img" ("src" =: Ob.static @"small_spinner.svg" <> "width" =: "30" <> "alt" =: "loading") $ R.blank
         publishedMessage <- R.holdDyn R.blank $ R.leftmost [spinner, R.updated publishedTextMessage]
@@ -222,17 +215,10 @@ widget preloadedProblemId = mdo
           selectedTopicId
           figures
 
-        autosaveTimerGreedy <- R.tickLossyFromPostBuildTime autosaveInterval
-        let autosaveTimer = flip R.gate autosaveTimerGreedy $ andM
-              [ maybe True ((== ProblemStatus.Draft) . Problem.status) <$> R.current preloadedProblem
-              , not . T.null <$> R.current editorContents
-              , not . T.null <$> R.current summary
-              , not <$> publishing
-              ]
-        savedProblem <- saveProblem
-          autosaveTimer
+        (savedProblem, savingState) <- autosaveProblem
+          (not <$> publishing)
+          preloadedProblem
           problemId
-          ProblemStatus.Draft
           summary
           editorContents
           selectedTopicId
@@ -356,7 +342,7 @@ responseToFile response = do
       return $ FormFile.FormFile file name
     _ -> Nothing
 
-enableAutosave
+autosaveProblem
   :: forall t m.
      ( R.DomBuilder t m
      , R.MonadHold t m
@@ -367,31 +353,40 @@ enableAutosave
      , R.TriggerEvent t m
      , DOM.IsDocument (R.RawDocument (R.DomBuilderSpace m))
      , R.HasDocument m
+     , R.PostBuild t m
+     , MonadFix m
      )
-  => R.Event t () -- ^ Initial trigger event
-  -> Maybe Integer -- ^ Problem ID
+  => R.Behavior t Bool -- ^ Enable/disable
+  -> R.Dynamic t (Maybe Problem.Problem) -- ^ Pre-loaded problem
+  -> R.Dynamic t (Maybe Integer) -- ^ Problem ID
   -> R.Dynamic t Text -- ^ Problem summary
   -> R.Dynamic t Text -- ^ Problem contents
   -> R.Dynamic t Integer -- ^ Problem topic ID
   -> R.Dynamic t [FormFile.FormFile] -- ^ Problem figures as form files
-  -> m () -- ^ Response
-  -- -> m (R.Event t (Maybe Error.Error)) -- ^ Response
-enableAutosave trg problemId summary contents topicId figures = do
-  case problemId of
-    Nothing -> do
-      -- pid :: R.Event t Integer <- do
-      --   response <- saveProblem
-      --     trg
-      --     Nothing
-      --     (R.constDyn ProblemStatus.Draft)
-      --     summary
-      --     contents
-      --     topicId
-      --     figures
-        
-      return ()
-    Just pid -> do
-      return ()
+  -> m (R.Dynamic t (Either Error.Error Problem.Problem), R.Dynamic t (SavingState Text)) -- ^ (Problem, saving state)
+autosaveProblem enable preloadedProblem problemId summary editorContents topicId figures = do
+  autosaveTimerGreedy <- R.tickLossyFromPostBuildTime autosaveInterval
+  let autosaveTimer = flip R.gate autosaveTimerGreedy $ andM
+        [ maybe True ((== ProblemStatus.Draft) . Problem.status) <$> R.current preloadedProblem
+        , not . T.null <$> R.current editorContents
+        , not . T.null <$> R.current summary
+        , enable
+        ]
+  savedProblem <- saveProblem
+    autosaveTimer
+    problemId
+    ProblemStatus.Draft
+    summary
+    editorContents
+    topicId
+    figures
+  savingState :: R.Dynamic t (SavingState Text) <- R.holdDyn BeforeSave $ R.leftmost
+    [ const Saving <$> autosaveTimer
+    , R.updated savedProblem <&> \case
+        Left e -> SaveError $ Error.message e
+        Right _ -> Saved
+    ]
+  return (savedProblem, savingState)
 
 saveProblem
   :: forall t m a.
