@@ -42,19 +42,13 @@ import qualified Problem.FormFile as FormFile
 import qualified Widget.Button as Button
 import qualified Widget.Input as Input
 
--- Update or publish new problem
-data RequestSave = RequestSave
-  { rsStatus :: ProblemStatus.Status
-  , rsAuthorId :: Integer
-  , rsCtx :: EditContext
-  }
-
 -- Draft saving state
 data SavingState a = BeforeSave | Saving | Saved | SaveError a
   deriving (Eq)
 
 data EditContext = EditContext
   { ctxProblemId :: Maybe Integer
+  , ctxAuthorId :: Integer
   , ctxSummary :: Text
   , ctxContents :: Text
   , ctxTopicId :: Integer
@@ -210,8 +204,16 @@ widget preloadedProblemId = mdo
               (Nothing, Right p) -> Just $ Problem.id p
         let problemId :: R.Dynamic t (Maybe Integer) = f <$> R.constDyn preloadedProblemId <*> savedProblem
 
+        userId :: R.Dynamic t Integer <-
+          pure
+          . R.constDyn
+          . fromMaybe 0
+          . fmap User.id
+          =<< Util.getCurrentUser
         let ctx :: R.Dynamic t EditContext = EditContext
               <$> problemId
+              -- <*> _
+              <*> userId
               <*> summary
               <*> editorContents
               <*> selectedTopicId
@@ -351,13 +353,10 @@ autosaveProblem
   :: forall t m.
      ( R.DomBuilder t m
      , R.MonadHold t m
-     , JS.MonadJSM m
      , JS.MonadJSM (R.Performable m)
      , R.HasJSContext (R.Performable m)
      , R.PerformEvent t m
      , R.TriggerEvent t m
-     , DOM.IsDocument (R.RawDocument (R.DomBuilderSpace m))
-     , R.HasDocument m
      , R.PostBuild t m
      , MonadFix m
      )
@@ -387,47 +386,31 @@ saveProblem
   :: forall t m a.
      ( R.DomBuilder t m
      , R.MonadHold t m
-     , JS.MonadJSM m
      , JS.MonadJSM (R.Performable m)
      , R.HasJSContext (R.Performable m)
      , R.PerformEvent t m
      , R.TriggerEvent t m
-     , DOM.IsDocument (R.RawDocument (R.DomBuilderSpace m))
-     , R.HasDocument m
      )
   => R.Event t a -- ^ Trigger event
   -> ProblemStatus.Status -- ^ Problem status
   -> R.Dynamic t EditContext
   -> m (R.Dynamic t (Either Error.Error Problem.Problem)) -- ^ Response
 saveProblem trg problemStatus ctx = do
-  userId :: R.Dynamic t Integer <-
-    pure
-    . R.constDyn
-    . fromMaybe 0
-    . fmap User.id
-    =<< Util.getCurrentUser
-
-  let saveProblemRequest :: R.Dynamic t RequestSave =
-        RequestSave
-        <$> (R.constDyn problemStatus)
-        <*> userId
-        <*> ctx
-
   let formData :: R.Event t (Map Text (R'.FormValue GHCJS.DOM.Types.File)) =
-        R.ffor (R.tagPromptlyDyn saveProblemRequest trg) $ \req -> do
+        R.ffor (R.tagPromptlyDyn ctx trg) $ \ctx' -> do
         let formDataParams :: Map Problem.RequestParam (R'.FormValue GHCJS.DOM.Types.File) =
-              ( Problem.ParamSummary =: R'.FormValue_Text (ctxSummary . rsCtx $ req)
-                <> Problem.ParamContents =: R'.FormValue_Text (ctxContents . rsCtx $ req)
-                <> Problem.ParamTopicId =: R'.FormValue_Text (cs . show . ctxTopicId . rsCtx $ req)
-                <> Problem.ParamAuthorId =: R'.FormValue_Text (cs . show . rsAuthorId $ req)
-                <> Problem.ParamStatus =: R'.FormValue_Text (cs . show . rsStatus $ req)
-                <> Problem.ParamFigures =: R'.FormValue_List (map Util.formFile . ctxFigures . rsCtx $ req)
+              ( Problem.ParamSummary =: R'.FormValue_Text (ctxSummary ctx')
+                <> Problem.ParamContents =: R'.FormValue_Text (ctxContents ctx')
+                <> Problem.ParamTopicId =: R'.FormValue_Text (cs . show . ctxTopicId $ ctx')
+                <> Problem.ParamAuthorId =: R'.FormValue_Text (cs . show . ctxAuthorId $ ctx')
+                <> Problem.ParamStatus =: R'.FormValue_Text (cs . show $ problemStatus)
+                <> Problem.ParamFigures =: R'.FormValue_List (map Util.formFile . ctxFigures $ ctx')
               )
               <>
               ( maybe
                 mempty
                 (\id' -> Problem.ParamProblemId =: R'.FormValue_Text (cs . show $ id'))
-                (ctxProblemId . rsCtx $ req)
+                (ctxProblemId ctx')
               )
         Map.mapKeys (cs . show) formDataParams
   rawResponse :: R.Event t Text <- Util.postForm
