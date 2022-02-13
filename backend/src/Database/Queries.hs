@@ -72,15 +72,19 @@ getProblems conn routeQuery = do
     Just topicId -> do
       topicIds <- getTopicIdDescendants conn topicId
       return $ Just ("topic_id IN ?", SQL.toField $ SQL.In topicIds)
-  let
-    authorExpr = exprFromRouteParam
-      "author"
-      "author_id = ?"
-      (id :: Integer -> Integer)
-      routeQuery
-    exprs = [topicExpr, authorExpr]
-    whereClause = mconcat . intersperse " AND " . map fst . catMaybes $ exprs
-    whereParams = map snd . catMaybes $ exprs
+  let authorExpr = exprFromRouteParam
+        "author"
+        "author_id = ?"
+        (id :: Integer -> Integer)
+        routeQuery
+  let statusExpr = exprFromRouteParam
+        "status"
+        "status_id = ?"
+        (id :: Integer -> Integer)
+        routeQuery
+  let exprs = [topicExpr, authorExpr, statusExpr]
+  let whereClause = mconcat . intersperse " AND " . map fst . catMaybes $ exprs
+  let whereParams = map snd . catMaybes $ exprs
   dbProblems :: [DbProblem.Problem] <-
     if not . all isNothing $ exprs
     then SQL.query conn ("SELECT * FROM problems WHERE " <> whereClause) whereParams

@@ -60,7 +60,12 @@ backend = Ob.Backend
           case apiRoute of
             Route.Api_Problems :/ (Nothing, query) -> do
               Snap.rqMethod <$> Snap.getRequest >>= \case
-                Snap.GET -> writeJSON =<< IO.liftIO (Queries.getProblems conn query)
+                Snap.GET -> do
+                  -- Only get published problems
+                  let query' =
+                        ("status" =: (Just . cs . show . fromEnum $ ProblemStatus.Published))
+                        <> query
+                  writeJSON =<< IO.liftIO (Queries.getProblems conn query')
                 Snap.POST -> case mUser of
                   Nothing -> writeJSON $ Error.mk "No access"
                   Just user -> handleSaveProblem conn user
