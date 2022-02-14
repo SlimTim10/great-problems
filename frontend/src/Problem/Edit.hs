@@ -178,7 +178,10 @@ widget preloadedProblemId = mdo
         Util.dynFor savingState $ \case
           BeforeSave -> R.blank
           Saving -> R.elClass "p" "mt-2 text-brand-gray" $ R.text "Saving..."
-          Saved -> R.elClass "p" "mt-2 text-brand-gray" $ R.text "Saved to drafts" -- TODO: link to drafts
+          Saved -> R.elClass "p" "mt-2 text-brand-gray" $ do
+            R.el "span" $ R.text "Saved to "
+            Ob.routeLink (Route.FrontendRoute_Profile :/ ()) $ do
+              R.elClass "span" "underline" $ R.text "drafts"
           SaveError e -> R.elClass "p" "mt-2 text-brand-gray" $ R.text e
         publish :: R.Event t () <- R.elClass "div" "py-3" $ do
           Button.primaryClass' "Publish" "w-full active:bg-blue-400"
