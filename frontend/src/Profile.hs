@@ -1,16 +1,22 @@
+{-# LANGUAGE PackageImports #-}
 module Profile
   ( widget
   ) where
 
 import Common.Lib.Prelude
+import qualified Frontend.Lib.Util as Util
 
 import qualified Language.Javascript.JSaddle as JS
 import qualified Reflex.Dom.Core as R
 import qualified Obelisk.Route.Frontend as Ob
+import qualified "ghcjs-dom" GHCJS.DOM.Document as DOM
 
 import qualified Common.Route as Route
+import qualified Common.Api.Problem as Problem
+import qualified Common.Api.User as User
 import qualified Common.Api.ChangePassword as ChangePassword
 import qualified Common.Api.Error as Error
+import qualified Common.Api.ProblemStatus as ProblemStatus
 import qualified Widget.Button as Button
 import qualified Widget.Input as Input
 
@@ -27,9 +33,36 @@ widget
      , R.TriggerEvent t m
      , R.HasJSContext (R.Performable m)
      , JS.MonadJSM (R.Performable m)
+     , JS.MonadJSM m
+     , R.HasDocument m
+     , DOM.IsDocument (R.RawDocument (R.DomBuilderSpace m))
      )
   => m ()
 widget = do
+  Util.getCurrentUser >>= \case
+    Nothing -> do
+      onload <- R.getPostBuild
+      Ob.setRoute $ Route.FrontendRoute_Explore :/ Nothing <$ onload
+    Just user -> widget' user
+
+widget'
+  :: forall t m js.
+     ( R.DomBuilder t m
+     , R.PostBuild t m
+     , MonadFix m
+     , R.MonadHold t m
+     , JS.MonadJSM (R.Performable m)
+     , JS.MonadJSM m
+     , Ob.SetRoute t (Ob.R Route.FrontendRoute) m
+     , Ob.RouteToUrl (Ob.R Route.FrontendRoute) m
+     , R.Prerender js t m
+     , R.PerformEvent t m
+     , R.HasJSContext (R.Performable m)
+     , R.TriggerEvent t m
+     )
+  => User.User
+  -> m ()
+widget' user = do
   R.elClass "div" "flex flex-col items-center mx-20" $ do
     R.elClass "div" "w-full" $ do
       
@@ -70,6 +103,20 @@ widget = do
             Nothing -> R.elClass "p" "text-green-600" $ R.text "Your password has been changed"
           
           return ()
+
+      section "Drafts" $ do
+        drafts :: R.Event t (Maybe [Problem.Problem]) <- Util.getOnload
+          $ Route.apiHref
+          $ Route.Api_Problems :/
+          ( Nothing, Problem.getParamsToRouteQuery
+            $ Problem.GetParams
+            { Problem.gpTopic = Nothing
+            , Problem.gpAuthor = Just . User.id $ user
+            , Problem.gpStatus = Just . fromIntegral . fromEnum $ ProblemStatus.Draft
+            }
+          )
+        draftCards :: R.Dynamic t [Problem.Problem] <- R.holdDyn [] $ fromMaybe [] <$> drafts
+        void $ R.simpleList draftCards draftCardWidget
           
       section "Sign out" $ do
         Ob.routeLink (Route.FrontendRoute_SignOut :/ ()) $ do
@@ -93,3 +140,17 @@ widget = do
         let body = ChangePassword.ChangePassword (ChangePassword.OldPassword oldPassword') newPassword'
         R.postJson url body
       return $ R.decodeXhrResponse <$> r
+
+draftCardWidget
+  :: ( R.DomBuilder t m
+     , R.PostBuild t m
+     , Ob.SetRoute t (Ob.R Route.FrontendRoute) m
+     , Ob.RouteToUrl (Ob.R Route.FrontendRoute) m
+     , R.Prerender js t m
+     )
+  => R.Dynamic t Problem.Problem
+  -> m ()
+draftCardWidget draftCard = do
+  Util.dynFor draftCard $ \draft -> do
+    Ob.routeLink (Route.FrontendRoute_Problems :/ (Problem.id draft, Route.ProblemsRoute_Edit :/ ())) $ do
+      R.elClass "p" "text-brand-primary font-medium group-hover:underline" $ R.text (Problem.summary draft)

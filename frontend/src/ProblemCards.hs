@@ -13,6 +13,7 @@ import qualified Reflex.Dom.Core as R
 
 import qualified Common.Api.Topic as Topic
 import qualified Common.Api.Problem as Problem
+import qualified Common.Api.ProblemStatus as ProblemStatus
 import qualified Common.Api.User as User
 import qualified Common.Route as Route
 
@@ -36,24 +37,22 @@ widget
 widget topicId = do
   R.elClass "div" "flex justify-center" $ do
     R.elClass "div" "w-brand-screen-lg flex flex-col gap-2" $ do
-      response :: R.Event t (Maybe [Problem.Problem]) <- case topicId of
+      problems :: R.Event t (Maybe [Problem.Problem]) <- case topicId of
         Nothing -> Util.getOnload
           $ Route.apiHref
           $ Route.Api_Problems :/
-          ( Nothing, Problem.getParamsToRouteQuery
-            $ Problem.GetParams
-            { Problem.gpTopic = Nothing
-            }
-          )
+          (Nothing, Problem.getParamsToRouteQuery Problem.getParamsDefault)
         Just tid -> Util.getOnload
           $ Route.apiHref
           $ Route.Api_Problems :/
           ( Nothing, Problem.getParamsToRouteQuery
             $ Problem.GetParams
             { Problem.gpTopic = Just tid
+            , Problem.gpAuthor = Nothing
+            , Problem.gpStatus = Just . fromIntegral . fromEnum $ ProblemStatus.Published
             }
           )
-      problemCards :: R.Dynamic t [Problem.Problem] <- R.holdDyn [] $ fromMaybe [] <$> response
+      problemCards :: R.Dynamic t [Problem.Problem] <- R.holdDyn [] $ fromMaybe [] <$> problems
       void $ R.simpleList problemCards problemCardWidget
 
 problemCardWidget

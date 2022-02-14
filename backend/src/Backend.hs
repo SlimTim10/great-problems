@@ -9,7 +9,6 @@ import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Text as T
 import qualified Control.Monad.IO.Class as IO
 import qualified Data.Aeson as JSON
-import qualified Data.Map as Map
 import qualified Data.Word as Word
 import qualified Data.CaseInsensitive as CI
 import qualified Database.PostgreSQL.Simple as SQL
@@ -60,12 +59,7 @@ backend = Ob.Backend
           case apiRoute of
             Route.Api_Problems :/ (Nothing, query) -> do
               Snap.rqMethod <$> Snap.getRequest >>= \case
-                Snap.GET -> do
-                  -- Only get published problems
-                  let query' =
-                        ("status" =: (Just . cs . show . fromEnum $ ProblemStatus.Published))
-                        <> query
-                  writeJSON =<< IO.liftIO (Queries.getProblems conn query')
+                Snap.GET -> handleGetProblems conn mUser query
                 Snap.POST -> case mUser of
                   Nothing -> writeJSON $ Error.mk "No access"
                   Just user -> handleSaveProblem conn user
@@ -75,7 +69,7 @@ backend = Ob.Backend
               writeJSON =<< IO.liftIO (Queries.getProblemById conn problemId)
               
             Route.Api_Topics :/ query -> do
-              topics <- case fromMaybe Nothing (Map.lookup "parent" query) of
+              topics <- case Route.readParamFromQuery "parent" query :: Maybe Text of
                 Just "null" -> IO.liftIO $ Queries.getRootTopics conn
                 Just x -> case readMaybe (cs x) :: Maybe Integer of
                   Just parentId -> IO.liftIO $ Queries.getTopicsByParentId conn parentId
@@ -282,6 +276,22 @@ removeCookie
   => Text -- ^ cookie name
   -> m ()
 removeCookie name = Snap.expireCookie $ mkCookie name ""
+
+handleGetProblems :: SQL.Connection -> Maybe User.User -> Route.Query -> Snap.Snap ()
+handleGetProblems conn mUser routeQuery = do
+  let problemStatus :: Maybe ProblemStatus.Status = safeToEnum =<<
+        Route.readParamFromQuery "status" routeQuery
+  case problemStatus of
+    -- Restrict fetching drafts to authorized users (user ID matches draft author ID)
+    Just ProblemStatus.Draft -> case mUser of
+      Nothing -> writeJSON $ Error.mk "No access"
+      Just user -> do
+        let authorId :: Maybe Integer = Route.readParamFromQuery "author" routeQuery
+        if Just (User.id user) /= authorId
+          then writeJSON $ Error.mk "No access"
+          else writeJSON =<< IO.liftIO (Queries.getProblems conn routeQuery)
+    Just ProblemStatus.Published -> writeJSON =<< IO.liftIO (Queries.getProblems conn routeQuery)
+    Nothing -> writeJSON $ Error.mk "No access"
 
 -- Create or update problem
 handleSaveProblem :: SQL.Connection -> User.User -> Snap.Snap ()

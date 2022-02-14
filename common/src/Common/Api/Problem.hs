@@ -38,13 +38,22 @@ data Problem = Problem
 
 data GetParams = GetParams
   { gpTopic :: Maybe Integer -- Filter by topic ID
+  , gpAuthor :: Maybe Integer -- Filter by author ID
+  , gpStatus :: Maybe Integer -- Filter by status ID
   }
 
-data GetParamInclude = TopicPath
+getParamsDefault :: GetParams
+getParamsDefault = GetParams
+  { gpTopic = Nothing
+  , gpAuthor = Nothing
+  , gpStatus = Just . fromIntegral . fromEnum $ ProblemStatus.Published
+  }
 
 getParamsToRouteQuery :: GetParams -> Route.Query
 getParamsToRouteQuery gps = Map.fromList
-  [ ("topic", gpTopic gps >>= \t -> Just (cs $ show t))
+  [ ("topic", gpTopic gps >>= Just . cs . show)
+  , ("author", gpAuthor gps >>= Just . cs . show)
+  , ("status", gpStatus gps >>= Just . cs . show)
   ]
 
 data BareProblem = BareProblem

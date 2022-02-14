@@ -121,11 +121,7 @@ widget = do
       problem :: R.Dynamic t (Maybe Problem.Problem) <- do
         r :: R.Event t (Maybe Problem.Problem) <- Util.getOnload
           $ Route.apiHref $ Route.Api_Problems :/
-          ( Just problemId, Problem.getParamsToRouteQuery
-            $ Problem.GetParams
-            { Problem.gpTopic = Nothing
-            }
-          )
+          (Just problemId, Problem.getParamsToRouteQuery Problem.getParamsDefault)
         R.holdDyn Nothing r
       
       onload :: R.Event t () <- R.getPostBuild

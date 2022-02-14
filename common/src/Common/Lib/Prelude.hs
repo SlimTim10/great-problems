@@ -22,6 +22,7 @@ module Common.Lib.Prelude
   , showText
   , maybeToEither
   , singleton
+  , safeToEnum
   ) where
 
 import Data.Text (Text)
@@ -56,3 +57,12 @@ maybeToEither f = maybe (pure ()) (Left . f)
 
 singleton :: a -> [a]
 singleton a = [a]
+
+safeToEnum :: (Enum t, Bounded t) => Int -> Maybe t
+safeToEnum i =
+  let r = toEnum i
+      max' = maxBound `asTypeOf` r
+      min' = minBound `asTypeOf` r
+  in if i >= fromEnum min' && i <= fromEnum max'
+     then Just r
+     else Nothing
