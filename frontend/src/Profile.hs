@@ -19,6 +19,7 @@ import qualified Common.Api.Error as Error
 import qualified Common.Api.ProblemStatus as ProblemStatus
 import qualified Widget.Button as Button
 import qualified Widget.Input as Input
+import qualified ProblemCards as ProblemCards
 
 widget
   :: forall t m js.
@@ -105,18 +106,11 @@ widget' user = do
           return ()
 
       section "Drafts" $ do
-        drafts :: R.Event t (Maybe [Problem.Problem]) <- Util.getOnload
-          $ Route.apiHref
-          $ Route.Api_Problems :/
-          ( Nothing, Problem.getParamsToRouteQuery
-            $ Problem.GetParams
-            { Problem.gpTopic = Nothing
-            , Problem.gpAuthor = Just . User.id $ user
-            , Problem.gpStatus = Just . fromIntegral . fromEnum $ ProblemStatus.Draft
-            }
-          )
-        draftCards :: R.Dynamic t [Problem.Problem] <- R.holdDyn [] $ fromMaybe [] <$> drafts
-        void $ R.simpleList draftCards draftCardWidget
+        drafts <- getDrafts (User.id user)
+        R.elClass "div" "flex flex-col gap-2" $ do
+          void $ R.simpleList drafts
+            $ ProblemCards.problemCardWidget
+            ProblemCards.Options { ProblemCards.showAuthor = False }
           
       section "Sign out" $ do
         Ob.routeLink (Route.FrontendRoute_SignOut :/ ()) $ do
@@ -141,16 +135,26 @@ widget' user = do
         R.postJson url body
       return $ R.decodeXhrResponse <$> r
 
-draftCardWidget
-  :: ( R.DomBuilder t m
-     , R.PostBuild t m
-     , Ob.SetRoute t (Ob.R Route.FrontendRoute) m
-     , Ob.RouteToUrl (Ob.R Route.FrontendRoute) m
-     , R.Prerender js t m
+getDrafts
+  :: ( R.PostBuild t m
+     , JS.MonadJSM (R.Performable m)
+     , R.PerformEvent t m
+     , R.HasJSContext (R.Performable m)
+     , R.TriggerEvent t m
+     , R.MonadHold t m
+     , JS.MonadJSM m
      )
-  => R.Dynamic t Problem.Problem
-  -> m ()
-draftCardWidget draftCard = do
-  Util.dynFor draftCard $ \draft -> do
-    Ob.routeLink (Route.FrontendRoute_Problems :/ (Problem.id draft, Route.ProblemsRoute_Edit :/ ())) $ do
-      R.elClass "p" "text-brand-primary font-medium group-hover:underline" $ R.text (Problem.summary draft)
+  => Integer
+  -> m (R.Dynamic t [Problem.Problem])
+getDrafts authorId = do
+  response :: R.Event t (Maybe [Problem.Problem]) <- Util.getOnload
+    $ Route.apiHref
+    $ Route.Api_Problems :/
+    ( Nothing, Problem.getParamsToRouteQuery
+      $ Problem.GetParams
+      { Problem.gpTopic = Nothing
+      , Problem.gpAuthor = Just authorId
+      , Problem.gpStatus = Just (fromIntegral . fromEnum $ ProblemStatus.Draft)
+      }
+    )
+  R.holdDyn [] $ fromMaybe [] <$> response
