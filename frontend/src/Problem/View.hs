@@ -17,6 +17,7 @@ import qualified Reflex.Dom.Core as R
 import qualified Common.Route as Route
 import qualified Common.Api.Compile as Compile
 import qualified Common.Api.Problem as Problem
+import qualified Common.Api.ProblemStatus as ProblemStatus
 import qualified Common.Api.User as User
 import qualified Common.Api.Topic as Topic
 import qualified Problem.PdfViewer as PdfViewer
@@ -46,6 +47,18 @@ widget
   => Integer
   -> m ()
 widget problemId = mdo
+  problem :: R.Dynamic t (Maybe Problem.Problem) <- getProblem
+  let redirect = problem <&> \case
+        Nothing -> R.blank
+        Just problem' -> case Problem.status problem' of
+          -- Can't view drafts; redirect to edit
+          ProblemStatus.Draft -> do
+            afterLoad :: R.Event t R.TickInfo <- R.tickLossyFromPostBuildTime 0.01
+            Ob.setRoute
+              $ (Route.FrontendRoute_Problems :/ (Problem.id problem', Route.ProblemsRoute_Edit :/ ())) <$ afterLoad
+          _ -> R.blank
+  R.dyn_ redirect
+  
   topicPath
   ( randomizeVariablesAction
     , resetVariablesAction
@@ -95,7 +108,7 @@ widget problemId = mdo
     getProblem :: m (R.Dynamic t (Maybe Problem.Problem))
     getProblem = do
       r :: R.Event t (Maybe Problem.Problem) <- Util.getOnload
-        $ Route.apiHref $ Route.Api_Problems :/
+        $ Route.apiHref $ Route.Api_Problems :/ 
         (Just problemId, mempty)
       R.holdDyn Nothing r
 
