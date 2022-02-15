@@ -20,6 +20,7 @@ import qualified Common.Api.Problem as Problem
 import qualified Common.Api.ProblemStatus as ProblemStatus
 import qualified Common.Api.User as User
 import qualified Common.Api.Topic as Topic
+import qualified Common.Api.Role as Role
 import qualified Problem.PdfViewer as PdfViewer
 import qualified Widget.Button as Button
 import qualified Widget.Input as Input
@@ -64,7 +65,7 @@ widget problemId = mdo
     , resetVariablesAction
     , showAnswerAction
     , showSolutionAction
-    ) <- fullView
+    ) <- problemPane
          ((Problem.Compile.response . Loading.action) <$> currentResponse)
          (Loading.loading <$> currentResponse)
     
@@ -127,16 +128,16 @@ widget problemId = mdo
                   (Route.FrontendRoute_Topics :/ (tid, Route.TopicsRoute_Problems :/ ())) $ do
                   R.elClass "p" "hover:underline text-brand-primary" $ R.text name
 
-    fullView latestResponse anyLoading = do
+    problemPane latestResponse anyLoading = do
       R.elClass "div" "flex-1 mx-2 flex justify-center" $ do
         R.elClass "div" "w-brand-screen-lg flex" $ do
-          ctx <- leftPane
+          ctx <- infoPane
           R.elClass "div" "pl-2 flex-1 h-full flex flex-col" $ do
             R.elClass "div" "flex-1" $ do
               PdfViewer.widget latestResponse anyLoading (R.constDyn False)
           return ctx
 
-    leftPane = do
+    infoPane = do
       R.elClass "div" "w-96 flex-none flex flex-col gap-2" $ mdo
         section problemDetails
         section $ do
@@ -234,6 +235,7 @@ widget problemId = mdo
         problem <- getProblem
         R.dyn_ $ maybe R.blank problemDetails' <$> problem
         editProblem
+        duplicateProblem
 
 
     editProblem = do
@@ -245,7 +247,22 @@ widget problemId = mdo
                 Ob.routeLink
                   (Route.FrontendRoute_Problems :/
                    (problemId, Route.ProblemsRoute_Edit :/ ())) $ do
-                  R.elClass "div" "my-1" $ Button.secondarySmall "Edit this problem"
+                  R.elClass "div" "my-1" $ Button.secondarySmall "Edit problem"
       userId <- getUserId
       problem <- getProblem
       R.dyn_ $ showEditLink <$> userId <*> problem
+
+    duplicateProblem = do
+      Util.getCurrentUser >>= \case
+        Nothing -> R.blank
+        Just user -> do
+          if not $ User.role user `elem` [Role.Contributor, Role.Moderator, Role.Administrator]
+            then R.blank
+            else do
+            let showDuplicateLink = \case
+                  Nothing -> R.blank
+                  Just p -> do
+                    -- Ob.routeLink (Route.FrontendRoute_DuplicateProblem :/ problemId) $ do
+                      R.elClass "div" "my-1" $ Button.secondarySmall "Duplicate problem"
+            problem <- getProblem
+            R.dyn_ $ showDuplicateLink <$> problem
