@@ -35,6 +35,7 @@ library
     Frontend.Lib.Storage
     Frontend.Lib.LocalStorage
     Frontend.Lib.SessionStorage
+    Frontend.Lib.Api
     Header
     Home
     ProblemCards

@@ -1,3 +1,4 @@
+{-# LANGUAGE RankNTypes #-}
 module SignIn
   ( widget
   ) where
@@ -5,7 +6,6 @@ module SignIn
 import Common.Lib.Prelude
 
 import qualified Language.Javascript.JSaddle as JS
-import qualified Data.Aeson as JSON
 import qualified Data.CaseInsensitive as CI
 import qualified Web.KeyCode as Key
 import qualified Reflex.Dom.Core as R
@@ -16,6 +16,7 @@ import qualified Widget.Input as Input
 import qualified Widget.Button as Button
 import qualified Common.Api.Auth as Auth
 import qualified Common.Api.Error as Error
+import qualified Frontend.Lib.Api as Api
 
 widget
   :: forall t m js.
@@ -57,30 +58,17 @@ widget = do
             , R.keydown Key.Enter passwordInput
             ]
 
-      response <- signInAttempt email password signIn
-      
-      let signInError :: R.Event t (Either Text ()) = maybeToEither Error.message <$> response
+      response :: Api.Response t <- Api.request
+        (R.zipDyn email password)
+        signIn
+        (Route.Api_SignIn :/ ())
+        (\(email', password') -> Auth.Auth (CI.mk email') password')
         
-      signInErrorText :: R.Dynamic t Text <- R.holdDyn "" $ fromLeft "" <$> signInError
+      signInErrorText :: R.Dynamic t Text <- R.holdDyn "" $ maybe "" Error.message <$> Api.resError response
       R.elClass "p" "text-red-500" $ R.dynText signInErrorText
-      
-      signInSuccess :: R.Event t (Either (R.Dynamic t Text) (R.Dynamic t ())) <- fmap R.updated
-        $ R.eitherDyn =<< R.holdDyn (Left "") signInError
-      Ob.setRoute $ Route.FrontendRoute_Explore :/ Nothing <$ signInSuccess
-      
-      R.blank
-  where
-    signInAttempt
-      :: R.Dynamic t Text -- ^ Email
-      -> R.Dynamic t Text -- ^ Password
-      -> R.Event t () -- ^ Event to trigger request
-      -> m (R.Event t (Maybe Error.Error))
-    signInAttempt email password signIn = do
-      let ev :: R.Event t (Text, Text) = R.tagPromptlyDyn (R.zipDyn email password) signIn
-      r <- R.performRequestAsync $ R.ffor ev $ \(email', password') -> do
-        signInRequest $ Auth.Auth (CI.mk email') password'
-      return $ R.decodeXhrResponse <$> r
 
-    signInRequest :: JSON.ToJSON a => a -> R.XhrRequest Text
-    signInRequest body = R.postJson url body
-      where url = Route.apiHref $ Route.Api_SignIn :/ ()
+      signInSuccess :: R.Event t (Maybe (R.Dynamic t ())) <- fmap R.updated $
+        R.maybeDyn =<< R.holdDyn Nothing (Api.resSuccess response)
+      Ob.setRoute $ Route.FrontendRoute_Explore :/ Nothing <$ signInSuccess
+
+      R.blank
