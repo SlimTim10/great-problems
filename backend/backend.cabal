@@ -44,6 +44,7 @@ library
     Database.Types.EmailVerification
     Database.Types.Figure
     Database.Types.Problem
+    Database.Types.ProblemStatus
     Database.Types.ProblemSet
     Database.Types.ProblemSetProblem
     Database.Types.Role

@@ -29,6 +29,7 @@ library
     Common.Api.Figure
     Common.Api.OkResponse
     Common.Api.Problem
+    Common.Api.ProblemStatus
     Common.Api.ProblemSet
     Common.Api.ProblemSetCard
     Common.Api.Register
