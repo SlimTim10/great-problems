@@ -193,30 +193,29 @@ backend = Ob.Backend
 
             Route.Api_DuplicateProblem :/ problemId -> do
               -- Current user must have the right role and problem must be published
-              IO.liftIO (Queries.getProblemById conn problemId) >>= \case
-                Nothing -> writeJSON $ Error.mk "Problem does not exist"
-                Just problem -> case mUser of
-                  Nothing -> writeJSON $ Error.mk "No access"
-                  Just user -> do
-                    if not $ User.role user `elem` [Role.Contributor, Role.Moderator, Role.Administrator]
-                      then writeJSON $ Error.mk "No access"
-                      else
-                      case Problem.status problem of
-                        ProblemStatus.Draft -> writeJSON $ Error.mk "No access"
-                        ProblemStatus.Published -> do
-                          -- Make duplicate problem as draft with current user as author
-                          let figures = map (Figure.BareFigure <$> Figure.name <*> Figure.contents) (Problem.figures problem)
-                          createNewProblem
-                            conn
-                            Problem.BareProblem
-                            { Problem.bpProblemId = Nothing
-                            , Problem.bpSummary = Problem.summary problem
-                            , Problem.bpContents = Problem.contents problem
-                            , Problem.bpTopicId = Topic.id . Problem.topic $ problem
-                            , Problem.bpAuthorId = User.id user
-                            , Problem.bpStatus = ProblemStatus.Draft
-                            , Problem.bpFigures = figures
-                            }
+              mProblem <- IO.liftIO (Queries.getProblemById conn problemId)
+              let validate :: Maybe (Problem.Problem, User.User) = do
+                    problem <- mProblem
+                    user <- mUser
+                    guard $ User.role user `elem` [Role.Contributor, Role.Moderator, Role.Administrator]
+                    guard $ Problem.status problem == ProblemStatus.Published
+                    return (problem, user)
+              case validate of
+                Nothing -> writeJSON $ Error.mk "No access"
+                Just (problem, user) -> do
+                  -- Make duplicate problem as draft with current user as author
+                  let figures = map (Figure.BareFigure <$> Figure.name <*> Figure.contents) (Problem.figures problem)
+                  createNewProblem
+                    conn
+                    Problem.BareProblem
+                    { Problem.bpProblemId = Nothing
+                    , Problem.bpSummary = Problem.summary problem
+                    , Problem.bpContents = Problem.contents problem
+                    , Problem.bpTopicId = Topic.id . Problem.topic $ problem
+                    , Problem.bpAuthorId = User.id user
+                    , Problem.bpStatus = ProblemStatus.Draft
+                    , Problem.bpFigures = figures
+                    }
 
             Route.Api_ResetPassword :/ () -> Snap.rqMethod <$> Snap.getRequest >>= \case
               Snap.POST -> do
