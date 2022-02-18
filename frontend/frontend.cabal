@@ -64,6 +64,7 @@ library
     Problem.SelectTopic
     Problem.Summary
     Problem.UploadPrb
+    Problem.Duplicate
     Widget.Button
     Widget.Input
     MyReflex.Dom.Widget.Basic

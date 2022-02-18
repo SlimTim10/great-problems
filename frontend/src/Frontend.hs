@@ -11,6 +11,7 @@ import qualified Reflex.Dom.Core as R
 import qualified Common.Route as Route
 import qualified Problem.View
 import qualified Problem.Edit
+import qualified Problem.Duplicate
 import qualified Home
 import qualified Header
 import qualified Topics
@@ -89,6 +90,9 @@ frontend = Ob.Frontend
             Header.widget
           R.elClass "div" "flex-1 mx-2 flex justify-center" $ do
             Problem.Edit.widget Nothing
+      Route.FrontendRoute_DuplicateProblem -> do
+        problemId :: R.Dynamic t Integer <- Ob.askRoute
+        Util.dynFor problemId $ \pId -> Problem.Duplicate.widget pId
       Route.FrontendRoute_Problems -> do
         path :: R.Dynamic t (Integer, Ob.R Route.ProblemsRoute) <- Ob.askRoute
         Util.dynFor path $ \(problemId, route) -> do

@@ -29,6 +29,7 @@ import qualified Common.Api.Register as Register
 import qualified Common.Api.Role as Role
 import qualified Common.Api.OkResponse as OkResponse
 import qualified Common.Api.Compile as Compile
+import qualified Common.Api.Topic as Topic
 import qualified Common.Api.Problem as Problem
 import qualified Common.Api.ProblemStatus as ProblemStatus
 import qualified Common.Api.Figure as Figure
@@ -56,7 +57,9 @@ backend = Ob.Backend
           when (isNothing mUser) $ do
             removeCookie "sessionId"
             removeCookie "user"
+            
           case apiRoute of
+            
             Route.Api_Problems :/ (Nothing, query) -> do
               Snap.rqMethod <$> Snap.getRequest >>= \case
                 Snap.GET -> handleGetProblems conn mUser query
@@ -121,17 +124,18 @@ backend = Ob.Backend
                     , Register.password register
                     ]
                     then writeJSON $ Error.mk "Fields must not be empty"
-                    else do
-                    IO.liftIO (Queries.getUserByEmail conn (Register.email register)) >>= \case
-                      Just _ -> writeJSON $ Error.mk "Email already registered"
-                      Nothing -> do
-                        IO.liftIO (Queries.registerUser conn register) >>= \case
-                          Nothing -> writeJSON $ Error.mk "Something went wrong"
-                          Just user -> do
-                            secret <- IO.liftIO $ Queries.newEmailVerification conn (User.id user)
-                            Email.sendEmailVerification user secret
-                            writeJSON OkResponse.OkResponse
-                            
+                    else
+                    do
+                      IO.liftIO (Queries.getUserByEmail conn (Register.email register)) >>= \case
+                        Just _ -> writeJSON $ Error.mk "Email already registered"
+                        Nothing -> do
+                          IO.liftIO (Queries.registerUser conn register) >>= \case
+                            Nothing -> writeJSON $ Error.mk "Something went wrong"
+                            Just user -> do
+                              secret <- IO.liftIO $ Queries.newEmailVerification conn (User.id user)
+                              Email.sendEmailVerification user secret
+                              writeJSON OkResponse.OkResponse
+
             Route.Api_VerifyEmail :/ secret -> do
               verify <- IO.liftIO $ Queries.verifyEmail conn (cs secret)
               if verify
@@ -147,10 +151,11 @@ backend = Ob.Backend
                     let changePassword = \user newPassword -> do
                           if T.null newPassword
                             then writeJSON $ Error.mk "Password cannot be empty"
-                            else do
-                            IO.liftIO (Queries.updateUserPassword conn (User.id user) cp) >>= \case
-                              Nothing -> writeJSON $ Error.mk "Something went wrong"
-                              Just _ -> writeJSON OkResponse.OkResponse
+                            else
+                            do
+                              IO.liftIO (Queries.updateUserPassword conn (User.id user) cp) >>= \case
+                                Nothing -> writeJSON $ Error.mk "Something went wrong"
+                                Just _ -> writeJSON OkResponse.OkResponse
                     case ChangePassword.identification cp of
                       ChangePassword.OldPassword oldPassword -> do
                         case mUser of
@@ -184,6 +189,34 @@ backend = Ob.Backend
               IO.liftIO $ mapM_ (Auth.removeSession conn) mSession
               removeCookie "sessionId"
               removeCookie "user"
+              writeJSON OkResponse.OkResponse
+
+            Route.Api_DuplicateProblem :/ problemId -> do
+              -- Current user must have the right role and problem must be published
+              IO.liftIO (Queries.getProblemById conn problemId) >>= \case
+                Nothing -> writeJSON $ Error.mk "Problem does not exist"
+                Just problem -> case mUser of
+                  Nothing -> writeJSON $ Error.mk "No access"
+                  Just user -> do
+                    if not $ User.role user `elem` [Role.Contributor, Role.Moderator, Role.Administrator]
+                      then writeJSON $ Error.mk "No access"
+                      else
+                      case Problem.status problem of
+                        ProblemStatus.Draft -> writeJSON $ Error.mk "No access"
+                        ProblemStatus.Published -> do
+                          -- Make duplicate problem as draft with current user as author
+                          let figures = map (Figure.BareFigure <$> Figure.name <*> Figure.contents) (Problem.figures problem)
+                          createNewProblem
+                            conn
+                            Problem.BareProblem
+                            { Problem.bpProblemId = Nothing
+                            , Problem.bpSummary = Problem.summary problem
+                            , Problem.bpContents = Problem.contents problem
+                            , Problem.bpTopicId = Topic.id . Problem.topic $ problem
+                            , Problem.bpAuthorId = User.id user
+                            , Problem.bpStatus = ProblemStatus.Draft
+                            , Problem.bpFigures = figures
+                            }
 
             Route.Api_ResetPassword :/ () -> Snap.rqMethod <$> Snap.getRequest >>= \case
               Snap.POST -> do
@@ -310,10 +343,11 @@ handleSaveProblem conn user = do
   existingAuthor :: Maybe User.User <- IO.liftIO $ do
     if T.null problemId
       then return Nothing
-      else do
-      (Queries.getProblemById conn (read . cs $ problemId)) >>= \case
-        Nothing -> return Nothing
-        Just p -> return . Just $ Problem.author p
+      else
+      do
+        (Queries.getProblemById conn (read . cs $ problemId)) >>= \case
+          Nothing -> return Nothing
+          Just p -> return . Just $ Problem.author p
   if
     | any not
       [ T.null problemId || (read . cs $ authorId) == User.id user
@@ -343,6 +377,7 @@ handleSaveProblem conn user = do
               -> writeJSON $ Error.mk "Invalid problem. Please check that your problem compiles with no errors before saving."
             | T.null problemId -> do
                 createNewProblem
+                  conn
                   Problem.BareProblem
                   { Problem.bpProblemId = Nothing
                   , Problem.bpSummary = summary
@@ -354,6 +389,7 @@ handleSaveProblem conn user = do
                   }
             | otherwise -> do
                 updateExistingProblem
+                  conn
                   Problem.BareProblem
                   { Problem.bpProblemId = Just $ (read . cs $ problemId :: Integer)
                   , Problem.bpSummary = summary
@@ -367,6 +403,7 @@ handleSaveProblem conn user = do
         if
           | T.null problemId -> do
               createNewProblem
+                conn
                 Problem.BareProblem
                 { Problem.bpProblemId = Nothing
                 , Problem.bpSummary = summary
@@ -378,6 +415,7 @@ handleSaveProblem conn user = do
                 }
           | otherwise -> do
               updateExistingProblem
+                conn
                 Problem.BareProblem
                 { Problem.bpProblemId = Just $ (read . cs $ problemId :: Integer)
                 , Problem.bpSummary = summary
@@ -387,16 +425,18 @@ handleSaveProblem conn user = do
                 , Problem.bpStatus = read . cs $ status
                 , Problem.bpFigures = figures
                 }
-  where
-    createNewProblem problem = do
-      IO.liftIO (Queries.createProblem conn problem) >>= \case
-        Nothing -> writeJSON $ Error.mk "Something went wrong"
-        Just createdProblem -> writeJSON createdProblem
+
+createNewProblem :: SQL.Connection -> Problem.BareProblem -> Snap.Snap ()
+createNewProblem conn problem = do
+  IO.liftIO (Queries.createProblem conn problem) >>= \case
+    Nothing -> writeJSON $ Error.mk "Something went wrong"
+    Just createdProblem -> writeJSON createdProblem
         
-    updateExistingProblem problem = do
-      IO.liftIO (Queries.updateProblem conn problem) >>= \case
-        Nothing -> writeJSON $ Error.mk "Something went wrong"
-        Just updatedProblem -> writeJSON updatedProblem
+updateExistingProblem :: SQL.Connection -> Problem.BareProblem -> Snap.Snap ()
+updateExistingProblem conn problem = do
+  IO.liftIO (Queries.updateProblem conn problem) >>= \case
+    Nothing -> writeJSON $ Error.mk "Something went wrong"
+    Just updatedProblem -> writeJSON updatedProblem
 
 
 requestProblem2texCompileProblem

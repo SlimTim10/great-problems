@@ -58,13 +58,14 @@ widget = do
             , R.keydown Key.Enter passwordInput
             ]
 
-      response :: Api.Response t <- Api.request
+      response :: Api.Response t () <- Api.request
         (R.zipDyn email password)
         signIn
         (Route.Api_SignIn :/ ())
         (\(email', password') -> Auth.Auth (CI.mk email') password')
         
-      signInErrorText :: R.Dynamic t Text <- R.holdDyn "" $ maybe "" Error.message <$> Api.resError response
+      signInErrorText :: R.Dynamic t Text <- R.holdDyn "" $
+        maybe "" Error.message <$> Api.resError response
       R.elClass "p" "text-red-500" $ R.dynText signInErrorText
 
       signInSuccess :: R.Event t (Maybe (R.Dynamic t ())) <- fmap R.updated $

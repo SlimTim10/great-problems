@@ -40,6 +40,7 @@ data Api :: * -> * where
   Api_ResetPassword :: Api ()
   Api_SignIn :: Api ()
   Api_SignOut :: Api ()
+  Api_DuplicateProblem :: Api Integer
   Api_Compile :: Api (Maybe Integer)
   Api_Roles :: Api ()
 
@@ -55,6 +56,7 @@ data FrontendRoute :: * -> * where
   FrontendRoute_Profile :: FrontendRoute ()
   FrontendRoute_Problems :: FrontendRoute (Integer, Ob.R ProblemsRoute)
   FrontendRoute_NewProblem :: FrontendRoute ()
+  FrontendRoute_DuplicateProblem :: FrontendRoute Integer
   FrontendRoute_ViewProblemSet :: FrontendRoute Integer
   FrontendRoute_ViewUser :: FrontendRoute Integer
   FrontendRoute_Topics :: FrontendRoute (Integer, Ob.R TopicsRoute)
@@ -99,6 +101,7 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
         Api_ResetPassword -> Ob.PathSegment "reset-password" $ Ob.unitEncoder mempty
         Api_SignIn -> Ob.PathSegment "sign-in" $ Ob.unitEncoder mempty
         Api_SignOut -> Ob.PathSegment "sign-out" $ Ob.unitEncoder mempty
+        Api_DuplicateProblem -> Ob.PathSegment "duplicate-problem" $ idPathSegmentEncoder
         Api_Compile -> Ob.PathSegment "compile" $
           Ob.maybeEncoder (Ob.unitEncoder mempty) $ idPathSegmentEncoder
         Api_Roles -> Ob.PathSegment "roles" $ Ob.unitEncoder mempty
@@ -117,14 +120,15 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
       FrontendRoute_ForgotPassword -> Ob.PathSegment "forgot-password" $ Ob.unitEncoder mempty
       FrontendRoute_Profile -> Ob.PathSegment "profile" $ Ob.unitEncoder mempty
       FrontendRoute_NewProblem -> Ob.PathSegment "new-problem" $ Ob.unitEncoder mempty
+      FrontendRoute_DuplicateProblem -> Ob.PathSegment "duplicate-problem" $ idPathSegmentEncoder
       FrontendRoute_Problems -> Ob.PathSegment "problems" $ Ob.pathSegmentEncoder .
         bimap Ob.unsafeTshowEncoder
         (Ob.pathComponentEncoder $ \case
             ProblemsRoute_View -> Ob.PathEnd $ Ob.unitEncoder mempty
             ProblemsRoute_Edit -> Ob.PathSegment "edit" $ Ob.unitEncoder mempty
         )
-      FrontendRoute_ViewProblemSet -> Ob.PathSegment "problem-sets" idPathSegmentEncoder
-      FrontendRoute_ViewUser -> Ob.PathSegment "users" idPathSegmentEncoder
+      FrontendRoute_ViewProblemSet -> Ob.PathSegment "problem-sets" $ idPathSegmentEncoder
+      FrontendRoute_ViewUser -> Ob.PathSegment "users" $ idPathSegmentEncoder
       FrontendRoute_Topics -> Ob.PathSegment "topics" $ Ob.pathSegmentEncoder .
         bimap Ob.unsafeTshowEncoder
         (Ob.pathComponentEncoder $ \case

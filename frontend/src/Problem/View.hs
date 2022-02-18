@@ -262,7 +262,7 @@ widget problemId = mdo
             let showDuplicateLink = \case
                   Nothing -> R.blank
                   Just p -> do
-                    -- Ob.routeLink (Route.FrontendRoute_DuplicateProblem :/ problemId) $ do
+                    Ob.routeLink (Route.FrontendRoute_DuplicateProblem :/ Problem.id p) $ do
                       R.elClass "div" "my-1" $ Button.secondarySmall "Duplicate problem"
             problem <- getProblem
             R.dyn_ $ showDuplicateLink <$> problem
