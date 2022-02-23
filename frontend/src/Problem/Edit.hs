@@ -218,7 +218,6 @@ widget preloadedProblemId = mdo
           =<< Util.getCurrentUser
         let ctx :: R.Dynamic t EditContext = EditContext
               <$> problemId
-              -- <*> _
               <*> userId
               <*> summary
               <*> editorContents
