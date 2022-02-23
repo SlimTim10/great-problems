@@ -184,7 +184,13 @@ widget preloadedProblemId = mdo
               R.elClass "span" "underline" $ R.text "drafts"
           SaveError e -> R.elClass "p" "mt-2 text-brand-gray" $ R.text e
         publish :: R.Event t () <- R.elClass "div" "py-3" $ do
-          Button.primaryClass' "Publish" "w-full active:bg-blue-400"
+          let isEditingPublishedProblem :: R.Dynamic t Bool = maybe True ((== ProblemStatus.Draft) . Problem.status) <$> preloadedProblem
+          let buttonText :: R.Dynamic t Text = isEditingPublishedProblem <&> \case
+                True -> "Publish"
+                False -> "Publish changes"
+          let button :: R.Dynamic t (m (R.Event t ())) = buttonText <&> \t ->
+                Button.primaryClass' t "w-full active:bg-blue-400"
+          R.dyn button >>= R.switchHold R.never -- flatten R.Event t (R.Event t ())
         publishing :: R.Behavior t Bool <- R.current <$> R.holdDyn False (const True <$> publish)
         let isEditing = isJust preloadedProblemId
         let publishedTextMessage = publishResponse <&> \case
