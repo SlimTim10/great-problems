@@ -114,15 +114,51 @@ For more information:
 
 ** Deployment
 
-*** Scripts
+*** Managing the server
+
+After setting up the systemd service (see below), starting and stopping the server can be done with systemd:
+
+#+begin_src sh
+systemctl --user start great-problems
+systemctl --user stop great-problems
+systemctl --user status great-problems
+#+end_src
+
+Enable on startup:
+
+#+begin_src sh
+systemctl --user enable great-problems
+#+end_src
+
+**** Scripts
+
+Home user is assumed to be named "webserver".
 
 Shell scripts were made for simplifying actions regarding deployment.
 
 - deploy.sh: Stops the server, pulls latest code, rebuilds the app, then starts the server. Logs output to ~/var/log/great-problems/output.log~.
-- startserver.sh: Starts the server.
+- startserver.sh: Starts the server. Prefer running deploy.sh instead.
 - stopserver.sh: Stops the server by killing the process.
 
 If the server is picky about line endings in the shell scripts, use dos2unix.
+
+**** Setting up systemd service
+
+As user "webserver", create ~/home/webserver/.config/systemd/user/great-problems.service~ with contents:
+
+#+begin_src sh
+[Unit]
+Description=Great Problems
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/bash /home/webserver/websites/great-problems/deploy.sh
+ExecStop=/bin/bash /home/webserver/websites/great-problems/stopserver.sh
+
+[Install]
+WantedBy=default.target
+#+end_src
 
 *** Logging manually
 
