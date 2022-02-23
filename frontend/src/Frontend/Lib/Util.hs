@@ -135,3 +135,19 @@ createObjectURL bs = do
   b <- GHCJS.DOM.Blob.newBlob [ba] opt
   url :: JS.JSString <- GHCJS.DOM.URL.createObjectURL b
   return . T.pack . JS.fromJSString $ url
+
+-- See: https://developer.mozilla.org/en-US/docs/Web/API/WindowEventHandlers/onbeforeunload
+preventLeaving :: JS.MonadJSM m => Bool -> m ()
+preventLeaving b = void $ JS.liftJSM $ do
+  case b of
+    True -> do
+      -- Make listener global so it can be removed
+      void $ JS.eval (
+        "\
+        \ window.unloadListener = function(e) { \
+        \   e.preventDefault(); \
+        \   e.returnValue = ''; \
+        \ } \
+        \ " :: Text)
+      void $ JS.eval ("window.addEventListener('beforeunload', window.unloadListener)" :: Text)
+    False -> void $ JS.eval ("window.removeEventListener('beforeunload', window.unloadListener)" :: Text)

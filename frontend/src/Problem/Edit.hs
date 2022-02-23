@@ -53,7 +53,7 @@ data EditContext = EditContext
   , ctxContents :: Text
   , ctxTopicId :: Integer
   , ctxFigures :: [FormFile.FormFile]
-  }
+  } deriving (Eq)
 
 autosaveInterval :: Time.NominalDiffTime
 autosaveInterval = 3
@@ -224,6 +224,22 @@ widget preloadedProblemId = mdo
               <*> selectedTopicId
               <*> figures
 
+        let emptyCtx = EditContext
+              { ctxProblemId = Nothing
+              , ctxAuthorId = 0
+              , ctxSummary = ""
+              , ctxContents = ""
+              , ctxTopicId = 0
+              , ctxFigures = []
+              }
+        -- Allow some time for the problem information to load
+        afterLoaded <- R.delay 3 (R.updated preloadedProblem)
+        loadedCtx :: R.Dynamic t EditContext <- R.holdDyn emptyCtx $ R.tagPromptlyDyn ctx afterLoaded
+          
+        dirty :: R.Dynamic t Bool <- R.holdUniqDyn $
+          (/=) <$> ctx <*> loadedCtx
+        R.performEvent_ $ Util.preventLeaving <$> R.updated dirty
+        
         publishResponse <- saveProblem
           publish
           ProblemStatus.Published
