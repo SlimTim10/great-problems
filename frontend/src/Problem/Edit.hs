@@ -192,16 +192,13 @@ widget preloadedProblemId = mdo
                 Button.primaryClass' t "w-full active:bg-blue-400"
           R.dyn button >>= R.switchHold R.never -- flatten R.Event t (R.Event t ())
         publishing :: R.Behavior t Bool <- R.current <$> R.holdDyn False (const True <$> publish)
-        let isEditing = isJust preloadedProblemId
         let publishedTextMessage = publishResponse <&> \case
               Left err -> R.elClass "p" "text-red-500" $ R.text (Error.message err)
-              Right publishedProblem -> case isEditing of
-                True -> R.elClass "p" "text-green-600" $ R.text "Saved!"
-                False -> do
-                  timer :: R.Event t R.TickInfo <- R.tickLossyFromPostBuildTime 0.01
-                  Ob.setRoute $ do
-                    (Route.FrontendRoute_Problems :/
-                     (Problem.id publishedProblem, Route.ProblemsRoute_View :/ ())) <$ timer
+              Right publishedProblem -> do
+                timer :: R.Event t R.TickInfo <- R.tickLossyFromPostBuildTime 0.01
+                Ob.setRoute $ do
+                  (Route.FrontendRoute_Problems :/
+                   (Problem.id publishedProblem, Route.ProblemsRoute_View :/ ())) <$ timer
         let spinner = R.ffor publish $ \_ -> do
               R.elAttr "img" ("src" =: Ob.static @"small_spinner.svg" <> "width" =: "30" <> "alt" =: "loading") $ R.blank
         publishedMessage <- R.holdDyn R.blank $ R.leftmost [spinner, R.updated publishedTextMessage]
