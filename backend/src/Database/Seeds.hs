@@ -43,6 +43,7 @@ load conn = do
     ]
 
   let
+    topicExamples = (0, "Examples", Nothing)
     topicElectricalEngineering = (1, "Electrical Engineering", Nothing)
     topicMathematics = (2, "Mathematics", Nothing)
     topicPhysics = (3, "Physics", Nothing)
@@ -58,7 +59,8 @@ load conn = do
     VALUES
       (?,?,?)
   |]
-    [ topicElectricalEngineering
+    [ topicExamples
+    , topicElectricalEngineering
     , topicMathematics
     , topicPhysics
     , topicAnalogCircuits
