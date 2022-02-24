@@ -77,7 +77,7 @@ backend = Ob.Backend
                 _ -> return ()
               
             Route.Api_Topics :/ query -> do
-              topics <- case Route.readParamFromQuery "parent" query :: Maybe Text of
+              topics <- case Route.textParamFromQuery "parent" query :: Maybe Text of
                 Just "null" -> IO.liftIO $ Queries.getRootTopics conn
                 Just x -> case readMaybe (cs x) :: Maybe Integer of
                   Just parentId -> IO.liftIO $ Queries.getTopicsByParentId conn parentId
