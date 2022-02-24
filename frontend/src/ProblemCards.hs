@@ -72,12 +72,14 @@ getProblems topicId = do
   R.holdDyn [] $ fromMaybe [] <$> response
 
 data Options = Options
-  { showAuthor :: Bool
+  { showAuthor :: Bool -- ^ Show the author
+  , linkEdit :: Bool -- ^ Link to problem edit instead of view
   }
 
 defaultOptions :: Options
 defaultOptions = Options
   { showAuthor = True
+  , linkEdit = False
   }
 
 problemCardWidget
@@ -104,9 +106,14 @@ problemCardWidget opt problemCard = do
               (Route.FrontendRoute_Topics :/ (tid, Route.TopicsRoute_Problems :/ ())) $ do
               R.elClass "p" "hover:underline text-brand-sm text-brand-gray" $ R.text name
         R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "#" ++ show (Problem.id problem))
-      Ob.routeLink
-        (Route.FrontendRoute_Problems :/
-         (Problem.id problem, Route.ProblemsRoute_View :/ ())) $ do
+      let linkProblem = if linkEdit opt
+            then Ob.routeLink
+                 (Route.FrontendRoute_Problems :/
+                  (Problem.id problem, Route.ProblemsRoute_Edit :/ ()))
+            else Ob.routeLink
+                 (Route.FrontendRoute_Problems :/
+                  (Problem.id problem, Route.ProblemsRoute_View :/ ()))
+      linkProblem $ do
         R.elClass "div" "group" $ do
           R.elClass "p" "text-brand-primary font-medium group-hover:underline" $ R.text (Problem.summary problem)
           R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "Updated " ++ updatedAt)
