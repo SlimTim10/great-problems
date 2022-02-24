@@ -11,6 +11,7 @@ import qualified Data.Time.Clock as Time
 import qualified Data.CaseInsensitive as CI
 import qualified Data.Map as Map
 import qualified Data.Text as T
+import qualified Control.Lens as Lens
 import qualified Language.Javascript.JSaddle as JS
 import qualified "ghcjs-dom" GHCJS.DOM.Document as DOM
 import qualified GHCJS.DOM.Types
@@ -173,8 +174,10 @@ widget preloadedProblemId = mdo
           , showSolutionAction
           , outputOption
           ) <- outputOptionsPane editorContents figures
+          
         figures :: R.Dynamic t [FormFile.FormFile] <- R.elClass "div" "py-3 border-b border-brand-light-gray"
           $ Figures.widget =<< fetchFigures preloadedProblem
+        
         Util.dynFor savingState $ \case
           BeforeSave -> R.blank
           Saving -> R.elClass "p" "mt-2 text-brand-gray" $ R.text "Saving..."
@@ -183,6 +186,7 @@ widget preloadedProblemId = mdo
             Ob.routeLink (Route.FrontendRoute_Profile :/ ()) $ do
               R.elClass "span" "underline" $ R.text "drafts"
           SaveError e -> R.elClass "p" "mt-2 text-brand-gray" $ R.text e
+        
         publish :: R.Event t () <- R.elClass "div" "py-3" $ do
           let isEditingPublishedProblem :: R.Dynamic t Bool = maybe True ((== ProblemStatus.Draft) . Problem.status) <$> preloadedProblem
           let buttonText :: R.Dynamic t Text = isEditingPublishedProblem <&> \case
@@ -192,7 +196,11 @@ widget preloadedProblemId = mdo
                 Button.primaryClass' t "w-full active:bg-blue-400"
           R.dyn button >>= R.switchHold R.never -- flatten R.Event t (R.Event t ())
         publishing :: R.Behavior t Bool <- R.current <$> R.holdDyn False (const True <$> publish)
-        let publishedTextMessage = publishResponse <&> \case
+        publishResponse :: R.Dynamic t (Either Error.Error Problem.Problem) <- saveProblem
+          publish
+          ProblemStatus.Published
+          ctx
+        let publishResponseMessage = publishResponse <&> \case
               Left err -> R.elClass "p" "text-red-500" $ R.text (Error.message err)
               Right publishedProblem -> do
                 timer :: R.Event t R.TickInfo <- R.tickLossyFromPostBuildTime 0.01
@@ -201,8 +209,24 @@ widget preloadedProblemId = mdo
                    (Problem.id publishedProblem, Route.ProblemsRoute_View :/ ())) <$ timer
         let spinner = R.ffor publish $ \_ -> do
               R.elAttr "img" ("src" =: Ob.static @"small_spinner.svg" <> "width" =: "30" <> "alt" =: "loading") $ R.blank
-        publishedMessage <- R.holdDyn R.blank $ R.leftmost [spinner, R.updated publishedTextMessage]
+        publishedMessage <- R.holdDyn R.blank $ R.leftmost [spinner, R.updated publishResponseMessage]
         R.dyn_ publishedMessage
+
+        deleteButton :: R.Event t () <- R.elClass "div" "py-3" $ do
+          Button.secondaryClass' "Delete this problem" "w-full bg-red-100"
+        deletePrompt :: R.Event t Text <- R.performEvent $
+          (const $ Util.prompt "Are you sure?\n\nThis action cannot be undone. Please type yes to confirm.") <$> deleteButton
+        deleteResponse :: R.Dynamic t (Maybe Error.Error) <- do
+          deleteConfirm :: R.Dynamic t (Maybe ()) <- R.holdDyn Nothing $ deletePrompt <&> \userInput ->
+            if CI.mk userInput == CI.mk "yes"
+            then Just ()
+            else Nothing
+          deleteConfirmed :: R.Dynamic t (Maybe ()) <- R.improvingMaybe deleteConfirm
+          deleteProblem $ R.tagPromptlyDyn problemId (R.updated deleteConfirmed)
+        let deleteResponseMessage = deleteResponse <&> \case
+              Just err -> R.elClass "p" "text-red-500" $ R.text (Error.message err)
+              Nothing -> Util.historyBack
+        R.dyn_ =<< R.holdDyn R.blank (R.updated deleteResponseMessage)
 
         let f = \preloadedProblemId' savedProblem' -> case (preloadedProblemId', savedProblem') of
               (Just pid, _) -> Just pid
@@ -239,11 +263,6 @@ widget preloadedProblemId = mdo
         dirty :: R.Dynamic t Bool <- R.holdUniqDyn $
           (/=) <$> ctx <*> loadedCtx
         R.performEvent_ $ Util.preventLeaving <$> R.updated dirty
-        
-        publishResponse <- saveProblem
-          publish
-          ProblemStatus.Published
-          ctx
 
         (savedProblem, savingState) <- autosaveProblem
           (andM
@@ -444,3 +463,23 @@ saveProblem trg problemStatus ctx = do
     (Nothing, Nothing) -> Left $ Error.mk "Something went wrong"
     (Nothing, Just err) -> Left err
     (Just pr, _) -> Right pr
+
+deleteProblem
+  :: forall t m.
+     ( R.PerformEvent t m
+     , R.TriggerEvent t m
+     , JS.MonadJSM (R.Performable m)
+     , R.HasJSContext (R.Performable m)
+     , R.MonadHold t m
+     )
+  => R.Event t (Maybe Integer) -- ^ Problem ID
+  -> m (R.Dynamic t (Maybe Error.Error)) -- ^ Response
+deleteProblem problemId = do
+  let req :: R.Event t (R.XhrRequest ()) = problemId <&> \pid -> do
+        let url :: Text = (Route.apiHref $ Route.Api_Problems :/ (pid, mempty))
+        R.xhrRequest "DELETE" url R.def
+  res :: R.Event t (R.XhrResponse) <- R.performRequestAsync req
+  let result :: R.Event t Text = fromMaybe "" . Lens.view R.xhrResponse_responseText <$> res
+  errorResponse :: R.Dynamic t (Maybe Error.Error) <- R.holdDyn Nothing $
+    R.decodeText <$> result
+  return errorResponse

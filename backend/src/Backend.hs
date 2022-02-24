@@ -66,10 +66,15 @@ backend = Ob.Backend
                 Snap.POST -> case mUser of
                   Nothing -> writeJSON $ Error.mk "No access"
                   Just user -> handleSaveProblem conn user
-                _ -> return () -- TODO: implement put, delete
+                _ -> return ()
                 
             Route.Api_Problems :/ (Just problemId, _) -> do
-              writeJSON =<< IO.liftIO (Queries.getProblemById conn problemId)
+              Snap.rqMethod <$> Snap.getRequest >>= \case
+                Snap.GET -> writeJSON =<< IO.liftIO (Queries.getProblemById conn problemId)
+                Snap.DELETE -> case mUser of
+                  Nothing -> writeJSON $ Error.mk "No access"
+                  Just user -> handleDeleteProblem conn user problemId
+                _ -> return ()
               
             Route.Api_Topics :/ query -> do
               topics <- case Route.readParamFromQuery "parent" query :: Maybe Text of
@@ -437,6 +442,23 @@ updateExistingProblem conn problem = do
     Nothing -> writeJSON $ Error.mk "Something went wrong"
     Just updatedProblem -> writeJSON updatedProblem
 
+handleDeleteProblem :: SQL.Connection -> User.User -> Integer -> Snap.Snap ()
+handleDeleteProblem conn user problemId = do
+  IO.liftIO (Queries.getProblemById conn problemId) >>= \case
+    Nothing -> writeJSON $ Error.mk "Something went wrong"
+    Just problem -> do
+      let authorId = User.id . Problem.author $ problem
+      if any not
+        [ User.role user `elem` [Role.Contributor, Role.Moderator, Role.Administrator]
+        , authorId == User.id user
+        ]
+        then writeJSON $ Error.mk "No access"
+        else deleteProblem conn problemId
+
+deleteProblem :: SQL.Connection -> Integer -> Snap.Snap ()
+deleteProblem conn problemId = do
+  IO.liftIO (Queries.deleteProblem conn problemId)
+  writeJSON OkResponse.OkResponse
 
 requestProblem2texCompileProblem
   :: IO.MonadIO m

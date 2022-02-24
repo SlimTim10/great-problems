@@ -67,6 +67,13 @@ widget' user = do
   R.elClass "div" "flex flex-col items-center mx-20" $ do
     R.elClass "div" "w-full" $ do
       
+      section "Drafts" $ do
+        drafts <- getDrafts (User.id user)
+        R.elClass "div" "flex flex-col gap-2" $ do
+          void $ R.simpleList drafts
+            $ ProblemCards.problemCardWidget
+            ProblemCards.Options { ProblemCards.showAuthor = False, ProblemCards.linkEdit = True }
+          
       section "Change password" $ do
         R.elClass "div" "flex flex-col gap-4 w-96" $ mdo
           oldPassword :: R.Dynamic t Text <- R.elClass "div" "flex justify-between" $ do
@@ -105,13 +112,6 @@ widget' user = do
           
           return ()
 
-      section "Drafts" $ do
-        drafts <- getDrafts (User.id user)
-        R.elClass "div" "flex flex-col gap-2" $ do
-          void $ R.simpleList drafts
-            $ ProblemCards.problemCardWidget
-            ProblemCards.Options { ProblemCards.showAuthor = False }
-          
       section "Sign out" $ do
         Ob.routeLink (Route.FrontendRoute_SignOut :/ ()) $ do
           Button.secondary "Sign out"

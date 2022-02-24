@@ -3,6 +3,7 @@ module Database.Queries
   , getProblemById
   , createProblem
   , updateProblem
+  , deleteProblem
   , getTopics
   , getTopicById
   , getRootTopics
@@ -215,6 +216,14 @@ updateProblem conn problem = do
           "INSERT INTO figures(name, contents, problem_id) VALUES (?,?,?)"
           (Figure.bfName figure, SQL.Binary (Figure.bfContents figure), problemId)
       getProblemById conn problemId
+
+-- | Delete a problem and its figures (on delete cascade should be set in schema).
+deleteProblem
+  :: SQL.Connection
+  -> Integer -- ^ Problem ID
+  -> IO () -- ^ No error handling
+deleteProblem conn problemId = void $ SQL.execute conn
+  "DELETE FROM problems WHERE id = ?" (SQL.Only problemId)
 
 getTopics :: SQL.Connection -> IO [Topic.Topic]
 getTopics conn = do
