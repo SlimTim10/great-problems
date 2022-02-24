@@ -225,9 +225,7 @@ widget preloadedProblemId = mdo
           deleteProblem $ R.tagPromptlyDyn problemId (R.updated deleteConfirmed)
         let deleteResponseMessage = deleteResponse <&> \case
               Just err -> R.elClass "p" "text-red-500" $ R.text (Error.message err)
-              Nothing -> do
-                timer :: R.Event t R.TickInfo <- R.tickLossyFromPostBuildTime 0.01
-                Ob.setRoute $ (Route.FrontendRoute_Explore :/ Nothing) <$ timer
+              Nothing -> Util.historyBack
         R.dyn_ =<< R.holdDyn R.blank (R.updated deleteResponseMessage)
 
         let f = \preloadedProblemId' savedProblem' -> case (preloadedProblemId', savedProblem') of

@@ -162,3 +162,10 @@ prompt msg = JS.liftJSM $ do
   w <- JS.jsg ("window" :: Text)
   x :: JS.JSVal <- w ^. JS.js1 ("prompt" :: Text) msg
   return . JS.fromJSString . fromMaybe (JS.textToStr "") =<< JS.fromJSVal x
+
+-- | history.back()
+-- See: https://developer.mozilla.org/en-US/docs/Web/API/History/back
+historyBack :: JS.MonadJSM m => m ()
+historyBack = void $ JS.liftJSM $ do
+  history <- JS.jsg ("history" :: Text)
+  history ^. JS.js0 ("back" :: Text)
