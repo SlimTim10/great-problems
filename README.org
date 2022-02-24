@@ -119,20 +119,20 @@ For more information:
 After setting up the systemd service (see below), starting and stopping the server can be done with systemd:
 
 #+begin_src sh
-systemctl --user start great-problems
-systemctl --user stop great-problems
-systemctl --user status great-problems
+systemctl start great-problems
+systemctl stop great-problems
+systemctl status great-problems
 #+end_src
 
 Enable on startup:
 
 #+begin_src sh
-systemctl --user enable great-problems
+systemctl enable great-problems
 #+end_src
 
 **** Scripts
 
-Home user is assumed to be named "webserver".
+Main user is assumed to be named "webserver".
 
 Shell scripts were made for simplifying actions regarding deployment.
 
@@ -144,7 +144,9 @@ If the server is picky about line endings in the shell scripts, use dos2unix.
 
 **** Setting up systemd service
 
-As user "webserver", create ~/home/webserver/.config/systemd/user/great-problems.service~ with contents:
+Main user is assumed to be named "webserver".
+
+Create ~/etc/systemd/system/great-problems.service~ with contents:
 
 #+begin_src sh
 [Unit]
@@ -153,6 +155,7 @@ Description=Great Problems
 [Service]
 Type=oneshot
 RemainAfterExit=yes
+User=webserver
 ExecStart=/bin/bash /home/webserver/websites/great-problems/deploy.sh
 ExecStop=/bin/bash /home/webserver/websites/great-problems/stopserver.sh
 
