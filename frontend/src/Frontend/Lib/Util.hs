@@ -151,3 +151,14 @@ preventLeaving b = void $ JS.liftJSM $ do
         \ " :: Text)
       void $ JS.eval ("window.addEventListener('beforeunload', window.unloadListener)" :: Text)
     False -> void $ JS.eval ("window.removeEventListener('beforeunload', window.unloadListener)" :: Text)
+
+-- | Native browser prompt dialog
+-- See: https://developer.mozilla.org/en-US/docs/Web/API/Window/prompt
+prompt
+  :: JS.MonadJSM m
+  => Text -- ^ A message to display in the prompt
+  -> m Text
+prompt msg = JS.liftJSM $ do
+  w <- JS.jsg ("window" :: Text)
+  x :: JS.JSVal <- w ^. JS.js1 ("prompt" :: Text) msg
+  return . JS.fromJSString . fromMaybe (JS.textToStr "") =<< JS.fromJSVal x
