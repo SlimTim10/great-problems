@@ -5,7 +5,6 @@ module Problem.Figures
 import Common.Lib.Prelude
 
 import qualified Data.Map as Map
-import qualified Control.Monad.Fix as Fix
 import qualified GHCJS.DOM.File
 import qualified GHCJS.DOM.Types
 import qualified Language.Javascript.JSaddle as JS
@@ -18,7 +17,7 @@ widget
   :: ( R.DomBuilder t m
      , R.PostBuild t m
      , R.MonadHold t m
-     , Fix.MonadFix m
+     , MonadFix m
      , R.PerformEvent t m
      , JS.MonadJSM (R.Performable m)
      )
@@ -28,17 +27,21 @@ widget initialFiles = R.el "div" $ do
   fi <- R.elClass "div" "flex gap-3" $ do
     R.elClass "p" "font-medium mb-2 py-1" $ R.text "Figures"
     R.elClass "div" "w-min h-min" $ do
-      R.el "label" $ do
+      R.el "label" $ mdo
         R.elClass
           "p"
           "bg-brand-primary rounded text-white font-medium px-2 py-1 text-brand-sm cursor-pointer active:bg-blue-400"
           $ R.text "Upload"
-        R.inputElement $ R.def & R.initialAttributes .~ (
+        fi1 <- R.inputElement $ R.def
+          & R.initialAttributes .~ (
           "type" =: "file"
           <> "accept" =: ".asc"
           <> "multiple" =: ""
           <> "class" =: "hidden"
           )
+          & R.inputElementConfig_setValue .~
+          (const "" <$> R.updated (R._inputElement_files fi1))
+        return fi1
   figuresWidget initialFiles (R._inputElement_files fi)
 
 figuresWidget
@@ -46,7 +49,7 @@ figuresWidget
      ( R.DomBuilder t m
      , R.MonadHold t m
      , R.PostBuild t m
-     , Fix.MonadFix m
+     , MonadFix m
      , R.PerformEvent t m
      , JS.MonadJSM (R.Performable m)
      )

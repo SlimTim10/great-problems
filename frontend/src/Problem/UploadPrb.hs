@@ -17,13 +17,14 @@ widget
      , R.TriggerEvent t m
      , R.PerformEvent t m
      , JS.MonadJSM (R.Performable m)
+     , MonadFix m
      )
   => m (R.Event t Text)
 widget = do
   fi <- R.elClass
     "label"
     "cursor-pointer bg-brand-primary rounded text-white font-medium px-2 py-1 text-brand-sm min-w-fit active:bg-blue-400"
-    $ do
+    $ mdo
     R.text "Upload PRB"
     fi1 <- R.inputElement $ R.def
       & R.initialAttributes .~ (
@@ -31,6 +32,8 @@ widget = do
       <> "accept" =: ".prb"
       <> "class" =: "hidden"
       )
+      & R.inputElementConfig_setValue .~
+      (const "" <$> R.updated (R._inputElement_files fi1))
     return fi1
   readFileContents
     . R.fmapMaybe id
