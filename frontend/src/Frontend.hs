@@ -83,10 +83,10 @@ frontend = Ob.Frontend
       Route.FrontendRoute_ResendEmail -> do
         Header.widget
         ResendEmail.widget
-      Route.FrontendRoute_Profile -> do
+      Route.FrontendRoute_Settings -> do
         Header.widget
         R.elClass "div" "bg-brand-light-gray flex justify-center py-4" $ do
-          R.elClass "p" "text-brand-lg font-light" $ R.text "Profile"
+          R.elClass "p" "text-brand-lg font-light" $ R.text "Settings"
         Profile.widget
       Route.FrontendRoute_NewProblem -> do
         R.elClass "div" "h-screen flex flex-col gap-3" $ do
@@ -131,7 +131,7 @@ frontend = Ob.Frontend
               Tabs.widget Tabs.ProblemSets
               ProblemCards.widget $ Just topicId
             _ -> pure () -- Type refinement through unification
-      Route.FrontendRoute_ViewUser -> do
+      Route.FrontendRoute_Profile -> do
         Header.widget
         userId :: R.Dynamic t Integer <- Ob.askRoute
         R.el "p" $ R.text "Single user"

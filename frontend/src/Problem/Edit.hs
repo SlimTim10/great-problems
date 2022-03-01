@@ -183,7 +183,7 @@ widget preloadedProblemId = mdo
           Saving -> R.elClass "p" "mt-2 text-brand-gray" $ R.text "Saving..."
           Saved -> R.elClass "p" "mt-2 text-brand-gray" $ do
             R.el "span" $ R.text "Saved to "
-            Ob.routeLink (Route.FrontendRoute_Profile :/ ()) $ do
+            Ob.routeLink (Route.FrontendRoute_Settings :/ ()) $ do
               R.elClass "span" "underline" $ R.text "drafts"
           SaveError e -> R.elClass "p" "mt-2 text-brand-gray" $ R.text e
         

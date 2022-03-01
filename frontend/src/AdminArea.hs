@@ -55,7 +55,7 @@ widget = do
         Util.dynFor user $ \u -> do
           R.elClass "p" "" $ do
             Ob.routeLink
-              (Route.FrontendRoute_ViewUser :/ (User.id u)) $ do
+              (Route.FrontendRoute_Profile :/ (User.id u)) $ do
               R.text $ CI.original $ User.fullName u
           selectedRole :: R.Dynamic t Role.Role <- R.elClass "div" ""
             $ selectRoleWidget (User.role u)
