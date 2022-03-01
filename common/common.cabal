@@ -23,7 +23,6 @@ library
   exposed-modules:
     Common.Route
     Common.Lib.Prelude
-    Common.Api.Auth
     Common.Api.Compile
     Common.Api.Error
     Common.Api.Figure
@@ -32,11 +31,12 @@ library
     Common.Api.ProblemStatus
     Common.Api.ProblemSet
     Common.Api.ProblemSetCard
-    Common.Api.Register
     Common.Api.Role
     Common.Api.Topic
     Common.Api.User
-    Common.Api.ChangePassword
     Common.Api.Email
+    Common.Api.Request.Auth
+    Common.Api.Request.Register
+    Common.Api.Request.ChangePassword
     Common.Api.Request.ResendEmail
   ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits

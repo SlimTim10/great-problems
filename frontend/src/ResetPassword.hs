@@ -14,7 +14,7 @@ import qualified Widget.Input as Input
 import qualified Widget.Button as Button
 import qualified Common.Api.Error as Error
 import qualified Common.Route as Route
-import qualified Common.Api.ChangePassword as ChangePassword
+import qualified Common.Api.Request.ChangePassword as ChangePassword
 
 widget
   :: forall t m js.

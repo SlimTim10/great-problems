@@ -13,7 +13,7 @@ import Common.Lib.Prelude
 import qualified Database.PostgreSQL.Simple as SQL
 
 import qualified Common.Api.User as User
-import qualified Common.Api.Auth as Auth
+import qualified Common.Api.Request.Auth as Auth
 import qualified Database.Queries as Queries
 
 type Session = Text

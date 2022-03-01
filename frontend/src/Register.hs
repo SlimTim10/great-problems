@@ -14,7 +14,7 @@ import qualified Common.Route as Route
 import qualified Widget.Input as Input
 import qualified Widget.Button as Button
 import qualified Common.Api.Error as Error
-import qualified Common.Api.Register as Register
+import qualified Common.Api.Request.Register as Register
 
 widget
   :: forall t m.

@@ -38,13 +38,13 @@ import qualified Data.CaseInsensitive as CI
 import qualified Common.Route as Route
 import qualified Common.Api.Problem as Problem
 import qualified Common.Api.Topic as Topic
-import qualified Common.Api.Register as Register
 import qualified Common.Api.User as User
 import qualified Common.Api.Role as Role
-import qualified Common.Api.Auth as Auth
 import qualified Common.Api.Figure as Figure
 import qualified Common.Api.ProblemStatus as ProblemStatus
-import qualified Common.Api.ChangePassword as ChangePassword
+import qualified Common.Api.Request.Auth as Auth
+import qualified Common.Api.Request.ChangePassword as ChangePassword
+import qualified Common.Api.Request.Register as Register
 import qualified Database.Types.Problem as DbProblem
 import qualified Database.Types.Topic as DbTopic
 import qualified Database.Types.User as DbUser

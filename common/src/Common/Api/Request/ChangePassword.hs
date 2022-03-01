@@ -2,7 +2,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-module Common.Api.ChangePassword
+module Common.Api.Request.ChangePassword
   ( ChangePassword(..)
   , Identification(..)
   ) where
@@ -12,7 +12,6 @@ import Common.Lib.Prelude
 import qualified Data.Aeson as JSON
 import GHC.Generics (Generic)
 
--- TODO: move to request
 data ChangePassword = ChangePassword
   { identification :: Identification
   , newPassword :: Text

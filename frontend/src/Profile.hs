@@ -14,7 +14,7 @@ import qualified "ghcjs-dom" GHCJS.DOM.Document as DOM
 import qualified Common.Route as Route
 import qualified Common.Api.Problem as Problem
 import qualified Common.Api.User as User
-import qualified Common.Api.ChangePassword as ChangePassword
+import qualified Common.Api.Request.ChangePassword as ChangePassword
 import qualified Common.Api.Error as Error
 import qualified Common.Api.ProblemStatus as ProblemStatus
 import qualified Widget.Button as Button

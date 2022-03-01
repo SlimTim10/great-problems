@@ -2,8 +2,8 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-module Common.Api.Register
-  ( Register(..)
+module Common.Api.Request.Auth
+  ( Auth(..)
   ) where
 
 import Common.Lib.Prelude
@@ -13,10 +13,8 @@ import GHC.Generics (Generic)
 
 import qualified Common.Api.Email as Email
 
--- TODO: move to request
-data Register = Register
-  { fullName :: CI Text
-  , email :: Email.Email
+data Auth = Auth
+  { email :: Email.Email
   , password :: Text
   } deriving
   ( Eq

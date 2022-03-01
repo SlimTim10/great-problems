@@ -25,7 +25,6 @@ import qualified Common.Api.Error as Error
 import qualified Database
 import qualified Database.Queries as Queries
 import qualified Common.Api.User as User
-import qualified Common.Api.Register as Register
 import qualified Common.Api.Role as Role
 import qualified Common.Api.OkResponse as OkResponse
 import qualified Common.Api.Compile as Compile
@@ -33,7 +32,8 @@ import qualified Common.Api.Topic as Topic
 import qualified Common.Api.Problem as Problem
 import qualified Common.Api.ProblemStatus as ProblemStatus
 import qualified Common.Api.Figure as Figure
-import qualified Common.Api.ChangePassword as ChangePassword
+import qualified Common.Api.Request.ChangePassword as ChangePassword
+import qualified Common.Api.Request.Register as Register
 import qualified Common.Api.Request.ResendEmail as ResendEmail
 import qualified Auth
 import qualified Email

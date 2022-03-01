@@ -14,7 +14,7 @@ import qualified Obelisk.Route.Frontend as Ob
 import qualified Common.Route as Route
 import qualified Widget.Input as Input
 import qualified Widget.Button as Button
-import qualified Common.Api.Auth as Auth
+import qualified Common.Api.Request.Auth as Auth
 import qualified Common.Api.Error as Error
 import qualified Frontend.Lib.Api as Api
 
