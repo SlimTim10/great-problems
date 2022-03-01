@@ -11,7 +11,6 @@ module Common.Api.User
 import Common.Lib.Prelude
 
 import qualified Data.Aeson as JSON
-import qualified Data.CaseInsensitive as CI
 import GHC.Generics (Generic)
 
 import qualified Common.Api.Role as Role

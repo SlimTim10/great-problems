@@ -7,14 +7,12 @@ import Common.Lib.Prelude
 import qualified Data.CaseInsensitive as CI
 import qualified Web.KeyCode as Key
 import qualified Language.Javascript.JSaddle as JS
-import qualified Obelisk.Generated.Static as Ob
 import qualified Reflex.Dom.Core as R
 
 import qualified Widget.Input as Input
 import qualified Widget.Button as Button
 import qualified Common.Api.Error as Error
 import qualified Common.Route as Route
-import qualified Common.Api.User as User
 import qualified Layout.CenteredNarrow
 import qualified Frontend.Lib.Api as Api
 import qualified Common.Api.Request.ResendEmail as ResendEmail

@@ -3,14 +3,13 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Common.Api.Email
-  ( Email(..)
+  ( Email
   ) where
 
 import Common.Lib.Prelude
 
 import qualified Data.Aeson as JSON
 import qualified Data.CaseInsensitive as CI
-import GHC.Generics (Generic)
 
 type Email = CI Text
 
