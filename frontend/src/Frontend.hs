@@ -25,7 +25,7 @@ import qualified SignOut
 import qualified ForgotPassword
 import qualified ResetPassword
 import qualified ResendEmail
-import qualified Profile
+import qualified Settings
 import qualified AdminArea
 
 frontend :: Ob.Frontend (Ob.R Route.FrontendRoute)
@@ -87,7 +87,7 @@ frontend = Ob.Frontend
         Header.widget
         R.elClass "div" "bg-brand-light-gray flex justify-center py-4" $ do
           R.elClass "p" "text-brand-lg font-light" $ R.text "Settings"
-        Profile.widget
+        Settings.widget
       Route.FrontendRoute_NewProblem -> do
         R.elClass "div" "h-screen flex flex-col gap-3" $ do
           R.elClass "div" "flex-none"
@@ -134,7 +134,7 @@ frontend = Ob.Frontend
       Route.FrontendRoute_Profile -> do
         Header.widget
         userId :: R.Dynamic t Integer <- Ob.askRoute
-        R.el "p" $ R.text "Single user"
+        R.el "p" $ R.text "User profile"
         R.el "p" $ R.display userId
       Route.FrontendRoute_Admin -> do
         Header.widget

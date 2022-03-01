@@ -1,5 +1,5 @@
 {-# LANGUAGE PackageImports #-}
-module Profile
+module Settings
   ( widget
   ) where
 
