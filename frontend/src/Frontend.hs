@@ -24,6 +24,7 @@ import qualified SignIn
 import qualified SignOut
 import qualified ForgotPassword
 import qualified ResetPassword
+import qualified ResendEmail
 import qualified Profile
 import qualified AdminArea
 
@@ -79,6 +80,9 @@ frontend = Ob.Frontend
         Header.widget
         secret :: R.Dynamic t Text <- Ob.askRoute
         ResetPassword.widget secret
+      Route.FrontendRoute_ResendEmail -> do
+        Header.widget
+        ResendEmail.widget
       Route.FrontendRoute_Profile -> do
         Header.widget
         R.elClass "div" "bg-brand-light-gray flex justify-center py-4" $ do

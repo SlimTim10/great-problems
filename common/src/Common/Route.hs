@@ -38,6 +38,7 @@ data Api :: * -> * where
   Api_VerifyEmail :: Api Text
   Api_ChangePassword :: Api ()
   Api_ResetPassword :: Api ()
+  Api_ResendEmail :: Api ()
   Api_SignIn :: Api ()
   Api_SignOut :: Api ()
   Api_DuplicateProblem :: Api Integer
@@ -53,6 +54,7 @@ data FrontendRoute :: * -> * where
   FrontendRoute_SignOut :: FrontendRoute ()
   FrontendRoute_ForgotPassword :: FrontendRoute ()
   FrontendRoute_ResetPassword :: FrontendRoute Text
+  FrontendRoute_ResendEmail :: FrontendRoute ()
   FrontendRoute_Profile :: FrontendRoute ()
   FrontendRoute_Problems :: FrontendRoute (Integer, Ob.R ProblemsRoute)
   FrontendRoute_NewProblem :: FrontendRoute ()
@@ -99,6 +101,7 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
         Api_VerifyEmail -> Ob.PathSegment "verify-email" Ob.singlePathSegmentEncoder
         Api_ChangePassword -> Ob.PathSegment "change-password" $ Ob.unitEncoder mempty
         Api_ResetPassword -> Ob.PathSegment "reset-password" $ Ob.unitEncoder mempty
+        Api_ResendEmail -> Ob.PathSegment "resend-email" $ Ob.unitEncoder mempty
         Api_SignIn -> Ob.PathSegment "sign-in" $ Ob.unitEncoder mempty
         Api_SignOut -> Ob.PathSegment "sign-out" $ Ob.unitEncoder mempty
         Api_DuplicateProblem -> Ob.PathSegment "duplicate-problem" $ idPathSegmentEncoder
@@ -118,6 +121,7 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
       FrontendRoute_SignIn -> Ob.PathSegment "sign-in" $ Ob.unitEncoder mempty
       FrontendRoute_SignOut -> Ob.PathSegment "sign-out" $ Ob.unitEncoder mempty
       FrontendRoute_ForgotPassword -> Ob.PathSegment "forgot-password" $ Ob.unitEncoder mempty
+      FrontendRoute_ResendEmail -> Ob.PathSegment "resend-email" $ Ob.unitEncoder mempty
       FrontendRoute_Profile -> Ob.PathSegment "profile" $ Ob.unitEncoder mempty
       FrontendRoute_NewProblem -> Ob.PathSegment "new-problem" $ Ob.unitEncoder mempty
       FrontendRoute_DuplicateProblem -> Ob.PathSegment "duplicate-problem" $ idPathSegmentEncoder

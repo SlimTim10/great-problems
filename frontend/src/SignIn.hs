@@ -51,7 +51,10 @@ widget = do
 
       Ob.routeLink (Route.FrontendRoute_ForgotPassword :/ ()) $ do
         R.elClass "p" "text-blue-500" $ R.text "Forgot password?"
-      
+
+      Ob.routeLink (Route.FrontendRoute_ResendEmail :/ ()) $ do
+        R.elClass "p" "text-blue-500" $ R.text "Resend activation email"
+
       let signIn = R.leftmost
             [ signInButton
             , R.keydown Key.Enter emailInput

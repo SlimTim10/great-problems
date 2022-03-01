@@ -9,11 +9,13 @@ module Common.Api.Auth
 import Common.Lib.Prelude
 
 import qualified Data.Aeson as JSON
-import qualified Data.CaseInsensitive as CI
 import GHC.Generics (Generic)
 
+import qualified Common.Api.Email as Email
+
+-- TODO: move to request
 data Auth = Auth
-  { email :: CI Text
+  { email :: Email.Email
   , password :: Text
   } deriving
   ( Eq
@@ -22,11 +24,3 @@ data Auth = Auth
   , JSON.FromJSON
   , JSON.ToJSON
   )
-
-instance (JSON.FromJSON (CI Text)) where
-  parseJSON (JSON.String text) = pure $ CI.mk text
-  parseJSON v = fail $ "Expected String, encountered " ++ (show v)
-
-instance (JSON.ToJSON (CI Text)) where
-  toJSON a = JSON.String (CI.original a)
-
