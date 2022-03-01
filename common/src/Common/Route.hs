@@ -55,12 +55,12 @@ data FrontendRoute :: * -> * where
   FrontendRoute_ForgotPassword :: FrontendRoute ()
   FrontendRoute_ResetPassword :: FrontendRoute Text
   FrontendRoute_ResendEmail :: FrontendRoute ()
-  FrontendRoute_Profile :: FrontendRoute ()
+  FrontendRoute_Settings :: FrontendRoute ()
   FrontendRoute_Problems :: FrontendRoute (Integer, Ob.R ProblemsRoute)
   FrontendRoute_NewProblem :: FrontendRoute ()
   FrontendRoute_DuplicateProblem :: FrontendRoute Integer
   FrontendRoute_ViewProblemSet :: FrontendRoute Integer
-  FrontendRoute_ViewUser :: FrontendRoute Integer
+  FrontendRoute_Profile :: FrontendRoute Integer
   FrontendRoute_Topics :: FrontendRoute (Integer, Ob.R TopicsRoute)
   FrontendRoute_Admin :: FrontendRoute ()
 
@@ -122,7 +122,7 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
       FrontendRoute_SignOut -> Ob.PathSegment "sign-out" $ Ob.unitEncoder mempty
       FrontendRoute_ForgotPassword -> Ob.PathSegment "forgot-password" $ Ob.unitEncoder mempty
       FrontendRoute_ResendEmail -> Ob.PathSegment "resend-email" $ Ob.unitEncoder mempty
-      FrontendRoute_Profile -> Ob.PathSegment "profile" $ Ob.unitEncoder mempty
+      FrontendRoute_Settings -> Ob.PathSegment "settings" $ Ob.unitEncoder mempty
       FrontendRoute_NewProblem -> Ob.PathSegment "new-problem" $ Ob.unitEncoder mempty
       FrontendRoute_DuplicateProblem -> Ob.PathSegment "duplicate-problem" $ idPathSegmentEncoder
       FrontendRoute_Problems -> Ob.PathSegment "problems" $ Ob.pathSegmentEncoder .
@@ -132,7 +132,7 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
             ProblemsRoute_Edit -> Ob.PathSegment "edit" $ Ob.unitEncoder mempty
         )
       FrontendRoute_ViewProblemSet -> Ob.PathSegment "problem-sets" $ idPathSegmentEncoder
-      FrontendRoute_ViewUser -> Ob.PathSegment "users" $ idPathSegmentEncoder
+      FrontendRoute_Profile -> Ob.PathSegment "users" $ idPathSegmentEncoder
       FrontendRoute_Topics -> Ob.PathSegment "topics" $ Ob.pathSegmentEncoder .
         bimap Ob.unsafeTshowEncoder
         (Ob.pathComponentEncoder $ \case

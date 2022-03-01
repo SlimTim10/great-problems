@@ -71,6 +71,6 @@ problemSetCardWidget problemSetCard = Util.dynFor problemSetCard $ \(ProblemSetC
         R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "Updated " ++ updatedAt)
     R.elClass "div" "flex" $ do
       R.elClass "p" "text-brand-sm text-brand-gray mr-1" $ R.text "by"
-      Ob.routeLink (Route.FrontendRoute_ViewUser :/ (User.id author)) $ do
+      Ob.routeLink (Route.FrontendRoute_Profile :/ (User.id author)) $ do
         R.elClass "div" "hover:underline text-brand-sm text-brand-gray font-bold" $ do
           R.text (CI.original $ User.fullName author)

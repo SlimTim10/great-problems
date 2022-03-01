@@ -121,6 +121,6 @@ problemCardWidget opt problemCard = do
         R.elClass "div" "flex" $ do
           R.elClass "p" "text-brand-sm text-brand-gray mr-1" $ R.text "by"
           let author = Problem.author problem
-          Ob.routeLink (Route.FrontendRoute_ViewUser :/ User.id author) $ do
+          Ob.routeLink (Route.FrontendRoute_Profile :/ User.id author) $ do
             R.elClass "div" "hover:underline text-brand-sm text-brand-gray font-bold" $ do
               R.text (CI.original $ User.fullName author)
