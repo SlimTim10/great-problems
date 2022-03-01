@@ -470,7 +470,11 @@ newEmailVerification conn userId = do
           Just _ -> generateSecret
   secret <- generateSecret
   void $ SQL.execute conn
-    "INSERT INTO email_verifications(secret, user_id) VALUES (?,?)" (secret, userId)
+    "INSERT INTO email_verifications(secret, user_id) VALUES (?,?)"
+    (secret, userId)
+  -- Delete others for the same user
+  void $ SQL.execute conn "DELETE FROM email_verifications WHERE user_id = ?"
+    (SQL.Only userId)
   return secret
 
 newResetPassword

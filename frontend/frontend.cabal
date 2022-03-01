@@ -50,6 +50,8 @@ library
     AdminArea
     ForgotPassword
     ResetPassword
+    ResendEmail
+    Layout.CenteredNarrow
     Problem.View
     Problem.Edit
     Problem.Compile

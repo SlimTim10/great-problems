@@ -12,6 +12,7 @@ import Common.Lib.Prelude
 import qualified Data.Aeson as JSON
 import GHC.Generics (Generic)
 
+-- TODO: move to request
 data ChangePassword = ChangePassword
   { identification :: Identification
   , newPassword :: Text

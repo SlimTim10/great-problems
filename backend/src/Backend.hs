@@ -34,6 +34,7 @@ import qualified Common.Api.Problem as Problem
 import qualified Common.Api.ProblemStatus as ProblemStatus
 import qualified Common.Api.Figure as Figure
 import qualified Common.Api.ChangePassword as ChangePassword
+import qualified Common.Api.Request.ResendEmail as ResendEmail
 import qualified Auth
 import qualified Email
 
@@ -236,6 +237,25 @@ backend = Ob.Backend
                         secret <- IO.liftIO $ Queries.newResetPassword conn (User.id user)
                         Email.sendResetPasswordEmail user secret
                         writeJSON OkResponse.OkResponse
+              _ -> return ()
+
+            -- Hide DB email information from the client by always sending back OkResponse
+            Route.Api_ResendEmail :/ () -> Snap.rqMethod <$> Snap.getRequest >>= \case
+              Snap.POST -> do
+                rawBody <- Snap.readRequestBody maxRequestBodySize
+                case JSON.decode rawBody :: Maybe ResendEmail.ResendEmail of
+                  Nothing -> writeJSON OkResponse.OkResponse
+                  Just req -> do
+                    IO.liftIO (Queries.getUserByEmail conn (ResendEmail.email req)) >>= \case
+                      Nothing -> writeJSON OkResponse.OkResponse
+                      Just user -> do
+                        if User.verified user
+                          then writeJSON OkResponse.OkResponse
+                          else
+                          do
+                            secret <- IO.liftIO $ Queries.newEmailVerification conn (User.id user)
+                            Email.sendEmailVerification user secret
+                            writeJSON OkResponse.OkResponse
               _ -> return ()
               
             Route.Api_Compile :/ Nothing -> Snap.rqMethod <$> Snap.getRequest >>= \case

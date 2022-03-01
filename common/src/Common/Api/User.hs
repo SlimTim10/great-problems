@@ -15,11 +15,14 @@ import qualified Data.CaseInsensitive as CI
 import GHC.Generics (Generic)
 
 import qualified Common.Api.Role as Role
+import qualified Common.Api.Email as Email
+
+type FullName = CI Text
 
 data User = User
   { id :: Integer
-  , fullName :: CI Text
-  , email :: CI Text
+  , fullName :: FullName
+  , email :: Email.Email
   , role :: Role.Role
   , verified :: Bool
   } deriving
@@ -30,13 +33,7 @@ data User = User
   , JSON.ToJSON
   )
 
-instance (JSON.FromJSON (CI Text)) where
-  parseJSON (JSON.String text) = pure $ CI.mk text
-  parseJSON v = fail $ "Expected String, encountered " ++ (show v)
-
-instance (JSON.ToJSON (CI Text)) where
-  toJSON a = JSON.String (CI.original a)
-
+-- TODO: move to request
 data UpdateRequest = UpdateRequest
   { urRole :: Role.Role
   } deriving
@@ -45,8 +42,9 @@ data UpdateRequest = UpdateRequest
   , JSON.FromJSON
   )
 
+-- TODO: move to request
 data ResetPasswordRequest = ResetPasswordRequest
-  { rprEmail :: CI Text
+  { rprEmail :: Email.Email
   } deriving
   ( Generic
   , JSON.ToJSON

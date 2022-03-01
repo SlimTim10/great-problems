@@ -15,6 +15,7 @@ import qualified Widget.Button as Button
 import qualified Common.Api.Error as Error
 import qualified Common.Route as Route
 import qualified Common.Api.User as User
+import qualified Layout.CenteredNarrow
 
 widget
   :: forall t m.
@@ -28,31 +29,30 @@ widget
      )
   => m ()
 widget = do
-  R.elClass "div" "mt-10 flex justify-center" $ do
-    R.elClass "div" "flex flex-col gap-4 w-80" $ do
+  Layout.CenteredNarrow.widget $ do
       
-      emailInput <- R.elClass "div" "flex justify-between" $ do
-        R.elClass "p" "font-normal text-brand-lg" $ R.text "Email"
-        Input.rawEmailClass "border px-1"
-      let email :: R.Dynamic t Text = R.value emailInput
+    emailInput <- R.elClass "div" "flex justify-between" $ do
+      R.elClass "p" "font-normal text-brand-lg" $ R.text "Email"
+      Input.rawEmailClass "border px-1"
+    let email :: R.Dynamic t Text = R.value emailInput
 
-      resetPasswordButton :: R.Event t () <- Button.primary' "Reset password"
+    resetPasswordButton :: R.Event t () <- Button.primary' "Reset password"
 
-      let resetPassword = R.leftmost
-            [ resetPasswordButton
-            , R.keydown Key.Enter emailInput
-            ]
+    let resetPassword = R.leftmost
+          [ resetPasswordButton
+          , R.keydown Key.Enter emailInput
+          ]
 
-      response <- resetPasswordAttempt email resetPassword
-      let err :: R.Event t (Either Text ()) = maybeToEither Error.message <$> response
+    response <- resetPasswordAttempt email resetPassword
+    let err :: R.Event t (Either Text ()) = maybeToEither Error.message <$> response
 
-      spinner <- R.holdDyn R.blank $ R.ffor resetPassword . const
-        $ R.elAttr "img" ("src" =: Ob.static @"small_spinner.svg" <> "width" =: "30" <> "alt" =: "loading") $ R.blank
-      responseEl <- R.holdDyn R.blank . R.ffor err $ \case
-        Left e -> R.elClass "p" "text-red-500" $ R.text e
-        Right _ -> R.elClass "p" "text-green-500" $ R.text "You should receive an email in 5 minutes allowing you to reset your password."
-      status <- R.holdDyn R.blank . R.leftmost . map R.updated $ [spinner, responseEl]
-      R.dyn_ status
+    spinner <- R.holdDyn R.blank $ R.ffor resetPassword . const
+      $ R.elAttr "img" ("src" =: Ob.static @"small_spinner.svg" <> "width" =: "30" <> "alt" =: "loading") $ R.blank
+    responseEl <- R.holdDyn R.blank . R.ffor err $ \case
+      Left e -> R.elClass "p" "text-red-500" $ R.text e
+      Right _ -> R.elClass "p" "text-green-500" $ R.text "You should receive an email in 5 minutes allowing you to reset your password."
+    status <- R.holdDyn R.blank . R.leftmost . map R.updated $ [spinner, responseEl]
+    R.dyn_ status
   where
     resetPasswordAttempt
       :: R.Dynamic t Text -- ^ Email

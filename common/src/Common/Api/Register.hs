@@ -12,9 +12,12 @@ import qualified Data.Aeson as JSON
 import qualified Data.CaseInsensitive as CI
 import GHC.Generics (Generic)
 
+import qualified Common.Api.Email as Email
+
+-- TODO: move to request
 data Register = Register
   { fullName :: CI Text
-  , email :: CI Text
+  , email :: Email.Email
   , password :: Text
   } deriving
   ( Eq
@@ -23,11 +26,3 @@ data Register = Register
   , JSON.FromJSON
   , JSON.ToJSON
   )
-
-instance (JSON.FromJSON (CI Text)) where
-  parseJSON (JSON.String text) = pure $ CI.mk text
-  parseJSON v = fail $ "Expected String, encountered " ++ (show v)
-
-instance (JSON.ToJSON (CI Text)) where
-  toJSON a = JSON.String (CI.original a)
-
