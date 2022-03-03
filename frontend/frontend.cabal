@@ -61,7 +61,6 @@ library
     Problem.Figures
     Problem.FormFile
     Problem.Loading
-    Problem.Options
     Problem.PdfViewer
     Problem.SelectTopic
     Problem.Summary
