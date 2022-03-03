@@ -17,10 +17,10 @@ import Data.Aeson ((.:))
 data OutputOption = WithSolution | WithAnswer | WithSolutionAndAnswer | QuestionOnly
   deriving (Eq, Generic, JSON.FromJSON)
 instance Show OutputOption where
-  show WithSolution = "flagSolutions"
-  show WithAnswer = "flagAnswers"
+  show WithSolution = "flagSolution"
+  show WithAnswer = "flagAnswer"
   show WithSolutionAndAnswer = "flagSolAns"
-  show QuestionOnly = "flagQuestions"
+  show QuestionOnly = "flagQuestion"
 
 data RequestParam = ParamContents | ParamRandomizeVariables | ParamOutputOption | ParamFigures
   deriving (Eq, Ord)
