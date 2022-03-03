@@ -158,11 +158,11 @@ widget preloadedProblemId = mdo
           R.elClass "div" "pb-3" R.blank
         preloadedProblem :: R.Dynamic t (Maybe Problem.Problem) <- getPreloadedProblem
         let setTopicId :: R.Event t Integer =
-              fromMaybe 0
+              fromMaybe SelectTopic.firstTopicId
               . fmap (Topic.id . Problem.topic)
               <$> R.updated preloadedProblem
-        selectedTopicId :: R.Dynamic t Integer <- R.elClass "div" "pb-3 border-b border-brand-light-gray"
-          $ SelectTopic.widget setTopicId
+        selectedTopicId :: R.Dynamic t Integer <- R.elClass "div" "pb-3 border-b border-brand-light-gray" $ do
+          SelectTopic.widget setTopicId
         let setSummaryValue :: R.Event t Text = fromMaybe "" . fmap Problem.summary
               <$> R.updated preloadedProblem
         summary :: R.Dynamic t Text <- R.elClass "div" "py-3 border-b border-brand-light-gray"

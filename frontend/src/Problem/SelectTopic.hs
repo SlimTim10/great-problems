@@ -1,5 +1,6 @@
 module Problem.SelectTopic
   ( widget
+  , firstTopicId
   ) where
 
 import Common.Lib.Prelude
@@ -13,6 +14,17 @@ import qualified Common.Api.Topic as Topic
 import qualified Common.Route as Route
 import qualified Widget.Input as Input
 
+firstTopicId :: Integer
+firstTopicId = 0
+
+data DropdownKey = DropdownKey
+  { ddIdx :: Integer
+  , ddTopicId :: Integer
+  } deriving (Eq)
+
+instance Ord DropdownKey where
+  a <= b = ddIdx a <= ddIdx b
+
 widget
   :: forall t m.
      ( R.DomBuilder t m
@@ -25,50 +37,71 @@ widget
      , R.MonadHold t m
      , MonadFix m
      )
-  => R.Event t Integer
-  -> m (R.Dynamic t Integer)
+  => R.Event t Integer -- ^ Set selected topic by ID
+  -> m (R.Dynamic t Integer) -- ^ Topic ID
 widget setValue = R.elClass "div" "" $ do
   R.elClass "p" "font-medium mb-2" $ R.text "Topic"
   response :: R.Event t (Maybe [Topic.Topic]) <- Util.getOnload $
     Route.apiHref (Route.Api_Topics :/ mempty)
   let allTopics :: R.Event t [Topic.Topic] = fromMaybe [] <$> response
-  dropdownItems :: R.Dynamic t (Map Integer Text) <- R.holdDyn Map.empty $
+  dropdownItems :: R.Dynamic t (Map DropdownKey Text) <- R.holdDyn Map.empty $
     hierarchyToDropdownItems <$> flattenHierarchy <$> topicsToHierarchy <$> allTopics
-  Input.dropdownClass' "border border-brand-light-gray w-full" 1 dropdownItems setValue
+  let dropdownKeys :: R.Dynamic t [DropdownKey] = Map.keys <$> dropdownItems
+  holdSetValue :: R.Dynamic t Integer <- R.holdDyn firstTopicId setValue
+  let setValueKey :: R.Dynamic t DropdownKey =
+        (\v -> fromMaybe (DropdownKey 1 firstTopicId) . find ((== v) . ddTopicId))
+        <$> holdSetValue <*> dropdownKeys
+  x <- Input.dropdownClass' "border border-brand-light-gray w-full"
+    (DropdownKey 1 firstTopicId)
+    dropdownItems
+    (R.updated setValueKey)
+  return $ ddTopicId <$> x
   
 data TopicWithChildren = TopicWithChildren
-  { topic :: Topic.Topic
-  , children :: [TopicWithChildren]
-  , level :: Integer
+  { tcTopic :: Topic.Topic
+  , tcChildren :: [TopicWithChildren]
+  , tcLevel :: Integer
   } deriving (Show)
-  
+
+data TopicWithLevel = TopicWithLevel
+  { tlTopic :: Topic.Topic
+  , tlLevel :: Integer
+  }
+
+data DropdownItem = DropdownItem
+  { ddiIdx :: Integer
+  , ddiTopic :: TopicWithLevel
+  }
+
 topicsToHierarchy :: [Topic.Topic] -> [TopicWithChildren]
 topicsToHierarchy allTopics = map (f 0) rootTopics
   where
     rootTopics = filter (\x -> isNothing (Topic.parentId x)) allTopics
     f :: Integer -> Topic.Topic -> TopicWithChildren
-    f l t = TopicWithChildren t (map (f (l + 1)) $ getChildren t) l
+    f lvl t = TopicWithChildren t (map (f (lvl + 1)) $ getChildren t) lvl
     getChildren :: Topic.Topic -> [Topic.Topic]
     getChildren t = filter (\x -> Topic.parentId x == Just (Topic.id t)) allTopics
 
-flattenHierarchy :: [TopicWithChildren] -> [(Integer, Text, Integer)]
-flattenHierarchy = go []
+flattenHierarchy
+  :: [TopicWithChildren]
+  -> [DropdownItem]
+flattenHierarchy = zipWith DropdownItem [1 ..] . concatMap f
   where
-    go :: [(Integer, Text, Integer)] -> [TopicWithChildren] -> [(Integer, Text, Integer)]
-    go acc [] = acc
-    go acc topicsWithChildren =
-      map (\x -> (Topic.id . topic $ x, Topic.name . topic $ x, level x)) topicsWithChildren
+    f :: TopicWithChildren -> [TopicWithLevel]
+    f x =
+      [(\x' -> TopicWithLevel (tcTopic x') (tcLevel x')) x]
       ++
-      (concat . map (go acc . children) $ topicsWithChildren)
+      (concatMap f . tcChildren) x
 
-hierarchyToDropdownItems :: [(Integer, Text, Integer)] -> Map Integer Text
+hierarchyToDropdownItems :: [DropdownItem] -> Map DropdownKey Text
 hierarchyToDropdownItems = foldr f mempty
   where
-    f :: (Integer, Text, Integer) -> Map Integer Text -> Map Integer Text
-    f (topicId, topicName, topicLevel) = Map.insert topicId (indent topicLevel topicName)
+    f :: DropdownItem -> Map DropdownKey Text -> Map DropdownKey Text
+    f (DropdownItem {ddiIdx=idx, ddiTopic=TopicWithLevel {tlTopic=t, tlLevel=lvl} }) =
+      Map.insert (DropdownKey idx (Topic.id t)) (indent lvl (Topic.name t))
     indent :: Integral a => a -> Text -> Text
     indent n txt = cs $
-      (concat . replicate (fromIntegral n) $ "--")
+      (concat . replicate (fromIntegral n) $ "- ")
       ++
       cs txt
 
