@@ -26,15 +26,15 @@ request
   -> m (R.Event t (Either Error.Error c))
 request payload trg url jsonBody = do
   let ev = R.tagPromptlyDyn payload trg
-  r :: R.Event t R.XhrResponse <- R.performRequestAsync
+  res :: R.Event t R.XhrResponse <- R.performRequestAsync
     $ R.postJson (Route.apiHref url) <$> jsonBody <$> ev
 
-  let err :: R.Event t (Maybe Error.Error) = R.decodeXhrResponse <$> r
-  let retErr :: R.Event t (Either Error.Error c) = Left . fromJust
+  let err :: R.Event t (Maybe Error.Error) = R.decodeXhrResponse <$> res
+  let resErr :: R.Event t (Either Error.Error c) = Left . fromJust
         <$> R.ffilter isJust err
 
-  let success :: R.Event t (Maybe c) = R.decodeXhrResponse <$> r
-  let retSuccess :: R.Event t (Either Error.Error c) = Right . fromJust
+  let success :: R.Event t (Maybe c) = R.decodeXhrResponse <$> res
+  let resSuccess :: R.Event t (Either Error.Error c) = Right . fromJust
         <$> R.ffilter isJust success
 
-  return $ R.leftmost [retErr, retSuccess]
+  return $ R.leftmost [resErr, resSuccess]

@@ -11,7 +11,6 @@ import qualified Data.Time.Clock as Time
 import qualified Data.CaseInsensitive as CI
 import qualified Data.Map as Map
 import qualified Data.Text as T
-import qualified Control.Lens as Lens
 import qualified Language.Javascript.JSaddle as JS
 import qualified "ghcjs-dom" GHCJS.DOM.Document as DOM
 import qualified GHCJS.DOM.Types
@@ -216,15 +215,19 @@ widget preloadedProblemId = mdo
           Button.secondaryClass' "Delete this problem" "w-full bg-red-100"
         deletePrompt :: R.Event t Text <- R.performEvent
           $ (const $ Util.prompt "Are you sure?\n\nThis action cannot be undone. Please type yes to confirm.") <$> deleteButton
-        deleteResponse :: R.Dynamic t (Maybe Error.Error) <- do
+        deleteResponse :: R.Event t (Either Error.Error ()) <- do
           deleteProblem
             $ R.tagPromptlyDyn
             problemId
             (R.ffilter (\userInput -> CI.mk userInput == CI.mk "yes") deletePrompt)
-        let deleteResponseMessage = deleteResponse <&> \case
-              Just err -> R.elClass "p" "text-red-500" $ R.text (Error.message err)
-              Nothing -> Util.historyBack
-        R.dyn_ =<< R.holdDyn R.blank (R.updated deleteResponseMessage)
+        deleteResponseMessage :: R.Dynamic t (m ()) <- R.holdDyn R.blank
+          $ R.ffor deleteResponse
+          $ \case
+          Left e -> do
+            R.elClass "p" "text-red-500" $ R.text (Error.message e)
+          Right _ -> do
+            Util.historyBack
+        R.dyn_ deleteResponseMessage
 
         let f = \preloadedProblemId' savedProblem' -> case (preloadedProblemId', savedProblem') of
               (Just pid, _) -> Just pid
@@ -468,16 +471,21 @@ deleteProblem
      , R.TriggerEvent t m
      , JS.MonadJSM (R.Performable m)
      , R.HasJSContext (R.Performable m)
-     , R.MonadHold t m
      )
   => R.Event t (Maybe Integer) -- ^ Problem ID
-  -> m (R.Dynamic t (Maybe Error.Error)) -- ^ Response
+  -> m (R.Event t (Either Error.Error ())) -- ^ Response
 deleteProblem problemId = do
   let req :: R.Event t (R.XhrRequest ()) = problemId <&> \pid -> do
         let url :: Text = (Route.apiHref $ Route.Api_Problems :/ (pid, mempty))
         R.xhrRequest "DELETE" url R.def
-  res :: R.Event t (R.XhrResponse) <- R.performRequestAsync req
-  let result :: R.Event t Text = fromMaybe "" . Lens.view R.xhrResponse_responseText <$> res
-  errorResponse :: R.Dynamic t (Maybe Error.Error) <- R.holdDyn Nothing $
-    R.decodeText <$> result
-  return errorResponse
+  res :: R.Event t R.XhrResponse <- R.performRequestAsync req
+
+  let err :: R.Event t (Maybe Error.Error) = R.decodeXhrResponse <$> res
+  let retErr :: R.Event t (Either Error.Error ()) = Left . fromJust
+        <$> R.ffilter isJust err
+        
+  let success :: R.Event t (Maybe ()) = R.decodeXhrResponse <$> res
+  let retSuccess :: R.Event t (Either Error.Error ()) = Right . fromJust
+        <$> R.ffilter isJust success
+
+  return $ R.leftmost [retErr, retSuccess]
