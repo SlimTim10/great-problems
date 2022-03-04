@@ -4,6 +4,7 @@ module ResendEmail
 
 import Common.Lib.Prelude
 
+import qualified Data.Text as T
 import qualified Data.CaseInsensitive as CI
 import qualified Web.KeyCode as Key
 import qualified Language.Javascript.JSaddle as JS
@@ -37,7 +38,11 @@ widget = do
 
     resendEmailButton :: R.Event t () <- Button.primary' "Resend activation email"
 
-    let resendEmail = R.leftmost [resendEmailButton, R.keydown Key.Enter emailInput]
+    let resendEmail =
+          fmap (const ())
+          $ R.ffilter (not . T.null)
+          $ R.tagPromptlyDyn email
+          $ R.leftmost [resendEmailButton, R.keydown Key.Enter emailInput]
 
     response :: Api.Response t () <- Api.request
       email
