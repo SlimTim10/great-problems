@@ -13,7 +13,6 @@ import GHC.Generics (Generic)
 
 import qualified Common.Api.Email as Email
 
--- TODO: move to request
 data Register = Register
   { fullName :: CI Text
   , email :: Email.Email
