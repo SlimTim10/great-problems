@@ -221,13 +221,12 @@ widget preloadedProblemId = mdo
             problemId
             (R.ffilter (\userInput -> CI.mk userInput == CI.mk "yes") deletePrompt)
         deleteResponseMessage :: R.Dynamic t (m ()) <- R.holdDyn R.blank
-          $ R.ffor deleteResponse
-          $ \case
-          Left e -> do
-            R.elClass "p" "text-red-500" $ R.text (Error.message e)
-          Right _ -> do
-            Util.historyBack
+          $ R.ffor (R.filterLeft deleteResponse)
+          $ \e -> do
+          R.elClass "p" "text-red-500" $ R.text (Error.message e)
+          
         R.dyn_ deleteResponseMessage
+        Ob.setRoute $ Route.FrontendRoute_Settings :/ () <$ R.filterRight deleteResponse
 
         let f = \preloadedProblemId' savedProblem' -> case (preloadedProblemId', savedProblem') of
               (Just pid, _) -> Just pid
