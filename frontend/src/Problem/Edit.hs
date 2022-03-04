@@ -214,15 +214,13 @@ widget preloadedProblemId = mdo
 
         deleteButton :: R.Event t () <- R.elClass "div" "py-3" $ do
           Button.secondaryClass' "Delete this problem" "w-full bg-red-100"
-        deletePrompt :: R.Event t Text <- R.performEvent $
-          (const $ Util.prompt "Are you sure?\n\nThis action cannot be undone. Please type yes to confirm.") <$> deleteButton
+        deletePrompt :: R.Event t Text <- R.performEvent
+          $ (const $ Util.prompt "Are you sure?\n\nThis action cannot be undone. Please type yes to confirm.") <$> deleteButton
         deleteResponse :: R.Dynamic t (Maybe Error.Error) <- do
-          deleteConfirm :: R.Dynamic t (Maybe ()) <- R.holdDyn Nothing $ deletePrompt <&> \userInput ->
-            if CI.mk userInput == CI.mk "yes"
-            then Just ()
-            else Nothing
-          deleteConfirmed :: R.Dynamic t (Maybe ()) <- R.improvingMaybe deleteConfirm
-          deleteProblem $ R.tagPromptlyDyn problemId (R.updated deleteConfirmed)
+          deleteProblem
+            $ R.tagPromptlyDyn
+            problemId
+            (R.ffilter (\userInput -> CI.mk userInput == CI.mk "yes") deletePrompt)
         let deleteResponseMessage = deleteResponse <&> \case
               Just err -> R.elClass "p" "text-red-500" $ R.text (Error.message err)
               Nothing -> Util.historyBack
