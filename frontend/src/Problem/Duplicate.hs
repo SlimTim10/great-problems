@@ -27,7 +27,7 @@ widget
   -> m ()
 widget problemId = do
   onload <- R.getPostBuild
-  response :: R.Event t (Either Error.Error Problem.Problem) <- Api.request
+  response :: R.Event t (Either Error.Error Problem.Problem) <- Api.postRequest
     (R.constDyn ())
     onload
     (Route.Api_DuplicateProblem :/ problemId)

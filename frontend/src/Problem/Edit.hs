@@ -4,7 +4,6 @@ module Problem.Edit
   ) where
 
 import Common.Lib.Prelude
-import qualified Frontend.Lib.Util as Util
 
 import qualified Control.Monad.IO.Class as IO
 import qualified Data.Time.Clock as Time
@@ -20,6 +19,8 @@ import qualified Reflex.Dom.Core as R
 -- Import patch
 import qualified MyReflex.Dom.Xhr.FormData as R'
 
+import qualified Frontend.Lib.Util as Util
+import qualified Frontend.Lib.Api as Api
 import qualified Common.Route as Route
 import qualified Common.Api.Compile as Compile
 import qualified Common.Api.Error as Error
@@ -474,17 +475,7 @@ deleteProblem
   => R.Event t (Maybe Integer) -- ^ Problem ID
   -> m (R.Event t (Either Error.Error ())) -- ^ Response
 deleteProblem problemId = do
-  let req :: R.Event t (R.XhrRequest ()) = problemId <&> \pid -> do
-        let url :: Text = (Route.apiHref $ Route.Api_Problems :/ (pid, mempty))
-        R.xhrRequest "DELETE" url R.def
-  res :: R.Event t R.XhrResponse <- R.performRequestAsync req
-
-  let err :: R.Event t (Maybe Error.Error) = R.decodeXhrResponse <$> res
-  let retErr :: R.Event t (Either Error.Error ()) = Left . fromJust
-        <$> R.ffilter isJust err
-        
-  let success :: R.Event t (Maybe ()) = R.decodeXhrResponse <$> res
-  let retSuccess :: R.Event t (Either Error.Error ()) = Right . fromJust
-        <$> R.ffilter isJust success
-
-  return $ R.leftmost [retErr, retSuccess]
+  let url :: R.Event t (Ob.R Route.Api) =
+        (\pid -> Route.Api_Problems :/ (pid, mempty))
+        <$> problemId
+  Api.deleteRequest url

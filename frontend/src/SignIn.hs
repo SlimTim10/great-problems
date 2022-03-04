@@ -60,7 +60,7 @@ widget = do
             , R.keydown Key.Enter passwordInput
             ]
 
-      response :: R.Event t (Either Error.Error ()) <- Api.request
+      response :: R.Event t (Either Error.Error ()) <- Api.postRequest
         (R.zipDyn email password)
         signIn
         (Route.Api_SignIn :/ ())

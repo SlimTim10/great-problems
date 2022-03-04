@@ -44,7 +44,7 @@ widget = do
           $ R.tagPromptlyDyn email
           $ R.leftmost [resendEmailButton, R.keydown Key.Enter emailInput]
 
-    response :: R.Event t (Either Error.Error ()) <- Api.request
+    response :: R.Event t (Either Error.Error ()) <- Api.postRequest
       email
       resendEmail
       (Route.Api_ResendEmail :/ ())
