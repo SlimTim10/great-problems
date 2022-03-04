@@ -44,23 +44,18 @@ widget = do
           $ R.tagPromptlyDyn email
           $ R.leftmost [resendEmailButton, R.keydown Key.Enter emailInput]
 
-    response :: Api.Response t () <- Api.request
+    response :: R.Event t (Either Error.Error ()) <- Api.request
       email
       resendEmail
       (Route.Api_ResendEmail :/ ())
       (\email' -> ResendEmail.ResendEmail (CI.mk email'))
 
-    resendEmailError :: R.Dynamic t (m ()) <- R.holdDyn R.blank $
-      R.ffor (Api.resError response) $ maybe R.blank $
-      \e -> do
+    message :: R.Dynamic t (m ()) <- R.holdDyn R.blank
+      $ R.ffor response
+      $ \case
+      Left e -> do
         R.elClass "p" "text-red-500" $ R.text (Error.message e)
-    R.dyn_ resendEmailError
-
-    resendEmailSuccess :: R.Dynamic t (m ()) <- R.holdDyn R.blank $
-      R.ffor (Api.resSuccess response) $ maybe R.blank $
-      \_ -> do
+      Right _ -> do
         R.elClass "p" "text-green-600" $
           R.text "We'll send you an email in 5 minutes. Open it up to activate your account."
-    R.dyn_ resendEmailSuccess
-
-    R.blank
+    R.dyn_ message

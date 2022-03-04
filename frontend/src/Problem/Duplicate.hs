@@ -21,25 +21,24 @@ widget
      , R.PerformEvent t m
      , R.TriggerEvent t m
      , Ob.SetRoute t (Ob.R Route.FrontendRoute) m
-     , MonadFix m
      , R.MonadHold t m
      )
   => Integer
   -> m ()
 widget problemId = do
   onload <- R.getPostBuild
-  response :: Api.Response t Problem.Problem <- Api.request
+  response :: R.Event t (Either Error.Error Problem.Problem) <- Api.request
     (R.constDyn ())
     onload
     (Route.Api_DuplicateProblem :/ problemId)
     (const ())
 
-  duplicateErrorText :: R.Dynamic t Text <- R.holdDyn "" $
-    maybe "" Error.message <$> Api.resError response
-  R.elClass "p" "text-red-500" $ R.dynText duplicateErrorText
-  
-  duplicateSuccess :: R.Event t (Maybe Problem.Problem) <- fmap R.updated
-    $ R.improvingMaybe =<< R.holdDyn Nothing (Api.resSuccess response)
-  Ob.setRoute $
-    (\p -> Route.FrontendRoute_Problems :/ (Problem.id . fromJust $ p, Route.ProblemsRoute_Edit :/ ()))
-    <$> duplicateSuccess
+  errorMessage :: R.Dynamic t (m ()) <- R.holdDyn R.blank
+    $ R.ffor (R.filterLeft response)
+    $ \e -> do
+    R.elClass "p" "text-red-500" $ R.text (Error.message e)
+    
+  R.dyn_ errorMessage
+  Ob.setRoute
+    $ (\p -> Route.FrontendRoute_Problems :/ (Problem.id p, Route.ProblemsRoute_Edit :/ ()))
+    <$> R.filterRight response

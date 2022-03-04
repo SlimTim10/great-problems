@@ -27,7 +27,6 @@ widget
      , R.TriggerEvent t m
      , Ob.SetRoute t (Ob.R Route.FrontendRoute) m
      , R.MonadHold t m
-     , MonadFix m
      , R.PostBuild t m
      , Ob.RouteToUrl (Ob.R Route.FrontendRoute) m
      , R.Prerender js t m
@@ -61,18 +60,18 @@ widget = do
             , R.keydown Key.Enter passwordInput
             ]
 
-      response :: Api.Response t () <- Api.request
+      response :: R.Event t (Either Error.Error ()) <- Api.request
         (R.zipDyn email password)
         signIn
         (Route.Api_SignIn :/ ())
         (\(email', password') -> Auth.Auth (CI.mk email') password')
-        
-      signInErrorText :: R.Dynamic t Text <- R.holdDyn "" $
-        maybe "" Error.message <$> Api.resError response
-      R.elClass "p" "text-red-500" $ R.dynText signInErrorText
 
-      signInSuccess :: R.Event t (Maybe (R.Dynamic t ())) <- fmap R.updated $
-        R.maybeDyn =<< R.holdDyn Nothing (Api.resSuccess response)
-      Ob.setRoute $ Route.FrontendRoute_Explore :/ Nothing <$ signInSuccess
+      errorMessage :: R.Dynamic t (m ()) <- R.holdDyn R.blank
+        $ R.ffor (R.filterLeft response)
+        $ \e -> do
+        R.elClass "p" "text-red-500" $ R.text (Error.message e)
+        
+      R.dyn_ errorMessage
+      Ob.setRoute $ Route.FrontendRoute_Explore :/ Nothing <$ R.filterRight response
 
       R.blank
