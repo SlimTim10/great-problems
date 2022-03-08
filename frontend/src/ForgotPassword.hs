@@ -7,14 +7,15 @@ import Common.Lib.Prelude
 import qualified Data.CaseInsensitive as CI
 import qualified Web.KeyCode as Key
 import qualified Language.Javascript.JSaddle as JS
-import qualified Obelisk.Generated.Static as Ob
 import qualified Reflex.Dom.Core as R
 
 import qualified Widget.Input as Input
 import qualified Widget.Button as Button
+import qualified Widget.Spinner as Spinner
 import qualified Common.Api.Error as Error
 import qualified Common.Route as Route
 import qualified Common.Api.User as User
+import qualified Frontend.Lib.Api as Api
 import qualified Layout.CenteredNarrow
 
 widget
@@ -43,24 +44,19 @@ widget = do
           , R.keydown Key.Enter emailInput
           ]
 
-    response <- resetPasswordAttempt email resetPassword
-    let err :: R.Event t (Either Text ()) = maybeToEither Error.message <$> response
+    response :: R.Event t (Either Error.Error ()) <- Api.postRequest
+      email
+      resetPassword
+      (Route.Api_ResetPassword :/ ())
+      (\email' -> User.ResetPasswordRequest (CI.mk email'))
 
-    spinner <- R.holdDyn R.blank $ R.ffor resetPassword . const
-      $ R.elAttr "img" ("src" =: Ob.static @"small_spinner.svg" <> "width" =: "30" <> "alt" =: "loading") $ R.blank
-    responseEl <- R.holdDyn R.blank . R.ffor err $ \case
-      Left e -> R.elClass "p" "text-red-500" $ R.text e
-      Right _ -> R.elClass "p" "text-green-500" $ R.text "You should receive an email in 5 minutes allowing you to reset your password."
-    status <- R.holdDyn R.blank . R.leftmost . map R.updated $ [spinner, responseEl]
+    message :: R.Dynamic t (m ()) <- R.holdDyn R.blank
+      $ R.ffor response $ \case
+      Left e -> do
+        R.elClass "p" "text-red-500" $ R.text (Error.message e)
+      Right _ -> do
+        R.elClass "p" "text-green-500" $ R.text "You should receive an email in 5 minutes allowing you to reset your password."
+
+    spinner <- Spinner.holdSmall resetPassword
+    status <- R.holdDyn R.blank . R.leftmost . map R.updated $ [spinner, message]
     R.dyn_ status
-  where
-    resetPasswordAttempt
-      :: R.Dynamic t Text -- ^ Email
-      -> R.Event t () -- ^ Event to trigger request
-      -> m (R.Event t (Maybe Error.Error))
-    resetPasswordAttempt email resetPassword = do
-      let ev :: R.Event t Text = R.tagPromptlyDyn email resetPassword
-      r <- R.performRequestAsync $ R.ffor ev $ \email' -> do
-        let url = Route.apiHref $ Route.Api_ResetPassword :/ ()
-        R.postJson url $ User.ResetPasswordRequest (CI.mk email')
-      return $ R.decodeXhrResponse <$> r

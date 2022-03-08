@@ -9,15 +9,15 @@ import qualified Data.Map as Map
 import qualified Data.CaseInsensitive as CI
 import qualified Language.Javascript.JSaddle as JS
 import qualified Obelisk.Route.Frontend as Ob
-import qualified Obelisk.Generated.Static as Ob
 import qualified Reflex.Dom.Core as R
 
 import qualified Common.Route as Route
 import qualified Common.Api.User as User
 import qualified Common.Api.Role as Role
 import qualified Common.Api.Error as Error
+import qualified Frontend.Lib.Api as Api
 import qualified Widget.Input as Input
--- import qualified Widget.Button as Button
+import qualified Widget.Spinner as Spinner
 
 widget
   :: forall t m js.
@@ -60,15 +60,21 @@ widget = do
           selectedRole :: R.Dynamic t Role.Role <- R.elClass "div" ""
             $ selectRoleWidget (User.role u)
             
-          response <- updateRoleAttempt u selectedRole
-          let updateRoleError :: R.Event t (Either Text ()) = maybeToEither Error.message <$> response
+          response :: R.Event t (Either Error.Error ()) <- Api.postRequest
+            selectedRole
+            (() <$ R.updated selectedRole)
+            (Route.Api_Users :/ (Just $ User.id u))
+            (\role -> User.UpdateRequest role)
 
-          spinner <- R.holdDyn R.blank $ R.ffor (R.updated selectedRole) . const
-            $ R.elAttr "img" ("src" =: Ob.static @"small_spinner.svg" <> "width" =: "30" <> "alt" =: "loading") $ R.blank
-          responseEl <- R.holdDyn R.blank . R.ffor updateRoleError $ \case
-            Left e -> R.elClass "p" "text-red-500" $ R.text e
-            Right _ -> R.elClass "p" "text-green-500" $ R.text "Success"
-          status <- R.holdDyn R.blank . R.leftmost . map R.updated $ [spinner, responseEl]
+          spinner <- Spinner.holdSmall (R.updated selectedRole)
+          message :: R.Dynamic t (m ()) <- R.holdDyn R.blank
+            $ R.ffor response
+            $ \case
+            Left e -> do
+              R.elClass "p" "text-red-500" $ R.text (Error.message e)
+            Right _ -> do
+              R.elClass "p" "text-green-500" $ R.text "Success"
+          status <- R.holdDyn R.blank . R.leftmost . map R.updated $ [spinner, message]
           R.dyn_ status
 
     selectRoleWidget
@@ -80,10 +86,3 @@ widget = do
       let roleList :: [(Role.Role, Text)] = zip roles roleNames
       let dropdownItems = R.constDyn $ Map.fromList roleList
       Input.dropdownClass' "border border-brand-light-gray w-full" initialValue dropdownItems R.never
-
-    updateRoleAttempt :: User.User -> R.Dynamic t Role.Role -> m (R.Event t (Maybe Error.Error))
-    updateRoleAttempt user selectedRole = do
-      r <- R.performRequestAsync $ R.ffor (R.updated selectedRole) $ \role -> do
-        let url = Route.apiHref $ Route.Api_Users :/ (Just $ User.id user)
-        R.postJson url (User.UpdateRequest role)
-      return $ R.decodeXhrResponse <$> r

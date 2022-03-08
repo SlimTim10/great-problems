@@ -13,7 +13,6 @@ import qualified Data.Text as T
 import qualified Language.Javascript.JSaddle as JS
 import qualified "ghcjs-dom" GHCJS.DOM.Document as DOM
 import qualified GHCJS.DOM.Types
-import qualified Obelisk.Generated.Static as Ob
 import qualified Obelisk.Route.Frontend as Ob
 import qualified Reflex.Dom.Core as R
 -- Import patch
@@ -42,6 +41,7 @@ import qualified Problem.Loading as Loading
 import qualified Problem.FormFile as FormFile
 import qualified Widget.Button as Button
 import qualified Widget.Input as Input
+import qualified Widget.Spinner as Spinner
 
 -- Draft saving state
 data SavingState a = BeforeSave | Saving | Saved | SaveError a
@@ -207,9 +207,8 @@ widget preloadedProblemId = mdo
                 Ob.setRoute $ do
                   (Route.FrontendRoute_Problems :/
                    (Problem.id publishedProblem, Route.ProblemsRoute_View :/ ())) <$ timer
-        let spinner = R.ffor publish $ \_ -> do
-              R.elAttr "img" ("src" =: Ob.static @"small_spinner.svg" <> "width" =: "30" <> "alt" =: "loading") $ R.blank
-        publishedMessage <- R.holdDyn R.blank $ R.leftmost [spinner, R.updated publishResponseMessage]
+        spinner <- Spinner.holdSmall publish
+        publishedMessage <- R.holdDyn R.blank . R.leftmost . map R.updated $ [spinner, publishResponseMessage]
         R.dyn_ publishedMessage
 
         deleteButton :: R.Event t () <- R.elClass "div" "py-3" $ do

@@ -6,14 +6,15 @@ import Common.Lib.Prelude
 
 import qualified Web.KeyCode as Key
 import qualified Language.Javascript.JSaddle as JS
-import qualified Obelisk.Generated.Static as Ob
 import qualified Obelisk.Route.Frontend as Ob
 import qualified Reflex.Dom.Core as R
 
 import qualified Widget.Input as Input
 import qualified Widget.Button as Button
+import qualified Widget.Spinner as Spinner
 import qualified Common.Api.Error as Error
 import qualified Common.Route as Route
+import qualified Frontend.Lib.Api as Api
 import qualified Common.Api.Request.ChangePassword as ChangePassword
 
 widget
@@ -36,10 +37,9 @@ widget secret = do
   R.elClass "div" "mt-10 flex justify-center" $ do
     R.elClass "div" "flex flex-col gap-4" $ mdo
       
-      newPasswordInput <- R.elClass "div" "flex justify-between gap-4" $ do
+      newPassword :: R.Dynamic t Text <- R.elClass "div" "flex justify-between gap-4" $ do
         R.elClass "p" "font-normal text-brand-lg" $ R.text "New password"
-        Input.rawPasswordClass "border px-1"
-      let newPassword :: R.Dynamic t Text = R.value newPasswordInput
+        Input.passwordClass "border px-1"
 
       confirmNewPasswordInput <- R.elClass "div" "flex justify-between gap-4" $ do
         R.elClass "p" "font-normal text-brand-lg" $ R.text "Confirm new password"
@@ -51,14 +51,12 @@ widget secret = do
 
       changePasswordButton :: R.Event t () <- Button.primary' "Change my password"
 
-      spinner <- R.holdDyn R.blank $ R.ffor triggerRequest . const
-        $ R.elAttr "img" ("src" =: Ob.static @"small_spinner.svg" <> "width" =: "30" <> "alt" =: "loading") $ R.blank
-      status <- R.holdDyn R.blank . R.leftmost . map R.updated $ [spinner, changePasswordMessage]
+      spinner <- Spinner.holdSmall triggerRequest
+      status <- R.holdDyn R.blank . R.leftmost . map R.updated $ [spinner, message]
       R.dyn_ status
 
       let changePassword = R.leftmost
             [ changePasswordButton
-            , R.keydown Key.Enter newPasswordInput
             , R.keydown Key.Enter confirmNewPasswordInput
             ]
 
@@ -67,34 +65,35 @@ widget secret = do
         True -> R.blank
         False -> R.elClass "p" "text-red-500" $ R.text "Password must match"
 
-      let passwordNotEmpty :: R.Dynamic t Bool = (\x -> x /= "") <$> newPassword
+      let passwordNotEmpty :: R.Dynamic t Bool = (/= "") <$> newPassword
       passwordEmptyError <- R.holdDyn R.blank $ R.ffor (R.tagPromptlyDyn passwordNotEmpty changePassword) $ \case
         True -> R.blank
         False -> R.elClass "p" "text-red-500" $ R.text "Password cannot be empty"
 
-      let triggerRequest = R.gate (R.current $ (&&) <$> passwordMatch <*> passwordNotEmpty) changePassword
-      changePasswordResponse <- changePasswordAttempt newPassword triggerRequest
-      changePasswordMessage <- R.holdDyn R.blank $ R.ffor changePasswordResponse $ \case
-        Nothing -> do
+      let triggerRequest = () <$
+            R.ffilter
+            and
+            (R.tagPromptlyDyn (R.distributeListOverDyn [passwordMatch, passwordNotEmpty]) changePassword)
+            
+      response :: R.Event t (Either Error.Error ()) <- Api.postRequest
+        (R.zipDyn secret newPassword)
+        triggerRequest
+        (Route.Api_ChangePassword :/ ())
+        (\(secret', newPassword') ->
+           ChangePassword.ChangePassword
+           (ChangePassword.ResetSecret secret')
+           newPassword')
+      
+      message :: R.Dynamic t (m ()) <- R.holdDyn R.blank
+        $ R.ffor response $ \case
+        Left e -> do
+          R.elClass "p" "text-red-500" $ R.text (Error.message e)
+        Right _ -> do
           R.elClass "p" "text-green-600" $ R.text "Your password has been changed."
           R.elClass "p" "" $ do
             R.el "span" $ R.text "You may now "
             Ob.routeLink (Route.FrontendRoute_SignIn :/ ()) $ do
               R.elClass "span" "text-blue-500" $ R.text "sign in"
             R.el "span" $ R.text " with your new password "
-        Just e -> R.elClass "p" "text-red-500" $ R.text (Error.message e)
 
       return ()
-      
-  where
-    changePasswordAttempt
-      :: R.Dynamic t Text -- ^ New password
-      -> R.Event t () -- ^ Event to trigger request
-      -> m (R.Event t (Maybe Error.Error))
-    changePasswordAttempt newPassword trigger = do
-      let ev :: R.Event t (Text, Text) = R.tagPromptlyDyn (R.zipDyn secret newPassword) trigger
-      r <- R.performRequestAsync $ R.ffor ev $ \(secret', newPassword') -> do
-        let url = Route.apiHref $ Route.Api_ChangePassword :/ ()
-        let body = ChangePassword.ChangePassword (ChangePassword.ResetSecret secret') newPassword'
-        R.postJson url body
-      return $ R.decodeXhrResponse <$> r

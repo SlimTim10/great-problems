@@ -5,7 +5,6 @@ module Register
 import Common.Lib.Prelude
 
 import qualified Language.Javascript.JSaddle as JS
-import qualified Data.Aeson as JSON
 import qualified Web.KeyCode as Key
 import qualified Data.CaseInsensitive as CI
 import qualified Reflex.Dom.Core as R
@@ -13,6 +12,8 @@ import qualified Reflex.Dom.Core as R
 import qualified Common.Route as Route
 import qualified Widget.Input as Input
 import qualified Widget.Button as Button
+import qualified Widget.Spinner as Spinner
+import qualified Frontend.Lib.Api as Api
 import qualified Common.Api.Error as Error
 import qualified Common.Api.Request.Register as Register
 
@@ -57,7 +58,9 @@ widget = do
         
       registerButton :: R.Event t () <- Button.primary' "Create my account"
 
-      R.dyn_ responseMessage
+      spinner <- Spinner.holdSmall triggerRequest
+      status <- R.holdDyn R.blank . R.leftmost . map R.updated $ [spinner, message]
+      R.dyn_ status
 
       let register = R.leftmost
             [ registerButton
@@ -72,37 +75,29 @@ widget = do
         True -> R.blank
         False -> R.elClass "p" "text-red-500" $ R.text "Password must match"
 
-      let passwordNotEmpty :: R.Dynamic t Bool = (\x -> x /= "") <$> password
+      let passwordNotEmpty :: R.Dynamic t Bool = (/= "") <$> password
       passwordEmptyError <- R.holdDyn R.blank $ R.ffor (R.tagPromptlyDyn passwordNotEmpty register) $ \case
         True -> R.blank
         False -> R.elClass "p" "text-red-500" $ R.text "Password cannot be empty"
 
-      response <- registerAttempt fullName email password
-        $ R.gate (R.current $ (&&) <$> passwordMatch <*> passwordNotEmpty) register
-      responseMessage <- R.holdDyn R.blank $ R.ffor response $ \case
-        Just e -> R.elClass "p" "text-red-500" $ R.text
-          (Error.message e)
-        Nothing -> R.elClass "p" "text-green-600" $ R.text
-          "Almost done... We'll send you an email in 5 minutes. Open it up to activate your account."
+      let triggerRequest = () <$
+            R.ffilter
+            and
+            (R.tagPromptlyDyn (R.distributeListOverDyn [passwordMatch, passwordNotEmpty]) register)
 
+      response :: R.Event t (Either Error.Error ()) <- Api.postRequest
+        ((,,) <$> fullName <*> email <*> password)
+        register
+        (Route.Api_Register :/ ())
+        (\(fullName', email', password') ->
+           Register.Register (CI.mk fullName') (CI.mk email') password')
+
+      message :: R.Dynamic t (m ()) <- R.holdDyn R.blank
+        $ R.ffor response $ \case
+        Left e -> do
+          R.elClass "p" "text-red-500" $ R.text (Error.message e)
+        Right _ -> do
+          R.elClass "p" "text-green-600" $ R.text
+            "Almost done... We'll send you an email in 5 minutes. Open it up to activate your account."
+            
       return ()
-  where
-    registerAttempt
-      :: R.Dynamic t Text
-      -> R.Dynamic t Text
-      -> R.Dynamic t Text
-      -> R.Event t ()
-      -> m (R.Event t (Maybe Error.Error))
-    registerAttempt fullName email password register = do
-      let ev :: R.Event t (Text, Text, Text) = R.tagPromptlyDyn
-            (R.distributeListOverDynWith (\xs -> (xs !! 0, xs !! 1, xs !! 2)) [fullName, email, password])
-            register
-      r <- R.performRequestAsync
-        $ (\(fullName', email', password') -> registerRequest
-            $ Register.Register (CI.mk fullName') (CI.mk email') password')
-        <$> ev
-      return $ R.decodeXhrResponse <$> r
-
-    registerRequest :: JSON.ToJSON a => a -> R.XhrRequest Text
-    registerRequest body = R.postJson url body
-      where url = Route.apiHref (Route.Api_Register :/ ())

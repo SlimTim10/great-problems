@@ -6,6 +6,7 @@ module Settings
 import Common.Lib.Prelude
 import qualified Frontend.Lib.Util as Util
 
+import qualified Web.KeyCode as Key
 import qualified Language.Javascript.JSaddle as JS
 import qualified Reflex.Dom.Core as R
 import qualified Obelisk.Route.Frontend as Ob
@@ -17,8 +18,10 @@ import qualified Common.Api.User as User
 import qualified Common.Api.Request.ChangePassword as ChangePassword
 import qualified Common.Api.Error as Error
 import qualified Common.Api.ProblemStatus as ProblemStatus
+import qualified Frontend.Lib.Api as Api
 import qualified Widget.Button as Button
 import qualified Widget.Input as Input
+import qualified Widget.Spinner as Spinner
 import qualified ProblemCards as ProblemCards
 
 widget
@@ -73,44 +76,8 @@ widget' user = do
           void $ R.simpleList drafts
             $ ProblemCards.problemCardWidget
             ProblemCards.Options { ProblemCards.showAuthor = False, ProblemCards.linkEdit = True }
-          
-      section "Change password" $ do
-        R.elClass "div" "flex flex-col gap-4 w-96" $ mdo
-          oldPassword :: R.Dynamic t Text <- R.elClass "div" "flex justify-between" $ do
-            R.elClass "p" "" $ R.text "Old password"
-            Input.passwordClass "border px-1"
-          R.dyn_ changePasswordError
-          newPassword :: R.Dynamic t Text <- R.elClass "div" "flex justify-between" $ do
-            R.elClass "p" "" $ R.text "New password"
-            Input.passwordClass "border px-1"
-          confirmNewPassword :: R.Dynamic t Text <- R.elClass "div" "flex justify-between" $ do
-            R.elClass "p" "" $ R.text "Confirm new password"
-            Input.passwordClass "border px-1"
-          R.dyn_ passwordMatchError
-          R.dyn_ passwordEmptyError
-          changePassword :: R.Event t () <- Button.primary' "Save"
-          R.dyn_ changePasswordSuccess
 
-          let passwordMatch :: R.Dynamic t Bool = (==) <$> newPassword <*> confirmNewPassword
-          passwordMatchError <- R.holdDyn R.blank $ R.ffor (R.tagPromptlyDyn passwordMatch changePassword) $ \case
-            True -> R.blank
-            False -> R.elClass "p" "text-red-500" $ R.text "Password must match"
-
-          let passwordNotEmpty :: R.Dynamic t Bool = (\x -> x /= "") <$> newPassword
-          passwordEmptyError <- R.holdDyn R.blank $ R.ffor (R.tagPromptlyDyn passwordNotEmpty changePassword) $ \case
-            True -> R.blank
-            False -> R.elClass "p" "text-red-500" $ R.text "Password cannot be empty"
-            
-          changePasswordResponse <- changePasswordAttempt oldPassword newPassword
-            $ R.gate (R.current $ (&&) <$> passwordMatch <*> passwordNotEmpty) changePassword
-          changePasswordError <- R.holdDyn R.blank $ R.ffor changePasswordResponse $ \case
-            Nothing -> R.blank
-            Just e -> R.elClass "p" "text-red-500" $ R.text (Error.message e)
-          changePasswordSuccess <- R.holdDyn R.blank $ R.ffor changePasswordResponse $ \case
-            Just _ -> R.blank
-            Nothing -> R.elClass "p" "text-green-600" $ R.text "Your password has been changed"
-          
-          return ()
+      changePasswordSection
 
       section "Sign out" $ do
         Ob.routeLink (Route.FrontendRoute_SignOut :/ ()) $ do
@@ -122,18 +89,68 @@ widget' user = do
         R.elClass "p" "text-brand-lg border-b border-brand-black mb-4" $ R.text txt
         body
 
-    changePasswordAttempt
-      :: R.Dynamic t Text -- ^ Old password
-      -> R.Dynamic t Text -- ^ New password
-      -> R.Event t () -- ^ Event to trigger request
-      -> m (R.Event t (Maybe Error.Error))
-    changePasswordAttempt oldPassword newPassword trigger = do
-      let ev :: R.Event t (Text, Text) = R.tagPromptlyDyn (R.zipDyn oldPassword newPassword) trigger
-      r <- R.performRequestAsync $ R.ffor ev $ \(oldPassword', newPassword') -> do
-        let url = Route.apiHref $ Route.Api_ChangePassword :/ ()
-        let body = ChangePassword.ChangePassword (ChangePassword.OldPassword oldPassword') newPassword'
-        R.postJson url body
-      return $ R.decodeXhrResponse <$> r
+    changePasswordSection = do
+      section "Change password" $ do
+        R.elClass "div" "flex flex-col gap-4 w-96" $ mdo
+          
+          oldPassword :: R.Dynamic t Text <- R.elClass "div" "flex justify-between" $ do
+            R.elClass "p" "" $ R.text "Old password"
+            Input.passwordClass "border px-1"
+          
+          newPassword :: R.Dynamic t Text <- R.elClass "div" "flex justify-between" $ do
+            R.elClass "p" "" $ R.text "New password"
+            Input.passwordClass "border px-1"
+            
+          confirmNewPasswordInput <- R.elClass "div" "flex justify-between" $ do
+            R.elClass "p" "" $ R.text "Confirm new password"
+            Input.rawPasswordClass "border px-1"
+          let confirmNewPassword :: R.Dynamic t Text = R.value confirmNewPasswordInput
+          
+          R.dyn_ passwordMatchError
+          R.dyn_ passwordEmptyError
+          
+          changePasswordButton :: R.Event t () <- Button.primary' "Save"
+
+          spinner <- Spinner.holdSmall triggerRequest
+          status <- R.holdDyn R.blank . R.leftmost . map R.updated $ [spinner, message]
+          R.dyn_ status
+          
+          let changePassword = R.leftmost
+                [ changePasswordButton
+                , R.keydown Key.Enter confirmNewPasswordInput
+                ]
+                
+          let passwordMatch :: R.Dynamic t Bool = (==) <$> newPassword <*> confirmNewPassword
+          passwordMatchError <- R.holdDyn R.blank $ R.ffor (R.tagPromptlyDyn passwordMatch changePassword) $ \case
+            True -> R.blank
+            False -> R.elClass "p" "text-red-500" $ R.text "Password must match"
+
+          let passwordNotEmpty :: R.Dynamic t Bool = (/= "") <$> newPassword
+          passwordEmptyError <- R.holdDyn R.blank $ R.ffor (R.tagPromptlyDyn passwordNotEmpty changePassword) $ \case
+            True -> R.blank
+            False -> R.elClass "p" "text-red-500" $ R.text "Password cannot be empty"
+
+          let triggerRequest = () <$
+                R.ffilter
+                and
+                (R.tagPromptlyDyn (R.distributeListOverDyn [passwordMatch, passwordNotEmpty]) changePassword)
+
+          response :: R.Event t (Either Error.Error ()) <- Api.postRequest
+            (R.zipDyn oldPassword newPassword)
+            triggerRequest
+            (Route.Api_ChangePassword :/ ())
+            (\(oldPassword', newPassword') ->
+               ChangePassword.ChangePassword (ChangePassword.OldPassword oldPassword') newPassword')
+
+          message :: R.Dynamic t (m ()) <- R.holdDyn R.blank
+            $ R.ffor response $ \case
+            Left e -> do
+              R.elClass "p" "text-red-500" $ R.text (Error.message e)
+            Right _ -> do
+              R.elClass "p" "text-green-600" $ R.text "Your password has been changed."
+          
+          return ()
+
 
 getDrafts
   :: ( R.PostBuild t m
