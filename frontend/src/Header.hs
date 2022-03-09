@@ -40,6 +40,8 @@ widget = R.elClass "header" "h-14 py-2 px-3 flex items-center justify-between bo
     ("type" =: "search" <> "placeholder" =: "Search...")
     "border rounded h-8 w-1/2 px-1"
     $ R.blank
+  Ob.routeLink (Route.FrontendRoute_NewProblem :/ ()) $ do
+    Button.primary "Try the editor!"
   R.el "div" $ do
     Util.getCurrentUser >>= \case
       Just user -> do
