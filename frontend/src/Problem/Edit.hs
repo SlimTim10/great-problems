@@ -28,6 +28,7 @@ import qualified Common.Api.ProblemStatus as ProblemStatus
 import qualified Common.Api.Figure as Figure
 import qualified Common.Api.Topic as Topic
 import qualified Common.Api.User as User
+import qualified Common.Api.Role as Role
 import qualified Problem.SelectTopic as SelectTopic
 import qualified Problem.Summary as Summary
 import qualified Problem.Figures as Figures
@@ -193,7 +194,9 @@ widget preloadedProblemId = mdo
                 True -> "Publish"
                 False -> "Publish changes"
           let button :: R.Dynamic t (m (R.Event t ())) = buttonText <&> \t ->
-                Button.primaryClass' t "w-full active:bg-blue-400"
+                if userCanContribute
+                then Button.primaryClass' t "w-full active:bg-blue-400"
+                else return R.never
           R.dyn button >>= R.switchHold R.never -- flatten R.Event t (R.Event t ())
         publishing :: R.Behavior t Bool <- R.current <$> R.holdDyn False (const True <$> publish)
         publishResponse :: R.Dynamic t (Either Error.Error Problem.Problem) <- saveProblem
@@ -212,9 +215,13 @@ widget preloadedProblemId = mdo
         R.dyn_ publishedMessage
 
         deleteButton :: R.Event t () <- R.elClass "div" "py-3" $ do
-          Button.secondaryClass' "Delete this problem" "w-full bg-red-100"
+          let button :: R.Dynamic t (m (R.Event t ())) = return $
+                if userCanContribute
+                then Button.secondaryClass' "Delete this problem" "w-full bg-red-100"
+                else return R.never
+          R.dyn button >>= R.switchHold R.never
         deletePrompt :: R.Event t Text <- R.performEvent
-          $ (const $ Util.prompt "Are you sure?\n\nThis action cannot be undone. Please type yes to confirm.") <$> deleteButton
+          $ Util.prompt "Are you sure?\n\nThis action cannot be undone. Please type yes to confirm." <$ deleteButton
         deleteResponse :: R.Event t (Either Error.Error ()) <- do
           deleteProblem
             $ R.tagPromptlyDyn
@@ -264,10 +271,16 @@ widget preloadedProblemId = mdo
           (/=) <$> ctx <*> loadedCtx
         R.performEvent_ $ Util.preventLeaving <$> R.updated dirty
 
+        user :: Maybe User.User <- Util.getCurrentUser
+        let userCanContribute :: Bool = case user of
+              Nothing -> False
+              Just u -> User.role u `elem` [Role.Contributor, Role.Moderator, Role.Administrator]
+              
         (savedProblem, savingState) <- autosaveProblem
           (andM
            [ not <$> publishing
            , maybe True ((== ProblemStatus.Draft) . Problem.status) <$> R.current preloadedProblem
+           , R.constant userCanContribute
            ])
           ctx
 
