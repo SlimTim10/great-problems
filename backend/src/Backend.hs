@@ -259,9 +259,7 @@ backend = Ob.Backend
               _ -> return ()
               
             Route.Api_Compile :/ Nothing -> Snap.rqMethod <$> Snap.getRequest >>= \case
-              Snap.POST -> case mUser of
-                Nothing -> writeJSON $ Error.mk "No access"
-                Just _ -> handleCompileProblem
+              Snap.POST -> handleCompileProblem
               _ -> return ()
               
             Route.Api_Compile :/ Just problemId -> Snap.rqMethod <$> Snap.getRequest >>= \case
