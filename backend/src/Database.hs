@@ -5,10 +5,9 @@ import Common.Lib.Prelude
 import qualified Backend.Lib.Util as Util
 
 import qualified Database.PostgreSQL.Simple as SQL
+import qualified Database.PostgreSQL.Simple.Migration as SQLM
 import qualified Configuration.Dotenv as Dotenv
 
-import qualified Database.Schema
-import qualified Database.Seeds
 import qualified Database.Types.Role as DbRole
 import qualified Database.Types.User as DbUser
 
@@ -34,32 +33,6 @@ connect = do
     , SQL.connectDatabase = name
     }
 
--- | Reset the schema and load the seeds.
-reset :: IO SQL.Connection
-reset = do
-  putStrLn "Connecting to database..."
-  conn <- connect
-  putStrLn "Dropping tables..."
-  Database.Schema.unload conn
-  putStrLn "Creating tables..."
-  Database.Schema.load conn
-  putStrLn "Inserting seeds..."
-  Database.Seeds.load conn
-  putStrLn "Complete!"
-  return conn
-
--- | Setup the schema and load the seeds.
-setup :: IO SQL.Connection
-setup = do
-  putStrLn "Connecting to database..."
-  conn <- connect
-  putStrLn "Creating tables..."
-  Database.Schema.load conn
-  putStrLn "Inserting seeds..."
-  Database.Seeds.load conn
-  putStrLn "Complete!"
-  return conn
-
 -- | Add a user (verified) to the database. Intended for repl use only.
 addUser
   :: String -- ^ Full name
@@ -84,3 +57,23 @@ addUser name email password roleName = do
     Just user -> do
       putStrLn "Added user:"
       print user
+
+-- | Run all migrations that haven't yet run.
+migrate :: IO (SQLM.MigrationResult String)
+migrate = do
+  let dir = "./backend/src/Database/Migrations"
+  conn <- connect
+  SQL.withTransaction conn $
+    SQLM.runMigrations
+    True
+    conn
+    [ SQLM.MigrationInitialization
+    , SQLM.MigrationDirectory dir
+    ]
+
+-- | Reset the migration tracking (don't run any).
+resetMigrations :: IO ()
+resetMigrations = do
+  conn <- connect
+  void $ SQL.execute_ conn
+    "DROP TABLE IF EXISTS schema_migrations CASCADE"

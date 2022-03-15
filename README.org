@@ -36,16 +36,16 @@ DB_NAME=great_problems
 To setup the database, use the repl:
 #+BEGIN_SRC
 $ ob repl
-*Backend Obelisk.Run Frontend Backend> Database.setup
+*Backend Obelisk.Run Frontend Backend> Database.migrate
 #+END_SRC
-This will create the empty tables and insert the seeds.
+This will run all the migrations in backend/src/Database/Migrations.
 
-To reset the database, use the repl:
+To reset the migrations, use the repl:
 #+BEGIN_SRC
 $ ob repl
-*Backend Obelisk.Run Frontend Backend> Database.reset
+*Backend Obelisk.Run Frontend Backend> Database.resetMigrations
 #+END_SRC
-This will create the empty tables (dropping if they exist) and insert the seeds.
+This will reset the migration tracking (and not run any migrations).
 
 To manually add a user, use the repl:
 #+BEGIN_SRC
