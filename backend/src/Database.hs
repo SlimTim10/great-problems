@@ -11,6 +11,9 @@ import qualified Configuration.Dotenv as Dotenv
 import qualified Database.Types.Role as DbRole
 import qualified Database.Types.User as DbUser
 
+migrationsDir :: String
+migrationsDir = "./backend/src/Database/Migrations"
+
 -- | Connect to the database using the variables in db.env, or default values.
 connect :: IO SQL.Connection
 connect = do
@@ -61,14 +64,13 @@ addUser name email password roleName = do
 -- | Run all migrations that haven't yet run.
 migrate :: IO (SQLM.MigrationResult String)
 migrate = do
-  let dir = "./backend/src/Database/Migrations"
   conn <- connect
   SQL.withTransaction conn $
     SQLM.runMigrations
     True
     conn
     [ SQLM.MigrationInitialization
-    , SQLM.MigrationDirectory dir
+    , SQLM.MigrationDirectory migrationsDir
     ]
 
 -- | Reset the migration tracking (don't run any).
