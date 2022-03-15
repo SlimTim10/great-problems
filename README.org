@@ -213,3 +213,17 @@ $ sudo ln -s ~/websites/great-problems/startserver.sh /etc/letsencrypt/renewal-h
 #+begin_src sh
 $ sudo certbot renew --dry-run
 #+end_src
+
+*** Database backup and restore
+
+To backup (includes drop tables statements):
+
+#+begin_src sh
+pg_dump --format=custom --clean -U great_problems -h localhost -p 5432 -d great_problems > ~/backups/great_problems_dump
+#+end_src
+
+To restore from backup:
+
+#+begin_src sh
+pg_restore --format=custom --clean -U great_problems -h localhost -p 5432 -d great_problems < ~/backups/great_problems_dump
+#+end_src
