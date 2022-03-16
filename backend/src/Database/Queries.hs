@@ -27,6 +27,7 @@ module Database.Queries
   , updateUserRole
   , updateUserPassword
   , getMetaSettings
+  , getMetaSetting
   , setMetaSetting
   ) where
 
@@ -619,8 +620,22 @@ getMetaSettings conn = do
     $ dbMetaSettings
     <&>
     (\x -> MetaSetting.MetaSetting
-      { MetaSetting.setting = DbMetaSetting.meta_setting x
-      , MetaSetting.value = fromMaybe "" . DbMetaSetting.meta_value $ x
+      { MetaSetting.setting = read . cs $ DbMetaSetting.meta_setting x
+      , MetaSetting.value = fromMaybe "" $ DbMetaSetting.meta_value x
+      })
+
+-- | Get a meta setting.
+getMetaSetting :: SQL.Connection -> MetaSetting.Setting -> IO [MetaSetting.MetaSetting]
+getMetaSetting conn setting = do
+  dbMetaSettings <- SQL.query conn
+    "SELECT * FROM meta_settings WHERE setting = ?"
+    (SQL.Only $ show setting)
+  return
+    $ dbMetaSettings
+    <&>
+    (\x -> MetaSetting.MetaSetting
+      { MetaSetting.setting = read . cs $ DbMetaSetting.meta_setting x
+      , MetaSetting.value = fromMaybe "" $ DbMetaSetting.meta_value x
       })
 
 -- | Safely set a meta setting, making sure it exists before updating it. Returns the updated setting.
@@ -631,19 +646,19 @@ setMetaSetting
 setMetaSetting conn metaSetting = do
   mDbMetaSetting :: Maybe DbMetaSetting.MetaSetting <- headMay
     <$> SQL.query conn "SELECT * FROM meta_settings WHERE meta_setting = ?"
-    (SQL.Only $ MetaSetting.setting metaSetting)
+    (SQL.Only $ show $ MetaSetting.setting metaSetting)
   case mDbMetaSetting of
     Nothing -> return Nothing
     Just _ -> do
       void $ SQL.execute conn
         "UPDATE meta_settings SET meta_value = ? WHERE meta_setting = ?"
-        (MetaSetting.value metaSetting, MetaSetting.setting metaSetting)
+        (MetaSetting.value metaSetting, show $ MetaSetting.setting metaSetting)
       mDbMetaSetting' :: Maybe DbMetaSetting.MetaSetting <- headMay <$> SQL.query conn
         "SELECT * FROM meta_settings WHERE meta_setting = ?"
-        (SQL.Only $ MetaSetting.setting metaSetting)
+        (SQL.Only $ show $ MetaSetting.setting metaSetting)
       case mDbMetaSetting' of
         Nothing -> return Nothing
         Just x -> return . Just $ MetaSetting.MetaSetting
-          { MetaSetting.setting = DbMetaSetting.meta_setting x
-          , MetaSetting.value = fromMaybe "" . DbMetaSetting.meta_value $ x
+          { MetaSetting.setting = read . cs $ DbMetaSetting.meta_setting x
+          , MetaSetting.value = fromMaybe "" $ DbMetaSetting.meta_value x
           }

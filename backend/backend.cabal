@@ -39,6 +39,7 @@ library
     Email
     Backend.Lib.Util
     Database.Queries
+    Database.Seeds
     Database.DevSeeds
     Database.Types.EmailVerification
     Database.Types.Figure

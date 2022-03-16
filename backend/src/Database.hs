@@ -10,6 +10,7 @@ import qualified Configuration.Dotenv as Dotenv
 
 import qualified Database.Types.Role as DbRole
 import qualified Database.Types.User as DbUser
+import qualified Database.Seeds as Seeds
 
 migrationsDir :: String
 migrationsDir = "./backend/src/Database/Migrations"
@@ -65,15 +66,21 @@ addUser name email password roleName = do
 migrate :: IO (SQLM.MigrationResult String)
 migrate = do
   conn <- connect
+  seeds <- sequence . map (\x -> x conn) $
+    [ Seeds.rolesMigration
+    , Seeds.problemStatusesMigration
+    , Seeds.metaSettingsMigration
+    ]
   SQL.withTransaction conn $
     SQLM.runMigrations
-    True
+    True -- verbose
     conn
     [ SQLM.MigrationInitialization
     , SQLM.MigrationDirectory migrationsDir
+    , SQLM.MigrationCommands seeds
     ]
 
--- | Reset the migration tracking (don't run any).
+-- | Reset the migration tracking (but don't run any).
 resetMigrations :: IO ()
 resetMigrations = do
   conn <- connect

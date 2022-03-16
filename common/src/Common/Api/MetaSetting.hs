@@ -4,6 +4,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Common.Api.MetaSetting
   ( MetaSetting(..)
+  , Setting(..)
   ) where
 
 import Common.Lib.Prelude
@@ -12,7 +13,7 @@ import qualified Data.Aeson as JSON
 import GHC.Generics (Generic)
 
 data MetaSetting = MetaSetting
-  { setting :: Text
+  { setting :: Setting
   , value :: Text
   } deriving
   ( Eq
@@ -21,3 +22,15 @@ data MetaSetting = MetaSetting
   , JSON.FromJSON
   , JSON.ToJSON
   )
+
+data Setting = ExampleProblemId
+  deriving
+    ( Eq
+    , Show
+    , Read
+    , Enum
+    , Bounded
+    , Generic
+    , JSON.FromJSON
+    , JSON.ToJSON
+    )
