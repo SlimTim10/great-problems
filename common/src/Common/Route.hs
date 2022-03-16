@@ -44,6 +44,7 @@ data Api :: * -> * where
   Api_DuplicateProblem :: Api Integer
   Api_Compile :: Api (Maybe Integer)
   Api_Roles :: Api ()
+  Api_MetaSettings :: Api ()
 
 data FrontendRoute :: * -> * where
   FrontendRoute_Home :: FrontendRoute ()
@@ -108,6 +109,7 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
         Api_Compile -> Ob.PathSegment "compile" $
           Ob.maybeEncoder (Ob.unitEncoder mempty) $ idPathSegmentEncoder
         Api_Roles -> Ob.PathSegment "roles" $ Ob.unitEncoder mempty
+        Api_MetaSettings -> Ob.PathSegment "meta-settings" $ Ob.unitEncoder mempty
   )
   (\case
       FrontendRoute_Home -> Ob.PathEnd $ Ob.unitEncoder mempty

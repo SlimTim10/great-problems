@@ -26,6 +26,8 @@ module Database.Queries
   , getRoles
   , updateUserRole
   , updateUserPassword
+  , getMetaSettings
+  , setMetaSetting
   ) where
 
 import Common.Lib.Prelude
@@ -42,6 +44,7 @@ import qualified Common.Api.User as User
 import qualified Common.Api.Role as Role
 import qualified Common.Api.Figure as Figure
 import qualified Common.Api.ProblemStatus as ProblemStatus
+import qualified Common.Api.MetaSetting as MetaSetting
 import qualified Common.Api.Request.Auth as Auth
 import qualified Common.Api.Request.ChangePassword as ChangePassword
 import qualified Common.Api.Request.Register as Register
@@ -54,6 +57,7 @@ import qualified Database.Types.EmailVerification as DbEmailVerification
 import qualified Database.Types.ResetPassword as DbResetPassword
 import qualified Database.Types.Session as DbSession
 import qualified Database.Types.Figure as DbFigure
+import qualified Database.Types.MetaSetting as DbMetaSetting
 
 exprFromRouteParam
   :: (SQL.ToField q, Read a)
@@ -606,3 +610,40 @@ updateUserPassword conn userId changePassword = do
     "UPDATE users SET password = ? WHERE id = ?"
     (newPassword, userId)
   getUserById conn userId
+
+-- | Get all the meta settings.
+getMetaSettings :: SQL.Connection -> IO [MetaSetting.MetaSetting]
+getMetaSettings conn = do
+  dbMetaSettings <- SQL.query_ conn "SELECT * FROM meta_settings"
+  return
+    $ dbMetaSettings
+    <&>
+    (\x -> MetaSetting.MetaSetting
+      { MetaSetting.setting = DbMetaSetting.meta_setting x
+      , MetaSetting.value = fromMaybe "" . DbMetaSetting.meta_value $ x
+      })
+
+-- | Safely set a meta setting, making sure it exists before updating it. Returns the updated setting.
+setMetaSetting
+  :: SQL.Connection
+  -> MetaSetting.MetaSetting
+  -> IO (Maybe MetaSetting.MetaSetting)
+setMetaSetting conn metaSetting = do
+  mDbMetaSetting :: Maybe DbMetaSetting.MetaSetting <- headMay
+    <$> SQL.query conn "SELECT * FROM meta_settings WHERE meta_setting = ?"
+    (SQL.Only $ MetaSetting.setting metaSetting)
+  case mDbMetaSetting of
+    Nothing -> return Nothing
+    Just _ -> do
+      void $ SQL.execute conn
+        "UPDATE meta_settings SET meta_value = ? WHERE meta_setting = ?"
+        (MetaSetting.value metaSetting, MetaSetting.setting metaSetting)
+      mDbMetaSetting' :: Maybe DbMetaSetting.MetaSetting <- headMay <$> SQL.query conn
+        "SELECT * FROM meta_settings WHERE meta_setting = ?"
+        (SQL.Only $ MetaSetting.setting metaSetting)
+      case mDbMetaSetting' of
+        Nothing -> return Nothing
+        Just x -> return . Just $ MetaSetting.MetaSetting
+          { MetaSetting.setting = DbMetaSetting.meta_setting x
+          , MetaSetting.value = fromMaybe "" . DbMetaSetting.meta_value $ x
+          }

@@ -35,6 +35,7 @@ library
     Common.Api.Topic
     Common.Api.User
     Common.Api.Email
+    Common.Api.MetaSetting
     Common.Api.Request.Auth
     Common.Api.Request.Register
     Common.Api.Request.ChangePassword
