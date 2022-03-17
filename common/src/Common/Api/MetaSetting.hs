@@ -23,7 +23,9 @@ data MetaSetting = MetaSetting
   , JSON.ToJSON
   )
 
-data Setting = ExampleProblemId
+data Setting
+  = ExampleProblemId
+  | Dummy -- Placeholder until we add another setting (to force this to be seen as a sum type)
   deriving
     ( Eq
     , Show

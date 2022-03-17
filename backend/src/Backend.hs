@@ -279,7 +279,7 @@ backend = Ob.Backend
                   Snap.modifyResponse $ Snap.setHeader "Filename" $ cs (Figure.name figure)
                   Snap.writeBS $ Figure.contents figure
                   
-            Route.Api_MetaSettings :/ () -> case mUser of
+            Route.Api_MetaSettings :/ Nothing -> case mUser of
               Nothing -> writeJSON $ Error.mk "No access"
               Just user -> case User.role user of
                 Role.Administrator -> Snap.rqMethod <$> Snap.getRequest >>= \case
@@ -287,6 +287,11 @@ backend = Ob.Backend
                   Snap.POST -> handleSetMetaSetting conn
                   _ -> return ()
                 _ -> writeJSON $ Error.mk "No access"
+
+            Route.Api_MetaSettings :/ (Just setting) -> case setting of
+              MetaSetting.ExampleProblemId -> do
+                writeJSON =<< IO.liftIO (Queries.getMetaSetting conn setting)
+              _ -> return ()
                 
   , Ob._backend_routeEncoder = Route.fullRouteEncoder
   }

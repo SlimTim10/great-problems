@@ -625,18 +625,21 @@ getMetaSettings conn = do
       })
 
 -- | Get a meta setting.
-getMetaSetting :: SQL.Connection -> MetaSetting.Setting -> IO [MetaSetting.MetaSetting]
+getMetaSetting
+  :: SQL.Connection
+  -> MetaSetting.Setting
+  -> IO (Maybe MetaSetting.MetaSetting)
 getMetaSetting conn setting = do
-  dbMetaSettings <- SQL.query conn
-    "SELECT * FROM meta_settings WHERE setting = ?"
+  mDbMetaSetting <- headMay
+    <$> SQL.query conn
+    "SELECT * FROM meta_settings WHERE meta_setting = ?"
     (SQL.Only $ show setting)
-  return
-    $ dbMetaSettings
-    <&>
-    (\x -> MetaSetting.MetaSetting
+  case mDbMetaSetting of
+    Nothing -> return Nothing
+    Just x -> return . Just $ MetaSetting.MetaSetting
       { MetaSetting.setting = read . cs $ DbMetaSetting.meta_setting x
       , MetaSetting.value = fromMaybe "" $ DbMetaSetting.meta_value x
-      })
+      }
 
 -- | Safely set a meta setting, making sure it exists before updating it. Returns the updated setting.
 setMetaSetting

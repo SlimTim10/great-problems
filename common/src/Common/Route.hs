@@ -21,6 +21,8 @@ import qualified Obelisk.Route as Ob
 import qualified Obelisk.Route.TH as Ob
 import qualified Data.Map as Map
 
+import qualified Common.Api.MetaSetting as MetaSetting
+
 type Query = Map Text (Maybe Text)
 
 data BackendRoute :: * -> * where
@@ -44,7 +46,7 @@ data Api :: * -> * where
   Api_DuplicateProblem :: Api Integer
   Api_Compile :: Api (Maybe Integer)
   Api_Roles :: Api ()
-  Api_MetaSettings :: Api ()
+  Api_MetaSettings :: Api (Maybe MetaSetting.Setting)
 
 data FrontendRoute :: * -> * where
   FrontendRoute_Home :: FrontendRoute ()
@@ -81,6 +83,10 @@ idPathSegmentEncoder
   :: Ob.Encoder (Either Text) (Either Text) Integer Ob.PageName
 idPathSegmentEncoder = Ob.unsafeTshowEncoder >>> Ob.singlePathSegmentEncoder
 
+settingPathSegmentEncoder
+  :: Ob.Encoder (Either Text) (Either Text) MetaSetting.Setting Ob.PageName
+settingPathSegmentEncoder = Ob.unsafeTshowEncoder >>> Ob.singlePathSegmentEncoder
+
 fullRouteEncoder
   :: Ob.Encoder (Either Text) Identity (Ob.R (Ob.FullRoute BackendRoute FrontendRoute)) Ob.PageName
 fullRouteEncoder = Ob.mkFullRouteEncoder
@@ -109,7 +115,8 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
         Api_Compile -> Ob.PathSegment "compile" $
           Ob.maybeEncoder (Ob.unitEncoder mempty) $ idPathSegmentEncoder
         Api_Roles -> Ob.PathSegment "roles" $ Ob.unitEncoder mempty
-        Api_MetaSettings -> Ob.PathSegment "meta-settings" $ Ob.unitEncoder mempty
+        Api_MetaSettings -> Ob.PathSegment "meta-settings" $
+          Ob.maybeEncoder (Ob.unitEncoder mempty) $ settingPathSegmentEncoder
   )
   (\case
       FrontendRoute_Home -> Ob.PathEnd $ Ob.unitEncoder mempty

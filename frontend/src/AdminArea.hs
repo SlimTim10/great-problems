@@ -53,7 +53,7 @@ widget = do
       R.elClass "div" "" $ do
         R.elClass "p" "text-center text-brand-lg font-normal" $ R.text "Meta Settings"
         response :: R.Event t (Maybe [MetaSetting.MetaSetting]) <- Util.getOnload
-          $ Route.apiHref $ Route.Api_MetaSettings :/ ()
+          $ Route.apiHref $ Route.Api_MetaSettings :/ Nothing
         metaSettings :: R.Dynamic t [MetaSetting.MetaSetting] <- R.holdDyn [] $ fromMaybe [] <$> response
         R.elClass "ul" "flex flex-col gap-4" $ do
           void $ R.simpleList metaSettings viewMetaSetting
@@ -100,12 +100,12 @@ widget = do
     viewMetaSetting metaSetting = do
       R.elClass "li" "grid grid-cols-3 gap-4" $ do
         Util.dynFor metaSetting $ \x -> mdo
-          R.elClass "p" "justify-self-end self-center" $ R.text (MetaSetting.setting x)
+          R.elClass "p" "justify-self-end self-center" $ R.text (cs . show $ MetaSetting.setting x)
           v :: R.Dynamic t Text <- fmap R.value $ R.inputElement $
             R.def
             & R.inputElementConfig_elementConfig . R.elementConfig_initialAttributes .~
             ( "type" =: "text"
-              <> "class" =: "border p-1"
+              <> "class" =: "border px-1"
             )
             & R.inputElementConfig_initialValue .~ MetaSetting.value x
 
@@ -117,7 +117,7 @@ widget = do
           response :: R.Event t (Either Error.Error ()) <- Api.postRequest
             (R.zipDynWith MetaSetting.MetaSetting (R.constDyn $ MetaSetting.setting x) v)
             save
-            (Route.Api_MetaSettings :/ ())
+            (Route.Api_MetaSettings :/ Nothing)
             id
 
           spinner <- Spinner.holdSmall save

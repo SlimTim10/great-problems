@@ -16,6 +16,7 @@ import qualified Reflex.Dom.Core as R
 import qualified Common.Route as Route
 import qualified Common.Api.Problem as Problem
 import qualified Common.Api.Compile as Compile
+import qualified Common.Api.MetaSetting as MetaSetting
 import qualified Widget.Button as Button
 import qualified Widget.Input as Input
 import qualified Problem.Loading as Loading
@@ -116,23 +117,37 @@ widget = do
 
   where
     exampleProblem = mdo
-      let problemId = 1
+      let fallbackProblemId = 1
+      mSetting :: R.Event t (Maybe MetaSetting.MetaSetting) <- Util.getOnload
+        $ Route.apiHref $ Route.Api_MetaSettings :/ (Just MetaSetting.ExampleProblemId)
+      let problemId' :: R.Event t Integer = mSetting <&> \case
+            Nothing -> fallbackProblemId
+            Just x -> read . cs $ MetaSetting.value x
 
       problem :: R.Dynamic t (Maybe Problem.Problem) <- do
-        r :: R.Event t (Maybe Problem.Problem) <- Util.getOnload
-          $ Route.apiHref $ Route.Api_Problems :/
-          (Just problemId, Problem.getParamsToRouteQuery Problem.getParamsDefault)
+        let url :: R.Event t Text = R.ffor problemId' $ \pid -> do
+              Route.apiHref $ Route.Api_Problems :/
+                (Just pid, Problem.getParamsToRouteQuery Problem.getParamsDefault)
+        r :: R.Event t (Maybe Problem.Problem) <- R.getAndDecode url
         R.holdDyn Nothing r
-      
-      onload :: R.Event t () <- R.getPostBuild
+
+      let compileProblem = \req -> do
+            problemId'' <- R.holdDyn fallbackProblemId problemId'
+            res :: R.Event t (R.Dynamic t (Loading.WithLoading Problem.Compile.Response)) <-
+              R.dyn . R.ffor problemId'' $ \pid -> Problem.Compile.performRequestWithId pid req
+            res' :: R.Event t (Loading.WithLoading Problem.Compile.Response) <-
+              R.switchHold R.never (R.updated <$> res)
+            ct <- IO.liftIO Time.getCurrentTime
+            R.holdDyn (Loading.WithLoading (Problem.Compile.Response ct Nothing) True) res'
+
       onloadAction :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do
-        r <- Problem.Compile.mkRequest onload
+        req <- Problem.Compile.mkRequest (const () <$> problemId')
           (R.constDyn "")
           (R.constDyn Problem.Compile.NoChange)
           (R.constDyn Compile.QuestionOnly)
           (R.constDyn [])
-        Problem.Compile.performRequestWithId problemId r
-          
+        compileProblem req
+      
       let actions =
             [ onloadAction
             , randomizeVariablesAction
@@ -171,22 +186,22 @@ widget = do
               "Randomize variables"
               "active:bg-blue-400"
             randomizeVariablesAction :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do
-              r <- Problem.Compile.mkRequest randomizeVariables
+              req <- Problem.Compile.mkRequest randomizeVariables
                 (R.constDyn "")
                 (R.constDyn Problem.Compile.Randomize)
                 outputOption
                 (R.constDyn [])
-              Problem.Compile.performRequestWithId problemId r
+              compileProblem req
             resetVariables :: R.Event t () <- Button.primarySmallClass'
               "Reset variables"
               "active:bg-blue-400"
             resetVariablesAction :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do
-              r <- Problem.Compile.mkRequest resetVariables
+              req <- Problem.Compile.mkRequest resetVariables
                 (R.constDyn "")
                 (R.constDyn Problem.Compile.Reset)
                 outputOption
                 (R.constDyn [])
-              Problem.Compile.performRequestWithId problemId r
+              compileProblem req
             return (randomizeVariablesAction, resetVariablesAction)
         (showAnswerAction, showSolutionAction, outputOption) <- do
           R.elClass "div" "flex gap-4" $ do
@@ -198,23 +213,23 @@ widget = do
                 "font-medium text-brand-primary cursor-pointer"
                 "Answer"
               showAnswerAction :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do
-                r <- Problem.Compile.mkRequest (R.updated $ const () <$> showAnswer)
+                req <- Problem.Compile.mkRequest (R.updated $ const () <$> showAnswer)
                   (R.constDyn "")
                   (R.constDyn Problem.Compile.NoChange)
                   outputOption
                   (R.constDyn [])
-                Problem.Compile.performRequestWithId problemId r
+                compileProblem req
               showSolution :: R.Dynamic t Bool <- Input.checkboxClass
                 "cursor-pointer mr-2 checkbox-brand-primary"
                 "font-medium text-brand-primary cursor-pointer"
                 "Solution"
               showSolutionAction :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do
-                r <- Problem.Compile.mkRequest (R.updated $ const () <$> showSolution)
+                req <- Problem.Compile.mkRequest (R.updated $ const () <$> showSolution)
                   (R.constDyn "")
                   (R.constDyn Problem.Compile.NoChange)
                   outputOption
                   (R.constDyn [])
-                Problem.Compile.performRequestWithId problemId r
+                compileProblem req
               let outputOption' :: R.Dynamic t Compile.OutputOption =
                     (\showAnswer' showSolution' ->
                        case (showAnswer', showSolution') of
