@@ -10,6 +10,10 @@ import qualified Configuration.Dotenv as Dotenv
 
 import qualified Database.Types.Role as DbRole
 import qualified Database.Types.User as DbUser
+import qualified Database.Seeds as Seeds
+
+migrationsDir :: String
+migrationsDir = "./backend/src/Database/Migrations"
 
 -- | Connect to the database using the variables in db.env, or default values.
 connect :: IO SQL.Connection
@@ -61,17 +65,22 @@ addUser name email password roleName = do
 -- | Run all migrations that haven't yet run.
 migrate :: IO (SQLM.MigrationResult String)
 migrate = do
-  let dir = "./backend/src/Database/Migrations"
   conn <- connect
+  seeds <- sequence . map (\x -> x conn) $
+    [ Seeds.rolesMigration
+    , Seeds.problemStatusesMigration
+    , Seeds.metaSettingsMigration
+    ]
   SQL.withTransaction conn $
     SQLM.runMigrations
-    True
+    True -- verbose
     conn
     [ SQLM.MigrationInitialization
-    , SQLM.MigrationDirectory dir
+    , SQLM.MigrationDirectory migrationsDir
+    , SQLM.MigrationCommands seeds
     ]
 
--- | Reset the migration tracking (don't run any).
+-- | Reset the migration tracking (but don't run any).
 resetMigrations :: IO ()
 resetMigrations = do
   conn <- connect

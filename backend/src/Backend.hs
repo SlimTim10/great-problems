@@ -32,6 +32,7 @@ import qualified Common.Api.Topic as Topic
 import qualified Common.Api.Problem as Problem
 import qualified Common.Api.ProblemStatus as ProblemStatus
 import qualified Common.Api.Figure as Figure
+import qualified Common.Api.MetaSetting as MetaSetting
 import qualified Common.Api.Request.ChangePassword as ChangePassword
 import qualified Common.Api.Request.Register as Register
 import qualified Common.Api.Request.ResendEmail as ResendEmail
@@ -278,6 +279,20 @@ backend = Ob.Backend
                   Snap.modifyResponse $ Snap.setHeader "Filename" $ cs (Figure.name figure)
                   Snap.writeBS $ Figure.contents figure
                   
+            Route.Api_MetaSettings :/ Nothing -> case mUser of
+              Nothing -> writeJSON $ Error.mk "No access"
+              Just user -> case User.role user of
+                Role.Administrator -> Snap.rqMethod <$> Snap.getRequest >>= \case
+                  Snap.GET -> writeJSON =<< IO.liftIO (Queries.getMetaSettings conn)
+                  Snap.POST -> handleSetMetaSetting conn
+                  _ -> return ()
+                _ -> writeJSON $ Error.mk "No access"
+
+            Route.Api_MetaSettings :/ (Just setting) -> case setting of
+              MetaSetting.ExampleProblemId -> do
+                writeJSON =<< IO.liftIO (Queries.getMetaSetting conn setting)
+              _ -> return ()
+                
   , Ob._backend_routeEncoder = Route.fullRouteEncoder
   }
   where
@@ -594,3 +609,14 @@ handleFileUploads = do
     handleFile
     <&> catMaybes
   return figures
+
+-- | Set a meta setting provided in the request body.
+handleSetMetaSetting :: SQL.Connection -> Snap.Snap ()
+handleSetMetaSetting conn = do
+  rawBody <- Snap.readRequestBody maxRequestBodySize
+  case JSON.decode rawBody :: Maybe MetaSetting.MetaSetting of
+    Nothing -> writeJSON $ Error.mk "Something went wrong"
+    Just metaSetting -> do
+      IO.liftIO (Queries.setMetaSetting conn metaSetting) >>= \case
+        Nothing -> writeJSON $ Error.mk "Something went wrong"
+        Just _ -> writeJSON OkResponse.OkResponse

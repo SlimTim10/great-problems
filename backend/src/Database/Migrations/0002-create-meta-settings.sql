@@ -3,7 +3,3 @@ CREATE TABLE IF NOT EXISTS meta_settings (
   meta_setting TEXT NOT NULL UNIQUE,
   meta_value TEXT
 );
-
-INSERT INTO meta_settings(meta_setting, meta_value)
-VALUES ('demo_problem_id', NULL)
-ON CONFLICT DO NOTHING;

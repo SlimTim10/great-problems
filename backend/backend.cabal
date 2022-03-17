@@ -39,6 +39,7 @@ library
     Email
     Backend.Lib.Util
     Database.Queries
+    Database.Seeds
     Database.DevSeeds
     Database.Types.EmailVerification
     Database.Types.Figure
@@ -51,6 +52,7 @@ library
     Database.Types.Topic
     Database.Types.User
     Database.Types.ResetPassword
+    Database.Types.MetaSetting
   ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits
   default-extensions:
              OverloadedStrings
