@@ -47,7 +47,7 @@ library
     Tabs
     Topics
     VerifyEmail
-    AdminArea
+    AdminDashboard
     ForgotPassword
     ResetPassword
     ResendEmail

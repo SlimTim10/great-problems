@@ -1,4 +1,4 @@
-module AdminArea
+module AdminDashboard
   ( widget
   ) where
 
