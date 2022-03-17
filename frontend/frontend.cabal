@@ -47,7 +47,6 @@ library
     Tabs
     Topics
     VerifyEmail
-    AdminDashboard
     ForgotPassword
     ResetPassword
     ResendEmail
@@ -69,6 +68,10 @@ library
     Widget.Button
     Widget.Input
     Widget.Spinner
+    AdminDashboard
+    AdminDashboard.Util
+    AdminDashboard.MetaSettings
+    AdminDashboard.Users
     MyReflex.Dom.Widget.Basic
     MyReflex.Dom.Xhr.FormData
   ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits
