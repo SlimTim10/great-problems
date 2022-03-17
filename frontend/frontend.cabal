@@ -68,6 +68,7 @@ library
     Problem.Duplicate
     Widget.Button
     Widget.Input
+    Widget.Spinner
     MyReflex.Dom.Widget.Basic
     MyReflex.Dom.Xhr.FormData
   ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits
