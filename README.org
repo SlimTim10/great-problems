@@ -38,7 +38,7 @@ To setup the database, use the repl:
 $ ob repl
 *Backend Obelisk.Run Frontend Backend> Database.migrate
 #+END_SRC
-This will run all the migrations in backend/src/Database/Migrations.
+This will run all the migrations in backend/src/Database/Migrations and insert the seeds defined in module Database.Seeds.
 
 To reset the migrations, use the repl:
 #+BEGIN_SRC
