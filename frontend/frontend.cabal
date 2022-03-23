@@ -72,6 +72,7 @@ library
     AdminDashboard.Util
     AdminDashboard.MetaSettings
     AdminDashboard.Users
+    AdminDashboard.Topics
     MyReflex.Dom.Widget.Basic
     MyReflex.Dom.Xhr.FormData
   ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits

@@ -55,7 +55,7 @@ widget = do
             return save'
 
           response :: R.Event t (Either Error.Error ()) <- Api.postRequest
-            (R.zipDynWith MetaSetting.MetaSetting (R.constDyn $ MetaSetting.setting x) v)
+            (MetaSetting.MetaSetting <$> (R.constDyn $ MetaSetting.setting x) <*> v)
             save
             (Route.Api_MetaSettings :/ Nothing)
             id

@@ -42,10 +42,10 @@ widget
 widget setValue = R.elClass "div" "" $ do
   R.elClass "p" "font-medium mb-2" $ R.text "Topic"
   response :: R.Event t (Maybe [Topic.Topic]) <- Util.getOnload $
-    Route.apiHref (Route.Api_Topics :/ mempty)
+    Route.apiHref (Route.Api_Topics :/ (Nothing, mempty))
   let allTopics :: R.Event t [Topic.Topic] = fromMaybe [] <$> response
   dropdownItems :: R.Dynamic t (Map DropdownKey Text) <- R.holdDyn Map.empty $
-    hierarchyToDropdownItems <$> flattenHierarchy <$> topicsToHierarchy <$> allTopics
+    topicsToDropdownItems <$> Topic.flattenHierarchy <$> Topic.topicsToHierarchy <$> allTopics
   let dropdownKeys :: R.Dynamic t [DropdownKey] = Map.keys <$> dropdownItems
   holdSetValue :: R.Dynamic t Integer <- R.holdDyn firstTopicId setValue
   let setValueKey :: R.Dynamic t DropdownKey =
@@ -57,48 +57,19 @@ widget setValue = R.elClass "div" "" $ do
     (R.updated setValueKey)
   return $ ddTopicId <$> x
   
-data TopicWithChildren = TopicWithChildren
-  { tcTopic :: Topic.Topic
-  , tcChildren :: [TopicWithChildren]
-  , tcLevel :: Integer
-  } deriving (Show)
-
-data TopicWithLevel = TopicWithLevel
-  { tlTopic :: Topic.Topic
-  , tlLevel :: Integer
-  }
-
 data DropdownItem = DropdownItem
   { ddiIdx :: Integer
-  , ddiTopic :: TopicWithLevel
+  , ddiTopic :: Topic.TopicWithLevel
   }
 
-topicsToHierarchy :: [Topic.Topic] -> [TopicWithChildren]
-topicsToHierarchy allTopics = map (f 0) rootTopics
-  where
-    rootTopics = filter (\x -> isNothing (Topic.parentId x)) allTopics
-    f :: Integer -> Topic.Topic -> TopicWithChildren
-    f lvl t = TopicWithChildren t (map (f (lvl + 1)) $ getChildren t) lvl
-    getChildren :: Topic.Topic -> [Topic.Topic]
-    getChildren t = filter (\x -> Topic.parentId x == Just (Topic.id t)) allTopics
-
-flattenHierarchy
-  :: [TopicWithChildren]
-  -> [DropdownItem]
-flattenHierarchy = zipWith DropdownItem [1 ..] . concatMap f
-  where
-    f :: TopicWithChildren -> [TopicWithLevel]
-    f x =
-      [(\x' -> TopicWithLevel (tcTopic x') (tcLevel x')) x]
-      ++
-      (concatMap f . tcChildren) x
-
-hierarchyToDropdownItems :: [DropdownItem] -> Map DropdownKey Text
-hierarchyToDropdownItems = foldr f mempty
+topicsToDropdownItems :: [Topic.TopicWithLevel] -> Map DropdownKey Text
+topicsToDropdownItems = foldr f mempty . zipWith DropdownItem [1 ..]
   where
     f :: DropdownItem -> Map DropdownKey Text -> Map DropdownKey Text
-    f (DropdownItem {ddiIdx=idx, ddiTopic=TopicWithLevel {tlTopic=t, tlLevel=lvl} }) =
-      Map.insert (DropdownKey idx (Topic.id t)) (indent lvl (Topic.name t))
+    f DropdownItem
+      { ddiIdx=idx
+      , ddiTopic=Topic.TopicWithLevel {Topic.twlTopic=t, Topic.twlLevel=lvl}
+      } = Map.insert (DropdownKey idx (Topic.id t)) (indent lvl (Topic.name t))
     indent :: Integral a => a -> Text -> Text
     indent n txt = cs $
       (concat . replicate (fromIntegral n) $ "- ")

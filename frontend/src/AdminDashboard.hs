@@ -10,6 +10,7 @@ import Common.Lib.Prelude
 import qualified Common.Route as Route
 import qualified AdminDashboard.Users
 import qualified AdminDashboard.MetaSettings
+import qualified AdminDashboard.Topics
 
 widget
   :: forall t m js.
@@ -34,3 +35,5 @@ widget = do
         AdminDashboard.Users.widget
       R.el "div" $ do
         AdminDashboard.MetaSettings.widget
+      R.el "div" $ do
+        AdminDashboard.Topics.widget

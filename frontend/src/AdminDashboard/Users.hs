@@ -45,7 +45,7 @@ widget = do
   where
     viewUser :: R.Dynamic t User.User -> m ()
     viewUser user = do
-      R.elClass "li" "grid grid-cols-3 gap-4" $ do
+      R.elClass "li" "grid grid-cols-2 gap-4" $ do
         Util.dynFor user $ \u -> do
           R.elClass "p" "" $ do
             Ob.routeLink
