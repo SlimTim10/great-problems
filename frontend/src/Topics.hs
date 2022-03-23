@@ -38,7 +38,7 @@ widget topicId = do
       topicHierarchy :: R.Dynamic t [[Either Topic.Topic Topic.Topic]] <- case topicId of
         Nothing -> do
           response :: R.Event t (Maybe [Topic.Topic]) <- Util.getOnload
-            $ Route.apiHref (Route.Api_Topics :/ ("parent" =: Just "null"))
+            $ Route.apiHref (Route.Api_Topics :/ (Nothing, ("parent" =: Just "null")))
           R.holdDyn []
             $ singleton
             <$> map Left

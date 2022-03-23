@@ -26,7 +26,7 @@ import qualified ForgotPassword
 import qualified ResetPassword
 import qualified ResendEmail
 import qualified Settings
-import qualified AdminArea
+import qualified AdminDashboard
 
 frontend :: Ob.Frontend (Ob.R Route.FrontendRoute)
 frontend = Ob.Frontend
@@ -138,5 +138,5 @@ frontend = Ob.Frontend
         R.el "p" $ R.display userId
       Route.FrontendRoute_Admin -> do
         Header.widget
-        AdminArea.widget
+        AdminDashboard.widget
   }

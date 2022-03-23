@@ -8,6 +8,7 @@ module Widget.Button
   , primarySmall
   , secondarySmall
   , primarySmall'
+  , secondarySmall'
   , primarySmallClass
   , primarySmallClass'
   ) where
@@ -134,6 +135,20 @@ primarySmall' t = do
     "button"
     ("type" =: "button")
     "bg-brand-primary rounded text-white font-medium px-2 py-1 text-brand-sm"
+    $ R.text t
+  return $ R.domEvent R.Click e
+
+secondarySmall'
+  :: forall t m.
+     ( R.DomBuilder t m
+     )
+  => Text -- ^ Button text
+  -> m (R.Event t ())
+secondarySmall' t = do
+  (e, _) <- R'.elAttrClass'
+    "button"
+    ("type" =: "button")
+    "border border-brand-primary bg-transparent rounded text-blue-700 font-medium px-2 py-1 text-brand-sm"
     $ R.text t
   return $ R.domEvent R.Click e
 

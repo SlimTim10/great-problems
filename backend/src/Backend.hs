@@ -77,15 +77,32 @@ backend = Ob.Backend
                   Nothing -> writeJSON $ Error.mk "No access"
                   Just user -> handleDeleteProblem conn user problemId
                 _ -> return ()
-              
-            Route.Api_Topics :/ query -> do
-              topics <- case Route.textParamFromQuery "parent" query :: Maybe Text of
-                Just "null" -> IO.liftIO $ Queries.getRootTopics conn
-                Just x -> case readMaybe (cs x) :: Maybe Integer of
-                  Just parentId -> IO.liftIO $ Queries.getTopicsByParentId conn parentId
-                  Nothing -> IO.liftIO $ Queries.getTopics conn
-                Nothing -> IO.liftIO $ Queries.getTopics conn
-              writeJSON topics
+
+            Route.Api_Topics :/ (Nothing, query) -> do
+              Snap.rqMethod <$> Snap.getRequest >>= \case
+                Snap.GET -> do
+                  topics <- case Route.textParamFromQuery "parent" query :: Maybe Text of
+                    Just "null" -> IO.liftIO $ Queries.getRootTopics conn
+                    Just x -> case readMaybe (cs x) :: Maybe Integer of
+                      Just parentId -> IO.liftIO $ Queries.getTopicsByParentId conn parentId
+                      Nothing -> IO.liftIO $ Queries.getTopics conn
+                    Nothing -> IO.liftIO $ Queries.getTopics conn
+                  writeJSON topics
+                Snap.POST -> case mUser of
+                  Nothing -> writeJSON $ Error.mk "No access"
+                  Just _ -> handleCreateTopic conn
+                _ -> return ()
+
+            Route.Api_Topics :/ (Just topicId, _) -> do
+              Snap.rqMethod <$> Snap.getRequest >>= \case
+                Snap.GET -> writeJSON =<< IO.liftIO (Queries.getTopicById conn topicId)
+                Snap.POST -> case mUser of
+                  Nothing -> writeJSON $ Error.mk "No access"
+                  Just _ -> handleUpdateTopic conn topicId
+                Snap.DELETE -> case mUser of
+                  Nothing -> writeJSON $ Error.mk "No access"
+                  Just _ -> handleDeleteTopic conn topicId
+                _ -> return ()
               
             Route.Api_Users :/ Nothing -> do
               Snap.rqMethod <$> Snap.getRequest >>= \case
@@ -620,3 +637,38 @@ handleSetMetaSetting conn = do
       IO.liftIO (Queries.setMetaSetting conn metaSetting) >>= \case
         Nothing -> writeJSON $ Error.mk "Something went wrong"
         Just _ -> writeJSON OkResponse.OkResponse
+
+handleUpdateTopic :: SQL.Connection -> Integer -> Snap.Snap ()
+handleUpdateTopic conn topicId = do
+  rawBody <- Snap.readRequestBody maxRequestBodySize
+  case JSON.decode rawBody :: Maybe Topic.Topic of
+    Nothing -> writeJSON $ Error.mk "Something went wrong"
+    Just topic -> do
+      -- Ignore the incoming topic's ID (it should never be changed)
+      let topic' = topic { Topic.id = topicId }
+      IO.liftIO (Queries.updateTopic conn topic') >>= \case
+        Nothing -> writeJSON $ Error.mk "Something went wrong"
+        Just _ -> writeJSON OkResponse.OkResponse
+
+handleCreateTopic :: SQL.Connection -> Snap.Snap ()
+handleCreateTopic conn = do
+  rawBody <- Snap.readRequestBody maxRequestBodySize
+  case JSON.decode rawBody :: Maybe Topic.NewTopic of
+    Nothing -> writeJSON $ Error.mk "Something went wrong"
+    Just newTopic -> do
+      IO.liftIO (Queries.createTopic conn newTopic) >>= \case
+        Nothing -> writeJSON $ Error.mk "Something went wrong"
+        Just _ -> writeJSON OkResponse.OkResponse
+
+-- | Delete a topic. The topic must be empty (no children and no problems).
+handleDeleteTopic :: SQL.Connection -> Integer -> Snap.Snap ()
+handleDeleteTopic conn topicId = do
+  children <- IO.liftIO (Queries.getTopicsByParentId conn topicId)
+  problems <- IO.liftIO (Queries.getProblems conn ("topic" =: Just (cs . show $ topicId)))
+
+  if
+    | not . null $ children -> writeJSON $ Error.mk "Topic has children"
+    | not . null $ problems -> writeJSON $ Error.mk "Topic has problems"
+    | otherwise -> do
+        IO.liftIO (Queries.deleteTopic conn topicId)
+        writeJSON OkResponse.OkResponse

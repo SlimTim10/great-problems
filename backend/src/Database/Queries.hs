@@ -1,18 +1,28 @@
 module Database.Queries
-  ( getProblems
+  
+  -- problems, figures
+  ( createProblem
+  , getProblems
   , getProblemById
-  , createProblem
   , updateProblem
   , deleteProblem
+  , getFigureById
+  
+  -- topics
+  , createTopic
   , getTopics
   , getTopicById
   , getRootTopics
   , getTopicsByParentId
+  , getTopicHierarchy
+  , updateTopic
+  , deleteTopic
+  
+  -- users, roles, sessions
   , getUsers
   , getUserById
   , getUserByEmail
   , registerUser
-  , getTopicHierarchy
   , authenticate
   , verifyEmail
   , newEmailVerification
@@ -22,10 +32,11 @@ module Database.Queries
   , removeSessionsByUserId
   , removeSessionById
   , getUserFromSession
-  , getFigureById
   , getRoles
   , updateUserRole
   , updateUserPassword
+
+  -- meta settings
   , getMetaSettings
   , getMetaSetting
   , setMetaSetting
@@ -347,6 +358,39 @@ getTopicHierarchy conn topic = do
     getChildren t = do
       xs <- getTopicsByParentId conn (Topic.id t)
       return $ map Left xs
+
+updateTopic :: SQL.Connection -> Topic.Topic -> IO (Maybe Topic.Topic)
+updateTopic conn topic = do
+  mTopicId :: Maybe (SQL.Only Integer) <- headMay
+    <$> SQL.query conn
+    "UPDATE topics SET (name, parent_id) = (?, ?) WHERE id = ? returning id"
+    ( Topic.name topic
+    , Topic.parentId topic
+    , Topic.id topic
+    )
+  case SQL.fromOnly <$> mTopicId of
+    Nothing -> return Nothing
+    Just topicId -> getTopicById conn topicId
+
+createTopic :: SQL.Connection -> Topic.NewTopic -> IO (Maybe Topic.Topic)
+createTopic conn newTopic = do
+  mTopicId :: Maybe (SQL.Only Integer) <- headMay
+    <$> SQL.query conn
+    "INSERT INTO topics(name, parent_id) VALUES (?,?) returning id"
+    ( Topic.ntName newTopic
+    , Topic.ntParentId newTopic
+    )
+  case SQL.fromOnly <$> mTopicId of
+    Nothing -> return Nothing
+    Just topicId -> do
+      getTopicById conn topicId
+
+deleteTopic
+  :: SQL.Connection
+  -> Integer -- ^ Topic ID
+  -> IO () -- ^ No error handling
+deleteTopic conn topicId = void $ SQL.execute conn
+  "DELETE FROM topics WHERE id = ?" (SQL.Only topicId)
 
 getRoles :: SQL.Connection -> IO [Role.Role]
 getRoles conn = do
