@@ -80,44 +80,52 @@ widget
      )
   => Maybe Integer
   -> m ()
-widget preloadedProblemId = mdo
-  ( figures
-    , randomizeVariablesAction
-    , resetVariablesAction
-    , showAnswerAction
-    , showSolutionAction
-    , outputOption
-    ) <- leftPane editorContents
-  ( editorContents
-    , compileButtonAction
-    ) <- mainPane figures
-         ((Problem.Compile.response . Loading.action) <$> currentResponse)
-         (Loading.loading <$> currentResponse)
-         outputOption
+widget preloadedProblemId = do
+  user :: Maybe User.User <- Util.getCurrentUser
+  when ((User.role <$> user) == Just Role.Basic) $ do
+    R.elClass "div" "flex flex-col items-center bg-gray-200 py-2" $ do
+      R.el "p" $ R.text "As a Basic user, you can only make drafts. Contributors can publish problems for others to see."
+      Ob.routeLink (Route.FrontendRoute_Home :/ ()) $ do
+        R.elClass "p" "text-brand-primary hover:underline" $ R.text "Become a contributor"
 
-  let actions =
-        [ compileButtonAction
-        , randomizeVariablesAction
-        , resetVariablesAction
-        , showAnswerAction
-        , showSolutionAction
-        ] :: [R.Dynamic t (Loading.WithLoading Problem.Compile.Response)]
+  R.elClass "div" "flex-1 mx-2 flex justify-center" $ mdo
+    ( figures
+      , randomizeVariablesAction
+      , resetVariablesAction
+      , showAnswerAction
+      , showSolutionAction
+      , outputOption
+      ) <- leftPane editorContents
+    ( editorContents
+      , compileButtonAction
+      ) <- mainPane figures
+           ((Problem.Compile.response . Loading.action) <$> currentResponse)
+           (Loading.loading <$> currentResponse)
+           outputOption
 
-  currentResponse :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do
-    -- The current response should have the latest request time
-    let switchToLatest = \new old -> do
-          let tNew = Problem.Compile.reqTime . Loading.action $ new
-          let tOld = Problem.Compile.reqTime . Loading.action $ old
-          if tNew >= tOld
-            then Just new
-            else Nothing
-    t <- IO.liftIO Time.getCurrentTime
-    R.foldDynMaybe
-      switchToLatest
-      (Loading.WithLoading (Problem.Compile.Response t Nothing) False)
-      (R.leftmost . map R.updated $ actions)
+    let actions =
+          [ compileButtonAction
+          , randomizeVariablesAction
+          , resetVariablesAction
+          , showAnswerAction
+          , showSolutionAction
+          ] :: [R.Dynamic t (Loading.WithLoading Problem.Compile.Response)]
 
-  return ()
+    currentResponse :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do
+      -- The current response should have the latest request time
+      let switchToLatest = \new old -> do
+            let tNew = Problem.Compile.reqTime . Loading.action $ new
+            let tOld = Problem.Compile.reqTime . Loading.action $ old
+            if tNew >= tOld
+              then Just new
+              else Nothing
+      t <- IO.liftIO Time.getCurrentTime
+      R.foldDynMaybe
+        switchToLatest
+        (Loading.WithLoading (Problem.Compile.Response t Nothing) False)
+        (R.leftmost . map R.updated $ actions)
+
+    return ()
 
   where
     getPreloadedProblem :: m (R.Dynamic t (Maybe Problem.Problem))
@@ -148,15 +156,20 @@ widget preloadedProblemId = mdo
 
     leftPane editorContents = do
       R.elClass "div" "w-96 flex-none flex flex-col pr-2 border-r border-brand-light-gray" $ mdo
-        when (isJust preloadedProblemId) $ do
-          R.elClass "div" "pb-3 border-b border-brand-light-gray" $ do
-            R.elClass "p" "font-medium mb-2" $ R.text "View"
-            Ob.routeLink
-              (Route.FrontendRoute_Problems :/
-                (fromJust preloadedProblemId, Route.ProblemsRoute_View :/ ())) $ do
-              R.elClass "p" "text-brand-primary font-medium hover:underline" $ do
-                Button.secondarySmall "Public view of this problem"
-          R.elClass "div" "pb-3" R.blank
+        let showPublicView = \case
+              Nothing -> R.blank
+              Just p ->
+                if not $ Problem.status p == ProblemStatus.Published
+                then R.blank
+                else do
+                  R.elClass "div" "pb-3 border-b border-brand-light-gray" $ do
+                    R.elClass "p" "font-medium mb-2" $ R.text "View"
+                    Ob.routeLink
+                      (Route.FrontendRoute_Problems :/
+                        (fromJust preloadedProblemId, Route.ProblemsRoute_View :/ ())) $ do
+                      Button.secondarySmall "Public view of this problem"
+                  R.elClass "div" "pb-3" R.blank
+        R.dyn_ $ showPublicView <$> preloadedProblem
         preloadedProblem :: R.Dynamic t (Maybe Problem.Problem) <- getPreloadedProblem
         let setTopicId :: R.Event t Integer =
               fromMaybe SelectTopic.firstTopicId
@@ -194,7 +207,7 @@ widget preloadedProblemId = mdo
                 True -> "Publish"
                 False -> "Publish changes"
           let button :: R.Dynamic t (m (R.Event t ())) = buttonText <&> \t ->
-                if userCanContribute
+                if userCanPublish
                 then Button.primaryClass' t "w-full active:bg-blue-400"
                 else return R.never
           R.dyn button >>= R.switchHold R.never -- flatten R.Event t (R.Event t ())
@@ -216,7 +229,7 @@ widget preloadedProblemId = mdo
 
         deleteButton :: R.Event t () <- R.elClass "div" "py-3" $ do
           let button :: R.Dynamic t (m (R.Event t ())) = return $
-                if userCanContribute
+                if userCanSave
                 then Button.secondaryClass' "Delete this problem" "w-full bg-red-100"
                 else return R.never
           R.dyn button >>= R.switchHold R.never
@@ -272,7 +285,10 @@ widget preloadedProblemId = mdo
         R.performEvent_ $ Util.preventLeaving <$> R.updated dirty
 
         user :: Maybe User.User <- Util.getCurrentUser
-        let userCanContribute :: Bool = case user of
+        let userCanSave :: Bool = case user of
+              Nothing -> False
+              Just u -> User.role u `elem` [Role.Basic, Role.Contributor, Role.Moderator, Role.Administrator]
+        let userCanPublish :: Bool = case user of
               Nothing -> False
               Just u -> User.role u `elem` [Role.Contributor, Role.Moderator, Role.Administrator]
               
@@ -280,7 +296,7 @@ widget preloadedProblemId = mdo
           (andM
            [ not <$> publishing
            , maybe True ((== ProblemStatus.Draft) . Problem.status) <$> R.current preloadedProblem
-           , R.constant userCanContribute
+           , R.constant userCanSave
            ])
           ctx
 

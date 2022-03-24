@@ -221,7 +221,7 @@ backend = Ob.Backend
               let validate :: Maybe (Problem.Problem, User.User) = do
                     problem <- mProblem
                     user <- mUser
-                    guard $ User.role user `elem` [Role.Contributor, Role.Moderator, Role.Administrator]
+                    guard $ User.role user `elem` [Role.Basic, Role.Contributor, Role.Moderator, Role.Administrator]
                     guard $ Problem.status problem == ProblemStatus.Published
                     return (problem, user)
               case validate of
@@ -406,7 +406,6 @@ handleSaveProblem conn user = do
     | any not
       [ T.null problemId || (read . cs $ authorId) == User.id user
       , T.null problemId || (User.id <$> existingAuthor) == Just (User.id user)
-      , User.role user `elem` [Role.Contributor, Role.Moderator, Role.Administrator]
       ]
       -> writeJSON $ Error.mk "No access"
     | T.null contents
@@ -414,6 +413,7 @@ handleSaveProblem conn user = do
     | T.null summary
       -> writeJSON $ Error.mk "Summary cannot be empty"
     | (read . cs $ status) == ProblemStatus.Published
+      && User.role user `elem` [Role.Contributor, Role.Moderator, Role.Administrator]
       -> do
         -- Published problems must compile without errors
         response :: LBS.ByteString <- requestProblem2texCompileProblem
@@ -453,7 +453,8 @@ handleSaveProblem conn user = do
                   , Problem.bpStatus = read . cs $ status
                   , Problem.bpFigures = figures
                   }
-    | otherwise -> do
+    | (read . cs $ status) == ProblemStatus.Draft
+      && User.role user `elem` [Role.Basic, Role.Contributor, Role.Moderator, Role.Administrator] -> do
         if
           | T.null problemId -> do
               createNewProblem
@@ -479,6 +480,8 @@ handleSaveProblem conn user = do
                 , Problem.bpStatus = read . cs $ status
                 , Problem.bpFigures = figures
                 }
+      | otherwise -> do
+          writeJSON $ Error.mk "Something went wrong"
 
 createNewProblem :: SQL.Connection -> Problem.BareProblem -> Snap.Snap ()
 createNewProblem conn problem = do
@@ -499,7 +502,7 @@ handleDeleteProblem conn user problemId = do
     Just problem -> do
       let authorId = User.id . Problem.author $ problem
       if any not
-        [ User.role user `elem` [Role.Contributor, Role.Moderator, Role.Administrator]
+        [ User.role user `elem` [Role.Basic, Role.Contributor, Role.Moderator, Role.Administrator]
         , authorId == User.id user
         ]
         then writeJSON $ Error.mk "No access"

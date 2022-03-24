@@ -92,8 +92,7 @@ frontend = Ob.Frontend
         R.elClass "div" "h-screen flex flex-col gap-3" $ do
           R.elClass "div" "flex-none"
             Header.widget
-          R.elClass "div" "flex-1 mx-2 flex justify-center" $ do
-            Problem.Edit.widget Nothing
+          Problem.Edit.widget Nothing
       Route.FrontendRoute_DuplicateProblem -> do
         problemId :: R.Dynamic t Integer <- Ob.askRoute
         Util.dynFor problemId $ \pId -> Problem.Duplicate.widget pId
@@ -110,8 +109,7 @@ frontend = Ob.Frontend
               R.elClass "div" "h-screen flex flex-col gap-3" $ do
                 R.elClass "div" "flex-none"
                   Header.widget
-                R.elClass "div" "flex-1 mx-2 flex justify-center" $ do
-                  Problem.Edit.widget $ Just problemId
+                Problem.Edit.widget $ Just problemId
             _ -> pure () -- Type refinement through unification
       Route.FrontendRoute_ViewProblemSet -> do
         Header.widget

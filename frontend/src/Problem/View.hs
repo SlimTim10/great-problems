@@ -256,7 +256,7 @@ widget problemId = mdo
       Util.getCurrentUser >>= \case
         Nothing -> R.blank
         Just user -> do
-          if not $ User.role user `elem` [Role.Contributor, Role.Moderator, Role.Administrator]
+          if not $ User.role user `elem` [Role.Basic, Role.Contributor, Role.Moderator, Role.Administrator]
             then R.blank
             else do
             let showDuplicateLink = \case
