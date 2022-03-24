@@ -71,7 +71,6 @@ data RequestParam
   | ParamSummary
   | ParamContents
   | ParamTopicId
-  | ParamAuthorId
   | ParamStatus
   | ParamFigures
   deriving (Eq, Ord)
@@ -80,6 +79,5 @@ instance Show RequestParam where
   show ParamSummary = "summary"
   show ParamContents = "contents"
   show ParamTopicId = "topicId"
-  show ParamAuthorId = "authorId"
   show ParamStatus = "status"
   show ParamFigures = "figures"

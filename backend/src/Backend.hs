@@ -403,7 +403,6 @@ handleSaveProblem conn user = do
   summary <- getTextParam Problem.ParamSummary
   contents <- getTextParam Problem.ParamContents
   topicId <- getTextParam Problem.ParamTopicId
-  authorId <- getTextParam Problem.ParamAuthorId
   status <- getTextParam Problem.ParamStatus
   existingAuthor :: Maybe User.User <- IO.liftIO $ do
     if T.null problemId
@@ -414,10 +413,7 @@ handleSaveProblem conn user = do
           Nothing -> return Nothing
           Just p -> return . Just $ Problem.author p
   if
-    | any not
-      [ T.null problemId || (read . cs $ authorId) == User.id user
-      , T.null problemId || (User.id <$> existingAuthor) == Just (User.id user)
-      ]
+    | isJust existingAuthor && (User.id <$> existingAuthor) /= Just (User.id user)
       -> writeJSON $ Error.mk "No access"
     | T.null contents
       -> writeJSON $ Error.mk "Problem contents cannot be empty"
@@ -448,7 +444,7 @@ handleSaveProblem conn user = do
                   , Problem.bpSummary = summary
                   , Problem.bpContents = contents
                   , Problem.bpTopicId = read . cs $ topicId
-                  , Problem.bpAuthorId = read . cs $ authorId
+                  , Problem.bpAuthorId = User.id user
                   , Problem.bpStatus = read . cs $ status
                   , Problem.bpFigures = figures
                   }
@@ -460,7 +456,7 @@ handleSaveProblem conn user = do
                   , Problem.bpSummary = summary
                   , Problem.bpContents = contents
                   , Problem.bpTopicId = read . cs $ topicId
-                  , Problem.bpAuthorId = read . cs $ authorId
+                  , Problem.bpAuthorId = User.id user
                   , Problem.bpStatus = read . cs $ status
                   , Problem.bpFigures = figures
                   }
@@ -475,7 +471,7 @@ handleSaveProblem conn user = do
                 , Problem.bpSummary = summary
                 , Problem.bpContents = contents
                 , Problem.bpTopicId = read . cs $ topicId
-                , Problem.bpAuthorId = read . cs $ authorId
+                , Problem.bpAuthorId = User.id user
                 , Problem.bpStatus = read . cs $ status
                 , Problem.bpFigures = figures
                 }
@@ -487,7 +483,7 @@ handleSaveProblem conn user = do
                 , Problem.bpSummary = summary
                 , Problem.bpContents = contents
                 , Problem.bpTopicId = read . cs $ topicId
-                , Problem.bpAuthorId = read . cs $ authorId
+                , Problem.bpAuthorId = User.id user
                 , Problem.bpStatus = read . cs $ status
                 , Problem.bpFigures = figures
                 }

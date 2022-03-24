@@ -50,7 +50,6 @@ data SavingState a = BeforeSave | Saving | Saved | SaveError a
 
 data EditContext = EditContext
   { ctxProblemId :: Maybe Integer
-  , ctxAuthorId :: Integer
   , ctxSummary :: Text
   , ctxContents :: Text
   , ctxTopicId :: Integer
@@ -254,15 +253,8 @@ widget preloadedProblemId = do
               (Nothing, Right p) -> Just $ Problem.id p
         let problemId :: R.Dynamic t (Maybe Integer) = f <$> R.constDyn preloadedProblemId <*> savedProblem
 
-        userId :: R.Dynamic t Integer <-
-          pure
-          . R.constDyn
-          . fromMaybe 0
-          . fmap User.id
-          =<< Util.getCurrentUser
         let ctx :: R.Dynamic t EditContext = EditContext
               <$> problemId
-              <*> userId
               <*> summary
               <*> editorContents
               <*> selectedTopicId
@@ -270,7 +262,6 @@ widget preloadedProblemId = do
 
         let emptyCtx = EditContext
               { ctxProblemId = Nothing
-              , ctxAuthorId = 0
               , ctxSummary = ""
               , ctxContents = ""
               , ctxTopicId = 0
@@ -471,7 +462,6 @@ saveProblem trg problemStatus ctx = do
               ( Problem.ParamSummary =: R'.FormValue_Text (ctxSummary ctx')
                 <> Problem.ParamContents =: R'.FormValue_Text (ctxContents ctx')
                 <> Problem.ParamTopicId =: R'.FormValue_Text (cs . show . ctxTopicId $ ctx')
-                <> Problem.ParamAuthorId =: R'.FormValue_Text (cs . show . ctxAuthorId $ ctx')
                 <> Problem.ParamStatus =: R'.FormValue_Text (cs . show $ problemStatus)
                 <> Problem.ParamFigures =: R'.FormValue_List (map Util.formFile . ctxFigures $ ctx')
               )
