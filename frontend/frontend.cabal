@@ -87,6 +87,7 @@ library
              DeriveGeneric
              LambdaCase
              TypeFamilies
+             MultiWayIf
 
 executable frontend
   main-is: main.hs

@@ -3,9 +3,7 @@ module Problem.View
   ( widget
   ) where
 
-import Common.Lib.Prelude
-import qualified Frontend.Lib.Util as Util
-
+import qualified Data.Aeson as JSON
 import qualified Control.Monad.IO.Class as IO
 import qualified Data.Time.Clock as Time
 import qualified Language.Javascript.JSaddle as JS
@@ -14,6 +12,8 @@ import qualified Data.CaseInsensitive as CI
 import qualified Obelisk.Route.Frontend as Ob
 import qualified Reflex.Dom.Core as R
 
+import Common.Lib.Prelude
+import qualified Frontend.Lib.Util as Util
 import qualified Common.Route as Route
 import qualified Common.Api.Compile as Compile
 import qualified Common.Api.Problem as Problem
@@ -21,6 +21,7 @@ import qualified Common.Api.ProblemStatus as ProblemStatus
 import qualified Common.Api.User as User
 import qualified Common.Api.Topic as Topic
 import qualified Common.Api.Role as Role
+import qualified Common.Api.MetaSetting as MetaSetting
 import qualified Problem.PdfViewer as PdfViewer
 import qualified Widget.Button as Button
 import qualified Widget.Input as Input
@@ -108,10 +109,20 @@ widget problemId = mdo
 
     getProblem :: m (R.Dynamic t (Maybe Problem.Problem))
     getProblem = do
-      r :: R.Event t (Maybe Problem.Problem) <- Util.getOnload
-        $ Route.apiHref $ Route.Api_Problems :/ 
-        (Just problemId, mempty)
-      R.holdDyn Nothing r
+      res :: R.Event t (Maybe Problem.Problem) <- Util.getOnload
+        $ Route.apiHref $ Route.Api_Problems :/ (Just problemId, mempty)
+      R.holdDyn Nothing res
+
+    getBasicDuplicateTopicIds :: m (R.Dynamic t [Integer])
+    getBasicDuplicateTopicIds = do
+      res :: R.Event t (Maybe MetaSetting.MetaSetting) <- Util.getOnload
+        $ Route.apiHref $ Route.Api_MetaSettings :/ (Just MetaSetting.BasicDuplicateTopicIds)
+      let basicDuplicateTopicIds :: R.Event t [Integer] = res <&> \case
+            Nothing -> []
+            Just x -> case JSON.decode (cs . MetaSetting.value $ x) :: Maybe [Integer] of
+              Nothing -> []
+              Just y -> y
+      R.holdDyn [] basicDuplicateTopicIds
 
     topicPath = do
       R.elClass "div" "bg-brand-light-gray flex py-2 pl-2" $ do
@@ -234,15 +245,14 @@ widget problemId = mdo
                   R.text $ (CI.original . User.fullName) (Problem.author p)
         problem <- getProblem
         R.dyn_ $ maybe R.blank problemDetails' <$> problem
-        editProblem
-        duplicateProblem
+        editProblemButton
+        duplicateProblemButton
 
-
-    editProblem = do
-      let showEditLink uid = \case
+    editProblemButton = do
+      let showEditLink = \uid p -> case p of
             Nothing -> R.blank
-            Just p -> do
-              let authorId = User.id (Problem.author p)
+            Just p' -> do
+              let authorId = User.id (Problem.author p')
               when (authorId == uid) $ do
                 Ob.routeLink
                   (Route.FrontendRoute_Problems :/
@@ -252,17 +262,30 @@ widget problemId = mdo
       problem <- getProblem
       R.dyn_ $ showEditLink <$> userId <*> problem
 
-    duplicateProblem = do
+    duplicateProblemButton = do
+      let duplicateLink = \p -> do
+            Ob.routeLink (Route.FrontendRoute_DuplicateProblem :/ Problem.id p) $ do
+              R.elClass "div" "my-1" $ Button.secondarySmall "Duplicate problem"
+      let showDuplicateLink = \p -> case p of
+            Nothing -> R.blank
+            Just p' -> duplicateLink p'
+      let showDuplicateLinkForBasicUser = \topicIds p -> case p of
+            Nothing -> R.blank
+            Just p' ->
+              if (Topic.id . Problem.topic $ p') `elem` topicIds
+              then duplicateLink p'
+              else R.blank
       Util.getCurrentUser >>= \case
         Nothing -> R.blank
-        Just user -> do
-          if not $ User.role user `elem` [Role.Basic, Role.Contributor, Role.Moderator, Role.Administrator]
-            then R.blank
-            else do
-            let showDuplicateLink = \case
-                  Nothing -> R.blank
-                  Just p -> do
-                    Ob.routeLink (Route.FrontendRoute_DuplicateProblem :/ Problem.id p) $ do
-                      R.elClass "div" "my-1" $ Button.secondarySmall "Duplicate problem"
-            problem <- getProblem
-            R.dyn_ $ showDuplicateLink <$> problem
+        Just user ->
+          if
+            | User.role user `elem` [Role.Contributor, Role.Moderator, Role.Administrator]
+              -> do
+                problem <- getProblem
+                R.dyn_ $ showDuplicateLink <$> problem
+            | User.role user == Role.Basic
+              -> do
+                problem <- getProblem
+                basicDuplicateTopicIds <- getBasicDuplicateTopicIds
+                R.dyn_ $ showDuplicateLinkForBasicUser <$> basicDuplicateTopicIds <*> problem
+            | otherwise -> R.blank

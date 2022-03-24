@@ -217,12 +217,22 @@ backend = Ob.Backend
 
             Route.Api_DuplicateProblem :/ problemId -> do
               -- Current user must have the right role and problem must be published
-              mProblem <- IO.liftIO (Queries.getProblemById conn problemId)
+              mProblem <- IO.liftIO $ Queries.getProblemById conn problemId
+              basicDuplicateTopics <-
+                IO.liftIO (Queries.getMetaSetting conn MetaSetting.BasicDuplicateTopicIds) >>= \case
+                Nothing -> return []
+                Just x -> case JSON.decode (cs . MetaSetting.value $ x) :: Maybe [Integer] of
+                  Nothing -> return []
+                  Just y -> return y
               let validate :: Maybe (Problem.Problem, User.User) = do
                     problem <- mProblem
                     user <- mUser
                     guard $ User.role user `elem` [Role.Basic, Role.Contributor, Role.Moderator, Role.Administrator]
                     guard $ Problem.status problem == ProblemStatus.Published
+                    guard $
+                      if User.role user == Role.Basic
+                      then (Topic.id . Problem.topic $ problem) `elem` basicDuplicateTopics
+                      else True
                     return (problem, user)
               case validate of
                 Nothing -> writeJSON $ Error.mk "No access"
@@ -308,7 +318,8 @@ backend = Ob.Backend
             Route.Api_MetaSettings :/ (Just setting) -> case setting of
               MetaSetting.ExampleProblemId -> do
                 writeJSON =<< IO.liftIO (Queries.getMetaSetting conn setting)
-              _ -> return ()
+              MetaSetting.BasicDuplicateTopicIds -> do
+                writeJSON =<< IO.liftIO (Queries.getMetaSetting conn setting)
                 
   , Ob._backend_routeEncoder = Route.fullRouteEncoder
   }

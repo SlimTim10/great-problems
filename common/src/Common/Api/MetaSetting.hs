@@ -25,7 +25,7 @@ data MetaSetting = MetaSetting
 
 data Setting
   = ExampleProblemId
-  | Dummy -- Placeholder until we add another setting (to force this to be seen as a sum type)
+  | BasicDuplicateTopicIds
   deriving
     ( Eq
     , Show
