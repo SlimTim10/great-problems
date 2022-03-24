@@ -63,6 +63,18 @@ $ cp config/backend/email.env.example config/backend/email.env
 
 Edit the environment variables in ~config/backend/email.env~ with the Mailgun settings.
 
+** Settings
+
+*** Meta settings
+
+This project stores meta settings for special situations that can be configured by administrators.
+
+| Meta setting           | Example value | Description                                                                             |
+|------------------------+---------------+-----------------------------------------------------------------------------------------|
+| ExampleProblemId       | 3             | The ID of an existing problem to be shown as the example on the home page.              |
+| BasicDuplicateTopicIds | [0,3]         | Basic users are only allowed to duplicate problems which belong to these topics.         |
+
+
 ** Development
 
 *** Explicit import style
