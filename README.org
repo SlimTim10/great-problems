@@ -231,11 +231,11 @@ $ sudo certbot renew --dry-run
 To backup (includes drop tables statements):
 
 #+begin_src sh
-pg_dump --format=custom --clean -U great_problems -h localhost -p 5432 -d great_problems > ~/backups/great_problems_dump
+pg_dump --clean --if-exists -U great_problems -h localhost -p 5432 -d great_problems > ~/backups/great_problems_dump.sql
 #+end_src
 
 To restore from backup:
 
 #+begin_src sh
-pg_restore --format=custom --clean -U great_problems -h localhost -p 5432 -d great_problems < ~/backups/great_problems_dump
+pg_restore --clean --if-exists -U great_problems -h localhost -p 5432 -d great_problems < ~/backups/great_problems_dump.sql
 #+end_src
