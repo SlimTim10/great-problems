@@ -158,6 +158,11 @@ apiHref
   -> Text
 apiHref r = Ob.renderBackendRoute checkedEncoder $ BackendRoute_Api :/ r
 
+frontendHref
+  :: Ob.R FrontendRoute
+  -> Text
+frontendHref r = Ob.renderFrontendRoute checkedEncoder r
+
 checkedEncoder :: Applicative check => Ob.Encoder check Identity (Ob.R (Ob.FullRoute BackendRoute FrontendRoute)) Ob.PageName
 checkedEncoder = either (error "checkEncoder failed") id $ Ob.checkEncoder fullRouteEncoder
 

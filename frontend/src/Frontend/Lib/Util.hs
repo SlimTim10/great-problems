@@ -1,8 +1,6 @@
 {-# LANGUAGE PackageImports #-}
 module Frontend.Lib.Util where
 
-import Common.Lib.Prelude
-
 import qualified Data.Text as T
 import qualified Data.ByteString as BS
 import qualified Control.Lens as Lens
@@ -15,11 +13,14 @@ import qualified GHCJS.DOM.Types
 import qualified GHCJS.DOM.Blob
 import qualified GHCJS.DOM.URL
 import qualified Foreign.JavaScript.Utils as JSUtils
+import qualified Obelisk.Route as Ob
 import qualified Reflex.Dom.Core as R
 -- Import patch
 import qualified MyReflex.Dom.Xhr.FormData as R'
 
+import Common.Lib.Prelude
 import qualified Common.Api.User as User
+import qualified Common.Route as Route
 import qualified Problem.FormFile as FormFile
 
 consoleLog :: (JS.MonadJSM m, JS.ToJSVal v) => v -> m ()
@@ -169,3 +170,17 @@ historyBack :: JS.MonadJSM m => m ()
 historyBack = void $ JS.liftJSM $ do
   history <- JS.jsg ("history" :: Text)
   history ^. JS.js0 ("back" :: Text)
+
+-- | window.location.replace(url)
+redirectWithoutHistory
+  :: forall t m.
+     ( JS.MonadJSM (R.Performable m)
+     , R.PerformEvent t m
+     )
+  => R.Event t (Ob.R Route.FrontendRoute)
+  -> m ()
+redirectWithoutHistory url = do
+  let textUrl :: R.Event t Text = Route.frontendHref <$> url
+  R.performEvent_ $ R.ffor textUrl $ \url' -> void $ JS.liftJSM $ do
+    window <- JS.jsg ("window" :: Text)
+    void $ window ^. JS.js ("location" :: Text) ^. JS.js1 ("replace" :: Text) url'
