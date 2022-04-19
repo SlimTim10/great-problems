@@ -123,12 +123,15 @@ backend = Ob.Backend
                     _ -> writeJSON $ Error.mk "No access"
                 _ -> return ()
                 
-            Route.Api_Roles :/ () -> case mUser of
-              Nothing -> writeJSON $ Error.mk "No access"
-              Just user -> case User.role user of
-                Role.Administrator -> writeJSON =<< IO.liftIO (Queries.getRoles conn)
-                _ -> writeJSON $ Error.mk "No access"
-                
+            Route.Api_Roles :/ () -> do
+              Snap.rqMethod <$> Snap.getRequest >>= \case
+                Snap.GET -> case mUser of
+                  Nothing -> writeJSON $ Error.mk "No access"
+                  Just user -> case User.role user of
+                    Role.Administrator -> writeJSON =<< IO.liftIO (Queries.getRoles conn)
+                    _ -> writeJSON $ Error.mk "No access"
+                _ -> return ()
+
             Route.Api_TopicHierarchy :/ Nothing -> do
               writeJSON $ Error.mk "Not yet implemented"
               
