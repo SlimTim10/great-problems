@@ -107,15 +107,17 @@ backend = Ob.Backend
             Route.Api_Users :/ Nothing -> do
               Snap.rqMethod <$> Snap.getRequest >>= \case
                 Snap.GET -> case mUser of
-                  Nothing -> writeJSON $ Error.mk "No access"
-                  Just user -> case User.role user of
-                    Role.Administrator -> writeJSON =<< IO.liftIO (Queries.getUsers conn)
-                    _ -> writeJSON $ Error.mk "No access"
+                  Just User.User{User.role = Role.Administrator} ->
+                    writeJSON =<< IO.liftIO (Queries.getUsers conn)
+                  _ -> writeJSON $ Error.mk "No access"
                 _ -> return ()
                 
             Route.Api_Users :/ (Just userId) -> do
               Snap.rqMethod <$> Snap.getRequest >>= \case
-                Snap.GET -> writeJSON =<< IO.liftIO (Queries.getUserById conn userId)
+                Snap.GET -> case mUser of
+                  Just User.User{User.role = Role.Administrator} ->
+                    writeJSON =<< IO.liftIO (Queries.getUserById conn userId)
+                  _ -> writeJSON $ Error.mk "No access"
                 Snap.POST -> case mUser of
                   Just User.User{User.role = Role.Administrator} ->
                     updateUser conn userId
