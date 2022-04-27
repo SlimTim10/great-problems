@@ -15,6 +15,7 @@ import qualified Reflex.Dom.Core as R
 import Common.Lib.Prelude
 import qualified Frontend.Lib.Util as Util
 import qualified Common.Route as Route
+import qualified Common.Api.Error as Error
 import qualified Common.Api.Compile as Compile
 import qualified Common.Api.Problem as Problem
 import qualified Common.Api.ProblemStatus as ProblemStatus
@@ -49,10 +50,16 @@ widget
   => Integer
   -> m ()
 widget problemId = mdo
-  problem :: R.Dynamic t (Maybe Problem.Problem) <- getProblem
+  problem :: R.Dynamic t (Maybe (Either Error.Error Problem.Problem)) <- getProblem
   let redirect = problem <&> \case
+  -- 
         Nothing -> R.blank
-        Just problem' -> case Problem.status problem' of
+        Just (Left _) -> do
+          -- Problem does not exist; redirect to homepage
+          afterLoad :: R.Event t R.TickInfo <- R.tickLossyFromPostBuildTime 0.01
+          Ob.setRoute
+            $ (Route.FrontendRoute_Home :/ ()) <$ afterLoad
+        Just (Right problem') -> case Problem.status problem' of
           -- Can't view drafts; redirect to edit
           ProblemStatus.Draft -> do
             afterLoad :: R.Event t R.TickInfo <- R.tickLossyFromPostBuildTime 0.01
@@ -107,11 +114,14 @@ widget problemId = mdo
     getUserId :: m (R.Dynamic t Integer)
     getUserId = pure . R.constDyn . fromMaybe 0 . fmap User.id =<< Util.getCurrentUser
 
-    getProblem :: m (R.Dynamic t (Maybe Problem.Problem))
+    getProblem :: m (R.Dynamic t (Maybe (Either Error.Error Problem.Problem)))
     getProblem = do
       res :: R.Event t (Maybe Problem.Problem) <- Util.getOnload
         $ Route.apiHref $ Route.Api_Problems :/ (Just problemId, mempty)
-      R.holdDyn Nothing res
+      let res' = res <&> \case
+            Nothing -> Just $ Left $ Error.mk "Problem does not exist"
+            Just x -> Just $ Right x
+      R.holdDyn Nothing res'
 
     getBasicDuplicateTopicIds :: m (R.Dynamic t [Integer])
     getBasicDuplicateTopicIds = do
@@ -129,7 +139,7 @@ widget problemId = mdo
         problem <- getProblem
         Util.dynFor problem $ \case
           Nothing -> R.blank
-          Just p -> do
+          Just (Right p) -> do
             R.elClass "div" "flex" $ do
               let topics = Problem.topicPath p
               forM_ (zip [0..] topics) $ \(n :: Integer, Topic.Topic tid name _) -> do
@@ -138,6 +148,7 @@ widget problemId = mdo
                 Ob.routeLink
                   (Route.FrontendRoute_Topics :/ (tid, Route.TopicsRoute_Problems :/ ())) $ do
                   R.elClass "p" "hover:underline text-brand-primary" $ R.text name
+          _ -> R.blank
 
     problemPane latestResponse anyLoading = do
       R.elClass "div" "flex-1 mx-2 flex justify-center" $ do
@@ -231,33 +242,35 @@ widget problemId = mdo
 
     problemDetails = do
       R.elClass "div" "flex flex-col gap-1" $ do
-        let problemDetails' = \p -> do
-              R.elClass "p" "text-brand-sm text-brand-gray" $ do
-                R.text $ "#" <> (cs . show . Problem.id $ p)
-              R.elClass "p" "font-medium" $ do
-                R.text $ Problem.summary p
-              R.elClass "p" "text-brand-sm text-brand-gray" $ do
-                R.text $ "Last updated at " <> (cs . show $ Problem.updatedAt p)
-              R.elClass "div" "flex gap-1" $ do
+        let problemDetails' = \case
+              Just (Right p) -> do
                 R.elClass "p" "text-brand-sm text-brand-gray" $ do
-                  R.text $ "by"
-                R.elClass "p" "text-brand-sm text-brand-gray font-bold" $ do
-                  R.text $ (CI.original . User.fullName) (Problem.author p)
+                  R.text $ "#" <> (cs . show . Problem.id $ p)
+                R.elClass "p" "font-medium" $ do
+                  R.text $ Problem.summary p
+                R.elClass "p" "text-brand-sm text-brand-gray" $ do
+                  R.text $ "Last updated at " <> (cs . show $ Problem.updatedAt p)
+                R.elClass "div" "flex gap-1" $ do
+                  R.elClass "p" "text-brand-sm text-brand-gray" $ do
+                    R.text $ "by"
+                  R.elClass "p" "text-brand-sm text-brand-gray font-bold" $ do
+                    R.text $ (CI.original . User.fullName) (Problem.author p)
+              _ -> R.blank
         problem <- getProblem
-        R.dyn_ $ maybe R.blank problemDetails' <$> problem
+        R.dyn_ $ problemDetails' <$> problem
         editProblemButton
         duplicateProblemButton
 
     editProblemButton = do
       let showEditLink = \uid p -> case p of
-            Nothing -> R.blank
-            Just p' -> do
+            Just (Right p') -> do
               let authorId = User.id (Problem.author p')
               when (authorId == uid) $ do
                 Ob.routeLink
                   (Route.FrontendRoute_Problems :/
                    (problemId, Route.ProblemsRoute_Edit :/ ())) $ do
                   R.elClass "div" "my-1" $ Button.secondarySmall "Edit problem"
+            _ -> R.blank
       userId <- getUserId
       problem <- getProblem
       R.dyn_ $ showEditLink <$> userId <*> problem
@@ -267,14 +280,14 @@ widget problemId = mdo
             Ob.routeLink (Route.FrontendRoute_DuplicateProblem :/ Problem.id p) $ do
               R.elClass "div" "my-1" $ Button.secondarySmall "Duplicate problem"
       let showDuplicateLink = \p -> case p of
-            Nothing -> R.blank
-            Just p' -> duplicateLink p'
+            Just (Right p') -> duplicateLink p'
+            _ -> R.blank
       let showDuplicateLinkForBasicUser = \topicIds p -> case p of
-            Nothing -> R.blank
-            Just p' ->
+            Just (Right p') ->
               if (Topic.id . Problem.topic $ p') `elem` topicIds
               then duplicateLink p'
               else R.blank
+            _ -> R.blank
       Util.getCurrentUser >>= \case
         Nothing -> R.blank
         Just user ->
