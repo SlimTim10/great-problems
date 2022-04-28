@@ -52,7 +52,6 @@ widget
 widget problemId = mdo
   problem :: R.Dynamic t (Maybe (Either Error.Error Problem.Problem)) <- getProblem
   let redirect = problem <&> \case
-  -- 
         Nothing -> R.blank
         Just (Left _) -> do
           -- Problem does not exist; redirect to homepage
