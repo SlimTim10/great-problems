@@ -13,7 +13,6 @@ import GHC.Generics (Generic)
 data ProblemSet = ProblemSet
   { id :: Integer
   , summary :: Text
-  , topicId :: Integer
   , authorId :: Integer
   , createdAt :: Time.UTCTime
   , updatedAt :: Time.UTCTime

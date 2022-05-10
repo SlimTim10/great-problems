@@ -10,6 +10,7 @@ import GHC.Generics (Generic)
 data ProblemSetProblem = ProblemSetProblem
   { problem_id :: Integer
   , problem_set_id :: Integer
+  , order :: Integer
   } deriving
   ( Eq
   , Show
