@@ -50,7 +50,8 @@ data Api :: * -> * where
 
 data FrontendRoute :: * -> * where
   FrontendRoute_Home :: FrontendRoute ()
-  FrontendRoute_Explore :: FrontendRoute (Maybe (Ob.R ExploreRoute))
+  -- TODO: remove
+  -- FrontendRoute_Explore :: FrontendRoute (Maybe (Ob.R ExploreRoute))
   FrontendRoute_Register :: FrontendRoute ()
   FrontendRoute_VerifyEmail :: FrontendRoute Text
   FrontendRoute_SignIn :: FrontendRoute ()
@@ -64,16 +65,13 @@ data FrontendRoute :: * -> * where
   FrontendRoute_DuplicateProblem :: FrontendRoute Integer
   FrontendRoute_ViewProblemSet :: FrontendRoute Integer
   FrontendRoute_Profile :: FrontendRoute Integer
-  FrontendRoute_Topics :: FrontendRoute (Integer, Ob.R TopicsRoute)
   FrontendRoute_Admin :: FrontendRoute ()
+  FrontendRoute_Search :: FrontendRoute Query
 
-data ExploreRoute :: * -> * where
-  ExploreRoute_Problems :: ExploreRoute ()
-  ExploreRoute_ProblemSets :: ExploreRoute ()
-
-data TopicsRoute :: * -> * where
-  TopicsRoute_Problems :: TopicsRoute ()
-  TopicsRoute_ProblemSets :: TopicsRoute ()
+-- TODO: remove
+-- data ExploreRoute :: * -> * where
+--   ExploreRoute_Problems :: ExploreRoute ()
+--   ExploreRoute_ProblemSets :: ExploreRoute ()
 
 data ProblemsRoute :: * -> * where
   ProblemsRoute_View :: ProblemsRoute ()
@@ -121,10 +119,11 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
   )
   (\case
       FrontendRoute_Home -> Ob.PathEnd $ Ob.unitEncoder mempty
-      FrontendRoute_Explore -> Ob.PathSegment "explore" $
-        Ob.maybeEncoder (Ob.unitEncoder mempty) $ Ob.pathComponentEncoder $ \case
-        ExploreRoute_Problems -> Ob.PathSegment "problems" $ Ob.unitEncoder mempty
-        ExploreRoute_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.unitEncoder mempty
+      -- TODO: remove
+      -- FrontendRoute_Explore -> Ob.PathSegment "explore" $
+      --   Ob.maybeEncoder (Ob.unitEncoder mempty) $ Ob.pathComponentEncoder $ \case
+      --   ExploreRoute_Problems -> Ob.PathSegment "problems" $ Ob.unitEncoder mempty
+      --   ExploreRoute_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.unitEncoder mempty
       FrontendRoute_Register -> Ob.PathSegment "register" $ Ob.unitEncoder mempty
       FrontendRoute_VerifyEmail -> Ob.PathSegment "verify-email" Ob.singlePathSegmentEncoder
       FrontendRoute_ResetPassword -> Ob.PathSegment "reset-password" Ob.singlePathSegmentEncoder
@@ -143,14 +142,8 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
         )
       FrontendRoute_ViewProblemSet -> Ob.PathSegment "problem-sets" $ idPathSegmentEncoder
       FrontendRoute_Profile -> Ob.PathSegment "users" $ idPathSegmentEncoder
-      FrontendRoute_Topics -> Ob.PathSegment "topics" $ Ob.pathSegmentEncoder .
-        bimap Ob.unsafeTshowEncoder
-        (Ob.pathComponentEncoder $ \case
-            TopicsRoute_Problems -> Ob.PathSegment "problems" $ Ob.unitEncoder mempty
-            TopicsRoute_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.unitEncoder mempty
-        )
       FrontendRoute_Admin -> Ob.PathSegment "admin" $ Ob.unitEncoder mempty
-
+      FrontendRoute_Search -> Ob.PathSegment "search" $ Ob.queryOnlyEncoder
   )
 
 apiHref
@@ -185,7 +178,7 @@ concat <$> mapM Ob.deriveRouteComponent
   [ ''BackendRoute
   , ''FrontendRoute
   , ''Api
-  , ''TopicsRoute
   , ''ProblemsRoute
-  , ''ExploreRoute
+  -- TODO: remove
+  -- , ''ExploreRoute
   ]

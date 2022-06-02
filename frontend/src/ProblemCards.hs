@@ -15,7 +15,8 @@ import qualified Reflex.Dom.Core as R
 
 import qualified Common.Api.Topic as Topic
 import qualified Common.Api.Problem as Problem
-import qualified Common.Api.ProblemStatus as ProblemStatus
+-- TODO: clean up
+-- import qualified Common.Api.ProblemStatus as ProblemStatus
 import qualified Common.Api.User as User
 import qualified Common.Route as Route
 
@@ -34,42 +35,42 @@ widget
      , Ob.RouteToUrl (Ob.R Route.FrontendRoute) m
      , R.Prerender js t m
      )
-  => Maybe Integer
+  => R.Dynamic t [Problem.Problem]
   -> m ()
-widget topicId = do
+widget problems = do
   R.elClass "div" "flex justify-center" $ do
     R.elClass "div" "w-brand-screen-lg flex flex-col gap-2" $ do
-      problems :: R.Dynamic t [Problem.Problem] <- getProblems topicId
       void $ R.simpleList problems (problemCardWidget defaultOptions)
 
-getProblems
-  :: ( R.PostBuild t m
-     , JS.MonadJSM (R.Performable m)
-     , R.PerformEvent t m
-     , R.HasJSContext (R.Performable m)
-     , R.TriggerEvent t m
-     , R.MonadHold t m
-     , JS.MonadJSM m
-     )
-  => Maybe Integer
-  -> m (R.Dynamic t [Problem.Problem])
-getProblems topicId = do
-  response :: R.Event t (Maybe [Problem.Problem]) <- case topicId of
-    Nothing -> Util.getOnload
-      $ Route.apiHref
-      $ Route.Api_Problems :/
-      (Nothing, Problem.getParamsToRouteQuery Problem.getParamsDefault)
-    Just tid -> Util.getOnload
-      $ Route.apiHref
-      $ Route.Api_Problems :/
-      ( Nothing, Problem.getParamsToRouteQuery
-        $ Problem.GetParams
-        { Problem.gpTopic = Just tid
-        , Problem.gpAuthor = Nothing
-        , Problem.gpStatus = Just . fromIntegral . fromEnum $ ProblemStatus.Published
-        }
-      )
-  R.holdDyn [] $ fromMaybe [] <$> response
+-- TODO: remove
+-- getProblems
+--   :: ( R.PostBuild t m
+--      , JS.MonadJSM (R.Performable m)
+--      , R.PerformEvent t m
+--      , R.HasJSContext (R.Performable m)
+--      , R.TriggerEvent t m
+--      , R.MonadHold t m
+--      , JS.MonadJSM m
+--      )
+--   => Maybe Integer
+--   -> m (R.Dynamic t [Problem.Problem])
+-- getProblems topicId = do
+--   response :: R.Event t (Maybe [Problem.Problem]) <- case topicId of
+--     Nothing -> Util.getOnload
+--       $ Route.apiHref
+--       $ Route.Api_Problems :/
+--       (Nothing, Problem.getParamsToRouteQuery Problem.getParamsDefault)
+--     Just tid -> Util.getOnload
+--       $ Route.apiHref
+--       $ Route.Api_Problems :/
+--       ( Nothing, Problem.getParamsToRouteQuery
+--         $ Problem.GetParams
+--         { Problem.gpTopic = Just tid
+--         , Problem.gpAuthor = Nothing
+--         , Problem.gpStatus = Just . fromIntegral . fromEnum $ ProblemStatus.Published
+--         }
+--       )
+--   R.holdDyn [] $ fromMaybe [] <$> response
 
 data Options = Options
   { showAuthor :: Bool -- ^ Show the author
@@ -102,8 +103,8 @@ problemCardWidget opt problemCard = do
           forM_ (zip [0..] topics) $ \(n :: Integer, Topic.Topic tid name _) -> do
             unless (n == 0) $ do
               R.elClass "p" "text-brand-sm text-brand-gray mx-1" $ R.text ">"
-            Ob.routeLink
-              (Route.FrontendRoute_Topics :/ (tid, Route.TopicsRoute_Problems :/ ())) $ do
+            Ob.routeLink -- TODO: update route
+              (Route.FrontendRoute_Home :/ ()) $ do
               R.elClass "p" "hover:underline text-brand-sm text-brand-gray" $ R.text name
         R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "#" ++ show (Problem.id problem))
       let linkProblem = if linkEdit opt

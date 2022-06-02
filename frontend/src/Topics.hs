@@ -63,12 +63,12 @@ widget topicId = do
     topicWidget topic = R.elClass "span" "m-2" $ do
       Util.dynFor topic $ \case
         Left t -> do
-          Ob.routeLink
-            (Route.FrontendRoute_Topics :/ (Topic.id t, Route.TopicsRoute_Problems :/ ())) $ do
+          Ob.routeLink -- TODO: update route
+            (Route.FrontendRoute_Home :/ ()) $ do
             Button.secondary (Topic.name t)
         Right t -> do
-          Ob.routeLink
-            (Route.FrontendRoute_Topics :/ (Topic.id t, Route.TopicsRoute_Problems :/ ())) $ do
+          Ob.routeLink -- TODO: update route
+            (Route.FrontendRoute_Home :/ ()) $ do
             Button.primary (Topic.name t)
     safeInit xs = if length xs == 0 then [] else init xs
     safeLast xs = if length xs == 0 then [] else last xs

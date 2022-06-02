@@ -61,8 +61,8 @@ problemSetCardWidget problemSetCard = Util.dynFor problemSetCard $ \(ProblemSetC
         forM_ (zip [0..] topics) $ \(n :: Integer, Topic.Topic tid name _) -> do
           unless (n == 0) $ do
             R.elClass "p" "text-brand-sm text-brand-gray mx-1" $ R.text ">"
-          Ob.routeLink
-            (Route.FrontendRoute_Topics :/ (tid, Route.TopicsRoute_ProblemSets :/ ())) $ do
+          Ob.routeLink -- TODO: update route
+            (Route.FrontendRoute_Home :/ ()) $ do
             R.elClass "p" "hover:underline text-brand-sm text-brand-gray" $ R.text name
       R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "#" ++ show (ProblemSet.id problemSet))
     Ob.routeLink (Route.FrontendRoute_ViewProblemSet :/ (ProblemSet.id problemSet)) $ do

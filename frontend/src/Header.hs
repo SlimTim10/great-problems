@@ -33,7 +33,7 @@ widget = R.elClass "header" "h-14 py-2 px-3 flex items-center justify-between bo
   Ob.routeLink (Route.FrontendRoute_Home :/ ()) $ do
     R.elClass "p" "font-medium text-xl"
       $ R.text "Great Problems"
-  Ob.routeLink (Route.FrontendRoute_Explore :/ Nothing) $ do
+  Ob.routeLink (Route.FrontendRoute_Search :/ mempty) $ do
     Button.primary "Explore"
   R'.elAttrClass
     "input"

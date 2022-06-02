@@ -26,10 +26,12 @@ widget activeTab = do
   R.elClass "div" "my-6 flex justify-center" $ do
     R.elClass "div" "flex justify-around w-brand-screen-lg" $ do
       tabWidget (activeTab == Problems)
-        (Ob.routeLink (Route.FrontendRoute_Explore :/ (Just (Route.ExploreRoute_Problems :/ ()))))
+        -- TODO: update route
+        (Ob.routeLink (Route.FrontendRoute_Search :/ mempty))
         "Problems"
       tabWidget (activeTab == ProblemSets)
-        (Ob.routeLink (Route.FrontendRoute_Explore :/ (Just (Route.ExploreRoute_ProblemSets :/ ()))))
+        -- TODO: update route
+        (Ob.routeLink (Route.FrontendRoute_Search :/ mempty))
         "Problem sets"
   where
     tabWidget active routeLink txt = case active of

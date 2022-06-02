@@ -135,8 +135,8 @@ widget problemId = mdo
               forM_ (zip [0..] topics) $ \(n :: Integer, Topic.Topic tid name _) -> do
                 unless (n == 0) $ do
                   R.elClass "p" "text-brand-gray mx-1" $ R.text ">"
-                Ob.routeLink
-                  (Route.FrontendRoute_Topics :/ (tid, Route.TopicsRoute_Problems :/ ())) $ do
+                Ob.routeLink -- TODO: update route
+                  (Route.FrontendRoute_Home :/ ()) $ do
                   R.elClass "p" "hover:underline text-brand-primary" $ R.text name
 
     problemPane latestResponse anyLoading = do

@@ -1,6 +1,9 @@
 module Problem.SelectTopic
   ( widget
   , firstTopicId
+  , topicsToDropdownItems
+  , DropdownKey(..)
+  , DropdownItem
   ) where
 
 import Common.Lib.Prelude
@@ -25,6 +28,8 @@ data DropdownKey = DropdownKey
 instance Ord DropdownKey where
   a <= b = ddIdx a <= ddIdx b
 
+type DropdownItem = Map DropdownKey Text
+
 widget
   :: forall t m.
      ( R.DomBuilder t m
@@ -44,7 +49,7 @@ widget setValue = R.elClass "div" "" $ do
   response :: R.Event t (Maybe [Topic.Topic]) <- Util.getOnload $
     Route.apiHref (Route.Api_Topics :/ (Nothing, mempty))
   let allTopics :: R.Event t [Topic.Topic] = fromMaybe [] <$> response
-  dropdownItems :: R.Dynamic t (Map DropdownKey Text) <- R.holdDyn Map.empty $
+  dropdownItems :: R.Dynamic t DropdownItem <- R.holdDyn Map.empty $
     topicsToDropdownItems <$> Topic.flattenHierarchy <$> Topic.topicsToHierarchy <$> allTopics
   let dropdownKeys :: R.Dynamic t [DropdownKey] = Map.keys <$> dropdownItems
   holdSetValue :: R.Dynamic t Integer <- R.holdDyn firstTopicId setValue
@@ -57,22 +62,14 @@ widget setValue = R.elClass "div" "" $ do
     (R.updated setValueKey)
   return $ ddTopicId <$> x
   
-data DropdownItem = DropdownItem
-  { ddiIdx :: Integer
-  , ddiTopic :: Topic.TopicWithLevel
-  }
-
-topicsToDropdownItems :: [Topic.TopicWithLevel] -> Map DropdownKey Text
-topicsToDropdownItems = foldr f mempty . zipWith DropdownItem [1 ..]
+topicsToDropdownItems :: [Topic.TopicWithLevel] -> DropdownItem
+topicsToDropdownItems = foldr addItem mempty . zip [1 ..]
   where
-    f :: DropdownItem -> Map DropdownKey Text -> Map DropdownKey Text
-    f DropdownItem
-      { ddiIdx=idx
-      , ddiTopic=Topic.TopicWithLevel {Topic.twlTopic=t, Topic.twlLevel=lvl}
-      } = Map.insert (DropdownKey idx (Topic.id t)) (indent lvl (Topic.name t))
+    addItem :: (Integer, Topic.TopicWithLevel) -> DropdownItem -> DropdownItem
+    addItem (idx, Topic.TopicWithLevel {Topic.twlTopic=t, Topic.twlLevel=lvl})
+      = Map.insert (DropdownKey idx (Topic.id t)) (indent lvl (Topic.name t))
     indent :: Integral a => a -> Text -> Text
     indent n txt = cs $
       (concat . replicate (fromIntegral n) $ "- ")
       ++
       cs txt
-
