@@ -18,8 +18,6 @@ import qualified Common.Api.Topic as Topic
 import qualified Common.Api.User as User
 import qualified Tabs
 import qualified ProblemCards
--- TODO: clean up
--- import qualified ProblemSetCards
 import qualified Common.Api.Problem as Problem
 import qualified Widget.Button as Button
 import qualified Widget.Input as Input
@@ -63,19 +61,23 @@ widget paramsFromUrl = do
             <$> searchTerm
             <*> selectedTopicId
             <*> selectedAuthorId
-            <*> R.constDyn Nothing -- TODO: use selected collection
-      R.dyn_ $ params <&> \params' ->
-        Ob.setRoute $ (Route.FrontendRoute_Search :/ (Search.paramsToQuery params'))
+            <*> R.constDyn (Search.collection paramsFromUrl)
+      Util.dynFor params $ \params' ->
+        Ob.setRoute $ (Route.FrontendRoute_Search :/ Search.paramsToQuery params')
         <$ (R.leftmost [search, R.keydown Key.Enter searchTermInput])
-  case fromMaybe Search.Problems (Search.collection paramsFromUrl) of
+  let defaultTab = Search.Problems
+  case fromMaybe defaultTab (Search.collection paramsFromUrl) of
     Search.Problems -> do
-      Tabs.widget Tabs.Problems
+      Tabs.widget Tabs.Problems paramsFromUrl
       problems :: R.Dynamic t [Problem.Problem] <- getProblems paramsFromUrl
       ProblemCards.widget problems
     Search.ProblemSets -> do
-      Tabs.widget Tabs.ProblemSets
+      -- Problem sets not yet implemented
+      Tabs.widget Tabs.ProblemSets paramsFromUrl
     Search.Courses -> do
-      Tabs.widget Tabs.Problems
+    -- Courses not yet implemented
+      -- Tabs.widget Tabs.Courses paramsFromUrl
+      return ()
   
 getProblems
   :: ( R.PostBuild t m

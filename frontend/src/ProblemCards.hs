@@ -9,26 +9,19 @@ import qualified Frontend.Lib.Util as Util
 
 import qualified Data.CaseInsensitive as CI
 import qualified Control.Monad.Fix as Fix
-import qualified Language.Javascript.JSaddle as JS
 import qualified Obelisk.Route.Frontend as Ob
 import qualified Reflex.Dom.Core as R
 
+import qualified Common.Route as Route
 import qualified Common.Api.Topic as Topic
 import qualified Common.Api.Problem as Problem
--- TODO: clean up
--- import qualified Common.Api.ProblemStatus as ProblemStatus
 import qualified Common.Api.User as User
-import qualified Common.Route as Route
+import qualified Common.Api.Search as Search
 
 widget
   :: forall t m js.
      ( R.DomBuilder t m
      , R.PostBuild t m
-     , JS.MonadJSM m
-     , JS.MonadJSM (R.Performable m)
-     , R.PerformEvent t m
-     , R.HasJSContext (R.Performable m)
-     , R.TriggerEvent t m
      , R.MonadHold t m
      , Fix.MonadFix m
      , Ob.SetRoute t (Ob.R Route.FrontendRoute) m
@@ -41,36 +34,6 @@ widget problems = do
   R.elClass "div" "flex justify-center" $ do
     R.elClass "div" "w-brand-screen-lg flex flex-col gap-2" $ do
       void $ R.simpleList problems (problemCardWidget defaultOptions)
-
--- TODO: remove
--- getProblems
---   :: ( R.PostBuild t m
---      , JS.MonadJSM (R.Performable m)
---      , R.PerformEvent t m
---      , R.HasJSContext (R.Performable m)
---      , R.TriggerEvent t m
---      , R.MonadHold t m
---      , JS.MonadJSM m
---      )
---   => Maybe Integer
---   -> m (R.Dynamic t [Problem.Problem])
--- getProblems topicId = do
---   response :: R.Event t (Maybe [Problem.Problem]) <- case topicId of
---     Nothing -> Util.getOnload
---       $ Route.apiHref
---       $ Route.Api_Problems :/
---       (Nothing, Problem.getParamsToRouteQuery Problem.getParamsDefault)
---     Just tid -> Util.getOnload
---       $ Route.apiHref
---       $ Route.Api_Problems :/
---       ( Nothing, Problem.getParamsToRouteQuery
---         $ Problem.GetParams
---         { Problem.gpTopic = Just tid
---         , Problem.gpAuthor = Nothing
---         , Problem.gpStatus = Just . fromIntegral . fromEnum $ ProblemStatus.Published
---         }
---       )
---   R.holdDyn [] $ fromMaybe [] <$> response
 
 data Options = Options
   { showAuthor :: Bool -- ^ Show the author
@@ -103,9 +66,15 @@ problemCardWidget opt problemCard = do
           forM_ (zip [0..] topics) $ \(n :: Integer, Topic.Topic tid name _) -> do
             unless (n == 0) $ do
               R.elClass "p" "text-brand-sm text-brand-gray mx-1" $ R.text ">"
-            Ob.routeLink -- TODO: update route
-              (Route.FrontendRoute_Home :/ ()) $ do
-              R.elClass "p" "hover:underline text-brand-sm text-brand-gray" $ R.text name
+            let searchParams = Search.Params
+                  { Search.query = Nothing
+                  , Search.topicId = Just tid
+                  , Search.authorId = Nothing
+                  , Search.collection = Just Search.Problems
+                  }
+            Ob.routeLink
+              (Route.FrontendRoute_Search :/ Search.paramsToQuery searchParams)
+              $ R.elClass "p" "hover:underline text-brand-sm text-brand-gray" $ R.text name
         R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "#" ++ show (Problem.id problem))
       let linkProblem = if linkEdit opt
             then Ob.routeLink

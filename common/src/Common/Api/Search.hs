@@ -35,9 +35,8 @@ paramsFromQuery q = do
 
 paramsToQuery :: Params -> Route.Query
 paramsToQuery ps = Map.fromList
-  [ ("topic", topicId ps >>= Just . cs . show)
+  [ ("q", query ps >>= Just . cs)
+  , ("topic", topicId ps >>= Just . cs . show)
   , ("author", authorId ps >>= Just . cs . show)
-  , ("q", query ps >>= Just . cs)
-  -- TODO: add status
-  -- , ("status", status ps >>= Just . cs . show)
+  , ("collection", collection ps >>= Just . cs . show)
   ]

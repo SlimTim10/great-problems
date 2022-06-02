@@ -50,8 +50,6 @@ data Api :: * -> * where
 
 data FrontendRoute :: * -> * where
   FrontendRoute_Home :: FrontendRoute ()
-  -- TODO: remove
-  -- FrontendRoute_Explore :: FrontendRoute (Maybe (Ob.R ExploreRoute))
   FrontendRoute_Register :: FrontendRoute ()
   FrontendRoute_VerifyEmail :: FrontendRoute Text
   FrontendRoute_SignIn :: FrontendRoute ()
@@ -67,11 +65,6 @@ data FrontendRoute :: * -> * where
   FrontendRoute_Profile :: FrontendRoute Integer
   FrontendRoute_Admin :: FrontendRoute ()
   FrontendRoute_Search :: FrontendRoute Query
-
--- TODO: remove
--- data ExploreRoute :: * -> * where
---   ExploreRoute_Problems :: ExploreRoute ()
---   ExploreRoute_ProblemSets :: ExploreRoute ()
 
 data ProblemsRoute :: * -> * where
   ProblemsRoute_View :: ProblemsRoute ()
@@ -119,11 +112,6 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
   )
   (\case
       FrontendRoute_Home -> Ob.PathEnd $ Ob.unitEncoder mempty
-      -- TODO: remove
-      -- FrontendRoute_Explore -> Ob.PathSegment "explore" $
-      --   Ob.maybeEncoder (Ob.unitEncoder mempty) $ Ob.pathComponentEncoder $ \case
-      --   ExploreRoute_Problems -> Ob.PathSegment "problems" $ Ob.unitEncoder mempty
-      --   ExploreRoute_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.unitEncoder mempty
       FrontendRoute_Register -> Ob.PathSegment "register" $ Ob.unitEncoder mempty
       FrontendRoute_VerifyEmail -> Ob.PathSegment "verify-email" Ob.singlePathSegmentEncoder
       FrontendRoute_ResetPassword -> Ob.PathSegment "reset-password" Ob.singlePathSegmentEncoder
@@ -179,6 +167,4 @@ concat <$> mapM Ob.deriveRouteComponent
   , ''FrontendRoute
   , ''Api
   , ''ProblemsRoute
-  -- TODO: remove
-  -- , ''ExploreRoute
   ]
