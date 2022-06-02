@@ -14,11 +14,6 @@ import qualified Problem.Edit
 import qualified Problem.Duplicate
 import qualified Home
 import qualified Header
--- TODO: clean up
--- import qualified Topics
--- import qualified Tabs
--- import qualified ProblemCards
--- import qualified ProblemSetCards
 import qualified Register
 import qualified VerifyEmail
 import qualified SignIn
@@ -46,21 +41,6 @@ frontend = Ob.Frontend
       Route.FrontendRoute_Home -> do
         Header.widget
         Home.widget
-      -- TODO: remove
-      -- Route.FrontendRoute_Explore -> do
-      --   Header.widget
-      --   Topics.widget Nothing
-      --   path :: R.Dynamic t (Maybe (Ob.R Route.ExploreRoute)) <- Ob.askRoute
-      --   Util.dynFor path $ \case
-      --     Just (Route.ExploreRoute_Problems :/ ()) -> do
-      --       Tabs.widget Tabs.Problems
-      --       ProblemCards.widget Nothing
-      --     Just (Route.ExploreRoute_ProblemSets :/ ()) -> do
-      --       Tabs.widget Tabs.ProblemSets
-      --       ProblemSetCards.widget Nothing
-      --     _ -> do
-      --       Tabs.widget Tabs.Problems
-      --       ProblemCards.widget Nothing
       Route.FrontendRoute_Register -> do
         Header.widget
         R.elClass "div" "bg-brand-light-gray flex justify-center py-4" $ do
@@ -120,20 +100,6 @@ frontend = Ob.Frontend
         problemSetId :: R.Dynamic t Integer <- Ob.askRoute
         R.el "p" $ R.text "Single problem set"
         R.el "p" $ R.display problemSetId
-      -- TODO: remove
-      -- Route.FrontendRoute_Topics -> do
-      --   Header.widget
-      --   path :: R.Dynamic t (Integer, Ob.R Route.TopicsRoute) <- Ob.askRoute
-      --   Util.dynFor path $ \(topicId, route) -> do
-      --     Topics.widget $ Just topicId
-      --     case route of
-      --       Route.TopicsRoute_Problems :/ () -> do
-      --         Tabs.widget Tabs.Problems
-      --         ProblemCards.widget $ Just topicId
-      --       Route.TopicsRoute_ProblemSets :/ () -> do
-      --         Tabs.widget Tabs.ProblemSets
-      --         ProblemCards.widget $ Just topicId
-      --       _ -> pure () -- Type refinement through unification
       Route.FrontendRoute_Profile -> do
         Header.widget
         userId :: R.Dynamic t Integer <- Ob.askRoute

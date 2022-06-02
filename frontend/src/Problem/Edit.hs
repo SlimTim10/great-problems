@@ -168,7 +168,7 @@ widget preloadedProblemId = do
                         (fromJust preloadedProblemId, Route.ProblemsRoute_View :/ ())) $ do
                       Button.secondarySmall "Public view of this problem"
                   R.elClass "div" "pb-3" R.blank
-        R.dyn_ $ showPublicView <$> preloadedProblem
+        Util.dynFor preloadedProblem showPublicView
         preloadedProblem :: R.Dynamic t (Maybe Problem.Problem) <- getPreloadedProblem
         let setTopicId :: R.Event t Integer =
               fromMaybe SelectTopic.firstTopicId
