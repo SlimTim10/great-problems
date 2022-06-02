@@ -2,6 +2,7 @@ module Search
   ( widget
   ) where
 
+import qualified Data.Aeson as JSON
 import qualified Web.KeyCode as Key
 import qualified Data.CaseInsensitive as CI
 import qualified Data.Map as Map
@@ -53,9 +54,37 @@ widget paramsFromUrl = do
       let searchTerm :: R.Dynamic t (Maybe Text) = fmap textToMaybe . R.value $ searchTermInput
       onload :: R.Event t () <- R.getPostBuild
       selectedTopicId :: R.Dynamic t (Maybe Integer) <- R.elClass "div" "my-4" $ do
-        selectTopic $ R.tagPromptlyDyn (R.constDyn $ Search.topicId paramsFromUrl) onload
+        -- selectTopic $ R.tagPromptlyDyn (R.constDyn $ Search.topicId paramsFromUrl) onload
+        let setTopic = R.tagPromptlyDyn (R.constDyn $ Search.topicId paramsFromUrl) onload
+        let indent =
+              \n txt ->
+                cs $
+                (concat . replicate (fromIntegral n) $ "- ")
+                ++
+                cs txt
+        let addTopic :: ((Integer, Topic.TopicWithLevel)) -> DropdownItem Integer -> DropdownItem Integer =
+              \(idx, Topic.TopicWithLevel {Topic.twlTopic=t, Topic.twlLevel=lvl}) ->
+                Map.insert (DropdownKey idx (Topic.id t)) (indent lvl (Topic.name t))
+        selectGeneral
+          setTopic
+          "Topic"
+          (Route.Api_Topics :/ (Nothing, mempty))
+          (Topic.flattenHierarchy . Topic.topicsToHierarchy)
+          addTopic
+          (-1)
+          
       selectedAuthorId :: R.Dynamic t (Maybe Integer) <- R.elClass "div" "my-4" $ do
-        selectAuthor $ R.tagPromptlyDyn (R.constDyn $ Search.authorId paramsFromUrl) onload
+        let setAuthor = R.tagPromptlyDyn (R.constDyn $ Search.authorId paramsFromUrl) onload
+        let addAuthor :: (Integer, User.User) -> DropdownItem Integer -> DropdownItem Integer =
+              \(idx, user) ->
+                Map.insert (DropdownKey idx (User.id user)) (CI.original $ User.fullName user)
+        selectGeneral
+          setAuthor
+          "Author"
+          (Route.Api_Users :/ Nothing)
+          id
+          addAuthor
+          (-1)
       search :: R.Event t () <- Button.primary' "Search"
       let params :: R.Dynamic t Search.Params = Search.Params
             <$> searchTerm
@@ -96,8 +125,8 @@ getProblems params = do
     $ Route.Api_Problems :/ (Nothing, Search.paramsToQuery params)
   R.holdDyn [] $ fromMaybe [] <$> response
 
--- TODO: merge with Problem.SelectTopic widget and selectAuthor
 -- Based on Problem.SelectTopic
+-- TODO: This should be merged with Problem.SelectTopic.widget (and selectAuthor?)
 selectTopic
   :: forall t m.
      ( R.DomBuilder t m
@@ -144,18 +173,72 @@ selectTopic setValue = R.elClass "div" "" $ do
       then Nothing
       else Just tid
 
-data UserDropdownKey = UserDropdownKey
-  { udIdx :: Integer
-  , udUserId :: Integer
-  } deriving (Eq)
+-- TODO: clean up
 
-instance Ord UserDropdownKey where
-  a <= b = udIdx a <= udIdx b
+-- data UserDropdownKey = UserDropdownKey
+--   { udIdx :: Integer
+--   , udUserId :: Integer
+--   } deriving (Eq)
 
-type UserDropdownItem = Map UserDropdownKey Text
+-- instance Ord UserDropdownKey where
+--   a <= b = udIdx a <= udIdx b
 
-selectAuthor
-  :: forall t m.
+-- type UserDropdownItem = Map UserDropdownKey Text
+
+-- selectAuthor
+--   :: forall t m.
+--      ( R.DomBuilder t m
+--      , R.HasJSContext (R.Performable m)
+--      , JS.MonadJSM (R.Performable m)
+--      , R.PostBuild t m
+--      , JS.MonadJSM m
+--      , R.PerformEvent t m
+--      , R.TriggerEvent t m
+--      , R.MonadHold t m
+--      , MonadFix m
+--      )
+--   => R.Event t (Maybe Integer) -- ^ Set selected author by ID
+--   -> m (R.Dynamic t (Maybe Integer)) -- ^ Author ID
+-- selectAuthor setValue = R.elClass "div" "" $ do
+--   R.elClass "p" "font-medium mb-2" $ R.text "Author"
+--   response :: R.Event t (Maybe [User.User]) <- Util.getOnload $
+--     Route.apiHref (Route.Api_Users :/ Nothing)
+--   let allUsers :: R.Event t [User.User] = fromMaybe [] <$> response
+--   dropdownItems :: R.Dynamic t UserDropdownItem <- R.holdDyn Map.empty $
+--     usersToDropdownItems
+--     <$> allUsers
+--   -- Every dropdown item needs an index and user ID, so we use -1 for the "Any" item (default)
+--   let anyIdx = -1
+--   let anyUserId = -1
+--   let anyItem = UserDropdownKey anyIdx anyUserId
+--   let defaultItem = anyItem
+--   let setValue' :: R.Event t Integer = fromMaybe anyUserId <$> setValue
+--   let dropdownItems' = Map.insert anyItem "Any" <$> dropdownItems
+--   let dropdownKeys :: R.Dynamic t [UserDropdownKey] = Map.keys <$> dropdownItems'
+--   holdSetValue :: R.Dynamic t Integer <- R.holdDyn anyUserId setValue'
+--   let setValueKey :: R.Dynamic t UserDropdownKey =
+--         (\v -> fromMaybe defaultItem . find ((== v) . udUserId))
+--         <$> holdSetValue <*> dropdownKeys
+--   x <- Input.dropdownClass' "border border-brand-light-gray w-full"
+--     defaultItem
+--     dropdownItems'
+--     (R.updated setValueKey)
+--   return $ x <&> \ddk -> do
+--     let uid = udUserId ddk
+--     if uid == -1
+--       then Nothing
+--       else Just uid
+      
+--   where
+--     usersToDropdownItems :: [User.User] -> UserDropdownItem
+--     usersToDropdownItems = foldr addItem mempty . zip [1 ..]
+--       where
+--         addItem :: (Integer, User.User) -> UserDropdownItem -> UserDropdownItem
+--         addItem (idx, user) = Map.insert (UserDropdownKey idx (User.id user)) (CI.original $ User.fullName user)
+
+-- TODO: rename
+selectGeneral
+  :: forall t m a b c.
      ( R.DomBuilder t m
      , R.HasJSContext (R.Performable m)
      , JS.MonadJSM (R.Performable m)
@@ -165,42 +248,56 @@ selectAuthor
      , R.TriggerEvent t m
      , R.MonadHold t m
      , MonadFix m
+     , Eq a
+     , JSON.FromJSON b
      )
-  => R.Event t (Maybe Integer) -- ^ Set selected author by ID
-  -> m (R.Dynamic t (Maybe Integer)) -- ^ Author ID
-selectAuthor setValue = R.elClass "div" "" $ do
-  R.elClass "p" "font-medium mb-2" $ R.text "Author"
-  response :: R.Event t (Maybe [User.User]) <- Util.getOnload $
-    Route.apiHref (Route.Api_Users :/ Nothing)
-  let allUsers :: R.Event t [User.User] = fromMaybe [] <$> response
-  dropdownItems :: R.Dynamic t UserDropdownItem <- R.holdDyn Map.empty $
-    usersToDropdownItems
-    <$> allUsers
+  => R.Event t (Maybe a) -- ^ Set selected item by value
+  -> Text -- ^ Dropdown title
+  -> Ob.R Route.Api -- ^ Route to fetch values to populate
+  -> ([b] -> [c]) -- ^ Transform the fetched values before adding to dropdown (use id if not needed)
+  -> ((Integer, c) -> DropdownItem a -> DropdownItem a) -- ^ How to add an item to the dropdown
+  -> a -- ^ Value for "Any" item
+  -> m (R.Dynamic t (Maybe a)) -- ^ Selected dropdown value
+selectGeneral setValue title route transformValues addItem anyValue = R.elClass "div" "" $ do
+  R.elClass "p" "font-medium mb-2" $ R.text title
+  response :: R.Event t (Maybe [b]) <- Util.getOnload $
+    Route.apiHref route
+  let allValues :: R.Event t [b] = fromMaybe [] <$> response
+  dropdownItems :: R.Dynamic t (DropdownItem a) <- R.holdDyn Map.empty $
+    valuesToDropdownItems
+    . transformValues
+    <$> allValues
   -- Every dropdown item needs an index and user ID, so we use -1 for the "Any" item (default)
   let anyIdx = -1
-  let anyUserId = -1
-  let anyItem = UserDropdownKey anyIdx anyUserId
+  let anyItem = DropdownKey anyIdx anyValue
   let defaultItem = anyItem
-  let setValue' :: R.Event t Integer = fromMaybe anyUserId <$> setValue
+  let setValue' :: R.Event t a = fromMaybe anyValue <$> setValue
   let dropdownItems' = Map.insert anyItem "Any" <$> dropdownItems
-  let dropdownKeys :: R.Dynamic t [UserDropdownKey] = Map.keys <$> dropdownItems'
-  holdSetValue :: R.Dynamic t Integer <- R.holdDyn anyUserId setValue'
-  let setValueKey :: R.Dynamic t UserDropdownKey =
-        (\v -> fromMaybe defaultItem . find ((== v) . udUserId))
+  let dropdownKeys :: R.Dynamic t [DropdownKey a] = Map.keys <$> dropdownItems'
+  holdSetValue :: R.Dynamic t a <- R.holdDyn anyValue setValue'
+  let setValueKey :: R.Dynamic t (DropdownKey a) =
+        (\v -> fromMaybe defaultItem . find ((== v) . dkValue))
         <$> holdSetValue <*> dropdownKeys
   x <- Input.dropdownClass' "border border-brand-light-gray w-full"
     defaultItem
     dropdownItems'
     (R.updated setValueKey)
   return $ x <&> \ddk -> do
-    let uid = udUserId ddk
-    if uid == -1
+    let v = dkValue ddk
+    if v == anyValue
       then Nothing
-      else Just uid
+      else Just v
       
   where
-    usersToDropdownItems :: [User.User] -> UserDropdownItem
-    usersToDropdownItems = foldr addItem mempty . zip [1 ..]
-      where
-        addItem :: (Integer, User.User) -> UserDropdownItem -> UserDropdownItem
-        addItem (idx, user) = Map.insert (UserDropdownKey idx (User.id user)) (CI.original $ User.fullName user)
+    valuesToDropdownItems :: [c] -> DropdownItem a
+    valuesToDropdownItems = foldr addItem mempty . zip [1 ..]
+
+type DropdownItem a = Map (DropdownKey a) Text
+
+data DropdownKey a = DropdownKey
+  { dkIdx :: Integer
+  , dkValue :: a
+  } deriving (Eq)
+
+instance Eq a => Ord (DropdownKey a) where
+  a <= b = dkIdx a <= dkIdx b
