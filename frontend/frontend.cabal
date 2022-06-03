@@ -74,6 +74,7 @@ library
     VerifyEmail
     Widget.Button
     Widget.Input
+    Widget.Select
     Widget.Spinner
   ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits
   default-extensions:
