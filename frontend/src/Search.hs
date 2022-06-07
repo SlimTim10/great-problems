@@ -82,7 +82,8 @@ widget paramsFromUrl = do
           id
           addAuthor
           (-1)
-      search :: R.Event t () <- Button.primary' "Search"
+      search :: R.Event t () <- R.elClass "div" "mt-4" $ do
+        Button.primary' "Search"
       let params :: R.Dynamic t Search.Params = Search.Params
             <$> searchTerm
             <*> selectedTopicId
