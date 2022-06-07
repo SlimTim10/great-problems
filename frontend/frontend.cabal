@@ -31,6 +31,12 @@ library
   exposed-modules:
     Frontend
   other-modules:
+    AdminDashboard
+    AdminDashboard.MetaSettings
+    AdminDashboard.Topics
+    AdminDashboard.Users
+    AdminDashboard.Util
+    ForgotPassword
     Frontend.Lib.Util
     Frontend.Lib.Storage
     Frontend.Lib.LocalStorage
@@ -38,19 +44,9 @@ library
     Frontend.Lib.Api
     Header
     Home
-    ProblemCards
-    ProblemSetCards
-    Settings
-    Register
-    SignIn
-    SignOut
-    Tabs
-    Topics
-    VerifyEmail
-    ForgotPassword
-    ResetPassword
-    ResendEmail
     Layout.CenteredNarrow
+    MyReflex.Dom.Widget.Basic
+    MyReflex.Dom.Xhr.FormData
     Problem.View
     Problem.Edit
     Problem.Compile
@@ -65,16 +61,21 @@ library
     Problem.Summary
     Problem.UploadPrb
     Problem.Duplicate
+    ProblemCards
+    ProblemSetCards
+    Register
+    ResendEmail
+    ResetPassword
+    Search
+    Settings
+    SignIn
+    SignOut
+    Tabs
+    VerifyEmail
     Widget.Button
     Widget.Input
+    Widget.Select
     Widget.Spinner
-    AdminDashboard
-    AdminDashboard.Util
-    AdminDashboard.MetaSettings
-    AdminDashboard.Users
-    AdminDashboard.Topics
-    MyReflex.Dom.Widget.Basic
-    MyReflex.Dom.Xhr.FormData
   ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits
   default-extensions:
              DataKinds

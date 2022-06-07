@@ -99,13 +99,17 @@ getProblems conn routeQuery = do
         "status_id = ?"
         (id :: Integer -> Integer)
         routeQuery
-  let exprs = [topicExpr, authorExpr, statusExpr]
+  queryExpr <- case Route.textParamFromQuery "q" routeQuery of
+    Nothing -> return Nothing
+    Just q -> return $ Just ("summary LIKE CONCAT('%', ?, '%')", SQL.toField q)
+  let exprs = [topicExpr, authorExpr, statusExpr, queryExpr]
   let whereClause = mconcat . intersperse " AND " . map fst . catMaybes $ exprs
+  let orderByClause = " ORDER BY updated_at DESC "
   let whereParams = map snd . catMaybes $ exprs
   dbProblems :: [DbProblem.Problem] <-
     if not . all isNothing $ exprs
-    then SQL.query conn ("SELECT * FROM problems WHERE " <> whereClause) whereParams
-    else SQL.query_ conn "SELECT * FROM problems"
+    then SQL.query conn ("SELECT * FROM problems WHERE " <> whereClause <> orderByClause) whereParams
+    else SQL.query_ conn ("SELECT * FROM problems " <> orderByClause)
   problemAuthors :: [User.User] <- sequence (map (fetchProblemAuthor conn) dbProblems)
   problemTopics :: [Topic.Topic] <- sequence (map (fetchProblemTopic conn) dbProblems)
   problemTopicPaths :: [[Topic.Topic]] <- sequence (map (fetchProblemTopicPath conn) dbProblems)

@@ -46,7 +46,7 @@ widget = do
   Util.getCurrentUser >>= \case
     Nothing -> do
       onload <- R.getPostBuild
-      Ob.setRoute $ Route.FrontendRoute_Explore :/ Nothing <$ onload
+      Ob.setRoute $ Route.FrontendRoute_Home :/ () <$ onload
     Just user -> widget' user
 
 widget'

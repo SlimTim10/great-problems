@@ -9,6 +9,7 @@ import qualified Obelisk.Route.Frontend as Ob
 import qualified Reflex.Dom.Core as R
 
 import qualified Common.Route as Route
+import qualified Common.Api.Search as Search
 
 data Tab = Problems | ProblemSets
   deriving (Eq)
@@ -21,15 +22,20 @@ widget
      , R.Prerender js t m
      )
   => Tab
+  -> Search.Params
   -> m ()
-widget activeTab = do
+widget activeTab searchParams = do
   R.elClass "div" "my-6 flex justify-center" $ do
     R.elClass "div" "flex justify-around w-brand-screen-lg" $ do
       tabWidget (activeTab == Problems)
-        (Ob.routeLink (Route.FrontendRoute_Explore :/ (Just (Route.ExploreRoute_Problems :/ ()))))
+        (Ob.routeLink
+          (Route.FrontendRoute_Search :/
+            (Search.paramsToQuery $ searchParams {Search.collection = Just Search.Problems})))
         "Problems"
       tabWidget (activeTab == ProblemSets)
-        (Ob.routeLink (Route.FrontendRoute_Explore :/ (Just (Route.ExploreRoute_ProblemSets :/ ()))))
+        (Ob.routeLink
+          (Route.FrontendRoute_Search :/
+            (Search.paramsToQuery $ searchParams {Search.collection = Just Search.ProblemSets})))
         "Problem sets"
   where
     tabWidget active routeLink txt = case active of

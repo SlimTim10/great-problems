@@ -39,4 +39,4 @@ widget = do
     R.elClass "p" "text-red-500" $ R.text (Error.message e)
         
   R.dyn_ errorMessage
-  Ob.setRoute $ Route.FrontendRoute_Explore :/ Nothing <$ R.filterRight response
+  Ob.setRoute $ Route.FrontendRoute_Home :/ () <$ R.filterRight response

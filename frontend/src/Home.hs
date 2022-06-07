@@ -48,7 +48,7 @@ widget = do
       R.elClass "p" "mt-2" $ R.text "Discover problems & problem sets in topics like Math, Electrical Engineering, Physics, and more, made by real teachers."
       
     R.elClass "div" "mt-10 flex flex-col items-center gap-2 w-full" $ do
-      Ob.routeLink (Route.FrontendRoute_Explore :/ Nothing) $ do
+      Ob.routeLink (Route.FrontendRoute_Search :/ mempty) $ do
         Button.primary "Explore"
       R.elClass "div" "flex" $ do
         R.elClass "div" "flex items-center mr-2" $ do
@@ -101,7 +101,7 @@ widget = do
           $ R.blank
 
     R.elClass "div" "my-10 flex flex-col items-center gap-2 w-full" $ do
-      Ob.routeLink (Route.FrontendRoute_Explore :/ Nothing) $ do
+      Ob.routeLink (Route.FrontendRoute_Search :/ mempty) $ do
         Button.primary "Explore"
       R.elClass "div" "flex" $ do
         R.elClass "div" "flex items-center mr-2" $ do
