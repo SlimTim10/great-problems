@@ -105,10 +105,6 @@ getProblems conn routeQuery = do
   let exprs = [topicExpr, authorExpr, statusExpr, queryExpr]
   let whereClause = mconcat . intersperse " AND " . map fst . catMaybes $ exprs
   let whereParams = map snd . catMaybes $ exprs
-  putStrLn "\nWHERE"
-  print whereClause
-  print whereParams
-  putStrLn "\n"
   dbProblems :: [DbProblem.Problem] <-
     if not . all isNothing $ exprs
     then SQL.query conn ("SELECT * FROM problems WHERE " <> whereClause) whereParams
