@@ -41,8 +41,7 @@ widget
   -> m ()
 widget paramsFromUrl = do
   R.elClass "div" "bg-brand-light-gray flex justify-center py-4" $ do
-    R.elClass "div" "max-w-screen-lg flex flex-col items-center" $ do
-      R.el "p" $ R.text "Search bar"
+    R.elClass "div" "max-w-screen-lg flex flex-col" $ do
       searchTermInput <- R.inputElement
         $ R.def & R.inputElementConfig_elementConfig . R.elementConfig_initialAttributes .~
         ( "type" =: "search"
