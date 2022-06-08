@@ -101,7 +101,7 @@ getProblems conn routeQuery = do
         routeQuery
   queryExpr <- case Route.textParamFromQuery "q" routeQuery of
     Nothing -> return Nothing
-    Just q -> return $ Just ("summary LIKE CONCAT('%', ?, '%')", SQL.toField q)
+    Just q -> return $ Just ("summary ILIKE CONCAT('%', ?, '%')", SQL.toField q)
   let exprs = [topicExpr, authorExpr, statusExpr, queryExpr]
   let whereClause = mconcat . intersperse " AND " . map fst . catMaybes $ exprs
   let orderByClause = " ORDER BY updated_at DESC "
