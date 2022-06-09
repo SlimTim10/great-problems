@@ -4,6 +4,7 @@ module Backend where
 
 import Common.Lib.Prelude
 
+import qualified Data.Int as Int
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Text as T
@@ -41,6 +42,9 @@ import qualified Email
 
 maxRequestBodySize :: Word.Word64
 maxRequestBodySize = 2048
+
+maxUploadSize :: Int.Int64
+maxUploadSize = 50 * 1024 * 1024 -- 50 MB max file size
 
 backend :: Ob.Backend Route.BackendRoute Route.FrontendRoute
 backend = Ob.Backend
@@ -627,7 +631,7 @@ handleFileUploads = do
   figures <- Snap.handleFileUploads
     tmpDir
     Snap.defaultUploadPolicy
-    (const $ Snap.allowWithMaximumSize 20000) -- 20 kB max file size
+    (const $ Snap.allowWithMaximumSize maxUploadSize)
     handleFile
     <&> catMaybes
   return figures
