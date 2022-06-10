@@ -194,7 +194,7 @@ getProblemById conn problemId = do
 
 createProblem :: SQL.Connection -> Problem.BareProblem -> IO (Maybe Problem.Problem)
 createProblem conn newProblem = do
-  let statusId = fromEnum $ Problem.bpStatus newProblem
+  let statusId = ProblemStatus.toId $ Problem.bpStatus newProblem
   mProblemId :: Maybe (SQL.Only Integer) <- headMay
     <$> SQL.query conn
     "INSERT INTO problems(summary, contents, topic_id, author_id, status_id) VALUES (?,?,?,?,?) returning id"
@@ -215,7 +215,7 @@ createProblem conn newProblem = do
 
 updateProblem :: SQL.Connection -> Problem.BareProblem -> IO (Maybe Problem.Problem)
 updateProblem conn problem = do
-  let statusId = fromEnum $ Problem.bpStatus problem
+  let statusId = ProblemStatus.toId $ Problem.bpStatus problem
   mProblemId :: Maybe (SQL.Only Integer) <- headMay
     <$> SQL.query conn
     "UPDATE problems SET (summary, contents, topic_id, status_id, updated_at) = (?, ?, ?, ?, DEFAULT) WHERE id = ? returning id"

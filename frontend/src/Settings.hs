@@ -171,7 +171,7 @@ getDrafts authorId = do
       $ Problem.GetParams
       { Problem.gpTopic = Nothing
       , Problem.gpAuthor = Just authorId
-      , Problem.gpStatus = Just (fromIntegral . fromEnum $ ProblemStatus.Draft)
+      , Problem.gpStatus = Just (ProblemStatus.toId ProblemStatus.Draft)
       }
     )
   R.holdDyn [] $ fromMaybe [] <$> response

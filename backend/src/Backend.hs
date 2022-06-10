@@ -377,18 +377,21 @@ removeCookie name = Snap.expireCookie $ mkCookie name ""
 
 handleGetProblems :: SQL.Connection -> Maybe User.User -> Route.Query -> Snap.Snap ()
 handleGetProblems conn mUser routeQuery = do
-  let problemStatus :: ProblemStatus.Status = fromMaybe ProblemStatus.Published
+  let problemStatusId :: Maybe Integer =
+        fromMaybe (Problem.gpStatus Problem.defaultGetParams)
         $ Route.readParamFromQuery "status" routeQuery
-  case problemStatus of
+  let routeQuery' = routeQuery <> ("status" =: (cs . show <$> problemStatusId))
+  case ProblemStatus.fromId <$> problemStatusId of
+    Just ProblemStatus.Published -> do
+      writeJSON =<< IO.liftIO (Queries.getProblems conn routeQuery')
     -- Restrict fetching drafts to authorized users (user ID matches draft author ID)
-    ProblemStatus.Draft -> case mUser of
+    _ -> case mUser of
       Nothing -> writeJSON $ Error.mk "No access"
       Just user -> do
-        let authorId :: Maybe Integer = Route.readParamFromQuery "author" routeQuery
+        let authorId :: Maybe Integer = Route.readParamFromQuery "author" routeQuery'
         if Just (User.id user) /= authorId
           then writeJSON $ Error.mk "No access"
-          else writeJSON =<< IO.liftIO (Queries.getProblems conn routeQuery)
-    ProblemStatus.Published -> writeJSON =<< IO.liftIO (Queries.getProblems conn routeQuery)
+          else writeJSON =<< IO.liftIO (Queries.getProblems conn routeQuery')
 
 -- Create or update problem
 handleSaveProblem :: SQL.Connection -> User.User -> Snap.Snap ()

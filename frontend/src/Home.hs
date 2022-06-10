@@ -127,7 +127,7 @@ widget = do
       problem :: R.Dynamic t (Maybe Problem.Problem) <- do
         let url :: R.Event t Text = R.ffor problemId' $ \pid -> do
               Route.apiHref $ Route.Api_Problems :/
-                (Just pid, Problem.getParamsToRouteQuery Problem.getParamsDefault)
+                (Just pid, Problem.getParamsToRouteQuery Problem.defaultGetParams)
         r :: R.Event t (Maybe Problem.Problem) <- R.getAndDecode url
         R.holdDyn Nothing r
 
