@@ -32,6 +32,7 @@ data BackendRoute :: * -> * where
 
 data Api :: * -> * where
   Api_Problems :: Api (Maybe Integer, Query)
+  Api_ProblemSets :: Api (Maybe Integer, Query)
   Api_Figures :: Api Integer
   Api_Topics :: Api (Maybe Integer, Query)
   Api_TopicHierarchy :: Api (Maybe Integer)
@@ -62,7 +63,7 @@ data FrontendRoute :: * -> * where
   FrontendRoute_Problems :: FrontendRoute (Integer, Ob.R ProblemsRoute)
   FrontendRoute_NewProblem :: FrontendRoute ()
   FrontendRoute_DuplicateProblem :: FrontendRoute Integer
-  FrontendRoute_ViewProblemSet :: FrontendRoute Integer
+  FrontendRoute_ProblemSets :: FrontendRoute (Integer, Ob.R ProblemSetsRoute)
   FrontendRoute_Profile :: FrontendRoute Integer
   FrontendRoute_Topics :: FrontendRoute (Integer, Ob.R TopicsRoute)
   FrontendRoute_Admin :: FrontendRoute ()
@@ -78,6 +79,11 @@ data TopicsRoute :: * -> * where
 data ProblemsRoute :: * -> * where
   ProblemsRoute_View :: ProblemsRoute ()
   ProblemsRoute_Edit :: ProblemsRoute ()
+
+data ProblemSetsRoute :: * -> * where
+  ProblemSetsRoute_View :: ProblemSetsRoute ()
+  ProblemSetsRoute_ViewProblem :: ProblemSetsRoute Integer
+  ProblemSetsRoute_Edit :: ProblemSetsRoute ()
 
 idPathSegmentEncoder
   :: Ob.Encoder (Either Text) (Either Text) Integer Ob.PageName
@@ -96,8 +102,8 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
       BackendRoute_Api -> Ob.PathSegment "api" $ Ob.pathComponentEncoder $ \case
         Api_Problems -> Ob.PathSegment "problems" $ Ob.pathSegmentEncoder .
           bimap (Ob.maybeEncoder (Ob.unitEncoder mempty) Ob.unsafeTshowEncoder) Ob.queryOnlyEncoder
-        -- Api_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.pathSegmentEncoder .
-        --   bimap (Ob.maybeEncoder (Ob.unitEncoder mempty) Ob.unsafeTshowEncoder) Ob.queryOnlyEncoder
+        Api_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.pathSegmentEncoder .
+          bimap (Ob.maybeEncoder (Ob.unitEncoder mempty) Ob.unsafeTshowEncoder) Ob.queryOnlyEncoder
         Api_Figures -> Ob.PathSegment "figures" $ idPathSegmentEncoder
         Api_Topics -> Ob.PathSegment "topics" $ Ob.pathSegmentEncoder .
           bimap (Ob.maybeEncoder (Ob.unitEncoder mempty) Ob.unsafeTshowEncoder) Ob.queryOnlyEncoder
@@ -141,7 +147,13 @@ fullRouteEncoder = Ob.mkFullRouteEncoder
             ProblemsRoute_View -> Ob.PathEnd $ Ob.unitEncoder mempty
             ProblemsRoute_Edit -> Ob.PathSegment "edit" $ Ob.unitEncoder mempty
         )
-      FrontendRoute_ViewProblemSet -> Ob.PathSegment "problem-sets" $ idPathSegmentEncoder
+      FrontendRoute_ProblemSets -> Ob.PathSegment "problem-sets" $ Ob.pathSegmentEncoder .
+        bimap Ob.unsafeTshowEncoder
+        (Ob.pathComponentEncoder $ \case
+            ProblemSetsRoute_View -> Ob.PathEnd $ Ob.unitEncoder mempty
+            ProblemSetsRoute_ViewProblem -> Ob.PathSegment "view" $ idPathSegmentEncoder
+            ProblemSetsRoute_Edit -> Ob.PathSegment "edit" $ Ob.unitEncoder mempty
+        )
       FrontendRoute_Profile -> Ob.PathSegment "users" $ idPathSegmentEncoder
       FrontendRoute_Topics -> Ob.PathSegment "topics" $ Ob.pathSegmentEncoder .
         bimap Ob.unsafeTshowEncoder
@@ -182,5 +194,6 @@ concat <$> mapM Ob.deriveRouteComponent
   , ''Api
   , ''TopicsRoute
   , ''ProblemsRoute
+  , ''ProblemSetsRoute
   , ''ExploreRoute
   ]

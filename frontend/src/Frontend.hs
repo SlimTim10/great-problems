@@ -111,11 +111,29 @@ frontend = Ob.Frontend
                   Header.widget
                 Problem.Edit.widget $ Just problemId
             _ -> pure () -- Type refinement through unification
-      Route.FrontendRoute_ViewProblemSet -> do
-        Header.widget
-        problemSetId :: R.Dynamic t Integer <- Ob.askRoute
-        R.el "p" $ R.text "Single problem set"
-        R.el "p" $ R.display problemSetId
+      Route.FrontendRoute_ProblemSets -> do
+        path :: R.Dynamic t (Integer, Ob.R Route.ProblemSetsRoute) <- Ob.askRoute
+        Util.dynFor path $ \(problemSetId, route) -> do
+          case route of
+            Route.ProblemSetsRoute_View :/ () -> do
+              R.elClass "div" "h-screen flex flex-col" $ do
+                R.elClass "div" "flex-none"
+                  Header.widget
+                R.el "p" $ R.display $ R.constDyn problemSetId
+              -- ProblemSet.View.widget problemSetId
+            Route.ProblemSetsRoute_ViewProblem :/ problemOrder -> do
+              R.elClass "div" "h-screen flex flex-col" $ do
+                R.elClass "div" "flex-none"
+                  Header.widget
+                R.el "p" $ R.display $ R.constDyn problemOrder
+              -- ProblemSet.View.widget problemSetId
+            Route.ProblemSetsRoute_Edit :/ () -> do
+              R.elClass "div" "h-screen flex flex-col gap-3" $ do
+                R.elClass "div" "flex-none"
+                  Header.widget
+                R.el "p" $ R.display $ R.constDyn problemSetId
+              -- ProblemSet.Edit.widget $ Just problemSetId
+            _ -> pure () -- Type refinement through unification
       Route.FrontendRoute_Topics -> do
         Header.widget
         path :: R.Dynamic t (Integer, Ob.R Route.TopicsRoute) <- Ob.askRoute
