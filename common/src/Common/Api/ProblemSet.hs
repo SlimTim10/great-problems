@@ -7,6 +7,7 @@ import Common.Lib.Prelude
 import qualified Data.Aeson as JSON
 import qualified Data.Time.Clock as Time
 import qualified Common.Api.User as User
+import qualified Common.Api.Problem as Problem
 import GHC.Generics (Generic)
 
 data ProblemSet = ProblemSet
@@ -15,6 +16,7 @@ data ProblemSet = ProblemSet
   , author :: User.User
   , createdAt :: Time.UTCTime
   , updatedAt :: Time.UTCTime
+  , problems :: [Problem.Problem]
   } deriving
   ( Eq
   , Show
@@ -27,20 +29,13 @@ data BareProblemSet = BareProblemSet
   { bpsProblemSetId :: Maybe Integer
   , bpsSummary :: Text
   , bpsAuthorId :: Integer
+  , bpsProblemIds :: [Integer]
   }
 
-data ProblemSetWithProblems = ProblemSetWithProblems
-  { pswpSummary :: Text
-  , pswpUpdatedAt :: Time.UTCTime
-  , pswpProblems :: [ProblemId]
-  }
-
-data ProblemId = Integer
-
-data RequestParam
-  = ParamProblemId
-  | ParamSummary
-  deriving (Eq, Ord)
-instance Show RequestParam where
-  show ParamProblemId = "problemId"
-  show ParamSummary = "summary"
+-- data RequestParam
+--   = ParamProblemId
+--   | ParamSummary
+--   deriving (Eq, Ord)
+-- instance Show RequestParam where
+--   show ParamProblemId = "problemId"
+--   show ParamSummary = "summary"
