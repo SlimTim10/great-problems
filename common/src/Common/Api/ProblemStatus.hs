@@ -2,6 +2,8 @@
 {-# LANGUAGE DeriveAnyClass #-}
 module Common.Api.ProblemStatus
   ( Status(..)
+  , toId
+  , fromId
   ) where
 
 import qualified Data.Aeson as JSON
@@ -19,3 +21,9 @@ data Status = Draft | Published
   , JSON.FromJSON
   , JSON.ToJSON
   )
+
+toId :: Status -> Integer
+toId = fromIntegral . fromEnum
+
+fromId :: Integer -> Status
+fromId = toEnum . fromIntegral

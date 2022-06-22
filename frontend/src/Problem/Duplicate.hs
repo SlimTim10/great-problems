@@ -6,12 +6,12 @@ import Common.Lib.Prelude
 
 import qualified Language.Javascript.JSaddle as JS
 import qualified Reflex.Dom.Core as R
-import qualified Obelisk.Route.Frontend as Ob
 
 import qualified Common.Route as Route
 import qualified Common.Api.Error as Error
 import qualified Common.Api.Problem as Problem
 import qualified Frontend.Lib.Api as Api
+import qualified Frontend.Lib.Util as Util
 
 widget
   :: ( R.DomBuilder t m
@@ -20,7 +20,6 @@ widget
      , R.HasJSContext (R.Performable m)
      , R.PerformEvent t m
      , R.TriggerEvent t m
-     , Ob.SetRoute t (Ob.R Route.FrontendRoute) m
      , R.MonadHold t m
      )
   => Integer
@@ -39,6 +38,6 @@ widget problemId = do
     R.elClass "p" "text-red-500" $ R.text (Error.message e)
     
   R.dyn_ errorMessage
-  Ob.setRoute
+  Util.redirectWithoutHistory
     $ (\p -> Route.FrontendRoute_Problems :/ (Problem.id p, Route.ProblemsRoute_Edit :/ ()))
     <$> R.filterRight response

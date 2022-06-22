@@ -1,4 +1,6 @@
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 -- | A local Prelude, meant to be imported unqualified.
 module Common.Lib.Prelude
   ( module Data.Text
@@ -23,6 +25,7 @@ module Common.Lib.Prelude
   , maybeToEither
   , singleton
   , safeToEnum
+  , textToMaybe
   ) where
 
 import Data.Text (Text)
@@ -66,3 +69,7 @@ safeToEnum i =
   in if i >= fromEnum min' && i <= fromEnum max'
      then Just r
      else Nothing
+
+textToMaybe :: Text -> Maybe Text
+textToMaybe "" = Nothing
+textToMaybe x = Just x

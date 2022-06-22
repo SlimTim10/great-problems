@@ -46,7 +46,7 @@ widget = do
   Util.getCurrentUser >>= \case
     Nothing -> do
       onload <- R.getPostBuild
-      Ob.setRoute $ Route.FrontendRoute_Explore :/ Nothing <$ onload
+      Ob.setRoute $ Route.FrontendRoute_Home :/ () <$ onload
     Just user -> widget' user
 
 widget'
@@ -171,7 +171,7 @@ getDrafts authorId = do
       $ Problem.GetParams
       { Problem.gpTopic = Nothing
       , Problem.gpAuthor = Just authorId
-      , Problem.gpStatus = Just (fromIntegral . fromEnum $ ProblemStatus.Draft)
+      , Problem.gpStatus = Just (ProblemStatus.toId ProblemStatus.Draft)
       }
     )
   R.holdDyn [] $ fromMaybe [] <$> response

@@ -4,6 +4,7 @@ module Backend where
 
 import Common.Lib.Prelude
 
+import qualified Data.Int as Int
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Text as T
@@ -42,6 +43,9 @@ import qualified Email
 
 maxRequestBodySize :: Word.Word64
 maxRequestBodySize = 2048
+
+maxUploadSize :: Int.Int64
+maxUploadSize = 50 * 1024 * 1024 -- 50 MB max file size
 
 backend :: Ob.Backend Route.BackendRoute Route.FrontendRoute
 backend = Ob.Backend
@@ -129,10 +133,7 @@ backend = Ob.Backend
               
             Route.Api_Users :/ Nothing -> do
               Snap.rqMethod <$> Snap.getRequest >>= \case
-                Snap.GET -> case mUser of
-                  Just User.User{User.role = Role.Administrator} ->
-                    writeJSON =<< IO.liftIO (Queries.getUsers conn)
-                  _ -> writeJSON $ Error.mk "No access"
+                Snap.GET -> writeJSON =<< IO.liftIO (Queries.getUsers conn)
                 _ -> return ()
                 
             Route.Api_Users :/ (Just userId) -> do
@@ -430,19 +431,21 @@ removeCookie name = Snap.expireCookie $ mkCookie name ""
 
 handleGetProblems :: SQL.Connection -> Maybe User.User -> Route.Query -> Snap.Snap ()
 handleGetProblems conn mUser routeQuery = do
-  let problemStatus :: Maybe ProblemStatus.Status = safeToEnum =<<
-        Route.readParamFromQuery "status" routeQuery
-  case problemStatus of
+  let problemStatusId :: Maybe Integer =
+        fromMaybe (Problem.gpStatus Problem.defaultGetParams)
+        $ Route.readParamFromQuery "status" routeQuery
+  let routeQuery' = routeQuery <> ("status" =: (cs . show <$> problemStatusId))
+  case ProblemStatus.fromId <$> problemStatusId of
+    Just ProblemStatus.Published -> do
+      writeJSON =<< IO.liftIO (Queries.getProblems conn routeQuery')
     -- Restrict fetching drafts to authorized users (user ID matches draft author ID)
-    Just ProblemStatus.Draft -> case mUser of
+    _ -> case mUser of
       Nothing -> writeJSON $ Error.mk "No access"
       Just user -> do
-        let authorId :: Maybe Integer = Route.readParamFromQuery "author" routeQuery
+        let authorId :: Maybe Integer = Route.readParamFromQuery "author" routeQuery'
         if Just (User.id user) /= authorId
           then writeJSON $ Error.mk "No access"
-          else writeJSON =<< IO.liftIO (Queries.getProblems conn routeQuery)
-    Just ProblemStatus.Published -> writeJSON =<< IO.liftIO (Queries.getProblems conn routeQuery)
-    Nothing -> writeJSON $ Error.mk "No access"
+          else writeJSON =<< IO.liftIO (Queries.getProblems conn routeQuery')
 
 handleGetProblemSets :: SQL.Connection -> Maybe User.User -> Route.Query -> Snap.Snap ()
 handleGetProblemSets conn mUser routeQuery = do
@@ -718,7 +721,7 @@ handleFileUploads = do
   figures <- Snap.handleFileUploads
     tmpDir
     Snap.defaultUploadPolicy
-    (const $ Snap.allowWithMaximumSize 20000) -- 20 kB max file size
+    (const $ Snap.allowWithMaximumSize maxUploadSize)
     handleFile
     <&> catMaybes
   return figures

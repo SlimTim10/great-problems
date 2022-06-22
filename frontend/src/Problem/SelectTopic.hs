@@ -4,7 +4,6 @@ module Problem.SelectTopic
   ) where
 
 import Common.Lib.Prelude
-import qualified Frontend.Lib.Util as Util
 
 import qualified Data.Map as Map
 import qualified Language.Javascript.JSaddle as JS
@@ -12,18 +11,10 @@ import qualified Reflex.Dom.Core as R
 
 import qualified Common.Api.Topic as Topic
 import qualified Common.Route as Route
-import qualified Widget.Input as Input
+import qualified Widget.Select as Select
 
 firstTopicId :: Integer
 firstTopicId = 0
-
-data DropdownKey = DropdownKey
-  { ddIdx :: Integer
-  , ddTopicId :: Integer
-  } deriving (Eq)
-
-instance Ord DropdownKey where
-  a <= b = ddIdx a <= ddIdx b
 
 widget
   :: forall t m.
@@ -39,40 +30,20 @@ widget
      )
   => R.Event t Integer -- ^ Set selected topic by ID
   -> m (R.Dynamic t Integer) -- ^ Topic ID
-widget setValue = R.elClass "div" "" $ do
-  R.elClass "p" "font-medium mb-2" $ R.text "Topic"
-  response :: R.Event t (Maybe [Topic.Topic]) <- Util.getOnload $
-    Route.apiHref (Route.Api_Topics :/ (Nothing, mempty))
-  let allTopics :: R.Event t [Topic.Topic] = fromMaybe [] <$> response
-  dropdownItems :: R.Dynamic t (Map DropdownKey Text) <- R.holdDyn Map.empty $
-    topicsToDropdownItems <$> Topic.flattenHierarchy <$> Topic.topicsToHierarchy <$> allTopics
-  let dropdownKeys :: R.Dynamic t [DropdownKey] = Map.keys <$> dropdownItems
-  holdSetValue :: R.Dynamic t Integer <- R.holdDyn firstTopicId setValue
-  let setValueKey :: R.Dynamic t DropdownKey =
-        (\v -> fromMaybe (DropdownKey 1 firstTopicId) . find ((== v) . ddTopicId))
-        <$> holdSetValue <*> dropdownKeys
-  x <- Input.dropdownClass' "border border-brand-light-gray w-full"
-    (DropdownKey 1 firstTopicId)
-    dropdownItems
-    (R.updated setValueKey)
-  return $ ddTopicId <$> x
-  
-data DropdownItem = DropdownItem
-  { ddiIdx :: Integer
-  , ddiTopic :: Topic.TopicWithLevel
-  }
-
-topicsToDropdownItems :: [Topic.TopicWithLevel] -> Map DropdownKey Text
-topicsToDropdownItems = foldr f mempty . zipWith DropdownItem [1 ..]
-  where
-    f :: DropdownItem -> Map DropdownKey Text -> Map DropdownKey Text
-    f DropdownItem
-      { ddiIdx=idx
-      , ddiTopic=Topic.TopicWithLevel {Topic.twlTopic=t, Topic.twlLevel=lvl}
-      } = Map.insert (DropdownKey idx (Topic.id t)) (indent lvl (Topic.name t))
-    indent :: Integral a => a -> Text -> Text
-    indent n txt = cs $
-      (concat . replicate (fromIntegral n) $ "- ")
-      ++
-      cs txt
-
+widget setTopic = do
+  let indent =
+        \n txt ->
+          cs $
+          (concat . replicate (fromIntegral n) $ "- ")
+          ++
+          cs txt
+  let addTopic :: (Integer, Topic.TopicWithLevel) -> Select.DropdownItem Integer -> Select.DropdownItem Integer =
+        \(idx, Topic.TopicWithLevel {Topic.twlTopic=t, Topic.twlLevel=lvl}) ->
+          Map.insert (Select.DropdownKey idx (Topic.id t)) (indent lvl (Topic.name t))
+  Select.widget
+    setTopic
+    "Topic"
+    (Route.Api_Topics :/ (Nothing, mempty))
+    (Topic.flattenHierarchy . Topic.topicsToHierarchy)
+    addTopic
+    firstTopicId

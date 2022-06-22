@@ -23,6 +23,7 @@ import qualified Common.Api.User as User
 import qualified Common.Api.Topic as Topic
 import qualified Common.Api.Role as Role
 import qualified Common.Api.MetaSetting as MetaSetting
+import qualified Common.Api.Search as Search
 import qualified Problem.PdfViewer as PdfViewer
 import qualified Widget.Button as Button
 import qualified Widget.Input as Input
@@ -144,9 +145,15 @@ widget problemId = mdo
               forM_ (zip [0..] topics) $ \(n :: Integer, Topic.Topic tid name _) -> do
                 unless (n == 0) $ do
                   R.elClass "p" "text-brand-gray mx-1" $ R.text ">"
+                let searchParams = Search.Params
+                      { Search.query = Nothing
+                      , Search.topicId = Just tid
+                      , Search.authorId = Nothing
+                      , Search.collection = Just Search.Problems
+                      }
                 Ob.routeLink
-                  (Route.FrontendRoute_Topics :/ (tid, Route.TopicsRoute_Problems :/ ())) $ do
-                  R.elClass "p" "hover:underline text-brand-primary" $ R.text name
+                  (Route.FrontendRoute_Search :/ Search.paramsToQuery searchParams)
+                  $ R.elClass "p" "hover:underline text-brand-primary" $ R.text name
           _ -> R.blank
 
     problemPane latestResponse anyLoading = do
