@@ -269,6 +269,7 @@ getProblemSets conn routeQuery = do
     then SQL.query conn ("SELECT * FROM problem_sets WHERE " <> whereClause) whereParams
     else SQL.query_ conn "SELECT * FROM problem_sets"
   problemSetAuthors :: [User.User] <- sequence (map (fetchProblemSetAuthor conn) dbProblemSets)
+  -- problemSetProblems :: [[Problem.Problem]]
   return
     $ flip map
     (zip
@@ -282,7 +283,19 @@ getProblemSets conn routeQuery = do
         , ProblemSet.author = problemSetAuthor
         , ProblemSet.createdAt = DbProblemSet.created_at dbProblemSet
         , ProblemSet.updatedAt = DbProblemSet.updated_at dbProblemSet
+        -- , ProblemSet.problems = _
         }
+
+getProblemsByProblemSetId :: SQL.Connection -> Integer -> IO [Problem.Problem]
+getProblemsByProblemSetId conn problemSetId = do
+  dbProblems :: [DbProblem.Problem] <- SQL.query conn "SELECT problems.* FROM problems INNER JOIN problem_set_problems ON problems.id = problem_id WHERE problem_set_id = ?" (SQL.Only problemSetId)
+  let problemIds :: [Integer] = map DbProblem.id dbProblems
+  mProblems :: [Maybe Problem.Problem] <- sequence $ map (getProblemById conn) problemIds
+  return $ catMaybes mProblems
+
+fetchProblemSetProblems :: SQL.Connection -> DbProblemSet.ProblemSet -> IO [Problem.Problem]
+fetchProblemSetProblems conn (DbProblemSet.ProblemSet {DbProblemSet.id=problemSetId}) =
+  getProblemsByProblemSetId conn problemSetId
 
 fetchProblemSetAuthor :: SQL.Connection -> DbProblemSet.ProblemSet -> IO User.User
 fetchProblemSetAuthor conn (DbProblemSet.ProblemSet {DbProblemSet.author_id=authorId}) =
@@ -297,6 +310,7 @@ getProblemSetById conn problemSetId = do
   case mDbProblemSet of
     Nothing -> return Nothing
     Just dbProblemSet -> do
+      problems <- fetchProblemSetProblems conn dbProblemSet
       problemSetAuthor <- fetchProblemSetAuthor conn dbProblemSet
       return . Just $
         ProblemSet.ProblemSet
@@ -305,21 +319,32 @@ getProblemSetById conn problemSetId = do
         , ProblemSet.author = problemSetAuthor
         , ProblemSet.createdAt = DbProblemSet.created_at dbProblemSet
         , ProblemSet.updatedAt = DbProblemSet.updated_at dbProblemSet
+        , ProblemSet.problems = problems
         }
 
 createProblemSet :: SQL.Connection -> ProblemSet.BareProblemSet -> IO (Maybe ProblemSet.ProblemSet)
 createProblemSet conn newProblemSet = do
   mProblemSetId :: Maybe (SQL.Only Integer) <- headMay
     <$> SQL.query conn
-    "INSERT INTO problem_sets (summary, author_id) VALUES (?,?,?,?,?) returning id"
+    "INSERT INTO problem_sets (summary, author_id) VALUES (?,?) returning id"
     ( ProblemSet.bpsSummary newProblemSet
     , ProblemSet.bpsAuthorId newProblemSet
     )
   case SQL.fromOnly <$> mProblemSetId of
     Nothing -> return Nothing
     Just problemSetId -> do
+      let problemIds :: [Integer] = ProblemSet.bpsProblemIds newProblemSet
+      let positions :: [Integer] = [1 ..]
+      forM_ (zip problemIds positions) $ \(problemId, position) -> do
+        void $ SQL.execute conn
+          "INSERT INTO problem_set_problems (problem_id, problem_set_id, position) VALUES (?,?,?)"
+          ( problemId
+          , problemSetId
+          , position
+          )
       getProblemSetById conn problemSetId
 
+-- TODO: insert into problem_set_problems
 updateProblemSet :: SQL.Connection -> ProblemSet.BareProblemSet -> IO (Maybe ProblemSet.ProblemSet)
 updateProblemSet conn problemSet = do
   mProblemSetId :: Maybe (SQL.Only Integer) <- headMay
@@ -336,7 +361,8 @@ updateProblemSet conn problemSet = do
         (SQL.Only problemSetId)
       getProblemSetById conn problemSetId
 
--- | Delete a problem and its figures (on delete cascade should be set in schema).
+-- | Delete a problem set.
+-- TODO: delete from problem_set_problems
 deleteProblemSet
   :: SQL.Connection
   -> Integer -- ^ Problem ID

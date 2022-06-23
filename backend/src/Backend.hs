@@ -85,7 +85,7 @@ backend = Ob.Backend
 
             Route.Api_ProblemSets :/ (Nothing, query) -> do
               Snap.rqMethod <$> Snap.getRequest >>= \case
-                -- Snap.GET -> handleGetProblemSets conn mUser query
+                Snap.GET -> handleGetProblemSets conn mUser query
                 Snap.POST -> case mUser of
                   Nothing -> writeJSON $ Error.mk "No access"
                   -- Just user -> handleCreateProblemSet conn user
