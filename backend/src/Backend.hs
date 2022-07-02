@@ -88,7 +88,7 @@ backend = Ob.Backend
                 Snap.GET -> handleGetProblemSets conn mUser query
                 Snap.POST -> case mUser of
                   Nothing -> writeJSON $ Error.mk "No access"
-                  -- Just user -> handleCreateProblemSet conn user
+                  Just user -> handleSaveProblemSet conn user
                 _ -> return ()
                 
             Route.Api_ProblemSets :/ (Just problemSetId, _) -> do
@@ -96,7 +96,8 @@ backend = Ob.Backend
                 Snap.GET -> writeJSON =<< IO.liftIO (Queries.getProblemSetById conn problemSetId)
                 Snap.POST -> case mUser of
                   Nothing -> writeJSON $ Error.mk "No access"
-                  -- Just user -> handleAddProblemToSet conn user problemSetId
+                  -- TODO: add single problem to problem set (by problem or problem ID in request body?)
+                  Just user -> handleAddProblemToSet conn user problemSetId
                 Snap.PUT -> case mUser of
                   Nothing -> writeJSON $ Error.mk "No access"
                   -- Just user -> handleEditProblemSet conn user problemSetId
@@ -551,21 +552,51 @@ handleSaveProblem conn user = do
       | otherwise -> do
           writeJSON $ Error.mk "Something went wrong"
 
--- handleCreateProblemSet :: SQL.Connection -> User.User -> Snap.Snap ()
--- handleCreateProblemSet conn user = do
---   let getTextParam :: ProblemSet.RequestParam -> Snap.Snap Text = \param -> do
---         Snap.rqPostParam (cs . show $ param)
---           <$> Snap.getRequest
---           <&> cs . BS.concat . fromMaybe mempty
---   summary <- getTextParam Problem.ParamSummary
---   if User.role user `elem` [Role.Contributor, Role.Moderator, Role.Administrator]
---       then createNewProblemSet
---               conn
---               ProblemSet.BareProblemSet
---               { ProblemSet.bpsSummary = summary
---               , ProblemSet.bpsAuthorId = User.id user
---               }
---   else writeJSON $ Error.mk "Something went wrong"
+-- Create or update problem set
+handleSaveProblemSet :: SQL.Connection -> User.User -> Snap.Snap ()
+handleSaveProblemSet conn user = do
+  let getTextParam :: ProblemSet.RequestParam -> Snap.Snap Text = \param -> do
+        Snap.rqPostParam (cs . show $ param)
+          <$> Snap.getRequest
+          <&> cs . BS.concat . fromMaybe mempty
+  problemSetId <- getTextParam ProblemSet.ParamProblemSetId
+  summary <- getTextParam ProblemSet.ParamSummary
+  problemIds <- getTextParam ProblemSet.ParamProblemIds
+  existingAuthor :: Maybe User.User <- IO.liftIO $ do
+    if T.null problemSetId
+      then return Nothing
+      else
+      do
+        (Queries.getProblemSetById conn (read . cs $ problemSetId)) >>= \case
+          Nothing -> return Nothing
+          Just pset -> return . Just $ ProblemSet.author pset
+  if
+    | isJust existingAuthor && (User.id <$> existingAuthor) /= Just (User.id user) -> do
+      writeJSON $ Error.mk "No access"
+    | T.null summary -> do
+      writeJSON $ Error.mk "Summary cannot be empty"
+    | User.role user `elem` [Role.Basic, Role.Contributor, Role.Moderator, Role.Administrator] -> do
+      if
+        | T.null problemSetId -> do
+          createNewProblemSet
+            conn
+            ProblemSet.BareProblemSet
+            { ProblemSet.bpsProblemSetId = Nothing
+            , ProblemSet.bpsSummary = summary
+            , ProblemSet.bpsAuthorId = User.id user
+            , ProblemSet.bpsProblemIds = read . cs $ problemIds
+            }
+        | otherwise -> do
+          updateExistingProblemSet
+            conn
+            ProblemSet.BareProblemSet
+            { ProblemSet.bpsProblemSetId = Just $ (read . cs $ problemSetId :: Integer)
+            , ProblemSet.bpsSummary = summary
+            , ProblemSet.bpsAuthorId = User.id user
+            , ProblemSet.bpsProblemIds = read . cs $ problemIds
+            }
+    | otherwise -> do
+      writeJSON $ Error.mk "No access"
 
 createNewProblem :: SQL.Connection -> Problem.BareProblem -> Snap.Snap ()
 createNewProblem conn problem = do
@@ -573,14 +604,15 @@ createNewProblem conn problem = do
     Nothing -> writeJSON $ Error.mk "Something went wrong"
     Just createdProblem -> writeJSON createdProblem
         
--- createNewProblemSet :: SQL.Connection -> ProblemSet.BareProblemSet -> Snap.Snap ()
--- createNewProblemSet conn problemSet = do
---   IO.liftIO (Queries.createProblemSet conn problemSet) >>= \case
---     Nothing -> writeJSON $ Error.mk "Something went wrong"
---     Just createdProblemSet -> writeJSON createdProblemSet
-        
--- handleAddProblemToSet :: SQL.Connection -> Problem.Problem -> Snap.Snap ()
--- handleAddProblemToSet conn problem = do
+createNewProblemSet :: SQL.Connection -> ProblemSet.BareProblemSet -> Snap.Snap ()
+createNewProblemSet conn problemSet = do
+  IO.liftIO (Queries.createProblemSet conn problemSet) >>= \case
+    Nothing -> writeJSON $ Error.mk "Something went wrong"
+    Just createdProblemSet -> writeJSON createdProblemSet
+
+-- TODO: problem or problem ID in request body?
+-- handleAddProblemToSet :: SQL.Connection -> User.User -> Integer -> Snap.Snap ()
+-- handleAddProblemToSet conn user problemId = do
 --   IO.liftIO (Queries.updateProblem conn problem) >>= \case
 --     Nothing -> writeJSON $ Error.mk "Something went wrong"
 --     Just updatedProblem -> writeJSON updatedProblem
@@ -590,6 +622,12 @@ updateExistingProblem conn problem = do
   IO.liftIO (Queries.updateProblem conn problem) >>= \case
     Nothing -> writeJSON $ Error.mk "Something went wrong"
     Just updatedProblem -> writeJSON updatedProblem
+
+updateExistingProblemSet :: SQL.Connection -> ProblemSet.BareProblemSet -> Snap.Snap ()
+updateExistingProblemSet conn problemSet = do
+  IO.liftIO (Queries.updateProblemSet conn problemSet) >>= \case
+    Nothing -> writeJSON $ Error.mk "Something went wrong"
+    Just updatedProblemSet -> writeJSON updatedProblemSet
 
 handleDeleteProblem :: SQL.Connection -> User.User -> Integer -> Snap.Snap ()
 handleDeleteProblem conn user problemId = do

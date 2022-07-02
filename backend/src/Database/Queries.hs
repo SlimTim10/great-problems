@@ -108,13 +108,13 @@ getProblems conn routeQuery = do
         "status_id = ?"
         (id :: Integer -> Integer)
         routeQuery
-  queryExpr <- case Route.textParamFromQuery "q" routeQuery of
+  searchQueryExpr <- case Route.textParamFromQuery "q" routeQuery of
     Nothing -> return Nothing
     Just q -> return $ Just ("summary ILIKE CONCAT('%', ?, '%')", SQL.toField q)
-  let exprs = [topicExpr, authorExpr, statusExpr, queryExpr]
+  let exprs = [topicExpr, authorExpr, statusExpr, searchQueryExpr]
   let whereClause = mconcat . intersperse " AND " . map fst . catMaybes $ exprs
-  let orderByClause = " ORDER BY updated_at DESC "
   let whereParams = map snd . catMaybes $ exprs
+  let orderByClause = " ORDER BY updated_at DESC "
   dbProblems :: [DbProblem.Problem] <-
     if not . all isNothing $ exprs
     then SQL.query conn ("SELECT * FROM problems WHERE " <> whereClause <> orderByClause) whereParams
@@ -254,36 +254,48 @@ deleteProblem
 deleteProblem conn problemId = void $ SQL.execute conn
   "DELETE FROM problems WHERE id = ?" (SQL.Only problemId)
 
+-- | Get all problem sets matching the query.
+-- Problem sets do not belong to a specific topic. If a topic is specified, select all problem sets that involve any problems belonging to that topic.
 getProblemSets :: SQL.Connection -> Route.Query -> IO [ProblemSet.ProblemSet]
 getProblemSets conn routeQuery = do
+  -- TODO: topic
+  -- topicExpr <- case Route.readParamFromQuery "topic" routeQuery of
+  --   Nothing -> return Nothing
+  --   Just topicId -> do
+  --     _
   let authorExpr = exprFromRouteParam
         "author"
         "author_id = ?"
         (id :: Integer -> Integer)
         routeQuery
-  let exprs = [authorExpr]
+  searchQueryExpr <- case Route.textParamFromQuery "q" routeQuery of
+    Nothing -> return Nothing
+    Just q -> return $ Just ("summary ILIKE CONCAT('%', ?, '%')", SQL.toField q)
+  let exprs = [authorExpr, searchQueryExpr]
   let whereClause = mconcat . intersperse " AND " . map fst . catMaybes $ exprs
   let whereParams = map snd . catMaybes $ exprs
+  let orderByClause = " ORDER BY updated_at DESC "
   dbProblemSets :: [DbProblemSet.ProblemSet] <-
     if not . all isNothing $ exprs
-    then SQL.query conn ("SELECT * FROM problem_sets WHERE " <> whereClause) whereParams
-    else SQL.query_ conn "SELECT * FROM problem_sets"
-  problemSetAuthors :: [User.User] <- sequence (map (fetchProblemSetAuthor conn) dbProblemSets)
-  -- problemSetProblems :: [[Problem.Problem]]
+    then SQL.query conn ("SELECT * FROM problem_sets WHERE " <> whereClause <> orderByClause) whereParams
+    else SQL.query_ conn ("SELECT * FROM problem_sets" <> orderByClause)
+  problemSetsAuthors :: [User.User] <- sequence (map (fetchProblemSetAuthor conn) dbProblemSets)
+  problemSetsProblems :: [[Problem.Problem]] <- sequence (map (fetchProblemSetProblems conn) dbProblemSets)
   return
     $ flip map
-    (zip
+    (zip3
       dbProblemSets
-      problemSetAuthors
+      problemSetsAuthors
+      problemSetsProblems
     )
-    $ \(dbProblemSet, problemSetAuthor) ->
+    $ \(dbProblemSet, problemSetAuthor, problemSetProblems) ->
         ProblemSet.ProblemSet
         { ProblemSet.id = DbProblemSet.id dbProblemSet
         , ProblemSet.summary = DbProblemSet.summary dbProblemSet
         , ProblemSet.author = problemSetAuthor
         , ProblemSet.createdAt = DbProblemSet.created_at dbProblemSet
         , ProblemSet.updatedAt = DbProblemSet.updated_at dbProblemSet
-        -- , ProblemSet.problems = _
+        , ProblemSet.problems = problemSetProblems
         }
 
 getProblemsByProblemSetId :: SQL.Connection -> Integer -> IO [Problem.Problem]
@@ -344,12 +356,11 @@ createProblemSet conn newProblemSet = do
           )
       getProblemSetById conn problemSetId
 
--- TODO: insert into problem_set_problems
 updateProblemSet :: SQL.Connection -> ProblemSet.BareProblemSet -> IO (Maybe ProblemSet.ProblemSet)
 updateProblemSet conn problemSet = do
   mProblemSetId :: Maybe (SQL.Only Integer) <- headMay
     <$> SQL.query conn
-    "UPDATE problem_sets SET (summary, updated_at) = (?, ?, ?, ?, DEFAULT) WHERE id = ? returning id"
+    "UPDATE problem_sets SET (summary, updated_at) = (?, DEFAULT) WHERE id = ? returning id"
     ( ProblemSet.bpsSummary problemSet
     , ProblemSet.bpsProblemSetId problemSet
     )
@@ -357,15 +368,23 @@ updateProblemSet conn problemSet = do
     Nothing -> return Nothing
     Just problemSetId -> do
       void $ SQL.execute conn
-        "DELETE FROM figures WHERE problem_set_id = ?"
+        "DELETE FROM problem_set_problems WHERE problem_set_id = ?"
         (SQL.Only problemSetId)
+      let problemIds :: [Integer] = ProblemSet.bpsProblemIds problemSet
+      let positions :: [Integer] = [1 ..]
+      forM_ (zip problemIds positions) $ \(problemId, position) -> do
+        void $ SQL.execute conn
+          "INSERT INTO problem_set_problems (problem_id, problem_set_id, position) VALUES (?,?,?)"
+          ( problemId
+          , problemSetId
+          , position
+          )
       getProblemSetById conn problemSetId
 
--- | Delete a problem set.
--- TODO: delete from problem_set_problems
+-- | Delete a problem set and its associated problem_set_problems (on delete cascade should be set in schema).
 deleteProblemSet
   :: SQL.Connection
-  -> Integer -- ^ Problem ID
+  -> Integer -- ^ Problem set ID
   -> IO () -- ^ No error handling
 deleteProblemSet conn problemSetId = void $ SQL.execute conn
   "DELETE FROM problem_sets WHERE id = ?" (SQL.Only problemSetId)

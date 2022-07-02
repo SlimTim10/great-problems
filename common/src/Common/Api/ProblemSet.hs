@@ -32,10 +32,12 @@ data BareProblemSet = BareProblemSet
   , bpsProblemIds :: [Integer]
   }
 
--- data RequestParam
---   = ParamProblemId
---   | ParamSummary
---   deriving (Eq, Ord)
--- instance Show RequestParam where
---   show ParamProblemId = "problemId"
---   show ParamSummary = "summary"
+data RequestParam
+  = ParamProblemSetId
+  | ParamSummary
+  | ParamProblemIds
+  deriving (Eq, Ord)
+instance Show RequestParam where
+  show ParamProblemSetId = "problemSetId"
+  show ParamSummary = "summary"
+  show ParamProblemIds = "problemIds"
