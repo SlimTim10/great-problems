@@ -40,4 +40,5 @@ library
     Common.Api.Request.Register
     Common.Api.Request.ChangePassword
     Common.Api.Request.ResendEmail
+    Common.Api.Search
   ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits

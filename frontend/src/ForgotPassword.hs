@@ -2,13 +2,12 @@ module ForgotPassword
   ( widget
   ) where
 
-import Common.Lib.Prelude
-
 import qualified Data.CaseInsensitive as CI
 import qualified Web.KeyCode as Key
 import qualified Language.Javascript.JSaddle as JS
 import qualified Reflex.Dom.Core as R
 
+import Common.Lib.Prelude
 import qualified Widget.Input as Input
 import qualified Widget.Button as Button
 import qualified Widget.Spinner as Spinner

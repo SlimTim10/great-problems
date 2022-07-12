@@ -11,11 +11,12 @@ import qualified Language.Javascript.JSaddle as JS
 import qualified Obelisk.Route.Frontend as Ob
 import qualified Reflex.Dom.Core as R
 
+import qualified Common.Route as Route
 import qualified Common.Api.Topic as Topic
 import qualified Common.Api.ProblemSet as ProblemSet
 import qualified Common.Api.ProblemSetCard as ProblemSetCard
 import qualified Common.Api.User as User
-import qualified Common.Route as Route
+import qualified Common.Api.Search as Search
 
 widget
   :: forall t m js.
@@ -61,9 +62,15 @@ problemSetCardWidget problemSetCard = Util.dynFor problemSetCard $ \(ProblemSetC
         forM_ (zip [0..] topics) $ \(n :: Integer, Topic.Topic tid name _) -> do
           unless (n == 0) $ do
             R.elClass "p" "text-brand-sm text-brand-gray mx-1" $ R.text ">"
+          let searchParams = Search.Params
+                { Search.query = Nothing
+                , Search.topicId = Just tid
+                , Search.authorId = Nothing
+                , Search.collection = Just Search.ProblemSets
+                }
           Ob.routeLink
-            (Route.FrontendRoute_Topics :/ (tid, Route.TopicsRoute_ProblemSets :/ ())) $ do
-            R.elClass "p" "hover:underline text-brand-sm text-brand-gray" $ R.text name
+            (Route.FrontendRoute_Search :/ Search.paramsToQuery searchParams)
+            $ R.elClass "p" "hover:underline text-brand-sm text-brand-gray" $ R.text name
       R.elClass "p" "text-brand-sm text-brand-gray" $ R.text (cs $ "#" ++ show (ProblemSet.id problemSet))
     Ob.routeLink (Route.FrontendRoute_ViewProblemSet :/ (ProblemSet.id problemSet)) $ do
       R.elClass "div" "group" $ do

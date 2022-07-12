@@ -42,11 +42,11 @@ data GetParams = GetParams
   , gpStatus :: Maybe Integer -- Filter by status ID
   }
 
-getParamsDefault :: GetParams
-getParamsDefault = GetParams
+defaultGetParams :: GetParams
+defaultGetParams = GetParams
   { gpTopic = Nothing
   , gpAuthor = Nothing
-  , gpStatus = Just . fromIntegral . fromEnum $ ProblemStatus.Published
+  , gpStatus = Just . ProblemStatus.toId $ ProblemStatus.Published
   }
 
 getParamsToRouteQuery :: GetParams -> Route.Query

@@ -99,13 +99,17 @@ getProblems conn routeQuery = do
         "status_id = ?"
         (id :: Integer -> Integer)
         routeQuery
-  let exprs = [topicExpr, authorExpr, statusExpr]
+  queryExpr <- case Route.textParamFromQuery "q" routeQuery of
+    Nothing -> return Nothing
+    Just q -> return $ Just ("summary ILIKE CONCAT('%', ?, '%')", SQL.toField q)
+  let exprs = [topicExpr, authorExpr, statusExpr, queryExpr]
   let whereClause = mconcat . intersperse " AND " . map fst . catMaybes $ exprs
+  let orderByClause = " ORDER BY updated_at DESC "
   let whereParams = map snd . catMaybes $ exprs
   dbProblems :: [DbProblem.Problem] <-
     if not . all isNothing $ exprs
-    then SQL.query conn ("SELECT * FROM problems WHERE " <> whereClause) whereParams
-    else SQL.query_ conn "SELECT * FROM problems"
+    then SQL.query conn ("SELECT * FROM problems WHERE " <> whereClause <> orderByClause) whereParams
+    else SQL.query_ conn ("SELECT * FROM problems " <> orderByClause)
   problemAuthors :: [User.User] <- sequence (map (fetchProblemAuthor conn) dbProblems)
   problemTopics :: [Topic.Topic] <- sequence (map (fetchProblemTopic conn) dbProblems)
   problemTopicPaths :: [[Topic.Topic]] <- sequence (map (fetchProblemTopicPath conn) dbProblems)
@@ -190,7 +194,7 @@ getProblemById conn problemId = do
 
 createProblem :: SQL.Connection -> Problem.BareProblem -> IO (Maybe Problem.Problem)
 createProblem conn newProblem = do
-  let statusId = fromEnum $ Problem.bpStatus newProblem
+  let statusId = ProblemStatus.toId $ Problem.bpStatus newProblem
   mProblemId :: Maybe (SQL.Only Integer) <- headMay
     <$> SQL.query conn
     "INSERT INTO problems(summary, contents, topic_id, author_id, status_id) VALUES (?,?,?,?,?) returning id"
@@ -211,7 +215,7 @@ createProblem conn newProblem = do
 
 updateProblem :: SQL.Connection -> Problem.BareProblem -> IO (Maybe Problem.Problem)
 updateProblem conn problem = do
-  let statusId = fromEnum $ Problem.bpStatus problem
+  let statusId = ProblemStatus.toId $ Problem.bpStatus problem
   mProblemId :: Maybe (SQL.Only Integer) <- headMay
     <$> SQL.query conn
     "UPDATE problems SET (summary, contents, topic_id, status_id, updated_at) = (?, ?, ?, ?, DEFAULT) WHERE id = ? returning id"
