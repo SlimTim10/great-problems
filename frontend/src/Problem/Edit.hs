@@ -81,6 +81,24 @@ widget
   -> m ()
 widget preloadedProblemId = do
   user :: Maybe User.User <- Util.getCurrentUser
+  preloadedProblem :: R.Dynamic t (Maybe (Either Error.Error Problem.Problem)) <- getPreloadedProblem
+  afterLoad :: R.Event t R.TickInfo <- R.tickLossyFromPostBuildTime 0.01
+  let redirect = preloadedProblem <&> \case
+        Nothing -> R.blank
+        Just (Left _) -> do
+          -- Problem does not exist; redirect to homepage
+          Ob.setRoute
+            $ (Route.FrontendRoute_Home :/ ()) <$ afterLoad
+        Just (Right preloadedProblem') -> case user of
+          -- Check user's permissions; redirect to view
+          Nothing -> Ob.setRoute
+              $ (Route.FrontendRoute_Problems :/ (Problem.id preloadedProblem', Route.ProblemsRoute_View :/ ())) <$ afterLoad
+          Just u -> if (u == Problem.author preloadedProblem') || (User.role u == Role.Administrator) 
+            then R.blank
+            else Ob.setRoute
+              $ (Route.FrontendRoute_Problems :/ (Problem.id preloadedProblem', Route.ProblemsRoute_View :/ ())) <$ afterLoad
+  R.dyn_ redirect
+
   when ((User.role <$> user) == Just Role.Basic) $ do
     R.elClass "div" "flex flex-col items-center bg-gray-200 py-2" $ do
       R.el "p" $ R.text "As a Basic user, you can only make drafts. Contributors can publish problems for others to see."
@@ -127,22 +145,25 @@ widget preloadedProblemId = do
     return ()
 
   where
-    getPreloadedProblem :: m (R.Dynamic t (Maybe Problem.Problem))
+    getPreloadedProblem :: m (R.Dynamic t (Maybe (Either Error.Error Problem.Problem)))
     getPreloadedProblem = do
-      response :: R.Event t (Maybe Problem.Problem) <- case preloadedProblemId of
+      res :: R.Event t (Maybe Problem.Problem) <- case preloadedProblemId of
         Nothing -> return R.never
         Just pid -> do
           Util.getOnload
             $ Route.apiHref $ Route.Api_Problems :/ (Just pid, mempty)
-      R.holdDyn Nothing response
+      let res' = res <&> \case
+            Nothing -> Just $ Left $ Error.mk "Problem does not exist"
+            Just x -> Just $ Right x
+      R.holdDyn Nothing res'
 
     fetchFigures
-      ::  R.Dynamic t (Maybe Problem.Problem)
+      ::  R.Dynamic t (Maybe (Either Error.Error Problem.Problem))
       -> m (R.Dynamic t [FormFile.FormFile])
     fetchFigures problem = do
-      let urls :: R.Event t [Text] = R.ffor (R.updated problem) $ \case
-            Nothing -> []
-            Just p -> R.ffor (Problem.figures p) $ \x -> Route.apiHref $ Route.Api_Figures :/ (Figure.id x)
+      let urls :: R.Event t [Text] = R.updated problem <&> \case
+            Just (Right p) -> R.ffor (Problem.figures p) $ \x -> Route.apiHref $ Route.Api_Figures :/ (Figure.id x)
+            _ -> []
       let requests :: R.Event t [R.XhrRequest ()] = (fmap . map)
             (\x -> R.XhrRequest "GET" x $ R.def
               & R.xhrRequestConfig_responseType .~ Just R.XhrResponseType_Blob
@@ -157,7 +178,7 @@ widget preloadedProblemId = do
       R.elClass "div" "w-96 flex-none flex flex-col pr-2 border-r border-brand-light-gray" $ mdo
         let showPublicView = \case
               Nothing -> R.blank
-              Just p ->
+              Just (Right p) ->
                 if not $ Problem.status p == ProblemStatus.Published
                 then R.blank
                 else do
@@ -168,16 +189,17 @@ widget preloadedProblemId = do
                         (fromJust preloadedProblemId, Route.ProblemsRoute_View :/ ())) $ do
                       Button.secondarySmall "Public view of this problem"
                   R.elClass "div" "pb-3" R.blank
-        Util.dynFor preloadedProblem showPublicView
-        preloadedProblem :: R.Dynamic t (Maybe Problem.Problem) <- getPreloadedProblem
-        let setTopicId :: R.Event t Integer =
-              fromMaybe SelectTopic.firstTopicId
-              . fmap (Topic.id . Problem.topic)
-              <$> R.updated preloadedProblem
+              _ -> R.blank
+        R.dyn_ $ showPublicView <$> preloadedProblem
+        preloadedProblem :: R.Dynamic t (Maybe (Either Error.Error Problem.Problem)) <- getPreloadedProblem
+        let setTopicId :: R.Event t Integer = R.updated preloadedProblem <&> \case
+              Just (Right p) -> Topic.id . Problem.topic $ p
+              _ -> SelectTopic.firstTopicId
         selectedTopicId :: R.Dynamic t Integer <- R.elClass "div" "pb-3 border-b border-brand-light-gray" $ do
           SelectTopic.widget setTopicId
-        let setSummaryValue :: R.Event t Text = fromMaybe "" . fmap Problem.summary
-              <$> R.updated preloadedProblem
+        let setSummaryValue :: R.Event t Text = R.updated preloadedProblem <&> \case
+              Just (Right p) -> Problem.summary p
+              _ -> ""
         summary :: R.Dynamic t Text <- R.elClass "div" "py-3 border-b border-brand-light-gray"
           $ Summary.widget setSummaryValue
               
@@ -201,7 +223,6 @@ widget preloadedProblemId = do
           SaveError e -> R.elClass "p" "mt-2 text-brand-gray" $ R.text e
         
         publish :: R.Event t () <- R.elClass "div" "py-3" $ do
-          let isEditingPublishedProblem :: R.Dynamic t Bool = maybe True ((== ProblemStatus.Draft) . Problem.status) <$> preloadedProblem
           let buttonText :: R.Dynamic t Text = isEditingPublishedProblem <&> \case
                 True -> "Publish"
                 False -> "Publish changes"
@@ -283,10 +304,13 @@ widget preloadedProblemId = do
               Nothing -> False
               Just u -> User.role u `elem` [Role.Contributor, Role.Moderator, Role.Administrator]
               
+        let isEditingPublishedProblem :: R.Dynamic t Bool = preloadedProblem <&> \case
+              Just (Right p) -> Problem.status p == ProblemStatus.Draft
+              _ -> True
         (savedProblem, savingState) <- autosaveProblem
           (andM
            [ not <$> publishing
-           , maybe True ((== ProblemStatus.Draft) . Problem.status) <$> R.current preloadedProblem
+           , R.current isEditingPublishedProblem
            , R.constant userCanSave
            ])
           ctx
@@ -361,9 +385,10 @@ widget preloadedProblemId = do
       R.elClass "div" "pl-2 flex-1 h-full flex flex-col" $ mdo
         (uploadPrb, compileButtonAction, errorsToggle) <-
           upperPane editorContents figures outputOption latestResponse anyLoading
-        preloadedProblem :: R.Dynamic t (Maybe Problem.Problem) <- getPreloadedProblem
-        let contentsFromPreloadedProblem :: R.Event t Text = fromMaybe "" . fmap Problem.contents
-              <$> R.updated preloadedProblem
+        preloadedProblem :: R.Dynamic t (Maybe (Either Error.Error Problem.Problem)) <- getPreloadedProblem
+        let contentsFromPreloadedProblem :: R.Event t Text = R.updated preloadedProblem <&> \case
+              Just (Right p) -> Problem.contents p
+              _ -> ""
         let setContentsValue = R.leftmost [contentsFromPreloadedProblem, uploadPrb]
         editorContents <- R.elClass "div" "h-full flex" $ do
           editorContents' :: R.Dynamic t Text <- R.elClass "div" "flex-1" $ Editor.widget setContentsValue

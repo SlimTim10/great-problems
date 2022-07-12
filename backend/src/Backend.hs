@@ -115,57 +115,70 @@ backend = Ob.Backend
                 
             Route.Api_Users :/ (Just userId) -> do
               Snap.rqMethod <$> Snap.getRequest >>= \case
-                Snap.GET -> writeJSON =<< IO.liftIO (Queries.getUserById conn userId)
+                Snap.GET -> case mUser of
+                  Just User.User{User.role = Role.Administrator} ->
+                    writeJSON =<< IO.liftIO (Queries.getUserById conn userId)
+                  _ -> writeJSON $ Error.mk "No access"
                 Snap.POST -> case mUser of
-                  Nothing -> writeJSON $ Error.mk "No access"
-                  Just user -> case User.role user of
-                    Role.Administrator -> updateUser conn userId
-                    _ -> writeJSON $ Error.mk "No access"
+                  Just User.User{User.role = Role.Administrator} ->
+                    updateUser conn userId
+                  _ -> writeJSON $ Error.mk "No access"
                 _ -> return ()
                 
-            Route.Api_Roles :/ () -> case mUser of
-              Nothing -> writeJSON $ Error.mk "No access"
-              Just user -> case User.role user of
-                Role.Administrator -> writeJSON =<< IO.liftIO (Queries.getRoles conn)
-                _ -> writeJSON $ Error.mk "No access"
-                
+            Route.Api_Roles :/ () -> do
+              Snap.rqMethod <$> Snap.getRequest >>= \case
+                Snap.GET -> case mUser of
+                  Just User.User{User.role = Role.Administrator} ->
+                    writeJSON =<< IO.liftIO (Queries.getRoles conn)
+                  _ -> writeJSON $ Error.mk "No access"
+                _ -> return ()
+
             Route.Api_TopicHierarchy :/ Nothing -> do
               writeJSON $ Error.mk "Not yet implemented"
               
             Route.Api_TopicHierarchy :/ Just topicId -> do
-              IO.liftIO (Queries.getTopicById conn topicId) >>= \case
-                Nothing -> writeJSON $ Error.mk "Topic not found"
-                Just topic -> writeJSON =<< IO.liftIO (Queries.getTopicHierarchy conn topic)
-                
+              Snap.rqMethod <$> Snap.getRequest >>= \case
+                Snap.GET -> do
+                  IO.liftIO (Queries.getTopicById conn topicId) >>= \case
+                    Nothing -> writeJSON $ Error.mk "Topic not found"
+                    Just topic -> writeJSON =<< IO.liftIO (Queries.getTopicHierarchy conn topic)
+                _ -> return ()
+
             Route.Api_Register :/ () -> do
-              rawBody <- Snap.readRequestBody maxRequestBodySize
-              case JSON.decode rawBody :: Maybe Register.Register of
-                Nothing -> writeJSON $ Error.mk "Something went wrong"
-                Just register -> do
-                  if any T.null
-                    [ CI.original $ Register.fullName register
-                    , CI.original $ Register.email register
-                    , Register.password register
-                    ]
-                    then writeJSON $ Error.mk "Fields must not be empty"
-                    else
-                    do
-                      IO.liftIO (Queries.getUserByEmail conn (Register.email register)) >>= \case
-                        Just _ -> writeJSON $ Error.mk "Email already registered"
-                        Nothing -> do
-                          IO.liftIO (Queries.registerUser conn register) >>= \case
-                            Nothing -> writeJSON $ Error.mk "Something went wrong"
-                            Just user -> do
-                              secret <- IO.liftIO $ Queries.newEmailVerification conn (User.id user)
-                              Email.sendEmailVerification user secret
-                              writeJSON OkResponse.OkResponse
+              Snap.rqMethod <$> Snap.getRequest >>= \case
+                Snap.POST -> do
+                  rawBody <- Snap.readRequestBody maxRequestBodySize
+                  case JSON.decode rawBody :: Maybe Register.Register of
+                    Nothing -> writeJSON $ Error.mk "Something went wrong"
+                    Just register -> do
+                      if any T.null
+                        [ CI.original $ Register.fullName register
+                        , CI.original $ Register.email register
+                        , Register.password register
+                        ]
+                        then writeJSON $ Error.mk "Fields must not be empty"
+                        else
+                        do
+                          IO.liftIO (Queries.getUserByEmail conn (Register.email register)) >>= \case
+                            Just _ -> writeJSON $ Error.mk "Email already registered"
+                            Nothing -> do
+                              IO.liftIO (Queries.registerUser conn register) >>= \case
+                                Nothing -> writeJSON $ Error.mk "Something went wrong"
+                                Just user -> do
+                                  secret <- IO.liftIO $ Queries.newEmailVerification conn (User.id user)
+                                  Email.sendEmailVerification user secret
+                                  writeJSON OkResponse.OkResponse
+                _ -> return ()
 
             Route.Api_VerifyEmail :/ secret -> do
-              verify <- IO.liftIO $ Queries.verifyEmail conn (cs secret)
-              if verify
-                then writeJSON OkResponse.OkResponse
-                else writeJSON $ Error.mk "Invalid email verification link"
-                
+              Snap.rqMethod <$> Snap.getRequest >>= \case
+                Snap.GET -> do
+                  verify <- IO.liftIO $ Queries.verifyEmail conn (cs secret)
+                  if verify
+                    then writeJSON OkResponse.OkResponse
+                    else writeJSON $ Error.mk "Invalid email verification link"
+                _ -> return ()
+    
             Route.Api_ChangePassword :/ () -> Snap.rqMethod <$> Snap.getRequest >>= \case
               Snap.POST -> do
                 rawBody <- Snap.readRequestBody maxRequestBodySize
@@ -196,60 +209,69 @@ backend = Ob.Backend
               _ -> return ()
                 
             Route.Api_SignIn :/ () -> do
-             rawBody <- Snap.readRequestBody maxRequestBodySize
-             case JSON.decode rawBody :: Maybe Auth.Auth of
-               Nothing -> writeJSON $ Error.mk "Something went wrong"
-               Just auth -> do
-                 IO.liftIO (Auth.authCheck conn auth) >>= \case
-                   Auth.Indefinite -> writeJSON $ Error.mk "Incorrect email or password. Please try again."
-                   Auth.Unverified _ -> writeJSON $ Error.mk "Account not verified. Please check your email to complete the verification process."
-                   Auth.Authenticated user -> do
-                     session <- IO.liftIO $ Auth.newSession conn user
-                     addCookie "sessionId" session
-                     addCookie "user" (cs $ JSON.encode user)
-                     writeJSON OkResponse.OkResponse
-                     
+              Snap.rqMethod <$> Snap.getRequest >>= \case
+                Snap.POST -> do
+                  rawBody <- Snap.readRequestBody maxRequestBodySize
+                  case JSON.decode rawBody :: Maybe Auth.Auth of
+                    Nothing -> writeJSON $ Error.mk "Something went wrong"
+                    Just auth -> do
+                      IO.liftIO (Auth.authCheck conn auth) >>= \case
+                        Auth.Indefinite -> writeJSON $ Error.mk "Incorrect email or password. Please try again."
+                        Auth.Unverified _ -> writeJSON $ Error.mk "Account not verified. Please check your email to complete the verification process."
+                        Auth.Authenticated user -> do
+                          session <- IO.liftIO $ Auth.newSession conn user
+                          addCookie "sessionId" session
+                          addCookie "user" (cs $ JSON.encode user)
+                          writeJSON OkResponse.OkResponse
+                _ -> return ()
+
             Route.Api_SignOut :/ () -> do
-              IO.liftIO $ mapM_ (Auth.removeSession conn) mSession
-              removeCookie "sessionId"
-              removeCookie "user"
-              writeJSON OkResponse.OkResponse
+              Snap.rqMethod <$> Snap.getRequest >>= \case
+                Snap.POST -> do
+                  IO.liftIO $ mapM_ (Auth.removeSession conn) mSession
+                  removeCookie "sessionId"
+                  removeCookie "user"
+                  writeJSON OkResponse.OkResponse
+                _ -> return ()
 
             Route.Api_DuplicateProblem :/ problemId -> do
               -- Current user must have the right role and problem must be published
-              mProblem <- IO.liftIO $ Queries.getProblemById conn problemId
-              basicDuplicateTopics <-
-                IO.liftIO (Queries.getMetaSetting conn MetaSetting.BasicDuplicateTopicIds) >>= \case
-                Nothing -> return []
-                Just x -> case JSON.decode (cs . MetaSetting.value $ x) :: Maybe [Integer] of
-                  Nothing -> return []
-                  Just y -> return y
-              let validate :: Maybe (Problem.Problem, User.User) = do
-                    problem <- mProblem
-                    user <- mUser
-                    guard $ User.role user `elem` [Role.Basic, Role.Contributor, Role.Moderator, Role.Administrator]
-                    guard $ Problem.status problem == ProblemStatus.Published
-                    guard $
-                      if User.role user == Role.Basic
-                      then (Topic.id . Problem.topic $ problem) `elem` basicDuplicateTopics
-                      else True
-                    return (problem, user)
-              case validate of
-                Nothing -> writeJSON $ Error.mk "No access"
-                Just (problem, user) -> do
-                  -- Make duplicate problem as draft with current user as author
-                  let figures = map (Figure.BareFigure <$> Figure.name <*> Figure.contents) (Problem.figures problem)
-                  createNewProblem
-                    conn
-                    Problem.BareProblem
-                    { Problem.bpProblemId = Nothing
-                    , Problem.bpSummary = Problem.summary problem
-                    , Problem.bpContents = Problem.contents problem
-                    , Problem.bpTopicId = Topic.id . Problem.topic $ problem
-                    , Problem.bpAuthorId = User.id user
-                    , Problem.bpStatus = ProblemStatus.Draft
-                    , Problem.bpFigures = figures
-                    }
+              Snap.rqMethod <$> Snap.getRequest >>= \case
+                Snap.POST -> do
+                  mProblem <- IO.liftIO $ Queries.getProblemById conn problemId
+                  basicDuplicateTopics <-
+                    IO.liftIO (Queries.getMetaSetting conn MetaSetting.BasicDuplicateTopicIds) >>= \case
+                    Nothing -> return []
+                    Just x -> case JSON.decode (cs . MetaSetting.value $ x) :: Maybe [Integer] of
+                      Nothing -> return []
+                      Just y -> return y
+                  let validate :: Maybe (Problem.Problem, User.User) = do
+                        problem <- mProblem
+                        user <- mUser
+                        guard $ User.role user `elem` [Role.Basic, Role.Contributor, Role.Moderator, Role.Administrator]
+                        guard $ Problem.status problem == ProblemStatus.Published
+                        guard $
+                          if User.role user == Role.Basic
+                          then (Topic.id . Problem.topic $ problem) `elem` basicDuplicateTopics
+                          else True
+                        return (problem, user)
+                  case validate of
+                    Nothing -> writeJSON $ Error.mk "No access"
+                    Just (problem, user) -> do
+                      -- Make duplicate problem as draft with current user as author
+                      let figures = map (Figure.BareFigure <$> Figure.name <*> Figure.contents) (Problem.figures problem)
+                      createNewProblem
+                        conn
+                        Problem.BareProblem
+                        { Problem.bpProblemId = Nothing
+                        , Problem.bpSummary = Problem.summary problem
+                        , Problem.bpContents = Problem.contents problem
+                        , Problem.bpTopicId = Topic.id . Problem.topic $ problem
+                        , Problem.bpAuthorId = User.id user
+                        , Problem.bpStatus = ProblemStatus.Draft
+                        , Problem.bpFigures = figures
+                        }
+                _ -> return ()
 
             Route.Api_ResetPassword :/ () -> Snap.rqMethod <$> Snap.getRequest >>= \case
               Snap.POST -> do
@@ -295,32 +317,41 @@ backend = Ob.Backend
               _ -> return ()
               
             Route.Api_Figures :/ figureId -> do
-              IO.liftIO (Queries.getFigureById conn figureId) >>= \case
-                Nothing -> writeJSON $ Error.mk "Figure does not exist"
-                Just figure -> do
-                  Snap.modifyResponse $ Snap.setHeader "Content-Type" "application/octet-stream"
-                  -- For browsers
-                  Snap.modifyResponse $ Snap.setHeader "Content-Disposition" $
-                    "attachment; filename=\"" <> cs (Figure.name figure) <> "\""
-                  -- For frontend easier parsing
-                  Snap.modifyResponse $ Snap.setHeader "Filename" $ cs (Figure.name figure)
-                  Snap.writeBS $ Figure.contents figure
-                  
-            Route.Api_MetaSettings :/ Nothing -> case mUser of
-              Nothing -> writeJSON $ Error.mk "No access"
-              Just user -> case User.role user of
-                Role.Administrator -> Snap.rqMethod <$> Snap.getRequest >>= \case
-                  Snap.GET -> writeJSON =<< IO.liftIO (Queries.getMetaSettings conn)
-                  Snap.POST -> handleSetMetaSetting conn
-                  _ -> return ()
-                _ -> writeJSON $ Error.mk "No access"
+              Snap.rqMethod <$> Snap.getRequest >>= \case
+                Snap.GET -> do
+                  IO.liftIO (Queries.getFigureById conn figureId) >>= \case
+                    Nothing -> writeJSON $ Error.mk "Figure does not exist"
+                    Just figure -> do
+                      Snap.modifyResponse $ Snap.setHeader "Content-Type" "application/octet-stream"
+                      -- For browsers
+                      Snap.modifyResponse $ Snap.setHeader "Content-Disposition" $
+                        "attachment; filename=\"" <> cs (Figure.name figure) <> "\""
+                      -- For frontend easier parsing
+                      Snap.modifyResponse $ Snap.setHeader "Filename" $ cs (Figure.name figure)
+                      Snap.writeBS $ Figure.contents figure
+                _ -> return ()
 
-            Route.Api_MetaSettings :/ (Just setting) -> case setting of
-              MetaSetting.ExampleProblemId -> do
-                writeJSON =<< IO.liftIO (Queries.getMetaSetting conn setting)
-              MetaSetting.BasicDuplicateTopicIds -> do
-                writeJSON =<< IO.liftIO (Queries.getMetaSetting conn setting)
-                
+            Route.Api_MetaSettings :/ Nothing -> do
+              Snap.rqMethod <$> Snap.getRequest >>= \case
+                Snap.GET -> case mUser of
+                  Just User.User{User.role = Role.Administrator} ->
+                    writeJSON =<< IO.liftIO (Queries.getMetaSettings conn)
+                  _ -> writeJSON $ Error.mk "No access"
+                Snap.POST -> case mUser of
+                  Just User.User{User.role = Role.Administrator} ->
+                    handleSetMetaSetting conn
+                  _ -> writeJSON $ Error.mk "No access"
+                _ -> return ()
+
+            Route.Api_MetaSettings :/ (Just setting) -> do
+              Snap.rqMethod <$> Snap.getRequest >>= \case
+                Snap.GET -> case setting of
+                  MetaSetting.ExampleProblemId -> do
+                    writeJSON =<< IO.liftIO (Queries.getMetaSetting conn setting)
+                  MetaSetting.BasicDuplicateTopicIds -> do
+                    writeJSON =<< IO.liftIO (Queries.getMetaSetting conn setting)
+                _ -> return ()
+
   , Ob._backend_routeEncoder = Route.fullRouteEncoder
   }
   where
