@@ -138,7 +138,6 @@ widget problemId = mdo
       R.elClass "div" "bg-brand-light-gray flex py-2 pl-2" $ do
         problem <- getProblem
         Util.dynFor problem $ \case
-          Nothing -> R.blank
           Just (Right p) -> do
             R.elClass "div" "flex" $ do
               let topics = Problem.topicPath p
