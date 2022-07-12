@@ -138,7 +138,6 @@ widget problemId = mdo
       R.elClass "div" "bg-brand-light-gray flex py-2 pl-2" $ do
         problem <- getProblem
         Util.dynFor problem $ \case
-          Nothing -> R.blank
           Just (Right p) -> do
             R.elClass "div" "flex" $ do
               let topics = Problem.topicPath p
@@ -154,6 +153,7 @@ widget problemId = mdo
                 Ob.routeLink
                   (Route.FrontendRoute_Search :/ Search.paramsToQuery searchParams)
                   $ R.elClass "p" "hover:underline text-brand-primary" $ R.text name
+          _ -> R.blank
 
     problemPane latestResponse anyLoading = do
       R.elClass "div" "flex-1 mx-2 flex justify-center" $ do
