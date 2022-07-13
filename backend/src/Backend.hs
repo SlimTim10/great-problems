@@ -507,7 +507,7 @@ handleSaveProblem conn user = do
                   , Problem.bpFigures = figures
                   }
             | otherwise -> do
-                updateExistingProblem
+                updateProblem
                   conn
                   Problem.BareProblem
                   { Problem.bpProblemId = Just $ (read . cs $ problemId :: Integer)
@@ -534,7 +534,7 @@ handleSaveProblem conn user = do
                 , Problem.bpFigures = figures
                 }
           | otherwise -> do
-              updateExistingProblem
+              updateProblem
                 conn
                 Problem.BareProblem
                 { Problem.bpProblemId = Just $ (read . cs $ problemId :: Integer)
@@ -580,7 +580,7 @@ handleSaveProblemSet conn user = do
             , ProblemSet.bpsProblemIds = read . cs $ problemIds
             }
         | otherwise -> do
-          updateExistingProblemSet
+          updateProblemSet
             conn
             ProblemSet.BareProblemSet
             { ProblemSet.bpsProblemSetId = Just $ (read . cs $ problemSetId :: Integer)
@@ -622,7 +622,7 @@ handleAddProblemToSet conn user problemSetId = do
           Just problemSet -> do
             let problemIds = map Problem.id (ProblemSet.problems problemSet)
             let problemIds' = problemIds <> (pure . Problem.id . fromJust $ problem)
-            updateExistingProblemSet
+            updateProblemSet
               conn
               ProblemSet.BareProblemSet
               { ProblemSet.bpsProblemSetId = Just (ProblemSet.id problemSet)
@@ -633,14 +633,14 @@ handleAddProblemToSet conn user problemSetId = do
     | otherwise -> do
         writeJSON $ Error.mk "No access"
 
-updateExistingProblem :: SQL.Connection -> Problem.BareProblem -> Snap.Snap ()
-updateExistingProblem conn problem = do
+updateProblem :: SQL.Connection -> Problem.BareProblem -> Snap.Snap ()
+updateProblem conn problem = do
   IO.liftIO (Queries.updateProblem conn problem) >>= \case
     Nothing -> writeJSON $ Error.mk "Something went wrong"
     Just updatedProblem -> writeJSON updatedProblem
 
-updateExistingProblemSet :: SQL.Connection -> ProblemSet.BareProblemSet -> Snap.Snap ()
-updateExistingProblemSet conn problemSet = do
+updateProblemSet :: SQL.Connection -> ProblemSet.BareProblemSet -> Snap.Snap ()
+updateProblemSet conn problemSet = do
   IO.liftIO (Queries.updateProblemSet conn problemSet) >>= \case
     Nothing -> writeJSON $ Error.mk "Something went wrong"
     Just updatedProblemSet -> writeJSON updatedProblemSet
