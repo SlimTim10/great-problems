@@ -36,8 +36,10 @@ data RequestParam
   = ParamProblemSetId
   | ParamSummary
   | ParamProblemIds
+  | ParamProblemId
   deriving (Eq, Ord)
 instance Show RequestParam where
   show ParamProblemSetId = "problemSetId"
   show ParamSummary = "summary"
   show ParamProblemIds = "problemIds"
+  show ParamProblemId = "problemId"

@@ -96,7 +96,6 @@ backend = Ob.Backend
                 Snap.GET -> writeJSON =<< IO.liftIO (Queries.getProblemSetById conn problemSetId)
                 Snap.POST -> case mUser of
                   Nothing -> writeJSON $ Error.mk "No access"
-                  -- TODO: add single problem to problem set (by problem or problem ID in request body?)
                   Just user -> handleAddProblemToSet conn user problemSetId
                 Snap.PUT -> case mUser of
                   Nothing -> writeJSON $ Error.mk "No access"
@@ -449,7 +448,7 @@ handleGetProblems conn mUser routeQuery = do
           else writeJSON =<< IO.liftIO (Queries.getProblems conn routeQuery')
 
 handleGetProblemSets :: SQL.Connection -> Maybe User.User -> Route.Query -> Snap.Snap ()
-handleGetProblemSets conn mUser routeQuery = do
+handleGetProblemSets conn _ routeQuery = do
   -- No problem set status - no need to restrict access
   writeJSON =<< IO.liftIO (Queries.getProblemSets conn routeQuery)
 
@@ -457,10 +456,7 @@ handleGetProblemSets conn mUser routeQuery = do
 handleSaveProblem :: SQL.Connection -> User.User -> Snap.Snap ()
 handleSaveProblem conn user = do
   figures <- handleFileUploads
-  let getTextParam :: Problem.RequestParam -> Snap.Snap Text = \param -> do
-        Snap.rqPostParam (cs . show $ param)
-          <$> Snap.getRequest
-          <&> cs . BS.concat . fromMaybe mempty
+  let getTextParam = getTextParamGeneric :: Problem.RequestParam -> Snap.Snap Text
   problemId <- getTextParam Problem.ParamProblemId
   summary <- getTextParam Problem.ParamSummary
   contents <- getTextParam Problem.ParamContents
@@ -555,10 +551,7 @@ handleSaveProblem conn user = do
 -- Create or update problem set
 handleSaveProblemSet :: SQL.Connection -> User.User -> Snap.Snap ()
 handleSaveProblemSet conn user = do
-  let getTextParam :: ProblemSet.RequestParam -> Snap.Snap Text = \param -> do
-        Snap.rqPostParam (cs . show $ param)
-          <$> Snap.getRequest
-          <&> cs . BS.concat . fromMaybe mempty
+  let getTextParam = getTextParamGeneric :: ProblemSet.RequestParam -> Snap.Snap Text
   problemSetId <- getTextParam ProblemSet.ParamProblemSetId
   summary <- getTextParam ProblemSet.ParamSummary
   problemIds <- getTextParam ProblemSet.ParamProblemIds
@@ -610,12 +603,35 @@ createNewProblemSet conn problemSet = do
     Nothing -> writeJSON $ Error.mk "Something went wrong"
     Just createdProblemSet -> writeJSON createdProblemSet
 
--- TODO: problem or problem ID in request body?
--- handleAddProblemToSet :: SQL.Connection -> User.User -> Integer -> Snap.Snap ()
--- handleAddProblemToSet conn user problemId = do
---   IO.liftIO (Queries.updateProblem conn problem) >>= \case
---     Nothing -> writeJSON $ Error.mk "Something went wrong"
---     Just updatedProblem -> writeJSON updatedProblem
+handleAddProblemToSet :: SQL.Connection -> User.User -> Integer -> Snap.Snap ()
+handleAddProblemToSet conn user problemSetId = do
+  let getTextParam = getTextParamGeneric :: ProblemSet.RequestParam -> Snap.Snap Text
+  mProblemSet :: Maybe ProblemSet.ProblemSet <- IO.liftIO $ Queries.getProblemSetById conn problemSetId
+  problemId <- getTextParam ProblemSet.ParamProblemId
+  problem :: Maybe Problem.Problem <- IO.liftIO $ do
+    if T.null problemId
+      then return Nothing
+      else Queries.getProblemById conn (read . cs $ problemId)
+  let existingAuthor :: Maybe User.User = ProblemSet.author <$> mProblemSet
+  if
+    | isNothing problem -> do
+        writeJSON $ Error.mk "Problem does not exist"
+    | (User.id <$> existingAuthor) == Just (User.id user) -> do
+        IO.liftIO (Queries.getProblemSetById conn problemSetId) >>= \case
+          Nothing -> writeJSON $ Error.mk "Problem set does not exist"
+          Just problemSet -> do
+            let problemIds = map Problem.id (ProblemSet.problems problemSet)
+            let problemIds' = problemIds <> (pure . Problem.id . fromJust $ problem)
+            updateExistingProblemSet
+              conn
+              ProblemSet.BareProblemSet
+              { ProblemSet.bpsProblemSetId = Just (ProblemSet.id problemSet)
+              , ProblemSet.bpsSummary = ProblemSet.summary problemSet
+              , ProblemSet.bpsAuthorId = User.id (ProblemSet.author problemSet)
+              , ProblemSet.bpsProblemIds = problemIds'
+              }
+    | otherwise -> do
+        writeJSON $ Error.mk "No access"
 
 updateExistingProblem :: SQL.Connection -> Problem.BareProblem -> Snap.Snap ()
 updateExistingProblem conn problem = do
@@ -674,10 +690,7 @@ requestProblem2texCompileProblem contents mRandomizeVariables mOutputOption figu
 handleCompileProblem :: Snap.Snap ()
 handleCompileProblem = do
   figures <- handleFileUploads
-  let getTextParam :: Compile.RequestParam -> Snap.Snap Text = \param -> do
-        Snap.rqPostParam (cs . show $ param)
-          <$> Snap.getRequest
-          <&> cs . BS.concat . fromMaybe mempty
+  let getTextParam = getTextParamGeneric :: Compile.RequestParam -> Snap.Snap Text
   contents <- getTextParam Compile.ParamContents
   randomizeVariables <- getTextParam Compile.ParamRandomizeVariables
   outputOption <- getTextParam Compile.ParamOutputOption
@@ -708,10 +721,7 @@ handleCompileProblemById conn problemId = do
   void $ Snap.handleMultipart
     Snap.defaultUploadPolicy
     (const . const $ return ())
-  let getTextParam :: Compile.RequestParam -> Snap.Snap Text = \param -> do
-        Snap.rqPostParam (cs . show $ param)
-          <$> Snap.getRequest
-          <&> cs . BS.concat . fromMaybe mempty
+  let getTextParam = getTextParamGeneric :: Compile.RequestParam -> Snap.Snap Text
   randomizeVariables <- fmap (mfilter (not . T.null) . Just)
     $ getTextParam Compile.ParamRandomizeVariables
   outputOption <- fmap (mfilter (not . T.null) . Just)
@@ -809,3 +819,12 @@ handleDeleteTopic conn topicId = do
     | otherwise -> do
         IO.liftIO (Queries.deleteTopic conn topicId)
         writeJSON OkResponse.OkResponse
+
+-- | Not meant to be used directly.
+-- Define a local function with specific type.
+-- e.g. let getTextParam = getTextParamGeneric :: Problem.RequestParam -> Snap.Snap Text
+getTextParamGeneric :: Show a => a -> Snap.Snap Text
+getTextParamGeneric param = do
+  Snap.rqPostParam (cs . show $ param)
+    <$> Snap.getRequest
+    <&> cs . BS.concat . fromMaybe mempty
