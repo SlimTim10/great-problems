@@ -608,28 +608,29 @@ handleAddProblemToSet conn user problemSetId = do
   let getTextParam = getTextParamGeneric :: ProblemSet.RequestParam -> Snap.Snap Text
   mProblemSet :: Maybe ProblemSet.ProblemSet <- IO.liftIO $ Queries.getProblemSetById conn problemSetId
   problemId <- getTextParam ProblemSet.ParamProblemId
-  problem :: Maybe Problem.Problem <- IO.liftIO $ do
+  mProblem :: Maybe Problem.Problem <- IO.liftIO $ do
     if T.null problemId
       then return Nothing
       else Queries.getProblemById conn (read . cs $ problemId)
   let existingAuthor :: Maybe User.User = ProblemSet.author <$> mProblemSet
   if
-    | isNothing problem -> do
+    | isNothing mProblem -> do
         writeJSON $ Error.mk "Problem does not exist"
+    | isNothing mProblemSet -> do
+        writeJSON $ Error.mk "Problem set does not exist"
     | (User.id <$> existingAuthor) == Just (User.id user) -> do
-        IO.liftIO (Queries.getProblemSetById conn problemSetId) >>= \case
-          Nothing -> writeJSON $ Error.mk "Problem set does not exist"
-          Just problemSet -> do
-            let problemIds = map Problem.id (ProblemSet.problems problemSet)
-            let problemIds' = problemIds <> (pure . Problem.id . fromJust $ problem)
-            updateProblemSet
-              conn
-              ProblemSet.BareProblemSet
-              { ProblemSet.bpsProblemSetId = Just (ProblemSet.id problemSet)
-              , ProblemSet.bpsSummary = ProblemSet.summary problemSet
-              , ProblemSet.bpsAuthorId = User.id (ProblemSet.author problemSet)
-              , ProblemSet.bpsProblemIds = problemIds'
-              }
+        let problem = fromJust mProblem
+        let problemSet = fromJust mProblemSet
+        let problemIds = map Problem.id (ProblemSet.problems problemSet)
+        let problemIds' = problemIds <> (pure . Problem.id $ problem)
+        updateProblemSet
+          conn
+          ProblemSet.BareProblemSet
+          { ProblemSet.bpsProblemSetId = Just (ProblemSet.id problemSet)
+          , ProblemSet.bpsSummary = ProblemSet.summary problemSet
+          , ProblemSet.bpsAuthorId = User.id (ProblemSet.author problemSet)
+          , ProblemSet.bpsProblemIds = problemIds'
+          }
     | otherwise -> do
         writeJSON $ Error.mk "No access"
 
