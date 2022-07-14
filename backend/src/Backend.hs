@@ -102,7 +102,7 @@ backend = Ob.Backend
                   Just user -> handleEditProblemSet conn user problemSetId
                 Snap.DELETE -> case mUser of
                   Nothing -> writeJSON $ Error.mk "No access"
-                  -- Just user -> handleDeleteProblemSet conn user problemSetId
+                  Just user -> handleDeleteProblemSet conn user problemSetId
                 _ -> return ()
 
             Route.Api_Topics :/ (Nothing, query) -> do
@@ -656,6 +656,23 @@ handleEditProblemSet conn user problemSetId = do
     | otherwise -> do
         writeJSON $ Error.mk "No access"
 
+handleDeleteProblemSet :: SQL.Connection -> User.User -> Integer -> Snap.Snap ()
+handleDeleteProblemSet conn user problemSetId = do
+  mProblemSet :: Maybe ProblemSet.ProblemSet <- IO.liftIO $ Queries.getProblemSetById conn problemSetId
+  let existingAuthor :: Maybe User.User = ProblemSet.author <$> mProblemSet
+  if
+    | isNothing mProblemSet -> do
+        writeJSON $ Error.mk "Problem set does not exist"
+    | (User.id <$> existingAuthor) == Just (User.id user) -> do
+        deleteProblemSet conn problemSetId
+    | otherwise -> do
+        writeJSON $ Error.mk "No access"
+
+deleteProblemSet :: SQL.Connection -> Integer -> Snap.Snap ()
+deleteProblemSet conn problemSetId = do
+  IO.liftIO $ Queries.deleteProblemSet conn problemSetId
+  writeJSON OkResponse.OkResponse
+
 updateProblem :: SQL.Connection -> Problem.BareProblem -> Snap.Snap ()
 updateProblem conn problem = do
   IO.liftIO (Queries.updateProblem conn problem) >>= \case
@@ -683,7 +700,7 @@ handleDeleteProblem conn user problemId = do
 
 deleteProblem :: SQL.Connection -> Integer -> Snap.Snap ()
 deleteProblem conn problemId = do
-  IO.liftIO (Queries.deleteProblem conn problemId)
+  IO.liftIO $ Queries.deleteProblem conn problemId
   writeJSON OkResponse.OkResponse
 
 requestProblem2texCompileProblem
