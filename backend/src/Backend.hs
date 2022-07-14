@@ -99,7 +99,7 @@ backend = Ob.Backend
                   Just user -> handleAddProblemToSet conn user problemSetId
                 Snap.PUT -> case mUser of
                   Nothing -> writeJSON $ Error.mk "No access"
-                  -- Just user -> handleEditProblemSet conn user problemSetId
+                  Just user -> handleEditProblemSet conn user problemSetId
                 Snap.DELETE -> case mUser of
                   Nothing -> writeJSON $ Error.mk "No access"
                   -- Just user -> handleDeleteProblemSet conn user problemSetId
@@ -630,6 +630,28 @@ handleAddProblemToSet conn user problemSetId = do
           , ProblemSet.bpsSummary = ProblemSet.summary problemSet
           , ProblemSet.bpsAuthorId = User.id (ProblemSet.author problemSet)
           , ProblemSet.bpsProblemIds = problemIds'
+          }
+    | otherwise -> do
+        writeJSON $ Error.mk "No access"
+
+handleEditProblemSet :: SQL.Connection -> User.User -> Integer -> Snap.Snap ()
+handleEditProblemSet conn user problemSetId = do
+  let getTextParam = getTextParamGeneric :: ProblemSet.RequestParam -> Snap.Snap Text
+  mProblemSet :: Maybe ProblemSet.ProblemSet <- IO.liftIO $ Queries.getProblemSetById conn problemSetId
+  let existingAuthor :: Maybe User.User = ProblemSet.author <$> mProblemSet
+  summary <- getTextParam ProblemSet.ParamSummary
+  problemIds <- getTextParam ProblemSet.ParamProblemIds
+  if
+    | isNothing mProblemSet -> do
+        writeJSON $ Error.mk "Problem set does not exist"
+    | (User.id <$> existingAuthor) == Just (User.id user) -> do
+        updateProblemSet
+          conn
+          ProblemSet.BareProblemSet
+          { ProblemSet.bpsProblemSetId = Just problemSetId
+          , ProblemSet.bpsSummary = summary
+          , ProblemSet.bpsAuthorId = User.id user
+          , ProblemSet.bpsProblemIds = read . cs $ problemIds
           }
     | otherwise -> do
         writeJSON $ Error.mk "No access"
