@@ -37,6 +37,8 @@ library
     Auth
     Database
     Email
+    Route.Handlers
+    Route.Actions
     Backend.Lib.Util
     Database.Queries
     Database.Seeds
