@@ -20,7 +20,20 @@ project ./. ({ pkgs, hackGet, ... }: {
     dotenv = dontCheck (self.callCabal2nix "dotenv" (hackGet ./dep/dotenv-hs) {});
     wreq = dontCheck (self.callCabal2nix "wreq" (hackGet ./dep/wreq) {});
   });
+  
   packages = {
     reflex-dom-ace = hackGet ./dep/reflex-dom-ace;
   };
+  
+  shellToolOverrides = self: super: {
+    # Examples
+    # cowsay = pkgs.cowsay;
+    # echotest = pkgs.writeShellScriptBin "echotest" ''echo test'';
+    
+    # emacs-27.2
+    emacs = (import (builtins.fetchTarball {
+      url = "https://github.com/NixOS/nixpkgs/archive/7d5956bf56e1f300c6668704b5e9c4cd8f5296cd.tar.gz";
+    }) {}).emacs;
+  };
+  
 })
