@@ -34,6 +34,8 @@ project ./. ({ pkgs, hackGet, ... }: {
     emacs = (import (builtins.fetchTarball {
       url = "https://github.com/NixOS/nixpkgs/archive/7d5956bf56e1f300c6668704b5e9c4cd8f5296cd.tar.gz";
     }) {}).emacs;
+    problem2tex = import ./dep-ext/problem2tex { inherit pkgs; };
+    ltspice2svg = import ./dep-ext/ltspice2svg { inherit pkgs; };
   };
   
 })
