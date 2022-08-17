@@ -1,9 +1,9 @@
-{ pkgs }:
-pkgs.buildGoModule rec {
+{ pkgs, buildGoModule, fetchFromGitHub }:
+buildGoModule rec {
   pname = "problem2tex";
   version = "0.9.13";
 
-  src = pkgs.fetchFromGitHub {
+  src = fetchFromGitHub {
     owner = "icewire314";
     repo = "problem2tex";
     rev = "v${version}";

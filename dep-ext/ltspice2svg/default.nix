@@ -1,9 +1,9 @@
-{ pkgs }:
-pkgs.buildGoModule rec {
+{ pkgs, buildGoModule, fetchFromGitHub }:
+buildGoModule rec {
   pname = "ltspice2svg";
   version = "0.8.3";
 
-  src = pkgs.fetchFromGitHub {
+  src = fetchFromGitHub {
     owner = "icewire314";
     repo = "ltspice2svg";
     rev = "v${version}";
