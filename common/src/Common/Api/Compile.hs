@@ -6,6 +6,7 @@ module Common.Api.Compile
   , Response(..)
   , OutputOption(..)
   , Problem2texResponse(..)
+  , RandomizeVariables(..)
   ) where
 
 import Common.Lib.Prelude
@@ -22,6 +23,14 @@ instance Show OutputOption where
   show WithSolutionAndAnswer = "flagSolAns"
   show QuestionOnly = "flagQuestion"
 
+data RandomizeVariables a
+  = RandomizeVariablesFalse
+  | RandomizeVariablesTrue
+  | RandomizeVariablesSeed a
+instance Show a => Show (RandomizeVariables a) where
+  show RandomizeVariablesFalse = "false"
+  show RandomizeVariablesTrue = "true"
+  show (RandomizeVariablesSeed a) = show a
 data RequestParam = ParamContents | ParamRandomizeVariables | ParamOutputOption | ParamFigures
   deriving (Eq, Ord)
 instance Show RequestParam where

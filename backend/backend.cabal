@@ -31,10 +31,12 @@ library
                , aeson
                , http-client
                , directory
+               , temporary == 1.3
   exposed-modules:
     Backend
   other-modules:
     Auth
+    Compile
     Database
     Email
     Route.Handlers
