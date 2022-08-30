@@ -23,6 +23,7 @@ import qualified Frontend.Lib.Util as Util
 import qualified Frontend.Lib.SessionStorage as SessionStorage
 import qualified Common.Route as Route
 import qualified Common.Api.Compile as Compile
+import qualified Common.Api.Error as Error
 import qualified Widget.Button as Button
 import qualified Problem.Loading as Loading
 import qualified Problem.FormFile as FormFile
@@ -42,7 +43,7 @@ data Request = Request
 -- so we can prioritize responses based on request time
 data Response = Response
   { reqTime :: Time.UTCTime
-  , response :: Maybe Compile.Response
+  , response :: Maybe (Either Error.Error Text)
   } deriving (Show, Eq)
 
 widget
@@ -76,10 +77,17 @@ performRequest compileRequest = do
           )
     return $ Map.mapKeys (cs . show) formDataParams
 
+    -- TODO: Use this pattern?
+    -- response :: R.Event t (Either Error.Error ()) <- Api.postRequest
+    --   email
+    --   resetPassword
+    --   (Route.Api_ResetPassword :/ ())
+    --   (\email' -> User.ResetPasswordRequest (CI.mk email'))
+
   rawCompileResponse :: R.Event t Text <- Util.postForm
     (Route.apiHref $ Route.Api_Compile :/ Nothing)
     formData
-  compileResponse :: R.Dynamic t (Maybe Compile.Response) <- R.holdDyn Nothing
+  compileResponse :: R.Dynamic t (Maybe (Either Error.Error Text)) <- R.holdDyn Nothing
     $ R.decodeText <$> rawCompileResponse
   loading :: R.Dynamic t Bool <- compileResponse `Util.notUpdatedSince` compileRequest
   ct <- IO.liftIO Time.getCurrentTime
@@ -112,7 +120,7 @@ performRequestWithId problemId compileRequest = do
   rawCompileResponse :: R.Event t Text <- Util.postForm
     (Route.apiHref $ Route.Api_Compile :/ Just problemId)
     formData
-  compileResponse :: R.Dynamic t (Maybe Compile.Response) <- R.holdDyn Nothing
+  compileResponse :: R.Dynamic t (Maybe (Either Error.Error Text)) <- R.holdDyn Nothing
     $ R.decodeText <$> rawCompileResponse
   loading :: R.Dynamic t Bool <- compileResponse `Util.notUpdatedSince` compileRequest
   ct <- IO.liftIO Time.getCurrentTime

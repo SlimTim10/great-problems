@@ -138,7 +138,9 @@ backend = Ob.Backend
               _ -> return ()
               
             Route.Api_Compile :/ Nothing -> Snap.rqMethod <$> Snap.getRequest >>= \case
-              Snap.POST -> Handlers.compileProblem
+              Snap.POST -> Handlers.compileProblem >>= \case
+                Left e -> Util.writeJSON e
+                Right html -> Util.writeJSON html
               _ -> return ()
               
             Route.Api_Compile :/ Just problemId -> Snap.rqMethod <$> Snap.getRequest >>= \case

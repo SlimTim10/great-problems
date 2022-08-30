@@ -2,11 +2,9 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Common.Api.Compile
-  ( RequestParam(..)
-  , Response(..)
-  , OutputOption(..)
-  , Problem2texResponse(..)
-  , RandomizeVariables(..)
+  ( OutputOption(..)
+  , RandomSeed
+  , RequestParam(..)
   ) where
 
 import Common.Lib.Prelude
@@ -23,15 +21,13 @@ instance Show OutputOption where
   show WithSolutionAndAnswer = "flagSolAns"
   show QuestionOnly = "flagQuestion"
 
-data RandomizeVariables a
-  = RandomizeVariablesFalse
-  | RandomizeVariablesTrue
-  | RandomizeVariablesSeed a
-instance Show a => Show (RandomizeVariables a) where
-  show RandomizeVariablesFalse = "false"
-  show RandomizeVariablesTrue = "true"
-  show (RandomizeVariablesSeed a) = show a
-data RequestParam = ParamContents | ParamRandomizeVariables | ParamOutputOption | ParamFigures
+type RandomSeed = Integer
+
+data RequestParam
+  = ParamContents
+  | ParamRandomizeVariables
+  | ParamOutputOption
+  | ParamFigures
   deriving (Eq, Ord)
 instance Show RequestParam where
   show ParamContents = "contents"
@@ -39,36 +35,23 @@ instance Show RequestParam where
   show ParamOutputOption = "outputOption"
   show ParamFigures = "figures"
 
-data Response = Response
-  { resErrorProblem2tex :: Text
-  , resErrorLatex :: Text
-  , resPdfContents :: Text
-  , resTerminalOutput :: Text
-  } deriving
-  ( Eq
-  , Show
-  , Generic
-  , JSON.FromJSON
-  , JSON.ToJSON
-  )
+-- data Problem2texResponse = Problem2texResponse
+--   { p2tErrorProblem2tex :: Text
+--   , p2tErrorLatex :: Text
+--   , p2tPdfContents :: Text
+--   , p2tPdfName :: Text
+--   , p2tTerminalOutput :: Text
+--   } deriving
+--   ( Eq
+--   , Show
+--   )
 
-data Problem2texResponse = Problem2texResponse
-  { p2tErrorProblem2tex :: Text
-  , p2tErrorLatex :: Text
-  , p2tPdfContents :: Text
-  , p2tPdfName :: Text
-  , p2tTerminalOutput :: Text
-  } deriving
-  ( Eq
-  , Show
-  )
-
-instance JSON.FromJSON Problem2texResponse where
-  parseJSON = JSON.withObject "icemakerResponse" $ \o -> do
-    errorProblem2tex <- o .: "ErrorIcemaker"
-    errorLatex <- o .: "ErrorLatex"
-    pdfContents <- o .: "PdfContent"
-    pdfName <- o .: "PdfName"
-    terminalOutput <- o .: "TerminalOutput"
-    return $ Problem2texResponse errorProblem2tex errorLatex pdfContents pdfName terminalOutput
+-- instance JSON.FromJSON Problem2texResponse where
+--   parseJSON = JSON.withObject "icemakerResponse" $ \o -> do
+--     errorProblem2tex <- o .: "ErrorIcemaker"
+--     errorLatex <- o .: "ErrorLatex"
+--     pdfContents <- o .: "PdfContent"
+--     pdfName <- o .: "PdfName"
+--     terminalOutput <- o .: "TerminalOutput"
+--     return $ Problem2texResponse errorProblem2tex errorLatex pdfContents pdfName terminalOutput
 

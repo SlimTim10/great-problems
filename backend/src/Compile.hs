@@ -10,15 +10,17 @@ import qualified System.Directory
 
 import Common.Lib.Prelude
 import qualified Common.Api.Figure as Figure
--- import qualified Common.Route as Route
 import qualified Common.Api.Compile as Compile
+import qualified Common.Api.Error as Error
 
 compile
   :: Text -- ^ Problem contents
-  -> Compile.RandomizeVariables Int -- Randomize variables
+  -> Compile.RandomSeed -- Seed for randomized variables
   -> [Figure.BareFigure] -- Figures
-  -> IO Text
-compile contents randomizeVariables figures = do
+  -> IO (Either Error.Error Text)
+compile contents randomSeed figures = do
+  -- TODO: error handling
+  
   tmpDir <- System.Directory.getTemporaryDirectory
   -- Do all of the work within a temporary directory (gets deleted after)
   -- e.g., /tmp/prb-e4bd89e5d00acdee
@@ -28,7 +30,7 @@ compile contents randomizeVariables figures = do
     -- Problem: main.prb
     -- Figures: schem1.asc, schem2.asc, fig1.svg, fig2.svg, ...
     createFiles
-      
+
     -- Run problem2tex on files (creates new files)
     -- New problem: main.org
     -- New figures: schem1NEWasc.svg, schem2NEWasc.svg, fig1NEW.svg, fig2NEW.svg, ...
@@ -39,7 +41,7 @@ compile contents randomizeVariables figures = do
     runEmacs
 
     -- Read and return main.html contents as text
-    Data.Text.IO.readFile "main.html"
+    Right <$> Data.Text.IO.readFile "main.html"
   where
     createFiles = do
       -- Problem: main.prb
@@ -54,12 +56,12 @@ compile contents randomizeVariables figures = do
         figures
         
     runProblem2tex = do
-     System.Process.callProcess
-       "problem2tex"
-       [ "-export=main.org"
-       , "-random=" <> show randomizeVariables
-       , "main.prb"
-       ]
+      System.Process.callProcess
+        "problem2tex"
+        [ "-export=main.org"
+        , "-random=" <> show randomSeed
+        , "main.prb"
+        ]
 
     runEmacs = do
       -- emacs main.org --batch -f org-html-export-to-html --kill

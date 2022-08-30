@@ -126,43 +126,40 @@ saveProblem conn (Just user) = do
       && User.role user `elem` [Role.Contributor, Role.Moderator, Role.Administrator]
       -> do
         -- Published problems must compile without errors
-        response :: LBS.ByteString <- Actions.requestProblem2texCompileProblem
-          contents
-          Nothing
-          Nothing
-          figures
-        case JSON.eitherDecode response :: Either String Compile.Problem2texResponse of
-          Left e -> do
-            IO.liftIO $ putStrLn "Error response:"
-            IO.liftIO $ print e
-            ambiguousErrorResponse
-          Right r -> if
-            | (not . T.null $ Compile.p2tErrorProblem2tex r) || (not . T.null $ Compile.p2tErrorLatex r)
-              -> Util.writeJSON $ Error.mk "Invalid problem. Please check that your problem compiles with no errors before saving."
-            | T.null problemId -> do
-                Actions.createNewProblem
-                  conn
-                  Problem.BareProblem
-                  { Problem.bpProblemId = Nothing
-                  , Problem.bpSummary = summary
-                  , Problem.bpContents = contents
-                  , Problem.bpTopicId = read . cs $ topicId
-                  , Problem.bpAuthorId = User.id user
-                  , Problem.bpStatus = read . cs $ status
-                  , Problem.bpFigures = figures
-                  }
-            | otherwise -> do
-                Actions.updateProblem
-                  conn
-                  Problem.BareProblem
-                  { Problem.bpProblemId = Just $ (read . cs $ problemId :: Integer)
-                  , Problem.bpSummary = summary
-                  , Problem.bpContents = contents
-                  , Problem.bpTopicId = read . cs $ topicId
-                  , Problem.bpAuthorId = User.id user
-                  , Problem.bpStatus = read . cs $ status
-                  , Problem.bpFigures = figures
-                  }
+        -- TODO: Error handling on IO exceptions
+        -- IO.liftIO
+        --   $ Compile.compile
+        --   contents
+        --   0
+        --   figures
+        
+        if
+          -- | (not . T.null $ Compile.p2tErrorProblem2tex r) || (not . T.null $ Compile.p2tErrorLatex r)
+          --   -> Util.writeJSON $ Error.mk "Invalid problem. Please check that your problem compiles with no errors before saving."
+          | T.null problemId -> do
+              Actions.createNewProblem
+                conn
+                Problem.BareProblem
+                { Problem.bpProblemId = Nothing
+                , Problem.bpSummary = summary
+                , Problem.bpContents = contents
+                , Problem.bpTopicId = read . cs $ topicId
+                , Problem.bpAuthorId = User.id user
+                , Problem.bpStatus = read . cs $ status
+                , Problem.bpFigures = figures
+                }
+          | otherwise -> do
+              Actions.updateProblem
+                conn
+                Problem.BareProblem
+                { Problem.bpProblemId = Just $ (read . cs $ problemId :: Integer)
+                , Problem.bpSummary = summary
+                , Problem.bpContents = contents
+                , Problem.bpTopicId = read . cs $ topicId
+                , Problem.bpAuthorId = User.id user
+                , Problem.bpStatus = read . cs $ status
+                , Problem.bpFigures = figures
+                }
     | (read . cs $ status) == ProblemStatus.Draft
       && User.role user `elem` [Role.Basic, Role.Contributor, Role.Moderator, Role.Administrator] -> do
         if
@@ -601,9 +598,10 @@ setMetaSetting conn (Just User.User{User.role = Role.Administrator}) = do
         Just _ -> Util.writeJSON OkResponse.OkResponse
 setMetaSetting _ _ = restrictedResponse
 
-compileProblem :: Snap.Snap ()
+compileProblem :: Snap.Snap (Either Error.Error Text)
 compileProblem = do
-  -- DEBUG testing
+  
+  -- DEBUGGING
   let figures' =
         [ Figure.BareFigure "currMirror01a.asc" "\n\
 \ Version 4\n\
@@ -636,72 +634,70 @@ compileProblem = do
         ]
   finalHtml <- IO.liftIO $ Compile.compile
     "PARAM{I_D = [30, 20, 10, 40] #units=\\mu A }\nincluding figures below\nINCLUDE{currMirror01a.asc}\nINCLUDE{circle.svg}"
-    Compile.RandomizeVariablesFalse
+    0
     figures'
   IO.liftIO $ putStrLn "Final HTML:"
   IO.liftIO $ print finalHtml
 
-  figures <- fileUploads
+  figures :: [Figure.BareFigure] <- fileUploads
   let getTextParam = getTextParamGeneric :: Compile.RequestParam -> Snap.Snap Text
   contents <- getTextParam Compile.ParamContents
   randomizeVariables <- getTextParam Compile.ParamRandomizeVariables
+
+  let randomSeed = readMaybe (cs randomizeVariables) :: Maybe Compile.RandomSeed
+  
   outputOption <- getTextParam Compile.ParamOutputOption
   if
     | T.null contents
-      -> Util.writeJSON $ Error.mk "Problem contents cannot be empty"
-    | otherwise -> do
-        response :: LBS.ByteString <- Actions.requestProblem2texCompileProblem
-          contents
-          (Just randomizeVariables)
-          (Just outputOption)
-          figures
-        case JSON.eitherDecode response :: Either String Compile.Problem2texResponse of
-          Left e -> do
-            IO.liftIO $ putStrLn "Error response:"
-            IO.liftIO $ print e
-            ambiguousErrorResponse
-          Right r -> Util.writeJSON Compile.Response
-            { Compile.resErrorProblem2tex = Compile.p2tErrorProblem2tex r
-            , Compile.resErrorLatex = Compile.p2tErrorLatex r
-            , Compile.resPdfContents = Compile.p2tPdfContents r
-            , Compile.resTerminalOutput = Compile.p2tTerminalOutput r
-            }
+      -> pure $ Left $ Error.mk "Problem contents cannot be empty"
+    | isNothing randomSeed
+      -> pure $ Left $ Error.mk "Invalid random seed"
+    | otherwise
+      -> IO.liftIO
+         $ Compile.compile
+         contents
+         (fromJust randomSeed)
+         figures
 
+-- TODO: update
 compileProblemById :: SQL.Connection -> Integer -> Snap.Snap ()
 compileProblemById conn problemId = do
   -- Need this to prepare POST parameters
   void $ Snap.handleMultipart
     Snap.defaultUploadPolicy
     (const . const $ return ())
-  let getTextParam = getTextParamGeneric :: Compile.RequestParam -> Snap.Snap Text
-  randomizeVariables <- fmap (mfilter (not . T.null) . Just)
-    $ getTextParam Compile.ParamRandomizeVariables
-  outputOption <- fmap (mfilter (not . T.null) . Just)
-    $ getTextParam Compile.ParamOutputOption
-  IO.liftIO (Queries.getProblemById conn problemId) >>= \case
-    Nothing -> Util.writeJSON $ Error.mk "Problem does not exist"
-    Just problem -> do
-      let figures = Problem.figures problem <&> \figure ->
-            Figure.BareFigure
-            { Figure.bfName = Figure.name figure
-            , Figure.bfContents = Figure.contents figure
-            }
-      response :: LBS.ByteString <- Actions.requestProblem2texCompileProblem
-        (Problem.contents problem)
-        randomizeVariables
-        outputOption
-        figures
-      case JSON.eitherDecode response :: Either String Compile.Problem2texResponse of
-        Left e -> do
-          IO.liftIO $ putStrLn "Error response:"
-          IO.liftIO $ print e
-          ambiguousErrorResponse
-        Right r -> Util.writeJSON Compile.Response
-          { Compile.resErrorProblem2tex = Compile.p2tErrorProblem2tex r
-          , Compile.resErrorLatex = Compile.p2tErrorLatex r
-          , Compile.resPdfContents = Compile.p2tPdfContents r
-          , Compile.resTerminalOutput = Compile.p2tTerminalOutput r
-          }
+
+  error "Not implemented"
+
+  -- let getTextParam = getTextParamGeneric :: Compile.RequestParam -> Snap.Snap Text
+  -- randomizeVariables <- fmap (mfilter (not . T.null) . Just)
+  --   $ getTextParam Compile.ParamRandomizeVariables
+  -- outputOption <- fmap (mfilter (not . T.null) . Just)
+  --   $ getTextParam Compile.ParamOutputOption
+  -- IO.liftIO (Queries.getProblemById conn problemId) >>= \case
+  --   Nothing -> Util.writeJSON $ Error.mk "Problem does not exist"
+  --   Just problem -> do
+  --     let figures = Problem.figures problem <&> \figure ->
+  --           Figure.BareFigure
+  --           { Figure.bfName = Figure.name figure
+  --           , Figure.bfContents = Figure.contents figure
+  --           }
+  --     response :: LBS.ByteString <- Actions.requestProblem2texCompileProblem
+  --       (Problem.contents problem)
+  --       randomizeVariables
+  --       outputOption
+  --       figures
+  --     case JSON.eitherDecode response :: Either String Compile.Problem2texResponse of
+  --       Left e -> do
+  --         IO.liftIO $ putStrLn "Error response:"
+  --         IO.liftIO $ print e
+  --         ambiguousErrorResponse
+  --       Right r -> Util.writeJSON Compile.Response
+  --         { Compile.resErrorProblem2tex = Compile.p2tErrorProblem2tex r
+  --         , Compile.resErrorLatex = Compile.p2tErrorLatex r
+  --         , Compile.resPdfContents = Compile.p2tPdfContents r
+  --         , Compile.resTerminalOutput = Compile.p2tTerminalOutput r
+  --         }
 
 getFigure :: SQL.Connection -> Integer -> Snap.Snap ()
 getFigure conn figureId = do
