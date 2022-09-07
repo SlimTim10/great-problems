@@ -77,18 +77,6 @@ performRequest compileRequest = do
           )
     return $ Map.mapKeys (cs . show) formDataParams
 
-  -- TODO: clean up
-  -- rawCompileResponse :: R.Event t Text <- Util.postForm
-  --   (Route.apiHref $ Route.Api_Compile :/ Nothing)
-  --   formData
-  -- -- The problem is, this is trying to decode an Either as JSON, not decode either an Error or Text
-  -- compileResponse :: R.Dynamic t (Maybe (Either Error.Error Text)) <- R.holdDyn Nothing
-  --   $ R.decodeText <$> rawCompileResponse
-  -- loading :: R.Dynamic t Bool <- compileResponse `Util.notUpdatedSince` compileRequest
-  -- ct <- IO.liftIO Time.getCurrentTime
-  -- t <- R.holdDyn ct (time <$> compileRequest)
-  -- return $ Loading.WithLoading <$> R.zipDynWith Response t compileResponse <*> loading
-
   rawCompileResponse :: R.Event t Text <- Util.postForm
     (Route.apiHref $ Route.Api_Compile :/ Nothing)
     formData
