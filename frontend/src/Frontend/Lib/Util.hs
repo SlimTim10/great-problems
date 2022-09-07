@@ -209,19 +209,42 @@ setInnerHTML el html = JS.liftJSM $ do
   elVal <- JS.toJSVal el
   JS.setProp "innerHTML" htmlVal (JS.Object elVal)
 
+appendScriptURL
+  :: ( JS.MonadJSM m
+     , JS.ToJSVal (R.RawElement (R.DomBuilderSpace m))
+     )
+  => R.RawElement (R.DomBuilderSpace m) -- ^ Append script to this element
+  -> Text -- ^ Script type (e.g., "text/javascript")
+  -> Text -- ^ URL to script
+  -> m ()
+appendScriptURL el scriptType url = JS.liftJSM $ do
+  doc <- JS.jsg ("document" :: Text)
+  -- script = document.createElement('script')
+  script <- doc ^. JS.js1 ("createElement" :: Text) ("script" :: Text)
+  -- script.type = scriptType
+  void $ script ^. JS.jss ("type" :: Text) scriptType
+  -- script.src = url
+  void $ script ^. JS.jss ("src" :: Text) url
+  elVal <- JS.toJSVal el
+  -- el.appendChild(script)
+  void $ (JS.Object elVal) ^. JS.js1 ("appendChild" :: Text) script
+
 appendScript
   :: ( JS.MonadJSM m
      , JS.ToJSVal (R.RawElement (R.DomBuilderSpace m))
      )
-  => R.RawElement (R.DomBuilderSpace m)
-  -> Text
+  => R.RawElement (R.DomBuilderSpace m) -- ^ Append script to this element
+  -> Text -- ^ Script type (e.g., "text/javascript")
+  -> Text -- ^ Script text
   -> m ()
-appendScript el scriptUrl = JS.liftJSM $ do
+appendScript el scriptType txt = JS.liftJSM $ do
   doc <- JS.jsg ("document" :: Text)
   -- script = document.createElement('script')
   script <- doc ^. JS.js1 ("createElement" :: Text) ("script" :: Text)
-  -- script.src = scriptUrl
-  void $ script ^. JS.jss ("src" :: Text) scriptUrl
+  -- script.type = scriptType
+  void $ script ^. JS.jss ("type" :: Text) scriptType
+  -- script.innerHTML = txt
+  void $ script ^. JS.jss ("innerHTML" :: Text) txt
   elVal <- JS.toJSVal el
   -- el.appendChild(script)
   void $ (JS.Object elVal) ^. JS.js1 ("appendChild" :: Text) script

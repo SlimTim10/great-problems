@@ -34,7 +34,8 @@ data Randomize = Randomize | Reset | NoChange
 data Request = Request
   { contents :: Text
   , randomizeVariables :: Randomize
-  , outputOption :: Compile.OutputOption -- TODO: remove
+  -- TODO: remove outputOption since it will be handled frontend-only
+  , outputOption :: Compile.OutputOption
   , figures :: [FormFile.FormFile]
   , time :: Time.UTCTime
   } deriving (Show, Eq)
@@ -121,8 +122,16 @@ performRequestWithId problemId compileRequest = do
   rawCompileResponse :: R.Event t Text <- Util.postForm
     (Route.apiHref $ Route.Api_Compile :/ Just problemId)
     formData
-  compileResponse :: R.Dynamic t (Maybe (Either Error.Error Text)) <- R.holdDyn Nothing
-    $ R.decodeText <$> rawCompileResponse
+  let err :: R.Event t (Maybe Error.Error) = R.decodeText <$> rawCompileResponse
+  let resErr :: R.Event t (Either Error.Error Text) = Left . fromJust
+        <$> R.ffilter isJust err
+
+  let success :: R.Event t (Maybe Text) = R.decodeText <$> rawCompileResponse
+  let resSuccess :: R.Event t (Either Error.Error Text) = Right . fromJust
+        <$> R.ffilter isJust success
+
+  compileResponse :: R.Dynamic t (Maybe (Either Error.Error Text)) <-
+    R.holdDyn Nothing $ Just <$> R.leftmost [resErr, resSuccess]
   loading :: R.Dynamic t Bool <- compileResponse `Util.notUpdatedSince` compileRequest
   ct <- IO.liftIO Time.getCurrentTime
   t <- R.holdDyn ct (time <$> compileRequest)
@@ -145,7 +154,6 @@ parseRandomize = \case
     Nothing -> return . cs . show $ (0 :: Integer)
     Just x -> return x
 
--- TODO: Doesn't need output option as it will be handled on the frontend
 mkRequest
   :: ( JS.MonadJSM (R.Performable m)
      , R.PerformEvent t m
@@ -154,7 +162,7 @@ mkRequest
   => R.Event t () -- ^ Event to trigger request
   -> R.Dynamic t Text -- ^ Problem contents
   -> R.Dynamic t Problem.Compile.Randomize -- ^ Randomize problem variables
-  -> R.Dynamic t Compile.OutputOption -- ^ Show problem solution/answer -- TODO: remove
+  -> R.Dynamic t Compile.OutputOption -- ^ Show problem solution/answer
   -> R.Dynamic t [FormFile.FormFile] -- ^ Problem figures
   -> m (R.Event t Problem.Compile.Request)
 mkRequest e c rv oo figs = R.performEvent $ R.ffor e $ \_ -> do

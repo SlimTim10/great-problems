@@ -1,7 +1,9 @@
+{-# LANGUAGE QuasiQuotes #-}
 module Problem.PdfViewer
   ( widget
   ) where
 
+import Text.RawString.QQ
 import qualified Language.Javascript.JSaddle as JS
 import qualified Obelisk.Generated.Static as Ob
 import qualified Reflex.Dom.Core as R
@@ -39,11 +41,35 @@ switchView Nothing _ _ = R.text "Press compile to view"
 switchView compileResponse@(Just (Left _)) _ _ = errorsWidget compileResponse
 switchView (Just (Right html)) _ _ = do
   el <- Util.placeRawHTML html
+  resetMathJax el
+  configureMathJax el
   includeMathJax el
   fixMathJaxSVG el
   where
-    includeMathJax el = Util.appendScript el "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_SVG"
-    fixMathJaxSVG el = Util.appendScript el (Ob.static @"fixMathJaxSVG.js")
+    includeMathJax el = Util.appendScriptURL el "text/javascript" "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_SVG"
+    fixMathJaxSVG el = Util.appendScriptURL el "text/javascript" (Ob.static @"fixMathJaxSVG.js")
+    configureMathJax el = Util.appendScript el "text/x-mathjax-config"
+      [r|
+      MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             },
+      });
+      |]
+    resetMathJax el = Util.appendScript el "text/javascript" "MathJax = undefined"
 
 errorsWidget
   :: R.DomBuilder t m

@@ -28,6 +28,7 @@ library
                , base64-bytestring
                , filepath
                , time
+               , raw-strings-qq
   exposed-modules:
     Frontend
   other-modules:

@@ -144,7 +144,9 @@ backend = Ob.Backend
               _ -> return ()
               
             Route.Api_Compile :/ Just problemId -> Snap.rqMethod <$> Snap.getRequest >>= \case
-              Snap.POST -> Handlers.compileProblemById conn problemId
+              Snap.POST -> Handlers.compileProblemById conn problemId >>= \case
+                Left e -> Util.writeJSON e
+                Right html -> Util.writeJSON html
               _ -> return ()
               
             Route.Api_Figures :/ figureId -> do

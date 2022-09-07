@@ -607,55 +607,34 @@ compileProblem = do
   let randomSeed = readMaybe (cs randomizeVariables) :: Maybe Compile.RandomSeed
   if
     | T.null contents
-      -> pure $ Left $ Error.mk "Problem contents cannot be empty"
+      -> return $ Left $ Error.mk "Problem contents cannot be empty"
     | isNothing randomSeed
-      -> pure $ Left $ Error.mk "Invalid random seed"
+      -> return $ Left $ Error.mk "Invalid random seed"
     | otherwise
-      -> IO.liftIO
-         $ Compile.compile
-         contents
-         (fromJust randomSeed)
-         figures
+      -> IO.liftIO $ Compile.compile contents (fromJust randomSeed) figures
 
--- TODO: update
-compileProblemById :: SQL.Connection -> Integer -> Snap.Snap ()
+compileProblemById :: SQL.Connection -> Integer -> Snap.Snap (Either Error.Error Text)
 compileProblemById conn problemId = do
   -- Need this to prepare POST parameters
   void $ Snap.handleMultipart
     Snap.defaultUploadPolicy
     (const . const $ return ())
 
-  return ()
-
-  -- let getTextParam = getTextParamGeneric :: Compile.RequestParam -> Snap.Snap Text
-  -- randomizeVariables <- fmap (mfilter (not . T.null) . Just)
-  --   $ getTextParam Compile.ParamRandomizeVariables
-  -- outputOption <- fmap (mfilter (not . T.null) . Just)
-  --   $ getTextParam Compile.ParamOutputOption
-  -- IO.liftIO (Queries.getProblemById conn problemId) >>= \case
-  --   Nothing -> Util.writeJSON $ Error.mk "Problem does not exist"
-  --   Just problem -> do
-  --     let figures = Problem.figures problem <&> \figure ->
-  --           Figure.BareFigure
-  --           { Figure.bfName = Figure.name figure
-  --           , Figure.bfContents = Figure.contents figure
-  --           }
-  --     response :: LBS.ByteString <- Actions.requestProblem2texCompileProblem
-  --       (Problem.contents problem)
-  --       randomizeVariables
-  --       outputOption
-  --       figures
-  --     case JSON.eitherDecode response :: Either String Compile.Problem2texResponse of
-  --       Left e -> do
-  --         IO.liftIO $ putStrLn "Error response:"
-  --         IO.liftIO $ print e
-  --         ambiguousErrorResponse
-  --       Right r -> Util.writeJSON Compile.Response
-  --         { Compile.resErrorProblem2tex = Compile.p2tErrorProblem2tex r
-  --         , Compile.resErrorLatex = Compile.p2tErrorLatex r
-  --         , Compile.resPdfContents = Compile.p2tPdfContents r
-  --         , Compile.resTerminalOutput = Compile.p2tTerminalOutput r
-  --         }
+  let getTextParam = getTextParamGeneric :: Compile.RequestParam -> Snap.Snap Text
+  randomizeVariables <- getTextParam Compile.ParamRandomizeVariables
+  let randomSeed = readMaybe (cs randomizeVariables) :: Maybe Compile.RandomSeed
+  IO.liftIO (Queries.getProblemById conn problemId) >>= \case
+    Nothing -> return $ Left $ Error.mk "Problem does not exist"
+    Just problem -> do
+      let figures :: [Figure.BareFigure] = Problem.figures problem <&> \figure ->
+            Figure.BareFigure
+            { Figure.bfName = Figure.name figure
+            , Figure.bfContents = Figure.contents figure
+            }
+      case randomSeed of
+        Nothing -> return $ Left $ Error.mk "Invalid random seed"
+        Just randomSeed' -> IO.liftIO
+          $ Compile.compile (Problem.contents problem) randomSeed' figures
 
 getFigure :: SQL.Connection -> Integer -> Snap.Snap ()
 getFigure conn figureId = do
