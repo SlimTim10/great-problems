@@ -34,7 +34,7 @@ data Randomize = Randomize | Reset | NoChange
 data Request = Request
   { contents :: Text
   , randomizeVariables :: Randomize
-  , outputOption :: Compile.OutputOption
+  , outputOption :: Compile.OutputOption -- TODO: remove
   , figures :: [FormFile.FormFile]
   , time :: Time.UTCTime
   } deriving (Show, Eq)
@@ -77,18 +77,31 @@ performRequest compileRequest = do
           )
     return $ Map.mapKeys (cs . show) formDataParams
 
-    -- TODO: Use this pattern?
-    -- response :: R.Event t (Either Error.Error ()) <- Api.postRequest
-    --   email
-    --   resetPassword
-    --   (Route.Api_ResetPassword :/ ())
-    --   (\email' -> User.ResetPasswordRequest (CI.mk email'))
+  -- TODO: clean up
+  -- rawCompileResponse :: R.Event t Text <- Util.postForm
+  --   (Route.apiHref $ Route.Api_Compile :/ Nothing)
+  --   formData
+  -- -- The problem is, this is trying to decode an Either as JSON, not decode either an Error or Text
+  -- compileResponse :: R.Dynamic t (Maybe (Either Error.Error Text)) <- R.holdDyn Nothing
+  --   $ R.decodeText <$> rawCompileResponse
+  -- loading :: R.Dynamic t Bool <- compileResponse `Util.notUpdatedSince` compileRequest
+  -- ct <- IO.liftIO Time.getCurrentTime
+  -- t <- R.holdDyn ct (time <$> compileRequest)
+  -- return $ Loading.WithLoading <$> R.zipDynWith Response t compileResponse <*> loading
 
   rawCompileResponse :: R.Event t Text <- Util.postForm
     (Route.apiHref $ Route.Api_Compile :/ Nothing)
     formData
-  compileResponse :: R.Dynamic t (Maybe (Either Error.Error Text)) <- R.holdDyn Nothing
-    $ R.decodeText <$> rawCompileResponse
+  let err :: R.Event t (Maybe Error.Error) = R.decodeText <$> rawCompileResponse
+  let resErr :: R.Event t (Either Error.Error Text) = Left . fromJust
+        <$> R.ffilter isJust err
+
+  let success :: R.Event t (Maybe Text) = R.decodeText <$> rawCompileResponse
+  let resSuccess :: R.Event t (Either Error.Error Text) = Right . fromJust
+        <$> R.ffilter isJust success
+
+  compileResponse :: R.Dynamic t (Maybe (Either Error.Error Text)) <-
+    R.holdDyn Nothing $ Just <$> R.leftmost [resErr, resSuccess]
   loading :: R.Dynamic t Bool <- compileResponse `Util.notUpdatedSince` compileRequest
   ct <- IO.liftIO Time.getCurrentTime
   t <- R.holdDyn ct (time <$> compileRequest)
@@ -144,6 +157,7 @@ parseRandomize = \case
     Nothing -> return . cs . show $ (0 :: Integer)
     Just x -> return x
 
+-- TODO: Doesn't need output option as it will be handled on the frontend
 mkRequest
   :: ( JS.MonadJSM (R.Performable m)
      , R.PerformEvent t m
@@ -152,7 +166,7 @@ mkRequest
   => R.Event t () -- ^ Event to trigger request
   -> R.Dynamic t Text -- ^ Problem contents
   -> R.Dynamic t Problem.Compile.Randomize -- ^ Randomize problem variables
-  -> R.Dynamic t Compile.OutputOption -- ^ Show problem solution/answer
+  -> R.Dynamic t Compile.OutputOption -- ^ Show problem solution/answer -- TODO: remove
   -> R.Dynamic t [FormFile.FormFile] -- ^ Problem figures
   -> m (R.Event t Problem.Compile.Request)
 mkRequest e c rv oo figs = R.performEvent $ R.ffor e $ \_ -> do

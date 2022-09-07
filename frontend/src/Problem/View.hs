@@ -47,6 +47,7 @@ widget
      , R.HasDocument m
      , DOM.IsDocument (R.RawDocument (R.DomBuilderSpace m))
      , R.MonadSample t (R.Performable m)
+     , JS.ToJSVal (R.RawElement (R.DomBuilderSpace m))
      )
   => Integer
   -> m ()
@@ -90,8 +91,8 @@ widget problemId = mdo
         [ onloadAction
         , randomizeVariablesAction
         , resetVariablesAction
-        , showAnswerAction
-        , showSolutionAction
+        , showAnswerAction -- TODO: change to frontend-only action
+        , showSolutionAction -- TODO: change to frontend-only action
         ] :: [R.Dynamic t (Loading.WithLoading Problem.Compile.Response)]
 
   currentResponse :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do

@@ -38,6 +38,7 @@ widget
      , Ob.SetRoute t (Ob.R Route.FrontendRoute) m
      , R.Prerender js t m
      , R.MonadSample t (R.Performable m)
+     , JS.ToJSVal (R.RawElement (R.DomBuilderSpace m))
      )
   => m ()
 widget = do

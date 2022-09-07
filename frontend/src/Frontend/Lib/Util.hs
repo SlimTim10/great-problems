@@ -184,3 +184,44 @@ redirectWithoutHistory url = do
   R.performEvent_ $ R.ffor textUrl $ \url' -> void $ JS.liftJSM $ do
     window <- JS.jsg ("window" :: Text)
     void $ window ^. JS.js ("location" :: Text) ^. JS.js1 ("replace" :: Text) url'
+
+placeRawHTML
+  :: ( R.DomBuilder t m
+     , JS.MonadJSM m
+     , JS.ToJSVal (R.RawElement (R.DomBuilderSpace m))
+     )
+  => Text
+  -> m (R.RawElement (R.DomBuilderSpace m))
+placeRawHTML html = do
+  el <- R._element_raw . fst <$> R.el' "div" R.blank
+  setInnerHTML el html
+  return el
+
+setInnerHTML
+  :: ( JS.MonadJSM m
+     , JS.ToJSVal (R.RawElement (R.DomBuilderSpace m))
+     )
+  => R.RawElement (R.DomBuilderSpace m)
+  -> Text
+  -> m ()
+setInnerHTML el html = JS.liftJSM $ do
+  htmlVal <- JS.toJSVal html
+  elVal <- JS.toJSVal el
+  JS.setProp "innerHTML" htmlVal (JS.Object elVal)
+
+appendScript
+  :: ( JS.MonadJSM m
+     , JS.ToJSVal (R.RawElement (R.DomBuilderSpace m))
+     )
+  => R.RawElement (R.DomBuilderSpace m)
+  -> Text
+  -> m ()
+appendScript el scriptUrl = JS.liftJSM $ do
+  doc <- JS.jsg ("document" :: Text)
+  -- script = document.createElement('script')
+  script <- doc ^. JS.js1 ("createElement" :: Text) ("script" :: Text)
+  -- script.src = scriptUrl
+  void $ script ^. JS.jss ("src" :: Text) scriptUrl
+  elVal <- JS.toJSVal el
+  -- el.appendChild(script)
+  void $ (JS.Object elVal) ^. JS.js1 ("appendChild" :: Text) script

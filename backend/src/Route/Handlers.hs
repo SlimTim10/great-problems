@@ -600,53 +600,11 @@ setMetaSetting _ _ = restrictedResponse
 
 compileProblem :: Snap.Snap (Either Error.Error Text)
 compileProblem = do
-  
-  -- DEBUGGING
-  let figures' =
-        [ Figure.BareFigure "currMirror01a.asc" "\n\
-\ Version 4\n\
-\ SHEET 1 1120 680\n\
-\ WIRE 112 288 112 272\n\
-\ WIRE 208 288 112 288\n\
-\ WIRE 112 320 112 288\n\
-\ WIRE 48 352 32 352\n\
-\ WIRE 112 416 112 384\n\
-\ WIRE 48 448 32 448\n\
-\ WIRE 112 496 112 480\n\
-\ FLAG 112 496 0\n\
-\ FLAG 208 288 vo\n\
-\ IOPIN 208 288 In\n\
-\ FLAG 32 448 VB1\n\
-\ IOPIN 32 448 In\n\
-\ FLAG 32 352 VB2\n\
-\ IOPIN 32 352 In\n\
-\ SYMBOL svg/svg_nmos 48 400 R0\n\
-\ SYMATTR InstName M1\n\
-\ SYMBOL svg/svg_nmos 48 304 R0\n\
-\ SYMATTR InstName M2\n\
-\ SYMBOL svg_meas_I 160 256 R180\n\
-\ SYMATTR InstName X1\n\
-\ TEXT 152 216 Left 2 ;VAL{I_D,=}\n\
-\ LINE Normal 112 272 112 192 1"
-        , Figure.BareFigure
-          "circle.svg"
-          "<svg height=\"100\" width=\"100\"><circle cx=\"50\" cy=\"50\" r=\"40\" stroke=\"black\" stroke-width=\"3\" fill=\"red\" /></svg>"
-        ]
-  finalHtml <- IO.liftIO $ Compile.compile
-    "PARAM{I_D = [30, 20, 10, 40] #units=\\mu A }\nincluding figures below\nINCLUDE{currMirror01a.asc}\nINCLUDE{circle.svg}"
-    0
-    figures'
-  IO.liftIO $ putStrLn "Final HTML:"
-  IO.liftIO $ print finalHtml
-
   figures :: [Figure.BareFigure] <- fileUploads
   let getTextParam = getTextParamGeneric :: Compile.RequestParam -> Snap.Snap Text
   contents <- getTextParam Compile.ParamContents
   randomizeVariables <- getTextParam Compile.ParamRandomizeVariables
-
   let randomSeed = readMaybe (cs randomizeVariables) :: Maybe Compile.RandomSeed
-  
-  outputOption <- getTextParam Compile.ParamOutputOption
   if
     | T.null contents
       -> pure $ Left $ Error.mk "Problem contents cannot be empty"
@@ -667,7 +625,7 @@ compileProblemById conn problemId = do
     Snap.defaultUploadPolicy
     (const . const $ return ())
 
-  error "Not implemented"
+  return ()
 
   -- let getTextParam = getTextParamGeneric :: Compile.RequestParam -> Snap.Snap Text
   -- randomizeVariables <- fmap (mfilter (not . T.null) . Just)
