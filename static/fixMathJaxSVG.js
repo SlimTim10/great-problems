@@ -38,10 +38,7 @@
   const runAfterMathJax = f => {
     const intervalId = setInterval(() => {
       if (typeof MathJax !== 'undefined') {
-        MathJax.Hub.Queue(
-          ['Typeset', MathJax.Hub],
-          f
-        )
+        MathJax.Hub.Queue(f)
         clearInterval(intervalId)
       }
     }, 100)

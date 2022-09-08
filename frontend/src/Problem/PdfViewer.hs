@@ -3,8 +3,14 @@ module Problem.PdfViewer
   ( widget
   ) where
 
-import Text.RawString.QQ
+import qualified Control.Monad.Loops as Loops
+import qualified Text.RawString.QQ as QQ
+import qualified Control.Monad.IO.Class as IO
+import qualified Control.Concurrent as Concurrent
+import qualified Control.Monad as Control
 import qualified Language.Javascript.JSaddle as JS
+import qualified JSDOM.Generated.WindowOrWorkerGlobalScope as JS
+import qualified JSDOM
 import qualified Obelisk.Generated.Static as Ob
 import qualified Reflex.Dom.Core as R
 
@@ -40,16 +46,20 @@ switchView compileResponse False True = errorsWidget compileResponse
 switchView Nothing _ _ = R.text "Press compile to view"
 switchView compileResponse@(Just (Left _)) _ _ = errorsWidget compileResponse
 switchView (Just (Right html)) _ _ = do
-  el <- Util.placeRawHTML html
-  resetMathJax el
+  el <- Util.placeRawHTML viewerId html
+  -- Need to clear MathJax so it doesn't use the previous route
+  clearMathJax
   configureMathJax el
   includeMathJax el
+  -- runMathJax
+  runMathJax'
   fixMathJaxSVG el
+  -- fixMathJaxSVG
   where
     includeMathJax el = Util.appendScriptURL el "text/javascript" "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_SVG"
     fixMathJaxSVG el = Util.appendScriptURL el "text/javascript" (Ob.static @"fixMathJaxSVG.js")
     configureMathJax el = Util.appendScript el "text/x-mathjax-config"
-      [r|
+      [QQ.r|
       MathJax.Hub.Config({
         displayAlign: "center",
         displayIndent: "0em",
@@ -69,7 +79,43 @@ switchView (Just (Right html)) _ _ = do
              },
       });
       |]
-    resetMathJax el = Util.appendScript el "text/javascript" "MathJax = undefined"
+    clearMathJax = JS.liftJSM $ do
+      win <- JS.jsg ("window" :: Text)
+      void $ win ^. JS.jss ("MathJax" :: Text) JS.jsUndefined
+--     runMathJax = JS.liftJSM $ void $ JS.eval ([QQ.r|
+-- (() => {
+--   const intervalId = setInterval(() => {
+--     if (typeof MathJax !== 'undefined') {
+--       MathJax.Hub.Queue(['Typeset', MathJax.Hub, '|] <> viewerId <> [QQ.r|'])
+--       clearInterval(intervalId)
+--     }
+--   }, 100)
+-- })();
+--       |] :: Text)
+    runMathJax' = JS.liftJSM $ do
+      ctx <- JS.askJSM
+      void $ IO.liftIO $ Concurrent.forkIO $ do
+        Loops.untilM_ (return ()) $ do
+          mjReady <- JS.runJSaddle ctx $ do
+            mj <- JS.jsg ("MathJax" :: Text)
+            return $ JS.isTruthy mj
+          let millis = 100
+          Concurrent.threadDelay (millis * 1000)
+          mjReady' :: Bool <- JS.runJSaddle ctx (JS.ghcjsPure mjReady) >>= return
+          return mjReady'
+        void $ flip JS.runJSM ctx $ do
+          mj <- JS.jsg ("MathJax" :: Text)
+          hub <- mj ^. JS.js ("Hub" :: Text)
+          q <- JS.toJSVal ("Typeset" :: Text, hub, viewerId)
+          void $ hub ^. JS.js1 ("Queue" :: Text) q
+    -- runMathJax' = JS.liftJSM $ do
+    --   window <- JSDOM.currentWindowUnchecked
+    --   intervalId <- flip (JS.setInterval window) (Just 1000) $ do
+    --     JS.eval $ ("() => console.log('test1')" :: Text)
+    --     JS.clearInterval window (Just intervalId)
+    --   JS.clearInterval window (Just intervalId)
+    --   return ()
+    viewerId = "problem-viewer"
 
 errorsWidget
   :: R.DomBuilder t m

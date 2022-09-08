@@ -190,10 +190,11 @@ placeRawHTML
      , JS.MonadJSM m
      , JS.ToJSVal (R.RawElement (R.DomBuilderSpace m))
      )
-  => Text
+  => Text -- ^ ID attribute for <div> element
+  -> Text -- ^ HTML content
   -> m (R.RawElement (R.DomBuilderSpace m))
-placeRawHTML html = do
-  el <- R._element_raw . fst <$> R.el' "div" R.blank
+placeRawHTML divId html = do
+  el <- R._element_raw . fst <$> R.elAttr' "div" ("id" =: divId) R.blank
   setInnerHTML el html
   return el
 
