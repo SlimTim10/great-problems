@@ -51,8 +51,7 @@ switchView (Just (Right html)) _ _ = do
   clearMathJax
   configureMathJax el
   includeMathJax el
-  -- runMathJax
-  runMathJax'
+  runMathJax
   fixMathJaxSVG el
   -- fixMathJaxSVG
   where
@@ -82,17 +81,12 @@ switchView (Just (Right html)) _ _ = do
     clearMathJax = JS.liftJSM $ do
       win <- JS.jsg ("window" :: Text)
       void $ win ^. JS.jss ("MathJax" :: Text) JS.jsUndefined
---     runMathJax = JS.liftJSM $ void $ JS.eval ([QQ.r|
--- (() => {
---   const intervalId = setInterval(() => {
---     if (typeof MathJax !== 'undefined') {
---       MathJax.Hub.Queue(['Typeset', MathJax.Hub, '|] <> viewerId <> [QQ.r|'])
---       clearInterval(intervalId)
---     }
---   }, 100)
--- })();
---       |] :: Text)
-    runMathJax' = JS.liftJSM $ do
+    runMathJax = whenMathJaxReady $ do
+      mj <- JS.jsg ("MathJax" :: Text)
+      hub <- mj ^. JS.js ("Hub" :: Text)
+      q <- JS.toJSVal ("Typeset" :: Text, hub, viewerId)
+      void $ hub ^. JS.js1 ("Queue" :: Text) q
+    whenMathJaxReady f = JS.liftJSM $ do
       ctx <- JS.askJSM
       void $ IO.liftIO $ Concurrent.forkIO $ do
         Loops.untilM_ (return ()) $ do
@@ -103,18 +97,7 @@ switchView (Just (Right html)) _ _ = do
           Concurrent.threadDelay (millis * 1000)
           mjReady' :: Bool <- JS.runJSaddle ctx (JS.ghcjsPure mjReady) >>= return
           return mjReady'
-        void $ flip JS.runJSM ctx $ do
-          mj <- JS.jsg ("MathJax" :: Text)
-          hub <- mj ^. JS.js ("Hub" :: Text)
-          q <- JS.toJSVal ("Typeset" :: Text, hub, viewerId)
-          void $ hub ^. JS.js1 ("Queue" :: Text) q
-    -- runMathJax' = JS.liftJSM $ do
-    --   window <- JSDOM.currentWindowUnchecked
-    --   intervalId <- flip (JS.setInterval window) (Just 1000) $ do
-    --     JS.eval $ ("() => console.log('test1')" :: Text)
-    --     JS.clearInterval window (Just intervalId)
-    --   JS.clearInterval window (Just intervalId)
-    --   return ()
+        void $ JS.runJSaddle ctx f
     viewerId = "problem-viewer"
 
 errorsWidget
