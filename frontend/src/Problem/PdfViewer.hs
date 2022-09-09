@@ -69,8 +69,8 @@ switchView (Just (Right html)) _ _ = do
   configureMathJax el
   includeMathJax el
   runMathJax
-  -- fixMathJaxSVG el
-  fixMathJaxSVG'
+  fixMathJaxSVG el
+  -- fixMathJaxSVG'
   where
     includeMathJax el = Util.appendScriptURL el "text/javascript" "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_SVG"
     
@@ -128,6 +128,7 @@ switchView (Just (Right html)) _ _ = do
       hub <- mj ! "Hub"
       void $ hub ^. JS.js1 "Queue" jsFunc
 
+    -- This works, but it's much slower (~1300 ms) than its vanilla JavaScript counterpart (~2 ms)
     fixMathJaxSVG' :: JS.MonadJSM m => m ()
     fixMathJaxSVG' = afterMathJax $ JS.function $ \_ _ _ -> do
       doc <- DOM.currentDocumentUnchecked
