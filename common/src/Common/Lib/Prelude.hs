@@ -13,6 +13,7 @@ module Common.Lib.Prelude
   , module Data.Word
   , module Data.Char
   , module Data.Either
+  , module Data.Foldable
   , module Control.Monad
   , module Control.Monad.Fix
   , module Control.Monad.Loops
@@ -38,6 +39,7 @@ import Data.Functor ((<&>))
 import Data.Word (Word64)
 import Data.Char (ord)
 import Data.Either (fromLeft, fromRight)
+import Data.Foldable (for_)
 import Control.Monad (void, (<=<), forM, forM_, when, unless, (>=>), mfilter, guard)
 import Control.Monad.Fix (MonadFix)
 import Control.Monad.Loops (andM)

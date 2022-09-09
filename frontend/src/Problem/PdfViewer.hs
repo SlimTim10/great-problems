@@ -1,16 +1,28 @@
+{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE ExtendedDefaultRules #-}
+{-# OPTIONS_GHC -fno-warn-type-defaults #-}
 module Problem.PdfViewer
   ( widget
   ) where
 
+import Prelude hiding ((!!))
+
+import qualified Control.Monad.Trans.Maybe as MaybeT
 import qualified Control.Monad.Loops as Loops
 import qualified Text.RawString.QQ as QQ
 import qualified Control.Monad.IO.Class as IO
 import qualified Control.Concurrent as Concurrent
 import qualified Control.Monad as Control
 import qualified Language.Javascript.JSaddle as JS
-import qualified JSDOM.Generated.WindowOrWorkerGlobalScope as JS
-import qualified JSDOM
+import Language.Javascript.JSaddle ((!), (!!))
+import qualified "ghcjs-dom" GHCJS.DOM.Document as DOM
+import qualified GHCJS.DOM.Element as DOM
+import qualified GHCJS.DOM.Node as DOM
+import qualified GHCJS.DOM.ParentNode as DOM
+import qualified GHCJS.DOM.NonElementParentNode as DOM
+import qualified GHCJS.DOM.Types as DOM
+import qualified GHCJS.DOM as DOM
 import qualified Obelisk.Generated.Static as Ob
 import qualified Reflex.Dom.Core as R
 
@@ -18,6 +30,11 @@ import Common.Lib.Prelude
 import qualified Frontend.Lib.Util as Util
 import qualified Common.Api.Compile as Compile
 import qualified Common.Api.Error as Error
+
+default (Text)
+
+viewerId :: Text
+viewerId = "problem-viewer"
 
 widget
   :: ( R.DomBuilder t m
@@ -52,11 +69,13 @@ switchView (Just (Right html)) _ _ = do
   configureMathJax el
   includeMathJax el
   runMathJax
-  fixMathJaxSVG el
-  -- fixMathJaxSVG
+  -- fixMathJaxSVG el
+  fixMathJaxSVG'
   where
     includeMathJax el = Util.appendScriptURL el "text/javascript" "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_SVG"
+    
     fixMathJaxSVG el = Util.appendScriptURL el "text/javascript" (Ob.static @"fixMathJaxSVG.js")
+    
     configureMathJax el = Util.appendScript el "text/x-mathjax-config"
       [QQ.r|
       MathJax.Hub.Config({
@@ -78,27 +97,77 @@ switchView (Just (Right html)) _ _ = do
              },
       });
       |]
+
     clearMathJax = JS.liftJSM $ do
-      win <- JS.jsg ("window" :: Text)
-      void $ win ^. JS.jss ("MathJax" :: Text) JS.jsUndefined
+      win <- JS.jsg "window"
+      win ^. JS.jss "MathJax" JS.jsUndefined
+
     runMathJax = whenMathJaxReady $ do
-      mj <- JS.jsg ("MathJax" :: Text)
-      hub <- mj ^. JS.js ("Hub" :: Text)
-      q <- JS.toJSVal ("Typeset" :: Text, hub, viewerId)
-      void $ hub ^. JS.js1 ("Queue" :: Text) q
+      mj <- JS.jsg "MathJax"
+      hub <- mj ! "Hub"
+      q <- JS.toJSVal ("Typeset", hub, viewerId)
+      void $ hub ^. JS.js1 "Queue" q
+
+    whenMathJaxReady :: JS.MonadJSM m => JS.JSM () -> m ()
     whenMathJaxReady f = JS.liftJSM $ do
       ctx <- JS.askJSM
       void $ IO.liftIO $ Concurrent.forkIO $ do
         Loops.untilM_ (return ()) $ do
           mjReady <- JS.runJSaddle ctx $ do
-            mj <- JS.jsg ("MathJax" :: Text)
+            mj <- JS.jsg "MathJax"
             return $ JS.isTruthy mj
           let millis = 100
           Concurrent.threadDelay (millis * 1000)
           mjReady' :: Bool <- JS.runJSaddle ctx (JS.ghcjsPure mjReady) >>= return
           return mjReady'
         void $ JS.runJSaddle ctx f
-    viewerId = "problem-viewer"
+
+    afterMathJax :: JS.MonadJSM m => JS.JSM JS.Function -> m ()
+    afterMathJax jsFunc = whenMathJaxReady $ do
+      mj <- JS.jsg "MathJax"
+      hub <- mj ! "Hub"
+      void $ hub ^. JS.js1 "Queue" jsFunc
+
+    fixMathJaxSVG' :: JS.MonadJSM m => m ()
+    fixMathJaxSVG' = afterMathJax $ JS.function $ \_ _ _ -> do
+      doc <- DOM.currentDocumentUnchecked
+      viewerElem <- DOM.getElementByIdUnsafe doc viewerId
+      elemsToFix :: DOM.NodeList <- DOM.querySelectorAll viewerElem "svg .MathJax_SVG"
+      elemsToFix' :: [DOM.Node] <- Util.nodeListNodes elemsToFix
+      elemsToFix'' :: [DOM.Element] <- do
+        xs <- traverse (JS.toJSVal >=> JS.fromJSVal) elemsToFix'
+        pure $ catMaybes xs
+      for_ elemsToFix'' fixElem
+
+    fixElem :: DOM.Element -> JS.JSM ()
+    fixElem el = void $ MaybeT.runMaybeT $ do
+      textElem :: DOM.Element <- MaybeT.MaybeT $ DOM.closest el "text"
+      x <- JS.liftJSM $ textElem ! "x" ! "baseVal" !! 0 ! "value"
+      y <- JS.liftJSM $ textElem ! "y" ! "baseVal" !! 0 ! "value"
+      fontSize <- JS.liftJSM $ textElem ! "style" ! "font-size"
+      anchor :: Text <- MaybeT.MaybeT $ JS.fromJSVal =<<
+        textElem ! "style" ! "text-anchor"
+      svgElem <- MaybeT.MaybeT $ DOM.querySelector el "svg"
+      JS.liftJSM $ svgElem ! "style" ^. JS.jss "font-size" fontSize
+      void $ JS.liftJSM $ svgElem ^. JS.js2 "setAttribute" "x" x
+      void $ JS.liftJSM $ svgElem ^. JS.js2 "setAttribute" "y" y
+      -- Adjust position based on anchor
+      widthPx :: Double <- MaybeT.MaybeT $ JS.fromJSVal =<<
+        svgElem ! "width" ! "baseVal" ! "value"
+      heightPx :: Double <- MaybeT.MaybeT $ JS.fromJSVal =<<
+        svgElem ! "height" ! "baseVal" ! "value"
+      let translateY = "translateY(-" <> (cs . show $ heightPx / 2) <> "px)"
+      let translateX = case anchor of
+            "middle" -> "translateX(-" <> (cs . show $ widthPx / 2) <> "px)"
+            "end" -> "translateX(-" <> (cs . show $ widthPx) <> "px)"
+            _ -> ""
+      JS.liftJSM $ svgElem ! "style" ^. JS.jss "transform" (translateX <> " " <> translateY)
+      JS.liftJSM $ replaceElem textElem svgElem
+
+    replaceElem :: DOM.Element -> DOM.Element -> JS.JSM ()
+    replaceElem old new = void $ MaybeT.runMaybeT $ do
+      parentNode :: DOM.Node <- MaybeT.MaybeT $ DOM.getParentNode old
+      DOM.replaceChild_ parentNode new old
 
 errorsWidget
   :: R.DomBuilder t m

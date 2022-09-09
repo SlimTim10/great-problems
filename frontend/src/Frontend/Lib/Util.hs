@@ -12,6 +12,7 @@ import qualified "ghcjs-dom" GHCJS.DOM.Document as DOM
 import qualified GHCJS.DOM.Types
 import qualified GHCJS.DOM.Blob
 import qualified GHCJS.DOM.URL
+import qualified GHCJS.DOM.NodeList
 import qualified Foreign.JavaScript.Utils as JSUtils
 import qualified Obelisk.Route as Ob
 import qualified Reflex.Dom.Core as R
@@ -249,3 +250,18 @@ appendScript el scriptType txt = JS.liftJSM $ do
   elVal <- JS.toJSVal el
   -- el.appendChild(script)
   void $ (JS.Object elVal) ^. JS.js1 ("appendChild" :: Text) script
+
+nodeListNodes
+  :: ( GHCJS.DOM.Types.IsNodeList l
+     , JS.MonadJSM m
+     )
+  =>
+  l ->
+  m [GHCJS.DOM.Types.Node]
+nodeListNodes es = do
+  len <- GHCJS.DOM.NodeList.getLength es
+  -- Warning! len is unsigned. If the NodeList is empty, we must avoid
+  -- accidentally traversing over [0..maxBound::Word]
+  nodes <- traverse (GHCJS.DOM.NodeList.item es) $
+    if len == 0 then [] else [0..len-1]
+  pure $ catMaybes nodes
