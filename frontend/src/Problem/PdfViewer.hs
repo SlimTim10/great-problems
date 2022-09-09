@@ -13,10 +13,8 @@ import qualified Control.Monad.Loops as Loops
 import qualified Text.RawString.QQ as QQ
 import qualified Control.Monad.IO.Class as IO
 import qualified Control.Concurrent as Concurrent
-import qualified Control.Monad as Control
 import qualified Language.Javascript.JSaddle as JS
 import Language.Javascript.JSaddle ((!), (!!))
-import qualified "ghcjs-dom" GHCJS.DOM.Document as DOM
 import qualified GHCJS.DOM.Element as DOM
 import qualified GHCJS.DOM.Node as DOM
 import qualified GHCJS.DOM.ParentNode as DOM
@@ -28,7 +26,6 @@ import qualified Reflex.Dom.Core as R
 
 import Common.Lib.Prelude
 import qualified Frontend.Lib.Util as Util
-import qualified Common.Api.Compile as Compile
 import qualified Common.Api.Error as Error
 
 default (Text)
@@ -70,7 +67,11 @@ switchView (Just (Right html)) _ _ = do
   includeMathJax el
   runMathJax
   fixMathJaxSVG el
-  -- fixMathJaxSVG'
+  
+  -- This function works, but it's much slower (~1300 ms) than its vanilla JavaScript counterpart (~2 ms).
+  -- So it is disabled until there is a way to make it faster or a reason to use it.
+  when False fixMathJaxSVG'
+  
   where
     includeMathJax el = Util.appendScriptURL el "text/javascript" "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_SVG"
     
@@ -128,7 +129,6 @@ switchView (Just (Right html)) _ _ = do
       hub <- mj ! "Hub"
       void $ hub ^. JS.js1 "Queue" jsFunc
 
-    -- This works, but it's much slower (~1300 ms) than its vanilla JavaScript counterpart (~2 ms)
     fixMathJaxSVG' :: JS.MonadJSM m => m ()
     fixMathJaxSVG' = afterMathJax $ JS.function $ \_ _ _ -> do
       doc <- DOM.currentDocumentUnchecked

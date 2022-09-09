@@ -31,7 +31,8 @@
   }
 
   const fixSvg = () => {
-    const elemsToFix = [...document.querySelectorAll('svg .MathJax_SVG')]
+    const viewer = document.getElementById('problem-viewer')
+    const elemsToFix = [...viewer.querySelectorAll('svg .MathJax_SVG')]
     elemsToFix.forEach(fixElem)
   }
 
