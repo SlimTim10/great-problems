@@ -57,7 +57,7 @@ library
     Problem.Figures
     Problem.FormFile
     Problem.Loading
-    Problem.PdfViewer
+    Problem.Viewer
     Problem.SelectTopic
     Problem.Summary
     Problem.UploadPrb

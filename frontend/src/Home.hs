@@ -21,7 +21,7 @@ import qualified Widget.Button as Button
 import qualified Widget.Input as Input
 import qualified Problem.Loading as Loading
 import qualified Problem.Compile
-import qualified Problem.PdfViewer as PdfViewer
+import qualified Problem.Viewer as Viewer
 
 widget
   :: forall t m js.
@@ -243,7 +243,7 @@ widget = do
 
         R.elClass "div" "flex justify-center w-full" $ do
           R.elClass "div" "home-pdf-viewer" $ do
-            PdfViewer.widget
+            Viewer.widget
               ((Problem.Compile.response . Loading.action) <$> currentResponse)
               (Loading.loading <$> currentResponse)
               (R.constDyn False)

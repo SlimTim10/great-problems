@@ -2,8 +2,10 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE ExtendedDefaultRules #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
-module Problem.PdfViewer
+module Problem.Viewer
   ( widget
+  , problemAnswerId
+  , problemSolutionId
   ) where
 
 import Prelude hiding ((!!))
@@ -33,6 +35,12 @@ default (Text)
 viewerId :: Text
 viewerId = "problem-viewer"
 
+problemAnswerId :: Text
+problemAnswerId = "outline-container-problem-answer"
+
+problemSolutionId :: Text
+problemSolutionId = "outline-container-problem-solution"
+
 widget
   :: ( R.DomBuilder t m
      , R.PostBuild t m
@@ -61,8 +69,10 @@ switchView Nothing _ _ = R.text "Press compile to view"
 switchView compileResponse@(Just (Left _)) _ _ = errorsWidget compileResponse
 switchView (Just (Right html)) _ _ = do
   el <- Util.placeRawHTML viewerId html
+
   -- Need to clear MathJax so it doesn't use the previous route
   clearMathJax
+  
   configureMathJax el
   includeMathJax el
   runMathJax
@@ -71,6 +81,14 @@ switchView (Just (Right html)) _ _ = do
   -- This function works, but it's much slower (~1300 ms) than its vanilla JavaScript counterpart (~2 ms).
   -- So it is disabled until there is a way to make it faster or a reason to use it.
   when False fixMathJaxSVG'
+
+  -- Hide problem answer and solution by default.
+  -- In theory, this should be possible immediately after the HTML has been updated (innerHTML).
+  -- However, due to reflex's inner workings, the elements cannot be found so soon.
+  -- Triggering after MathJax is ready is our compromise.
+  whenMathJaxReady $ do
+    Util.hideElement problemAnswerId True
+    Util.hideElement problemSolutionId True
   
   where
     includeMathJax el = Util.appendScriptURL el "text/javascript" "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_SVG"
@@ -117,7 +135,7 @@ switchView (Just (Right html)) _ _ = do
           mjReady <- JS.runJSaddle ctx $ do
             mj <- JS.jsg "MathJax"
             return $ JS.isTruthy mj
-          let millis = 100
+          let millis = 10
           Concurrent.threadDelay (millis * 1000)
           mjReady' :: Bool <- JS.runJSaddle ctx (JS.ghcjsPure mjReady) >>= return
           return mjReady'
@@ -136,7 +154,7 @@ switchView (Just (Right html)) _ _ = do
       elemsToFix :: DOM.NodeList <- DOM.querySelectorAll viewerElem "svg .MathJax_SVG"
       elemsToFix' :: [DOM.Node] <- Util.nodeListNodes elemsToFix
       elemsToFix'' :: [DOM.Element] <- do
-        xs <- traverse (JS.toJSVal >=> JS.fromJSVal) elemsToFix'
+        xs <- traverse (DOM.castTo DOM.Element) elemsToFix'
         pure $ catMaybes xs
       for_ elemsToFix'' fixElem
 

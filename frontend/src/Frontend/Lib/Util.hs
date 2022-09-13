@@ -1,6 +1,11 @@
 {-# LANGUAGE PackageImports #-}
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE ExtendedDefaultRules #-}
+{-# OPTIONS_GHC -fno-warn-type-defaults #-}
 module Frontend.Lib.Util where
 
+import qualified Control.Monad.Trans.Maybe as MaybeT
+import qualified Text.RawString.QQ as QQ
 import qualified Data.Text as T
 import qualified Data.ByteString as BS
 import qualified Control.Lens as Lens
@@ -8,11 +13,15 @@ import qualified Data.Aeson as JSON
 import qualified Control.Monad.IO.Class as IO
 import qualified Web.Cookie as Cookie
 import qualified Language.Javascript.JSaddle as JS
+import Language.Javascript.JSaddle ((!))
 import qualified "ghcjs-dom" GHCJS.DOM.Document as DOM
-import qualified GHCJS.DOM.Types
-import qualified GHCJS.DOM.Blob
-import qualified GHCJS.DOM.URL
-import qualified GHCJS.DOM.NodeList
+import qualified GHCJS.DOM.Types as DOM
+import qualified GHCJS.DOM.Blob as DOM
+import qualified GHCJS.DOM.URL as DOM
+import qualified GHCJS.DOM.NodeList as DOM
+import qualified GHCJS.DOM.NonElementParentNode as DOM
+import qualified GHCJS.DOM.Element as DOM
+import qualified GHCJS.DOM as DOM
 import qualified Foreign.JavaScript.Utils as JSUtils
 import qualified Obelisk.Route as Ob
 import qualified Reflex.Dom.Core as R
@@ -24,15 +33,17 @@ import qualified Common.Api.User as User
 import qualified Common.Route as Route
 import qualified Problem.FormFile as FormFile
 
+default (Text)
+
 consoleLog :: (JS.MonadJSM m, JS.ToJSVal v) => v -> m ()
 consoleLog x = void $ JS.liftJSM $ do
-  w <- JS.jsg ("console" :: Text)
-  w ^. JS.js1 ("log" :: Text) x
+  w <- JS.jsg "console"
+  w ^. JS.js1 "log" x
 
 -- | Generate a random 32-bit integer in JavaScript
 random32 :: JS.MonadJSM m => m Integer
 random32 = JS.liftJSM $ do
-  x :: JS.JSVal <- JS.eval ("Math.floor(Math.random() * (2**32 - 1))" :: Text)
+  x :: JS.JSVal <- JS.eval "Math.floor(Math.random() * (2**32 - 1))"
   floor <$> JS.valToNumber x
 
 buttonDynClass
@@ -81,7 +92,7 @@ getCurrentUser = do
   let cookies :: Cookie.Cookies = Cookie.parseCookies (cs rawCookies)
   return $ JSON.decode . cs =<< lookup "user" cookies
 
-formFile :: FormFile.FormFile -> R'.FormValue GHCJS.DOM.Types.File
+formFile :: FormFile.FormFile -> R'.FormValue DOM.File
 formFile f = R'.FormValue_File (FormFile.file f) (Just (FormFile.name f))
 
 formBool :: Bool -> Text
@@ -98,7 +109,7 @@ postForm
      , R.TriggerEvent t m
      )
   => Text
-  -> R.Event t (Map Text (R'.FormValue GHCJS.DOM.Types.File))
+  -> R.Event t (Map Text (R'.FormValue DOM.File))
   -> m (R.Event t Text)
 postForm url formData = do
   responses <- R'.postForms url (singleton <$> formData)
@@ -132,10 +143,10 @@ notUpdatedSince d e = fmap not <$> updatedSince d e
 
 createObjectURL :: JS.MonadJSM m => BS.ByteString -> m Text
 createObjectURL bs = do
-  let opt :: Maybe GHCJS.DOM.Types.BlobPropertyBag = Nothing
+  let opt :: Maybe DOM.BlobPropertyBag = Nothing
   ba <- JSUtils.bsToArrayBuffer bs
-  b <- GHCJS.DOM.Blob.newBlob [ba] opt
-  url :: JS.JSString <- GHCJS.DOM.URL.createObjectURL b
+  b <- DOM.newBlob [ba] opt
+  url :: JS.JSString <- DOM.createObjectURL b
   return . T.pack . JS.fromJSString $ url
 
 -- See: https://developer.mozilla.org/en-US/docs/Web/API/WindowEventHandlers/onbeforeunload
@@ -144,15 +155,14 @@ preventLeaving b = void $ JS.liftJSM $ do
   case b of
     True -> do
       -- Make listener global so it can be removed
-      void $ JS.eval (
-        "\
-        \ window.unloadListener = function(e) { \
-        \   e.preventDefault(); \
-        \   e.returnValue = ''; \
-        \ } \
-        \ " :: Text)
-      void $ JS.eval ("window.addEventListener('beforeunload', window.unloadListener)" :: Text)
-    False -> void $ JS.eval ("window.removeEventListener('beforeunload', window.unloadListener)" :: Text)
+      void $ JS.eval [QQ.r|
+window.unloadListener = function(e) {
+  e.preventDefault();
+  e.returnValue = '';
+}
+|]
+      void $ JS.eval "window.addEventListener('beforeunload', window.unloadListener)"
+    False -> void $ JS.eval "window.removeEventListener('beforeunload', window.unloadListener)"
 
 -- | Native browser prompt dialog
 -- See: https://developer.mozilla.org/en-US/docs/Web/API/Window/prompt
@@ -161,16 +171,16 @@ prompt
   => Text -- ^ A message to display in the prompt
   -> m Text
 prompt msg = JS.liftJSM $ do
-  w <- JS.jsg ("window" :: Text)
-  x :: JS.JSVal <- w ^. JS.js1 ("prompt" :: Text) msg
+  w <- JS.jsg "window"
+  x :: JS.JSVal <- w ^. JS.js1 "prompt" msg
   return . JS.fromJSString . fromMaybe (JS.textToStr "") =<< JS.fromJSVal x
 
 -- | history.back()
 -- See: https://developer.mozilla.org/en-US/docs/Web/API/History/back
 historyBack :: JS.MonadJSM m => m ()
 historyBack = void $ JS.liftJSM $ do
-  history <- JS.jsg ("history" :: Text)
-  history ^. JS.js0 ("back" :: Text)
+  history <- JS.jsg "history"
+  history ^. JS.js0 "back"
 
 -- | window.location.replace(url)
 redirectWithoutHistory
@@ -183,8 +193,8 @@ redirectWithoutHistory
 redirectWithoutHistory url = do
   let textUrl :: R.Event t Text = Route.frontendHref <$> url
   R.performEvent_ $ R.ffor textUrl $ \url' -> void $ JS.liftJSM $ do
-    window <- JS.jsg ("window" :: Text)
-    void $ window ^. JS.js ("location" :: Text) ^. JS.js1 ("replace" :: Text) url'
+    window <- JS.jsg "window"
+    void $ window ! "location" ^. JS.js1 "replace" url'
 
 placeRawHTML
   :: ( R.DomBuilder t m
@@ -206,10 +216,9 @@ setInnerHTML
   => R.RawElement (R.DomBuilderSpace m)
   -> Text
   -> m ()
-setInnerHTML el html = JS.liftJSM $ do
-  htmlVal <- JS.toJSVal html
-  elVal <- JS.toJSVal el
-  JS.setProp "innerHTML" htmlVal (JS.Object elVal)
+setInnerHTML el html = JS.liftJSM $ void $ MaybeT.runMaybeT $ do
+  el' :: DOM.Element <- MaybeT.MaybeT $ (JS.toJSVal >=> JS.fromJSVal) el
+  DOM.setInnerHTML el' html
 
 appendScriptURL
   :: ( JS.MonadJSM m
@@ -220,16 +229,16 @@ appendScriptURL
   -> Text -- ^ URL to script
   -> m ()
 appendScriptURL el scriptType url = JS.liftJSM $ do
-  doc <- JS.jsg ("document" :: Text)
+  doc <- JS.jsg "document"
   -- script = document.createElement('script')
-  script <- doc ^. JS.js1 ("createElement" :: Text) ("script" :: Text)
+  script <- doc ^. JS.js1 "createElement" "script"
   -- script.type = scriptType
-  void $ script ^. JS.jss ("type" :: Text) scriptType
+  script ^. JS.jss "type" scriptType
   -- script.src = url
-  void $ script ^. JS.jss ("src" :: Text) url
+  script ^. JS.jss "src" url
   elVal <- JS.toJSVal el
   -- el.appendChild(script)
-  void $ (JS.Object elVal) ^. JS.js1 ("appendChild" :: Text) script
+  void $ (JS.Object elVal) ^. JS.js1 "appendChild" script
 
 appendScript
   :: ( JS.MonadJSM m
@@ -240,28 +249,39 @@ appendScript
   -> Text -- ^ Script text
   -> m ()
 appendScript el scriptType txt = JS.liftJSM $ do
-  doc <- JS.jsg ("document" :: Text)
+  doc <- JS.jsg "document"
   -- script = document.createElement('script')
-  script <- doc ^. JS.js1 ("createElement" :: Text) ("script" :: Text)
+  script <- doc ^. JS.js1 "createElement" "script"
   -- script.type = scriptType
-  void $ script ^. JS.jss ("type" :: Text) scriptType
+  script ^. JS.jss "type" scriptType
   -- script.innerHTML = txt
-  void $ script ^. JS.jss ("innerHTML" :: Text) txt
+  script ^. JS.jss "innerHTML" txt
   elVal <- JS.toJSVal el
   -- el.appendChild(script)
-  void $ (JS.Object elVal) ^. JS.js1 ("appendChild" :: Text) script
+  void $ (JS.Object elVal) ^. JS.js1 "appendChild" script
 
 nodeListNodes
-  :: ( GHCJS.DOM.Types.IsNodeList l
+  :: ( DOM.IsNodeList l
      , JS.MonadJSM m
      )
   =>
   l ->
-  m [GHCJS.DOM.Types.Node]
+  m [DOM.Node]
 nodeListNodes es = do
-  len <- GHCJS.DOM.NodeList.getLength es
+  len <- DOM.getLength es
   -- Warning! len is unsigned. If the NodeList is empty, we must avoid
   -- accidentally traversing over [0..maxBound::Word]
-  nodes <- traverse (GHCJS.DOM.NodeList.item es) $
+  nodes <- traverse (DOM.item es) $
     if len == 0 then [] else [0..len-1]
   pure $ catMaybes nodes
+
+hideElement
+  :: JS.MonadJSM m
+  => Text -- ^ Element ID
+  -> Bool -- ^ True to hide, false to show
+  -> m ()
+hideElement elId b = JS.liftJSM $ void $ MaybeT.runMaybeT $ do
+  doc <- JS.liftJSM $ DOM.currentDocumentUnchecked
+  answerElem <- MaybeT.MaybeT $ DOM.getElementById doc elId
+  JS.liftJSM $ answerElem ^. JS.jss "hidden" b
+        

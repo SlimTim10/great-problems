@@ -34,7 +34,7 @@ import qualified Problem.Summary as Summary
 import qualified Problem.Figures as Figures
 import qualified Problem.Editor as Editor
 import qualified Problem.ErrorsToggle as ErrorsToggle
-import qualified Problem.PdfViewer as PdfViewer
+import qualified Problem.Viewer as Viewer
 import qualified Problem.Compile
 import qualified Problem.UploadPrb as UploadPrb
 import qualified Problem.DownloadPrb as DownloadPrb
@@ -393,7 +393,7 @@ widget preloadedProblemId = do
         let setContentsValue = R.leftmost [contentsFromPreloadedProblem, uploadPrb]
         editorContents <- R.elClass "div" "h-full flex" $ do
           editorContents' :: R.Dynamic t Text <- R.elClass "div" "flex-1" $ Editor.widget setContentsValue
-          R.elClass "div" "flex-1" $ PdfViewer.widget latestResponse anyLoading errorsToggle
+          R.elClass "div" "flex-1" $ Viewer.widget latestResponse anyLoading errorsToggle
           return editorContents'
         return (editorContents, compileButtonAction)
 
