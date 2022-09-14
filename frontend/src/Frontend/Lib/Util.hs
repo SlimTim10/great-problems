@@ -21,6 +21,7 @@ import qualified GHCJS.DOM.URL as DOM
 import qualified GHCJS.DOM.NodeList as DOM
 import qualified GHCJS.DOM.NonElementParentNode as DOM
 import qualified GHCJS.DOM.Element as DOM
+import qualified GHCJS.DOM.Node as DOM
 import qualified GHCJS.DOM as DOM
 import qualified Foreign.JavaScript.Utils as JSUtils
 import qualified Obelisk.Route as Ob
@@ -275,13 +276,28 @@ nodeListNodes es = do
     if len == 0 then [] else [0..len-1]
   pure $ catMaybes nodes
 
+-- This can be made more type-safe by using appropriate functions from GHCJS.
 hideElement
-  :: JS.MonadJSM m
+  :: ( R.PerformEvent t m
+     , JS.MonadJSM (R.Performable m)
+     )
   => Text -- ^ Element ID
-  -> Bool -- ^ True to hide, false to show
+  -> R.Event t Bool -- ^ True to hide, false to show
   -> m ()
-hideElement elId b = JS.liftJSM $ void $ MaybeT.runMaybeT $ do
-  doc <- JS.liftJSM $ DOM.currentDocumentUnchecked
-  answerElem <- MaybeT.MaybeT $ DOM.getElementById doc elId
-  JS.liftJSM $ answerElem ^. JS.jss "hidden" b
-        
+hideElement elId b = do
+  R.performEvent_ $ R.ffor b $ \b' -> JS.liftJSM . void . MaybeT.runMaybeT $ do
+    doc <- JS.liftJSM $ DOM.currentDocumentUnchecked
+    hd <- MaybeT.MaybeT $ DOM.getHead doc
+    let styleId = elId <> "-style"
+    case b' of
+      True -> do
+        DOM.getElementById doc styleId >>= maybe
+          (pure ())
+          (DOM.removeChild_ hd)
+        styleEl <- DOM.createElement doc "style"
+        DOM.setAttribute styleEl "id" styleId
+        DOM.setInnerHTML styleEl ("#" <> elId <> " { display: none; }")
+        DOM.appendChild_ hd styleEl
+      False -> do
+        styleEl <- MaybeT.MaybeT $ DOM.getElementById doc styleId
+        DOM.removeChild_ hd styleEl

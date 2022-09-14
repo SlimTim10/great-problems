@@ -46,13 +46,29 @@ widget
      , R.PostBuild t m
      , JS.MonadJSM m
      , JS.ToJSVal (R.RawElement (R.DomBuilderSpace m))
+     , R.PerformEvent t m
+     , JS.MonadJSM (R.Performable m)
      )
   => R.Dynamic t (Maybe (Either Error.Error Text)) -- ^ Compile response
   -> R.Dynamic t Bool -- ^ Is loading
   -> R.Dynamic t Bool -- ^ Show errors
+  -> R.Dynamic t Bool -- ^ Show answer
+  -> R.Dynamic t Bool -- ^ Show solution
   -> m ()
-widget compileResponse loading errorsToggle = do
-  R.dyn_ $ switchView <$> compileResponse <*> loading <*> errorsToggle
+widget compileResponse loading errorsToggle showAnswer showSolution = do
+  onload :: R.Event t () <- R.getPostBuild
+
+  -- Hide problem answer and solution by default
+  Util.hideElement problemAnswerId (True <$ onload)
+  Util.hideElement problemSolutionId (True <$ onload)
+
+  Util.hideElement problemAnswerId $ R.updated (not <$> showAnswer)
+  Util.hideElement problemSolutionId $ R.updated (not <$> showSolution)
+  
+  R.dyn_ $ switchView
+    <$> compileResponse
+    <*> loading
+    <*> errorsToggle
 
 switchView
   :: ( R.DomBuilder t m
@@ -81,14 +97,6 @@ switchView (Just (Right html)) _ _ = do
   -- This function works, but it's much slower (~1300 ms) than its vanilla JavaScript counterpart (~2 ms).
   -- So it is disabled until there is a way to make it faster or a reason to use it.
   when False fixMathJaxSVG'
-
-  -- Hide problem answer and solution by default.
-  -- In theory, this should be possible immediately after the HTML has been updated (innerHTML).
-  -- However, due to reflex's inner workings, the elements cannot be found so soon.
-  -- Triggering after MathJax is ready is our compromise.
-  whenMathJaxReady $ do
-    Util.hideElement problemAnswerId True
-    Util.hideElement problemSolutionId True
   
   where
     includeMathJax el = Util.appendScriptURL el "text/javascript" "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_SVG"

@@ -153,8 +153,6 @@ widget = do
             [ onloadAction
             , randomizeVariablesAction
             , resetVariablesAction
-            , showAnswerAction
-            , showSolutionAction
             ] :: [R.Dynamic t (Loading.WithLoading Problem.Compile.Response)]
             
       currentResponse :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do
@@ -173,8 +171,6 @@ widget = do
         
       ( randomizeVariablesAction
         , resetVariablesAction
-        , showAnswerAction
-        , showSolutionAction
         ) <- R.elClass "div" "mt-6 mx-10 flex flex-col gap-2" $ mdo
         let problemSummary = \p -> do
               R.elClass "p" "font-medium" $ do
@@ -204,7 +200,7 @@ widget = do
                 (R.constDyn [])
               compileProblem req
             return (randomizeVariablesAction, resetVariablesAction)
-        (showAnswerAction, showSolutionAction, outputOption) <- do
+        (showAnswer, showSolution, outputOption) <- do
           R.elClass "div" "flex gap-4" $ do
             R.elClass "p" "font-medium text-brand-primary"
               $ R.text "Show problem with:"
@@ -213,24 +209,10 @@ widget = do
                 "cursor-pointer mr-2 checkbox-brand-primary"
                 "font-medium text-brand-primary cursor-pointer"
                 "Answer"
-              showAnswerAction :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do
-                req <- Problem.Compile.mkRequest (R.updated $ const () <$> showAnswer)
-                  (R.constDyn "")
-                  (R.constDyn Problem.Compile.NoChange)
-                  outputOption
-                  (R.constDyn [])
-                compileProblem req
               showSolution :: R.Dynamic t Bool <- Input.checkboxClass
                 "cursor-pointer mr-2 checkbox-brand-primary"
                 "font-medium text-brand-primary cursor-pointer"
                 "Solution"
-              showSolutionAction :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do
-                req <- Problem.Compile.mkRequest (R.updated $ const () <$> showSolution)
-                  (R.constDyn "")
-                  (R.constDyn Problem.Compile.NoChange)
-                  outputOption
-                  (R.constDyn [])
-                compileProblem req
               let outputOption' :: R.Dynamic t Compile.OutputOption =
                     (\showAnswer' showSolution' ->
                        case (showAnswer', showSolution') of
@@ -239,7 +221,7 @@ widget = do
                          (True, False) -> Compile.WithAnswer
                          (True, True) -> Compile.WithSolutionAndAnswer
                     ) <$> showAnswer <*> showSolution
-              return (showAnswerAction, showSolutionAction, outputOption')
+              return (showAnswer, showSolution, outputOption')
 
         R.elClass "div" "flex justify-center w-full" $ do
           R.elClass "div" "home-pdf-viewer" $ do
@@ -247,7 +229,9 @@ widget = do
               ((Problem.Compile.response . Loading.action) <$> currentResponse)
               (Loading.loading <$> currentResponse)
               (R.constDyn False)
+              showAnswer
+              showSolution
 
-        return (randomizeVariablesAction, resetVariablesAction, showAnswerAction, showSolutionAction)
+        return (randomizeVariablesAction, resetVariablesAction)
 
       return ()

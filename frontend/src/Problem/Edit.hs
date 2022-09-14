@@ -110,9 +110,9 @@ widget preloadedProblemId = do
     ( figures
       , randomizeVariablesAction
       , resetVariablesAction
-      , showAnswerAction
-      , showSolutionAction
       , outputOption
+      , showAnswer
+      , showSolution
       ) <- leftPane editorContents
     ( editorContents
       , compileButtonAction
@@ -120,13 +120,13 @@ widget preloadedProblemId = do
            ((Problem.Compile.response . Loading.action) <$> currentResponse)
            (Loading.loading <$> currentResponse)
            outputOption
+           showAnswer
+           showSolution
 
     let actions =
           [ compileButtonAction
           , randomizeVariablesAction
           , resetVariablesAction
-          , showAnswerAction
-          , showSolutionAction
           ] :: [R.Dynamic t (Loading.WithLoading Problem.Compile.Response)]
 
     currentResponse :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do
@@ -206,9 +206,9 @@ widget preloadedProblemId = do
               
         ( randomizeVariablesAction
           , resetVariablesAction
-          , showAnswerAction
-          , showSolutionAction
           , outputOption
+          , showAnswer
+          , showSolution
           ) <- outputOptionsPane editorContents figures
           
         figures :: R.Dynamic t [FormFile.FormFile] <- R.elClass "div" "py-3 border-b border-brand-light-gray"
@@ -320,9 +320,9 @@ widget preloadedProblemId = do
           ( figures
           , randomizeVariablesAction
           , resetVariablesAction
-          , showAnswerAction
-          , showSolutionAction
           , outputOption
+          , showAnswer
+          , showSolution
           )
 
     outputOptionsPane editorContents figures = do
@@ -345,32 +345,18 @@ widget preloadedProblemId = do
               figures
             Problem.Compile.performRequest r
           return (randomizeVariablesAction', resetVariablesAction')
-        (showAnswerAction, showSolutionAction, outputOption) <- R.elClass "div" "flex gap-4" $ do
+        (showAnswer, showSolution, outputOption) <- R.elClass "div" "flex gap-4" $ do
           R.elClass "p" "font-medium text-brand-primary"
             $ R.text "Show problem with:"
-          R.elClass "div" "flex flex-col" $ do
+          R.elClass "div" "flex flex-col" $ mdo
             showAnswer :: R.Dynamic t Bool <- Input.checkboxClass
               "cursor-pointer mr-2 checkbox-brand-primary"
               "font-medium text-brand-primary cursor-pointer"
               "Answer"
-            showAnswerAction' :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do
-              r <- Problem.Compile.mkRequest (R.updated $ const () <$> showAnswer)
-                editorContents
-                (R.constDyn Problem.Compile.NoChange)
-                outputOption
-                figures
-              Problem.Compile.performRequest r
             showSolution :: R.Dynamic t Bool <- Input.checkboxClass
               "cursor-pointer mr-2 checkbox-brand-primary"
               "font-medium text-brand-primary cursor-pointer"
               "Solution"
-            showSolutionAction' :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do
-              r <- Problem.Compile.mkRequest (R.updated $ const () <$> showSolution)
-                editorContents
-                (R.constDyn Problem.Compile.NoChange)
-                outputOption
-                figures
-              Problem.Compile.performRequest r
             let outputOption' :: R.Dynamic t Compile.OutputOption =
                   (\showAnswer' showSolution' ->
                      case (showAnswer', showSolution') of
@@ -379,10 +365,10 @@ widget preloadedProblemId = do
                        (True, False) -> Compile.WithAnswer
                        (True, True) -> Compile.WithSolutionAndAnswer
                   ) <$> showAnswer <*> showSolution
-            return (showAnswerAction', showSolutionAction', outputOption')
-        return (randomizeVariablesAction, resetVariablesAction, showAnswerAction, showSolutionAction, outputOption)
+            return (showAnswer, showSolution, outputOption')
+        return (randomizeVariablesAction, resetVariablesAction, outputOption, showAnswer, showSolution)
 
-    mainPane figures latestResponse anyLoading outputOption = do
+    mainPane figures latestResponse anyLoading outputOption showAnswer showSolution = do
       R.elClass "div" "pl-2 flex-1 h-full flex flex-col" $ mdo
         (uploadPrb, compileButtonAction, errorsToggle) <-
           upperPane editorContents figures outputOption latestResponse anyLoading
@@ -393,7 +379,7 @@ widget preloadedProblemId = do
         let setContentsValue = R.leftmost [contentsFromPreloadedProblem, uploadPrb]
         editorContents <- R.elClass "div" "h-full flex" $ do
           editorContents' :: R.Dynamic t Text <- R.elClass "div" "flex-1" $ Editor.widget setContentsValue
-          R.elClass "div" "flex-1" $ Viewer.widget latestResponse anyLoading errorsToggle
+          R.elClass "div" "flex-1" $ Viewer.widget latestResponse anyLoading errorsToggle showAnswer showSolution
           return editorContents'
         return (editorContents, compileButtonAction)
 

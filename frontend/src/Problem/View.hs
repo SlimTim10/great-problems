@@ -72,9 +72,13 @@ widget problemId = mdo
   topicPath
   ( randomizeVariablesAction
     , resetVariablesAction
+    , showAnswer
+    , showSolution
     ) <- problemPane
          ((Problem.Compile.response . Loading.action) <$> currentResponse)
          (Loading.loading <$> currentResponse)
+         showAnswer
+         showSolution
     
   onload :: R.Event t () <- R.getPostBuild
   onloadAction :: R.Dynamic t (Loading.WithLoading Problem.Compile.Response) <- do
@@ -152,13 +156,13 @@ widget problemId = mdo
                   $ R.elClass "p" "hover:underline text-brand-primary" $ R.text name
           _ -> R.blank
 
-    problemPane latestResponse anyLoading = do
+    problemPane latestResponse anyLoading showAnswer showSolution = do
       R.elClass "div" "flex-1 mx-2 flex justify-center" $ do
         R.elClass "div" "w-brand-screen-lg flex" $ do
           ctx <- infoPane
           R.elClass "div" "pl-2 flex-1 h-full flex flex-col" $ do
             R.elClass "div" "flex-1" $ do
-              Viewer.widget latestResponse anyLoading (R.constDyn False)
+              Viewer.widget latestResponse anyLoading (R.constDyn False) showAnswer showSolution
           return ctx
 
     infoPane = do
@@ -199,7 +203,7 @@ widget problemId = mdo
               (R.constDyn [])
             Problem.Compile.performRequestWithId problemId r
           return (randomizeVariablesAction, resetVariablesAction)
-      outputOption <- do
+      (showAnswer, showSolution, outputOption) <- do
         R.elClass "div" "flex gap-4" $ do
           R.elClass "p" "font-medium text-brand-primary"
             $ R.text "Show problem with:"
@@ -208,14 +212,10 @@ widget problemId = mdo
               "cursor-pointer mr-2 checkbox-brand-primary"
               "font-medium text-brand-primary cursor-pointer"
               "Answer"
-            R.performEvent_ $ R.ffor (R.updated showAnswer) $ \b -> JS.liftJSM $ do
-              Util.hideElement Viewer.problemAnswerId (not b)
             showSolution :: R.Dynamic t Bool <- Input.checkboxClass
               "cursor-pointer mr-2 checkbox-brand-primary"
               "font-medium text-brand-primary cursor-pointer"
               "Solution"
-            R.performEvent_ $ R.ffor (R.updated showSolution) $ \b -> JS.liftJSM $ do
-              Util.hideElement Viewer.problemSolutionId (not b)
             let outputOption' :: R.Dynamic t Compile.OutputOption =
                   (\showAnswer' showSolution' ->
                      case (showAnswer', showSolution') of
@@ -224,10 +224,12 @@ widget problemId = mdo
                        (True, False) -> Compile.WithAnswer
                        (True, True) -> Compile.WithSolutionAndAnswer
                   ) <$> showAnswer <*> showSolution
-            return outputOption'
+            return (showAnswer, showSolution, outputOption')
       return
         ( randomizeVariablesAction
         , resetVariablesAction
+        , showAnswer
+        , showSolution
         )
 
     problemDetails = do
