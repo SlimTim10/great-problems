@@ -229,17 +229,13 @@ appendScriptURL
   -> Text -- ^ Script type (e.g., "text/javascript")
   -> Text -- ^ URL to script
   -> m ()
-appendScriptURL el scriptType url = JS.liftJSM $ do
-  doc <- JS.jsg "document"
-  -- script = document.createElement('script')
-  script <- doc ^. JS.js1 "createElement" "script"
-  -- script.type = scriptType
-  script ^. JS.jss "type" scriptType
-  -- script.src = url
-  script ^. JS.jss "src" url
-  elVal <- JS.toJSVal el
-  -- el.appendChild(script)
-  void $ (JS.Object elVal) ^. JS.js1 "appendChild" script
+appendScriptURL el scriptType url = JS.liftJSM . void . MaybeT.runMaybeT $ do
+  doc <- DOM.currentDocumentUnchecked
+  script <- DOM.createElement doc "script"
+  DOM.setAttribute script "type" scriptType
+  DOM.setAttribute script "src" url
+  el' :: DOM.Element <- MaybeT.MaybeT $ (JS.toJSVal >=> JS.fromJSVal) el
+  DOM.appendChild_ el' script
 
 appendScript
   :: ( JS.MonadJSM m
@@ -249,17 +245,13 @@ appendScript
   -> Text -- ^ Script type (e.g., "text/javascript")
   -> Text -- ^ Script text
   -> m ()
-appendScript el scriptType txt = JS.liftJSM $ do
-  doc <- JS.jsg "document"
-  -- script = document.createElement('script')
-  script <- doc ^. JS.js1 "createElement" "script"
-  -- script.type = scriptType
-  script ^. JS.jss "type" scriptType
-  -- script.innerHTML = txt
-  script ^. JS.jss "innerHTML" txt
-  elVal <- JS.toJSVal el
-  -- el.appendChild(script)
-  void $ (JS.Object elVal) ^. JS.js1 "appendChild" script
+appendScript el scriptType txt = JS.liftJSM . void . MaybeT.runMaybeT $ do
+  doc <- DOM.currentDocumentUnchecked
+  script <- DOM.createElement doc "script"
+  DOM.setAttribute script "type" scriptType
+  DOM.setInnerHTML script txt
+  el' :: DOM.Element <- MaybeT.MaybeT $ (JS.toJSVal >=> JS.fromJSVal) el
+  DOM.appendChild_ el' script
 
 nodeListNodes
   :: ( DOM.IsNodeList l
