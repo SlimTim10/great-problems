@@ -16,7 +16,6 @@ import Common.Lib.Prelude
 import qualified Frontend.Lib.Util as Util
 import qualified Common.Route as Route
 import qualified Common.Api.Error as Error
-import qualified Common.Api.Compile as Compile
 import qualified Common.Api.Problem as Problem
 import qualified Common.Api.ProblemStatus as ProblemStatus
 import qualified Common.Api.User as User
@@ -85,7 +84,6 @@ widget problemId = mdo
     r <- Problem.Compile.mkRequest onload
       (R.constDyn "")
       (R.constDyn Problem.Compile.NoChange)
-      (R.constDyn Compile.QuestionOnly)
       (R.constDyn [])
     Problem.Compile.performRequestWithId problemId r
 
@@ -189,7 +187,6 @@ widget problemId = mdo
             r <- Problem.Compile.mkRequest randomizeVariables
               (R.constDyn "")
               (R.constDyn Problem.Compile.Randomize)
-              outputOption
               (R.constDyn [])
             Problem.Compile.performRequestWithId problemId r
           resetVariables :: R.Event t () <- Button.primarySmallClass'
@@ -199,11 +196,10 @@ widget problemId = mdo
             r <- Problem.Compile.mkRequest resetVariables
               (R.constDyn "")
               (R.constDyn Problem.Compile.Reset)
-              outputOption
               (R.constDyn [])
             Problem.Compile.performRequestWithId problemId r
           return (randomizeVariablesAction, resetVariablesAction)
-      (showAnswer, showSolution, outputOption) <- do
+      (showAnswer, showSolution) <- do
         R.elClass "div" "flex gap-4" $ do
           R.elClass "p" "font-medium text-brand-primary"
             $ R.text "Show problem with:"
@@ -216,15 +212,7 @@ widget problemId = mdo
               "cursor-pointer mr-2 checkbox-brand-primary"
               "font-medium text-brand-primary cursor-pointer"
               "Solution"
-            let outputOption' :: R.Dynamic t Compile.OutputOption =
-                  (\showAnswer' showSolution' ->
-                     case (showAnswer', showSolution') of
-                       (False, False) -> Compile.QuestionOnly
-                       (False, True) -> Compile.WithSolution
-                       (True, False) -> Compile.WithAnswer
-                       (True, True) -> Compile.WithSolutionAndAnswer
-                  ) <$> showAnswer <*> showSolution
-            return (showAnswer, showSolution, outputOption')
+            return (showAnswer, showSolution)
       return
         ( randomizeVariablesAction
         , resetVariablesAction

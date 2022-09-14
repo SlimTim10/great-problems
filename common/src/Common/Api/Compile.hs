@@ -7,12 +7,10 @@ module Common.Api.Compile
   , RequestParam(..)
   ) where
 
-import Common.Lib.Prelude
-
 import qualified Data.Aeson as JSON
 import GHC.Generics (Generic)
-import Data.Aeson ((.:))
 
+-- deprecated
 data OutputOption = WithSolution | WithAnswer | WithSolutionAndAnswer | QuestionOnly
   deriving (Eq, Generic, JSON.FromJSON)
 instance Show OutputOption where
@@ -26,32 +24,11 @@ type RandomSeed = Integer
 data RequestParam
   = ParamContents
   | ParamRandomizeVariables
-  | ParamOutputOption
+  | ParamOutputOption -- deprecated
   | ParamFigures
   deriving (Eq, Ord)
 instance Show RequestParam where
   show ParamContents = "contents"
   show ParamRandomizeVariables = "randomizeVariables"
-  show ParamOutputOption = "outputOption"
+  show ParamOutputOption = "outputOption" -- deprecated
   show ParamFigures = "figures"
-
--- data Problem2texResponse = Problem2texResponse
---   { p2tErrorProblem2tex :: Text
---   , p2tErrorLatex :: Text
---   , p2tPdfContents :: Text
---   , p2tPdfName :: Text
---   , p2tTerminalOutput :: Text
---   } deriving
---   ( Eq
---   , Show
---   )
-
--- instance JSON.FromJSON Problem2texResponse where
---   parseJSON = JSON.withObject "icemakerResponse" $ \o -> do
---     errorProblem2tex <- o .: "ErrorIcemaker"
---     errorLatex <- o .: "ErrorLatex"
---     pdfContents <- o .: "PdfContent"
---     pdfName <- o .: "PdfName"
---     terminalOutput <- o .: "TerminalOutput"
---     return $ Problem2texResponse errorProblem2tex errorLatex pdfContents pdfName terminalOutput
-

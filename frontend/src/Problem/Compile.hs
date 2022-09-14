@@ -34,8 +34,6 @@ data Randomize = Randomize | Reset | NoChange
 data Request = Request
   { contents :: Text
   , randomizeVariables :: Randomize
-  -- TODO: remove outputOption since it will be handled frontend-only
-  , outputOption :: Compile.OutputOption
   , figures :: [FormFile.FormFile]
   , time :: Time.UTCTime
   } deriving (Show, Eq)
@@ -73,7 +71,6 @@ performRequest compileRequest = do
     let formDataParams :: Map Compile.RequestParam (R'.FormValue GHCJS.DOM.Types.File) = (
           Compile.ParamContents =: R'.FormValue_Text (contents req)
             <> Compile.ParamRandomizeVariables =: R'.FormValue_Text randomizeVariablesParam
-            <> Compile.ParamOutputOption =: R'.FormValue_Text (cs . show . outputOption $ req)
             <> Compile.ParamFigures =: R'.FormValue_List (map Util.formFile . figures $ req)
           )
     return $ Map.mapKeys (cs . show) formDataParams
@@ -115,7 +112,6 @@ performRequestWithId problemId compileRequest = do
     randomizeVariablesParam <- parseRandomize $ randomizeVariables req
     let formDataParams :: Map Compile.RequestParam (R'.FormValue GHCJS.DOM.Types.File) = (
           Compile.ParamRandomizeVariables =: R'.FormValue_Text randomizeVariablesParam
-            <> Compile.ParamOutputOption =: R'.FormValue_Text (cs . show . outputOption $ req)
           )
     return $ Map.mapKeys (cs . show) formDataParams
     
@@ -162,13 +158,11 @@ mkRequest
   => R.Event t () -- ^ Event to trigger request
   -> R.Dynamic t Text -- ^ Problem contents
   -> R.Dynamic t Problem.Compile.Randomize -- ^ Randomize problem variables
-  -> R.Dynamic t Compile.OutputOption -- ^ Show problem solution/answer
   -> R.Dynamic t [FormFile.FormFile] -- ^ Problem figures
   -> m (R.Event t Problem.Compile.Request)
-mkRequest e c rv oo figs = R.performEvent $ R.ffor e $ \_ -> do
+mkRequest e c rv figs = R.performEvent $ R.ffor e $ \_ -> do
   c' <- R.sample . R.current $ c
   rv' <- R.sample . R.current $ rv
-  oo' <- R.sample . R.current $ oo
   figs' <- R.sample . R.current $ figs
   t <- IO.liftIO Time.getCurrentTime
-  return $ Problem.Compile.Request c' rv' oo' figs' t
+  return $ Problem.Compile.Request c' rv' figs' t

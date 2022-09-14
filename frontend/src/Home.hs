@@ -15,7 +15,6 @@ import qualified Reflex.Dom.Core as R
 
 import qualified Common.Route as Route
 import qualified Common.Api.Problem as Problem
-import qualified Common.Api.Compile as Compile
 import qualified Common.Api.MetaSetting as MetaSetting
 import qualified Widget.Button as Button
 import qualified Widget.Input as Input
@@ -145,7 +144,6 @@ widget = do
         req <- Problem.Compile.mkRequest (const () <$> problemId')
           (R.constDyn "")
           (R.constDyn Problem.Compile.NoChange)
-          (R.constDyn Compile.QuestionOnly)
           (R.constDyn [])
         compileProblem req
       
@@ -186,7 +184,6 @@ widget = do
               req <- Problem.Compile.mkRequest randomizeVariables
                 (R.constDyn "")
                 (R.constDyn Problem.Compile.Randomize)
-                outputOption
                 (R.constDyn [])
               compileProblem req
             resetVariables :: R.Event t () <- Button.primarySmallClass'
@@ -196,11 +193,10 @@ widget = do
               req <- Problem.Compile.mkRequest resetVariables
                 (R.constDyn "")
                 (R.constDyn Problem.Compile.Reset)
-                outputOption
                 (R.constDyn [])
               compileProblem req
             return (randomizeVariablesAction, resetVariablesAction)
-        (showAnswer, showSolution, outputOption) <- do
+        (showAnswer, showSolution) <- do
           R.elClass "div" "flex gap-4" $ do
             R.elClass "p" "font-medium text-brand-primary"
               $ R.text "Show problem with:"
@@ -213,15 +209,7 @@ widget = do
                 "cursor-pointer mr-2 checkbox-brand-primary"
                 "font-medium text-brand-primary cursor-pointer"
                 "Solution"
-              let outputOption' :: R.Dynamic t Compile.OutputOption =
-                    (\showAnswer' showSolution' ->
-                       case (showAnswer', showSolution') of
-                         (False, False) -> Compile.QuestionOnly
-                         (False, True) -> Compile.WithSolution
-                         (True, False) -> Compile.WithAnswer
-                         (True, True) -> Compile.WithSolutionAndAnswer
-                    ) <$> showAnswer <*> showSolution
-              return (showAnswer, showSolution, outputOption')
+              return (showAnswer, showSolution)
 
         R.elClass "div" "flex justify-center w-full" $ do
           R.elClass "div" "home-pdf-viewer" $ do

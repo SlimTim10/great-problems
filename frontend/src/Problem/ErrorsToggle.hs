@@ -2,12 +2,10 @@ module Problem.ErrorsToggle
   ( widget
   ) where
 
-import qualified Data.Text as T
 import qualified Reflex.Dom.Core as R
 
 import Common.Lib.Prelude
 import qualified Frontend.Lib.Util as Util
-import qualified Common.Api.Compile as Compile
 import qualified Common.Api.Error as Error
 
 widget

@@ -21,7 +21,6 @@ import qualified MyReflex.Dom.Xhr.FormData as R'
 import qualified Frontend.Lib.Util as Util
 import qualified Frontend.Lib.Api as Api
 import qualified Common.Route as Route
-import qualified Common.Api.Compile as Compile
 import qualified Common.Api.Error as Error
 import qualified Common.Api.Problem as Problem
 import qualified Common.Api.ProblemStatus as ProblemStatus
@@ -110,16 +109,15 @@ widget preloadedProblemId = do
     ( figures
       , randomizeVariablesAction
       , resetVariablesAction
-      , outputOption
       , showAnswer
       , showSolution
       ) <- leftPane editorContents
     ( editorContents
       , compileButtonAction
-      ) <- mainPane figures
+      ) <- mainPane
+           figures
            ((Problem.Compile.response . Loading.action) <$> currentResponse)
            (Loading.loading <$> currentResponse)
-           outputOption
            showAnswer
            showSolution
 
@@ -206,7 +204,6 @@ widget preloadedProblemId = do
               
         ( randomizeVariablesAction
           , resetVariablesAction
-          , outputOption
           , showAnswer
           , showSolution
           ) <- outputOptionsPane editorContents figures
@@ -320,7 +317,6 @@ widget preloadedProblemId = do
           ( figures
           , randomizeVariablesAction
           , resetVariablesAction
-          , outputOption
           , showAnswer
           , showSolution
           )
@@ -333,7 +329,6 @@ widget preloadedProblemId = do
             r <- Problem.Compile.mkRequest randomizeVariables
               editorContents
               (R.constDyn Problem.Compile.Randomize)
-              outputOption
               figures
             Problem.Compile.performRequest r
           resetVariables :: R.Event t () <- Button.primarySmallClass' "Reset variables" "active:bg-blue-400"
@@ -341,11 +336,10 @@ widget preloadedProblemId = do
             r <- Problem.Compile.mkRequest resetVariables
               editorContents
               (R.constDyn Problem.Compile.Reset)
-              outputOption
               figures
             Problem.Compile.performRequest r
           return (randomizeVariablesAction', resetVariablesAction')
-        (showAnswer, showSolution, outputOption) <- R.elClass "div" "flex gap-4" $ do
+        (showAnswer, showSolution) <- R.elClass "div" "flex gap-4" $ do
           R.elClass "p" "font-medium text-brand-primary"
             $ R.text "Show problem with:"
           R.elClass "div" "flex flex-col" $ mdo
@@ -357,21 +351,13 @@ widget preloadedProblemId = do
               "cursor-pointer mr-2 checkbox-brand-primary"
               "font-medium text-brand-primary cursor-pointer"
               "Solution"
-            let outputOption' :: R.Dynamic t Compile.OutputOption =
-                  (\showAnswer' showSolution' ->
-                     case (showAnswer', showSolution') of
-                       (False, False) -> Compile.QuestionOnly
-                       (False, True) -> Compile.WithSolution
-                       (True, False) -> Compile.WithAnswer
-                       (True, True) -> Compile.WithSolutionAndAnswer
-                  ) <$> showAnswer <*> showSolution
-            return (showAnswer, showSolution, outputOption')
-        return (randomizeVariablesAction, resetVariablesAction, outputOption, showAnswer, showSolution)
+            return (showAnswer, showSolution)
+        return (randomizeVariablesAction, resetVariablesAction, showAnswer, showSolution)
 
-    mainPane figures latestResponse anyLoading outputOption showAnswer showSolution = do
+    mainPane figures latestResponse anyLoading showAnswer showSolution = do
       R.elClass "div" "pl-2 flex-1 h-full flex flex-col" $ mdo
         (uploadPrb, compileButtonAction, errorsToggle) <-
-          upperPane editorContents figures outputOption latestResponse anyLoading
+          upperPane editorContents figures latestResponse anyLoading
         preloadedProblem :: R.Dynamic t (Maybe (Either Error.Error Problem.Problem)) <- getPreloadedProblem
         let contentsFromPreloadedProblem :: R.Event t Text = R.updated preloadedProblem <&> \case
               Just (Right p) -> Problem.contents p
@@ -383,7 +369,7 @@ widget preloadedProblemId = do
           return editorContents'
         return (editorContents, compileButtonAction)
 
-    upperPane editorContents figures outputOption latestResponse anyLoading = do
+    upperPane editorContents figures latestResponse anyLoading = do
       R.elClass "div" "bg-brand-light-gray p-1 flex justify-between" $ do
         uploadPrb <- do
           R.elClass "div" "flex-1 flex justify-center" $ do
@@ -402,7 +388,6 @@ widget preloadedProblemId = do
             r <- Problem.Compile.mkRequest compileButton
               editorContents
               (R.constDyn Problem.Compile.NoChange)
-              outputOption
               figures
             Problem.Compile.performRequest r
         errorsToggle :: R.Dynamic t Bool <- R.elClass "div" "flex-1 flex justify-center ml-auto" $ do

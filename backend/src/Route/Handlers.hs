@@ -56,7 +56,6 @@ module Route.Handlers
 
 import qualified Data.Int as Int
 import qualified Data.ByteString as BS
-import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Word as Word
 import qualified Data.Text as T
 import qualified Control.Monad.IO.Class as IO
