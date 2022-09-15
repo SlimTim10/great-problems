@@ -125,16 +125,10 @@ saveProblem conn (Just user) = do
       && User.role user `elem` [Role.Contributor, Role.Moderator, Role.Administrator]
       -> do
         -- Published problems must compile without errors
-        -- TODO: Error handling on IO exceptions
-        -- IO.liftIO
-        --   $ Compile.compile
-        --   contents
-        --   0
-        --   figures
-        
+        problem <- IO.liftIO $ Compile.compile contents 0 figures
         if
-          -- | (not . T.null $ Compile.p2tErrorProblem2tex r) || (not . T.null $ Compile.p2tErrorLatex r)
-          --   -> Util.writeJSON $ Error.mk "Invalid problem. Please check that your problem compiles with no errors before saving."
+          | isLeft problem -> do
+              Util.writeJSON $ Error.mk "Invalid problem. Please check that your problem compiles without errors before saving."
           | T.null problemId -> do
               Actions.createNewProblem
                 conn
