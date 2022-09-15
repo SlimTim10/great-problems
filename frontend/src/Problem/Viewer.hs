@@ -125,6 +125,7 @@ switchView (Just (Right html)) _ _ = do
       });
       |]
 
+    -- TODO: find a better way that doesn't involve MathJax littering the DOM with style elements
     clearMathJax = JS.liftJSM $ do
       win <- JS.jsg "window"
       win ^. JS.jss "MathJax" JS.jsUndefined
