@@ -10,19 +10,19 @@ module Problem.Viewer
 
 import Prelude hiding ((!!))
 
-import qualified Control.Monad.Trans.Maybe as MaybeT
+-- import qualified Control.Monad.Trans.Maybe as MaybeT
 import qualified Control.Monad.Loops as Loops
 import qualified Text.RawString.QQ as QQ
 import qualified Control.Monad.IO.Class as IO
 import qualified Control.Concurrent as Concurrent
 import qualified Language.Javascript.JSaddle as JS
-import Language.Javascript.JSaddle ((!), (!!))
-import qualified GHCJS.DOM.Element as DOM
-import qualified GHCJS.DOM.Node as DOM
-import qualified GHCJS.DOM.ParentNode as DOM
-import qualified GHCJS.DOM.NonElementParentNode as DOM
-import qualified GHCJS.DOM.Types as DOM
-import qualified GHCJS.DOM as DOM
+import Language.Javascript.JSaddle ((!))
+-- import qualified GHCJS.DOM.Element as DOM
+-- import qualified GHCJS.DOM.Node as DOM
+-- import qualified GHCJS.DOM.ParentNode as DOM
+-- import qualified GHCJS.DOM.NonElementParentNode as DOM
+-- import qualified GHCJS.DOM.Types as DOM
+-- import qualified GHCJS.DOM as DOM
 import qualified Obelisk.Generated.Static as Ob
 import qualified Reflex.Dom.Core as R
 
@@ -94,10 +94,6 @@ switchView (Just (Right html)) _ _ = do
   runMathJax
   fixMathJaxSVG el
   
-  -- This function works, but it's much slower (~1300 ms) than its vanilla JavaScript counterpart (~2 ms).
-  -- So it is disabled until there is a way to make it faster or a reason to use it.
-  when False fixMathJaxSVG'
-  
   where
     includeMathJax el = Util.appendScriptURL el "text/javascript" "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_SVG"
     
@@ -150,52 +146,54 @@ switchView (Just (Right html)) _ _ = do
           return mjReady'
         void $ JS.runJSaddle ctx f
 
-    afterMathJax :: JS.MonadJSM m => JS.JSM JS.Function -> m ()
-    afterMathJax jsFunc = whenMathJaxReady $ do
-      mj <- JS.jsg "MathJax"
-      hub <- mj ! "Hub"
-      void $ hub ^. JS.js1 "Queue" jsFunc
+    -- afterMathJax :: JS.MonadJSM m => JS.JSM JS.Function -> m ()
+    -- afterMathJax jsFunc = whenMathJaxReady $ do
+    --   mj <- JS.jsg "MathJax"
+    --   hub <- mj ! "Hub"
+    --   void $ hub ^. JS.js1 "Queue" jsFunc
 
-    fixMathJaxSVG' :: JS.MonadJSM m => m ()
-    fixMathJaxSVG' = afterMathJax $ JS.function $ \_ _ _ -> do
-      doc <- DOM.currentDocumentUnchecked
-      viewerElem <- DOM.getElementByIdUnsafe doc viewerId
-      elemsToFix :: DOM.NodeList <- DOM.querySelectorAll viewerElem "svg .MathJax_SVG"
-      elemsToFix' :: [DOM.Node] <- Util.nodeListNodes elemsToFix
-      elemsToFix'' :: [DOM.Element] <- do
-        xs <- traverse (DOM.castTo DOM.Element) elemsToFix'
-        pure $ catMaybes xs
-      for_ elemsToFix'' fixElem
+    -- This function works, but it's much slower (~1300 ms) than its vanilla JavaScript counterpart (~2 ms).
+    -- So it is disabled until there is a way to make it faster or a reason to use it.
+    -- fixMathJaxSVG' :: JS.MonadJSM m => m ()
+    -- fixMathJaxSVG' = afterMathJax $ JS.function $ \_ _ _ -> do
+    --   doc <- DOM.currentDocumentUnchecked
+    --   viewerElem <- DOM.getElementByIdUnsafe doc viewerId
+    --   elemsToFix :: DOM.NodeList <- DOM.querySelectorAll viewerElem "svg .MathJax_SVG"
+    --   elemsToFix' :: [DOM.Node] <- Util.nodeListNodes elemsToFix
+    --   elemsToFix'' :: [DOM.Element] <- do
+    --     xs <- traverse (DOM.castTo DOM.Element) elemsToFix'
+    --     pure $ catMaybes xs
+    --   for_ elemsToFix'' fixElem
 
-    fixElem :: DOM.Element -> JS.JSM ()
-    fixElem el = void $ MaybeT.runMaybeT $ do
-      textElem :: DOM.Element <- MaybeT.MaybeT $ DOM.closest el "text"
-      x <- JS.liftJSM $ textElem ! "x" ! "baseVal" !! 0 ! "value"
-      y <- JS.liftJSM $ textElem ! "y" ! "baseVal" !! 0 ! "value"
-      fontSize <- JS.liftJSM $ textElem ! "style" ! "font-size"
-      anchor :: Text <- MaybeT.MaybeT $ JS.fromJSVal =<<
-        textElem ! "style" ! "text-anchor"
-      svgElem <- MaybeT.MaybeT $ DOM.querySelector el "svg"
-      JS.liftJSM $ svgElem ! "style" ^. JS.jss "font-size" fontSize
-      void $ JS.liftJSM $ svgElem ^. JS.js2 "setAttribute" "x" x
-      void $ JS.liftJSM $ svgElem ^. JS.js2 "setAttribute" "y" y
-      -- Adjust position based on anchor
-      widthPx :: Double <- MaybeT.MaybeT $ JS.fromJSVal =<<
-        svgElem ! "width" ! "baseVal" ! "value"
-      heightPx :: Double <- MaybeT.MaybeT $ JS.fromJSVal =<<
-        svgElem ! "height" ! "baseVal" ! "value"
-      let translateY = "translateY(-" <> (cs . show $ heightPx / 2) <> "px)"
-      let translateX = case anchor of
-            "middle" -> "translateX(-" <> (cs . show $ widthPx / 2) <> "px)"
-            "end" -> "translateX(-" <> (cs . show $ widthPx) <> "px)"
-            _ -> ""
-      JS.liftJSM $ svgElem ! "style" ^. JS.jss "transform" (translateX <> " " <> translateY)
-      JS.liftJSM $ replaceElem textElem svgElem
+    -- fixElem :: DOM.Element -> JS.JSM ()
+    -- fixElem el = void $ MaybeT.runMaybeT $ do
+    --   textElem :: DOM.Element <- MaybeT.MaybeT $ DOM.closest el "text"
+    --   x <- JS.liftJSM $ textElem ! "x" ! "baseVal" !! 0 ! "value"
+    --   y <- JS.liftJSM $ textElem ! "y" ! "baseVal" !! 0 ! "value"
+    --   fontSize <- JS.liftJSM $ textElem ! "style" ! "font-size"
+    --   anchor :: Text <- MaybeT.MaybeT $ JS.fromJSVal =<<
+    --     textElem ! "style" ! "text-anchor"
+    --   svgElem <- MaybeT.MaybeT $ DOM.querySelector el "svg"
+    --   JS.liftJSM $ svgElem ! "style" ^. JS.jss "font-size" fontSize
+    --   void $ JS.liftJSM $ svgElem ^. JS.js2 "setAttribute" "x" x
+    --   void $ JS.liftJSM $ svgElem ^. JS.js2 "setAttribute" "y" y
+    --   -- Adjust position based on anchor
+    --   widthPx :: Double <- MaybeT.MaybeT $ JS.fromJSVal =<<
+    --     svgElem ! "width" ! "baseVal" ! "value"
+    --   heightPx :: Double <- MaybeT.MaybeT $ JS.fromJSVal =<<
+    --     svgElem ! "height" ! "baseVal" ! "value"
+    --   let translateY = "translateY(-" <> (cs . show $ heightPx / 2) <> "px)"
+    --   let translateX = case anchor of
+    --         "middle" -> "translateX(-" <> (cs . show $ widthPx / 2) <> "px)"
+    --         "end" -> "translateX(-" <> (cs . show $ widthPx) <> "px)"
+    --         _ -> ""
+    --   JS.liftJSM $ svgElem ! "style" ^. JS.jss "transform" (translateX <> " " <> translateY)
+    --   JS.liftJSM $ replaceElem textElem svgElem
 
-    replaceElem :: DOM.Element -> DOM.Element -> JS.JSM ()
-    replaceElem old new = void $ MaybeT.runMaybeT $ do
-      parentNode :: DOM.Node <- MaybeT.MaybeT $ DOM.getParentNode old
-      DOM.replaceChild_ parentNode new old
+    -- replaceElem :: DOM.Element -> DOM.Element -> JS.JSM ()
+    -- replaceElem old new = void $ MaybeT.runMaybeT $ do
+    --   parentNode :: DOM.Node <- MaybeT.MaybeT $ DOM.getParentNode old
+    --   DOM.replaceChild_ parentNode new old
 
 errorsWidget
   :: R.DomBuilder t m
