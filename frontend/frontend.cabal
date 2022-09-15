@@ -30,6 +30,7 @@ library
                , time
                , raw-strings-qq
                , transformers
+               , monad-loops
   exposed-modules:
     Frontend
   other-modules:
