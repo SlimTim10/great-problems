@@ -200,8 +200,9 @@ $ rm -rf dist
 $ mkdir dist
 $ ln -s $(nix-build -A exe --no-out-link)/* dist/
 $ cp -r config dist
-$ cd dist
-$ sudo ./backend <parameters>
+$ nix-shell -A shells.ghc
+[nix-shell]$ cd dist
+[nix-shell]$ sudo ./backend <parameters>
 #+end_src
 
 *** Enabling SSL

@@ -1,17 +1,18 @@
-{ pkgs, buildGoModule, fetchFromGitHub }:
-buildGoModule rec {
+with import <nixpkgs> {}; with buildGo117Module;
+{ pkgs, fetchFromGitHub }:
+buildGo117Module rec {
   pname = "problem2tex";
   version = "0.9.14";
 
   src = fetchFromGitHub {
-    owner = "icewire314";
+    owner = "SlimTim10";
     repo = "problem2tex";
     # rev = "v${version}";
-    rev = "a03359d5f297e224a29704b88df782a6b409ed5f";
+    rev = "410fd6f1aea93f587415ad3e0249b6f42fc26963";
     # sha256 = pkgs.stdenv.lib.fakeSha256;
-    sha256 = "sha256-9Ne545st4NLofe+PFs8TRm2c9scAM9PhdGBqHg2p7EQ=";
+    sha256 = "sha256-iR02O6d32F/xMGQfel1GVSt3hMc7kGBU1BBJhoGDYAw=";
   };
 
-  # modSha256 = pkgs.stdenv.lib.fakeSha256;
-  modSha256 = "sha256-C9DW1szZjwlth0R28oEKrnlw92wj2vgvz2Tgrt9wKgo=";
+  # vendorSha256 = pkgs.stdenv.lib.fakeSha256;
+  vendorSha256 = "sha256-jX68SRCQbinIV45t3/DBAA5oLi87K7BSdbno116LRlY=";
 }
