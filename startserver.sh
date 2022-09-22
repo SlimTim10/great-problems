@@ -11,4 +11,4 @@ cd dist;
 		  --access-log=/var/log/great-problems/access.log \
 		  --error-log=/var/log/great-problems/error.log \
 		  &>> /var/log/great-problems/output.log;
-return'
+'
