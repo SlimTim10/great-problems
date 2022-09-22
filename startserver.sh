@@ -1,8 +1,8 @@
 
 #!/bin/sh
 echo "Saving output log to /var/log/great-problems/output.log"
-ADDRESS=127.0.0.1
 nix-shell -A shells.ghc -v --run '(
+ADDRESS=127.0.0.1;
 cd dist &&
 ./backend \
 		  --hostname=greatproblems.ca \
