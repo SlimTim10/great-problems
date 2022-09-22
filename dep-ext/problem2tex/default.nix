@@ -13,5 +13,5 @@ buildGoModule rec {
   };
 
   # modSha256 = pkgs.stdenv.lib.fakeSha256;
-  modSha256 = "sha256-EQ4BBpIhAY78HIHrPkxm8as+LF0uEPancQkvNq132Gk=";
+  modSha256 = "sha256-FoAdAxJHyCL/EOEwwZjZWAuqpwmWHPJu6kyLYlFQ8kg=";
 }
