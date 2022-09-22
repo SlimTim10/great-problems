@@ -4,12 +4,12 @@ buildGoModule rec {
   version = "0.9.14";
 
   src = fetchFromGitHub {
-    owner = "SlimTim10";
+    owner = "icewire314";
     repo = "problem2tex";
     # rev = "v${version}";
-    rev = "410fd6f1aea93f587415ad3e0249b6f42fc26963";
+    rev = "243ab93cce43373b6f4f1ee299aa86da7356c30f";
     # sha256 = pkgs.stdenv.lib.fakeSha256;
-    sha256 = "sha256-iR02O6d32F/xMGQfel1GVSt3hMc7kGBU1BBJhoGDYAw=";
+    sha256 = "sha256-Md3peaJHI0+pNNd+NCbQVtlGVEn5o0yj5ujl1+h5cAQ=";
   };
 
   # modSha256 = pkgs.stdenv.lib.fakeSha256;
