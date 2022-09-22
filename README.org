@@ -205,6 +205,8 @@ $ nix-shell -A shells.ghc
 [nix-shell]$ sudo ./backend <parameters>
 #+end_src
 
+The importance of ~nix-shell -A shells.ghc~ is to be put into an environment with the external dependencies available (i.e., emacs, problem2tex, ltspice2svg).
+
 *** Enabling SSL
 
 1. Obtain an SSL certificate with Let's Encrypt.
