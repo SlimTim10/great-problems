@@ -86,9 +86,6 @@ switchView compileResponse@(Just (Left _)) _ _ = errorsWidget compileResponse
 switchView (Just (Right html)) _ _ = do
   el <- Util.placeRawHTML viewerId html
 
-  -- Need to clear MathJax so it doesn't use the previous route
-  clearMathJax
-  
   configureMathJax el
   includeMathJax el
   runMathJax
@@ -98,7 +95,8 @@ switchView (Just (Right html)) _ _ = do
     includeMathJax el = Util.appendScriptURL el "text/javascript" "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_SVG"
     
     fixMathJaxSVG el = Util.appendScriptURL el "text/javascript" (Ob.static @"fixMathJaxSVG.js")
-    
+
+    -- It is important to set the cache to false, otherwise MathJax doesn't properly reset when navigating to a different problem.
     configureMathJax el = Util.appendScript el "text/x-mathjax-config"
       [QQ.r|
       MathJax.Hub.Config({
@@ -106,12 +104,14 @@ switchView (Just (Right html)) _ _ = do
         displayIndent: "0em",
 
         "HTML-CSS": { scale: 100,
-                        linebreaks: { automatic: "false" },
+                        linebreaks: { automatic: false },
                         webFont: "TeX"
                        },
         SVG: {scale: 100,
-              linebreaks: { automatic: "false" },
-              font: "TeX"},
+              linebreaks: { automatic: false },
+              font: "TeX",
+              useFontCache: false,
+              useGlobalCache: false},
         NativeMML: {scale: 100},
         TeX: { equationNumbers: {autoNumber: "AMS"},
                MultLineWidth: "85%",
@@ -120,11 +120,6 @@ switchView (Just (Right html)) _ _ = do
              },
       });
       |]
-
-    -- TODO: find a better way that doesn't involve MathJax littering the DOM with style elements
-    clearMathJax = JS.liftJSM $ do
-      win <- JS.jsg "window"
-      win ^. JS.jss "MathJax" JS.jsUndefined
 
     runMathJax = whenMathJaxReady $ do
       mj <- JS.jsg "MathJax"
