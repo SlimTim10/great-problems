@@ -109,6 +109,11 @@ input {
 }
 
 /* Undo normalize.css from tailwind on SVGs, since it affects MathJax output */
-svg {
+#content svg {
   display: initial;
+}
+
+.org-ul, .org-ol {
+  list-style: initial;
+  margin-left: 1em;
 }
