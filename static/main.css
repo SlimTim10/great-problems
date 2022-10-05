@@ -107,3 +107,8 @@ input {
   max-width: 900px;
   margin: 0 auto;
 }
+
+/* Undo normalize.css from tailwind on SVGs, since it affects MathJax output */
+svg {
+  display: initial;
+}
