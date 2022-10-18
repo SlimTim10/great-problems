@@ -37,6 +37,7 @@ frontend = Ob.Frontend
       R.elAttr "link" ("href" =: "https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" <> "rel" =: "stylesheet") R.blank
       R.elAttr "link" ("href" =: Ob.static @"tailwind.css" <> "type" =: "text/css" <> "rel" =: "stylesheet") R.blank
       R.elAttr "link" ("href" =: Ob.static @"main.css" <> "type" =: "text/css" <> "rel" =: "stylesheet") R.blank
+      R.elAttr "link" ("href" =: Ob.static @"problem-viewer.css" <> "type" =: "text/css" <> "rel" =: "stylesheet") R.blank
   , Ob._frontend_body = R.prerender_ R.blank $ Ob.subRoute_ $ \case
       Route.FrontendRoute_Home -> do
         Header.widget
