@@ -22,6 +22,9 @@ import qualified Common.Api.Problem as Problem
 import qualified Widget.Button as Button
 import qualified Widget.Select as Select
 
+defaultTab :: Search.Collection
+defaultTab = Search.Problems
+
 widget
   :: forall t m js.
      ( R.DomBuilder t m
@@ -42,45 +45,10 @@ widget
 widget paramsFromUrl = do
   R.elClass "div" "bg-brand-light-gray flex justify-center py-4" $ do
     R.elClass "div" "max-w-screen-lg flex flex-col" $ do
-      searchTermInput <- R.inputElement
-        $ R.def & R.inputElementConfig_elementConfig . R.elementConfig_initialAttributes .~
-        ( "type" =: "search"
-          <> "placeholder" =: "Search..."
-          <> "class" =: "border rounded h-8 w-96 px-1"
-        ) & R.inputElementConfig_initialValue .~ fromMaybe "" (Search.query paramsFromUrl)
+      searchTermInput <- searchElement
       let searchTerm :: R.Dynamic t (Maybe Text) = fmap textToMaybe . R.value $ searchTermInput
-      onload :: R.Event t () <- R.getPostBuild
-      selectedTopicId :: R.Dynamic t (Maybe Integer) <- R.elClass "div" "my-4" $ do
-        let setTopic = R.tagPromptlyDyn (R.constDyn $ Search.topicId paramsFromUrl) onload
-        let indent =
-              \n txt ->
-                cs $
-                (concat . replicate (fromIntegral n) $ "- ")
-                ++
-                cs txt
-        let addTopic :: ((Integer, Topic.TopicWithLevel)) -> Select.DropdownItem Integer -> Select.DropdownItem Integer =
-              \(idx, Topic.TopicWithLevel {Topic.twlTopic=t, Topic.twlLevel=lvl}) ->
-                Map.insert (Select.DropdownKey idx (Topic.id t)) (indent lvl (Topic.name t))
-        Select.widgetWithAny
-          setTopic
-          "Topic"
-          (Route.Api_Topics :/ (Nothing, mempty))
-          (Topic.flattenHierarchy . Topic.topicsToHierarchy)
-          addTopic
-          (-1)
-          
-      selectedAuthorId :: R.Dynamic t (Maybe Integer) <- R.elClass "div" "my-4" $ do
-        let setAuthor = R.tagPromptlyDyn (R.constDyn $ Search.authorId paramsFromUrl) onload
-        let addAuthor :: (Integer, User.User) -> Select.DropdownItem Integer -> Select.DropdownItem Integer =
-              \(idx, user) ->
-                Map.insert (Select.DropdownKey idx (User.id user)) (CI.original $ User.fullName user)
-        Select.widgetWithAny
-          setAuthor
-          "Author"
-          (Route.Api_Users :/ Nothing)
-          id
-          addAuthor
-          (-1)
+      selectedTopicId :: R.Dynamic t (Maybe Integer) <- selectTopicElement
+      selectedAuthorId :: R.Dynamic t (Maybe Integer) <- selectAuthorElement
       search :: R.Event t () <- R.elClass "div" "mt-4" $ do
         Button.primary' "Search"
       let params :: R.Dynamic t Search.Params = Search.Params
@@ -91,7 +59,6 @@ widget paramsFromUrl = do
       Util.dynFor params $ \params' ->
         Ob.setRoute $ (Route.FrontendRoute_Search :/ Search.paramsToQuery params')
         <$ (R.leftmost [search, R.keydown Key.Enter searchTermInput])
-  let defaultTab = Search.Problems
   case fromMaybe defaultTab (Search.collection paramsFromUrl) of
     Search.Problems -> do
       Tabs.widget Tabs.Problems paramsFromUrl
@@ -104,6 +71,53 @@ widget paramsFromUrl = do
     -- Courses not yet implemented
       -- Tabs.widget Tabs.Courses paramsFromUrl
       return ()
+  where
+    searchElement :: m (R.InputElement R.EventResult (R.DomBuilderSpace m) t)
+    searchElement = R.inputElement
+      $ R.def & R.inputElementConfig_elementConfig . R.elementConfig_initialAttributes .~
+      ( "type" =: "search"
+        <> "placeholder" =: "Search..."
+        <> "class" =: "border rounded h-8 w-96 px-1"
+      ) & R.inputElementConfig_initialValue .~ fromMaybe "" (Search.query paramsFromUrl)
+
+    selectTopicElement :: m (R.Dynamic t (Maybe Integer))
+    selectTopicElement = R.elClass "div" "my-4" $ do
+      onload :: R.Event t () <- R.getPostBuild
+      let setTopic = R.tagPromptlyDyn (R.constDyn $ Search.topicId paramsFromUrl) onload
+      let indent =
+            \n txt ->
+              cs $
+              (concat . replicate (fromIntegral n) $ "- ")
+              ++
+              cs txt
+      let addTopic
+            :: ((Integer, Topic.TopicWithLevel))
+            -> Select.DropdownItem Integer
+            -> Select.DropdownItem Integer =
+            \(idx, Topic.TopicWithLevel {Topic.twlTopic=t, Topic.twlLevel=lvl}) ->
+              Map.insert (Select.DropdownKey idx (Topic.id t)) (indent lvl (Topic.name t))
+      Select.widgetWithAny
+        setTopic
+        "Topic"
+        (Route.Api_Topics :/ (Nothing, mempty))
+        (Topic.flattenHierarchy . Topic.topicsToHierarchy)
+        addTopic
+        (-1)
+
+    selectAuthorElement :: m (R.Dynamic t (Maybe Integer))
+    selectAuthorElement = R.elClass "div" "my-4" $ do
+      onload :: R.Event t () <- R.getPostBuild
+      let setAuthor = R.tagPromptlyDyn (R.constDyn $ Search.authorId paramsFromUrl) onload
+      let addAuthor :: (Integer, User.User) -> Select.DropdownItem Integer -> Select.DropdownItem Integer =
+            \(idx, user) ->
+              Map.insert (Select.DropdownKey idx (User.id user)) (CI.original $ User.fullName user)
+      Select.widgetWithAny
+        setAuthor
+        "Author"
+        (Route.Api_Users :/ Nothing)
+        id
+        addAuthor
+        (-1)
   
 getProblems
   :: ( R.PostBuild t m
