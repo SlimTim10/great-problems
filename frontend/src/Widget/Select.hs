@@ -47,7 +47,7 @@ widget
   -> ((Integer, c) -> DropdownItem a -> DropdownItem a) -- ^ How to add an item to the dropdown
   -> a -- ^ First value
   -> m (R.Dynamic t a) -- ^ Selected dropdown value
-widget setValue title route transformValues addItem firstValue = R.elClass "div" "" $ do
+widget setValue title route transformValues addItem firstValue = R.el "div" $ do
   R.elClass "p" "font-medium mb-2" $ R.text title
   response :: R.Event t (Maybe [b]) <- Util.getOnload $
     Route.apiHref route
@@ -89,7 +89,7 @@ widgetWithAny
   -> ((Integer, c) -> DropdownItem a -> DropdownItem a) -- ^ How to add an item to the dropdown
   -> a -- ^ Value for "Any" item
   -> m (R.Dynamic t (Maybe a)) -- ^ Selected dropdown value
-widgetWithAny setValue title route transformValues addItem anyValue = R.elClass "div" "" $ do
+widgetWithAny setValue title route transformValues addItem anyValue = R.el "div" $ do
   R.elClass "p" "font-medium mb-2" $ R.text title
   response :: R.Event t (Maybe [b]) <- Util.getOnload $
     Route.apiHref route

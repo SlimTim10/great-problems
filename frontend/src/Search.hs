@@ -22,8 +22,8 @@ import qualified Common.Api.Problem as Problem
 import qualified Widget.Button as Button
 import qualified Widget.Select as Select
 
-defaultTab :: Search.Collection
-defaultTab = Search.Problems
+defaultCollection :: Search.Collection
+defaultCollection = Search.Problems
 
 widget
   :: forall t m js.
@@ -43,14 +43,28 @@ widget
   => Search.Params
   -> m ()
 widget paramsFromUrl = do
-  R.elClass "div" "bg-brand-light-gray flex justify-center py-4" $ do
-    R.elClass "div" "max-w-screen-lg flex flex-col" $ do
+  let collection = fromMaybe defaultCollection $ Search.collection paramsFromUrl
+  let searchTab = case collection of
+        Search.Problems -> Tabs.Problems
+        Search.ProblemSets -> Tabs.ProblemSets
+        Search.Courses -> undefined -- Tabs.Courses
+  Tabs.widget searchTab paramsFromUrl
+  R.elClass "div" "flex justify-center" $ do
+    R.elClass "div" "w-brand-screen-lg flex justify-between items-end py-4" $ do
       searchTermInput <- searchElement
       let searchTerm :: R.Dynamic t (Maybe Text) = fmap textToMaybe . R.value $ searchTermInput
       selectedTopicId :: R.Dynamic t (Maybe Integer) <- selectTopicElement
       selectedAuthorId :: R.Dynamic t (Maybe Integer) <- selectAuthorElement
-      search :: R.Event t () <- R.elClass "div" "mt-4" $ do
-        Button.primary' "Search"
+      search :: R.Event t () <- Button.primary' "Search"
+      
+      -- DEBUG
+      onload :: R.Event t () <- R.getPostBuild
+      afterLoad :: R.Event t () <- R.delay 1 onload
+      -- let initialSelectedTopicId :: R.Event t (Maybe Integer) = R.tagPromptlyDyn selectedTopicId afterLoad
+      -- let initialSelectedAuthorId :: R.Event t (Maybe Integer) = R.tagPromptlyDyn selectedAuthorId afterLoad
+      initialSelectedTopicId :: R.Dynamic t (Maybe Integer) <- R.holdDyn Nothing $ R.tagPromptlyDyn selectedTopicId afterLoad
+      -- let initialSelectedAuthorId :: R.Event t (Maybe Integer) = R.tagPromptlyDyn selectedAuthorId afterLoad
+        
       let params :: R.Dynamic t Search.Params = Search.Params
             <$> searchTerm
             <*> selectedTopicId
@@ -58,30 +72,38 @@ widget paramsFromUrl = do
             <*> R.constDyn (Search.collection paramsFromUrl)
       Util.dynFor params $ \params' ->
         Ob.setRoute $ (Route.FrontendRoute_Search :/ Search.paramsToQuery params')
-        <$ (R.leftmost [search, R.keydown Key.Enter searchTermInput])
-  case fromMaybe defaultTab (Search.collection paramsFromUrl) of
-    Search.Problems -> do
-      Tabs.widget Tabs.Problems paramsFromUrl
-      problems :: R.Dynamic t [Problem.Problem] <- getProblems paramsFromUrl
-      ProblemCards.widget problems
-    Search.ProblemSets -> do
-      -- Problem sets not yet implemented
-      Tabs.widget Tabs.ProblemSets paramsFromUrl
-    Search.Courses -> do
-    -- Courses not yet implemented
-      -- Tabs.widget Tabs.Courses paramsFromUrl
-      return ()
+        -- <$ R.leftmost
+        -- [ search
+        -- , R.keydown Key.Enter searchTermInput
+        -- ]
+        <$ R.leftmost
+        [ search
+        , R.keydown Key.Enter searchTermInput
+        -- , () <$ R.ffilter (uncurry (/=)) (R.attachPromptlyDyn initialSelectedTopicId (R.updated selectedTopicId))
+        , () <$ R.ffilter (\x -> x == Just 3) (R.updated selectedTopicId)
+        ]
+  R.elClass "div" "my-6" $ do
+    case collection of
+      Search.Problems -> do
+        problems :: R.Dynamic t [Problem.Problem] <- getProblems paramsFromUrl
+        ProblemCards.widget problems
+      Search.ProblemSets -> do
+        -- Problem sets not yet implemented
+        return ()
+      Search.Courses -> do
+        -- Courses not yet implemented
+        return ()
   where
     searchElement :: m (R.InputElement R.EventResult (R.DomBuilderSpace m) t)
     searchElement = R.inputElement
       $ R.def & R.inputElementConfig_elementConfig . R.elementConfig_initialAttributes .~
       ( "type" =: "search"
         <> "placeholder" =: "Search..."
-        <> "class" =: "border rounded h-8 w-96 px-1"
+        <> "class" =: "border rounded h-8 w-96 px-1 text-xs"
       ) & R.inputElementConfig_initialValue .~ fromMaybe "" (Search.query paramsFromUrl)
 
     selectTopicElement :: m (R.Dynamic t (Maybe Integer))
-    selectTopicElement = R.elClass "div" "my-4" $ do
+    selectTopicElement = R.elClass "div" "w-64" $ do
       onload :: R.Event t () <- R.getPostBuild
       let setTopic = R.tagPromptlyDyn (R.constDyn $ Search.topicId paramsFromUrl) onload
       let indent =
@@ -105,7 +127,7 @@ widget paramsFromUrl = do
         (-1)
 
     selectAuthorElement :: m (R.Dynamic t (Maybe Integer))
-    selectAuthorElement = R.elClass "div" "my-4" $ do
+    selectAuthorElement = R.elClass "div" "w-64" $ do
       onload :: R.Event t () <- R.getPostBuild
       let setAuthor = R.tagPromptlyDyn (R.constDyn $ Search.authorId paramsFromUrl) onload
       let addAuthor :: (Integer, User.User) -> Select.DropdownItem Integer -> Select.DropdownItem Integer =
