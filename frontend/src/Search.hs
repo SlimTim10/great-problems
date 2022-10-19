@@ -56,15 +56,6 @@ widget paramsFromUrl = do
       selectedTopicId :: R.Dynamic t (Maybe Integer) <- selectTopicElement
       selectedAuthorId :: R.Dynamic t (Maybe Integer) <- selectAuthorElement
       search :: R.Event t () <- Button.primary' "Search"
-      
-      -- DEBUG
-      onload :: R.Event t () <- R.getPostBuild
-      afterLoad :: R.Event t () <- R.delay 1 onload
-      -- let initialSelectedTopicId :: R.Event t (Maybe Integer) = R.tagPromptlyDyn selectedTopicId afterLoad
-      -- let initialSelectedAuthorId :: R.Event t (Maybe Integer) = R.tagPromptlyDyn selectedAuthorId afterLoad
-      initialSelectedTopicId :: R.Dynamic t (Maybe Integer) <- R.holdDyn Nothing $ R.tagPromptlyDyn selectedTopicId afterLoad
-      -- let initialSelectedAuthorId :: R.Event t (Maybe Integer) = R.tagPromptlyDyn selectedAuthorId afterLoad
-        
       let params :: R.Dynamic t Search.Params = Search.Params
             <$> searchTerm
             <*> selectedTopicId
@@ -72,15 +63,9 @@ widget paramsFromUrl = do
             <*> R.constDyn (Search.collection paramsFromUrl)
       Util.dynFor params $ \params' ->
         Ob.setRoute $ (Route.FrontendRoute_Search :/ Search.paramsToQuery params')
-        -- <$ R.leftmost
-        -- [ search
-        -- , R.keydown Key.Enter searchTermInput
-        -- ]
         <$ R.leftmost
         [ search
         , R.keydown Key.Enter searchTermInput
-        -- , () <$ R.ffilter (uncurry (/=)) (R.attachPromptlyDyn initialSelectedTopicId (R.updated selectedTopicId))
-        , () <$ R.ffilter (\x -> x == Just 3) (R.updated selectedTopicId)
         ]
   R.elClass "div" "my-6" $ do
     case collection of
