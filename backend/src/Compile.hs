@@ -48,13 +48,10 @@ compile contents randomSeed figures = do
       -- Problem: main.prb
       Data.Text.IO.writeFile (dir </> "main.prb") contents
       -- Figures: schem1.asc, schem2.asc, ..., fig1.svg, fig2.svg, ...
-      void $ mapM_
-        (\figure -> do
-            let fName = cs $ Figure.bfName figure
-            let fContents = cs $ Figure.bfContents figure
-            Data.Text.IO.writeFile fName fContents
-        )
-        figures
+      void . forM_ figures $ \figure -> do
+        let fName = dir </> (cs $ Figure.bfName figure)
+        let fContents = cs $ Figure.bfContents figure
+        Data.Text.IO.writeFile fName fContents
         
     runProblem2tex dir = do
       System.Process.callProcess
