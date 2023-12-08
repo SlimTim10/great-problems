@@ -1,5 +1,11 @@
 * Great Problems
 
+#+html: <p align="center"><img src="assets/problem_editor_screenshot.png" /></p>
+
+** Architecture
+
+#+html: <p align="center"><img src="assets/great_problems_architecture.drawio.svg" /></p>
+
 ** Installing
 
 To install and run this project:
