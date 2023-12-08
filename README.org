@@ -1,8 +1,10 @@
 * Great Problems
 
+** Screenshot
+
 #+html: <p align="center"><img src="assets/problem_editor_screenshot.png" /></p>
 
-** Architecture
+** Stages
 
 #+html: <p align="center"><img src="assets/great_problems_architecture_trim.drawio.svg" /></p>
 
