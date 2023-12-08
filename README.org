@@ -1,6 +1,6 @@
 * Great Problems
 
-** Screenshot
+** Editor Screenshot
 
 #+html: <p align="center"><img src="assets/problem_editor_screenshot.png" /></p>
 
