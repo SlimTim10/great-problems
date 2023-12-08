@@ -4,7 +4,7 @@
 
 ** Architecture
 
-#+html: <p align="center"><img src="assets/great_problems_architecture.drawio.svg" /></p>
+#+html: <p align="center"><img src="assets/great_problems_architecture_trim.drawio.svg" /></p>
 
 ** Installing
 
